@@ -27,9 +27,12 @@ public:
    static UString BIOtoString(BIO* bio);
 #endif
 
-#ifdef USE_LIBPCRE
-   // Searches subject for matches to pattern and replaces them with replacement
+#ifdef USE_LIBPCRE // Searches subject for matches to pattern and replaces them with replacement
    static UString pregReplace(const UString& pattern, const UString& replacement, const UString& subject);
+#endif
+
+#ifdef USE_LIBEXPAT // to strip out the HTML tags
+   static UString stripTags(const UString& html, UString* list_tags_allowed = 0);
 #endif
 
    static bool isDelimited(const UString& s, const char* delimiter = "()")

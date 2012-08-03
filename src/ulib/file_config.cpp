@@ -73,22 +73,24 @@ bool UFileConfig::open()
 
       // manage if we need preprocessing...
 
-      if (U_STRING_FIND(data, 0, "\n#include ") != U_NOT_FOUND)
+#  if defined(HAVE_CPP) || defined(HAVE_MCPP)
+      if (u_dosmatch(U_STRING_TO_PARAM(data), U_CONSTANT_TO_PARAM("*#*include *\n*"), 0))
          {
-#     ifdef DEBUG
-         static int fd_stderr = UFile::creat("/tmp/cpp.err", O_WRONLY | O_APPEND, PERM_FILE);
-#     else
-         static int fd_stderr = UServices::getDevNull();
-#     endif
+         static int fd_stderr = UServices::getDevNull("/tmp/cpp.err");
 
          (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
 
          UString command(200U), _dir = UStringExt::dirname(pathname);
 
+#     ifdef HAVE_MCPP
+         command.snprintf("mcpp                    -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
+#     else
          command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
+#     endif
 
          data = UCommand::outputCommand(command, environ, UFile::getFd(), fd_stderr);
          }
+#  endif
 
       if (data.empty()) goto err;
 

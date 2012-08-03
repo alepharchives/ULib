@@ -42,14 +42,14 @@ void UCache::init(uint32_t size)
    U_INTERNAL_DUMP("hsize = %u writer = %u, oldest = %u, unused = %u size = %u", info->hsize, info->writer, info->oldest, info->unused, info->size)
 }
 
-bool UCache::open(const UString& path, uint32_t size)
+bool UCache::open(const UString& path, uint32_t size, const UString* environment)
 {
-   U_TRACE(0, "UCache::open(%.*S,%u)", U_STRING_TO_TRACE(path), size)
+   U_TRACE(0, "UCache::open(%.*S,%u,%p)", U_STRING_TO_TRACE(path), size, environment)
 
    U_CHECK_MEMORY
 
-   UFile _x(path);
    bool exist = false;
+   UFile _x(path, environment);
 
    if (_x.creat(O_RDWR))
       {
@@ -93,13 +93,25 @@ UString UCache::addContentOf(const UString& pathname)
    U_RETURN_STRING(content);
 }
 
+UString UCache::contentOf(const UString& pathname)
+{
+   U_TRACE(0, "UCache::contentOf(%.*S)", U_STRING_TO_TRACE(pathname))
+
+   UString content = (*this)[pathname];
+
+   if (content.empty()) content = addContentOf(pathname);
+   else                 content.size_adjust(content.size() - 1); // minus null-terminator...
+
+   U_RETURN_STRING(content);
+}
+
 UString UCache::contentOf(const char* fmt, ...)
 {
    U_TRACE(0, "UCache::contentOf(%S)", fmt)
 
    U_CHECK_MEMORY
 
-   UString content, pathname(200U);
+   UString pathname(200U);
 
    va_list argp;
    va_start(argp, fmt);
@@ -108,21 +120,16 @@ UString UCache::contentOf(const char* fmt, ...)
 
    va_end(argp);
 
-   content = (*this)[pathname];
-
-   if (content.empty()) content = addContentOf(pathname);
-   else                 content.size_adjust(content.size() - 1); // minus null-terminator...
-
-   U_RETURN_STRING(content);
+   return contentOf(pathname);
 }
 
-void UCache::loadContentOf(const UString& dir)
+void UCache::loadContentOf(const UString& dir, const char* filter, uint32_t filter_len)
 {
-   U_TRACE(0, "UCache::loadContentOf(%.*S)", U_STRING_TO_TRACE(dir))
+   U_TRACE(0, "UCache::loadContentOf(%.*S,%.*S,%u)", U_STRING_TO_TRACE(dir), filter_len, filter, filter_len)
 
    UVector<UString> vec;
 
-   for (uint32_t i = 0, n = UFile::listContentOf(vec, &dir); i < n; ++i) (void) addContentOf(vec[i]);
+   for (uint32_t i = 0, n = UFile::listContentOf(vec, &dir, filter, filter_len); i < n; ++i) (void) addContentOf(vec[i]);
 }
 
 inline uint32_t UCache::hash(const char* key, uint32_t keylen)

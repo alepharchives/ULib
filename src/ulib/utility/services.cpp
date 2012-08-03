@@ -20,11 +20,15 @@
 
 unsigned char UServices::key[16];
 
-int UServices::getDevNull() /* return open(/dev/null) */
+int UServices::getDevNull(const char* file) /* return open(/dev/null) */
 {
-   U_TRACE(0, "UServices::getDevNull()")
+   U_TRACE(0, "UServices::getDevNull(%S)", file)
 
+#ifdef DEBUG
+          int fd_stderr = UFile::creat(file, O_WRONLY | O_APPEND, PERM_FILE);
+#else
    static int fd_stderr = UFile::open("/dev/null", O_WRONLY, PERM_FILE);
+#endif
 
    U_RETURN(fd_stderr);
 }
@@ -65,6 +69,12 @@ bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_l
 
    u_ftw_ctx.filter     = filter;
    u_ftw_ctx.filter_len = filter_len;
+
+   if (filter_len)
+      {
+      u_pfn_flags = 0;
+      u_pfn_match = u_dosmatch_with_OR;
+      }
 
    U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
    U_INTERNAL_DUMP("u_buffer = %S", u_buffer)

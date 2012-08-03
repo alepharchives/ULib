@@ -71,7 +71,7 @@ protected:
    time_t connected, expire, logout, ctime;
    uint64_t traffic_done, traffic_available;
    uint32_t ifindex, ctraffic, rulenum, index_AUTH;
-   UString ip, mac, token, user, ifname, label;
+   UString ip, mac, token, user, ifname, label, gateway;
    UCommand fw;
    int status;
    bool allowed;
@@ -167,11 +167,11 @@ public:
 #endif
 
 protected:
-   UCommand fw, uclient;
+   UCommand fw, uclient, uploader;
    UVector<Url*> vauth_url, vinfo_url;
    UVector<UIPAllow*> vLocalNetworkMask;
-   UVector<UString> vInternalDevice, vLocalNetwork, vLocalNetworkLabel, vauth, vauth_ip, vLoginValidate;
-   UString input, output, location, fw_cmd, decrypt_key, mode, gateway, access_point, extdev, intdev, localnet, auth_login, fw_env, allowed_members;
+   UVector<UString> vInternalDevice, vLocalNetwork, vLocalNetworkLabel, vLocalNetworkGateway, vauth, vauth_ip, vLoginValidate;
+   UString input, output, location, fw_cmd, decrypt_key, mode, host, hostname, ip, extdev, intdev, localnet, auth_login, fw_env, allowed_members, label;
 
    static vPF unatexit;
    static UPing** sockp;
@@ -201,14 +201,14 @@ protected:
    bool checkAuthMessage(UModNoCatPeer* peer);
    bool checkSignedData(const char* ptr, uint32_t len);
    void addPeerInfo(UModNoCatPeer* peer, time_t logout);
-   void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput = 0);
    void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
+   bool sendMsgToPortal(UCommand& cmd, uint32_t index_AUTH, const UString& msg, UString* poutput = 0);
 
-   void sendMsgToPortal(const UString& msg)
+   void sendMsgToPortal(UCommand& cmd, const UString& msg)
       {
-      U_TRACE(0, "UNoCatPlugIn::sendMsgToPortal(%.*S)", U_STRING_TO_TRACE(msg))
+      U_TRACE(0, "UNoCatPlugIn::sendMsgToPortal(%p,%.*S)", &cmd, U_STRING_TO_TRACE(msg))
 
-      for (uint32_t i = 0, n = pthis->vinfo_url.size(); i < n; ++i) sendMsgToPortal(i, msg, 0);
+      for (uint32_t i = 0, n = pthis->vinfo_url.size(); i < n; ++i) (void) sendMsgToPortal(cmd, i, msg, 0);
       }
 
    static UModNoCatPeer* getPeer(uint32_t i) __pure;

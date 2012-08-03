@@ -71,7 +71,6 @@ U_NO_EXPORT bool URDB::htLookup()
 
    U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
 
-   U_INTERNAL_ASSERT(node <= RDB_capacity)
    U_INTERNAL_ASSERT_RANGE(RDB_hashtab, pnode, (uint32_t*)RDB_allocate)
 
    U_RETURN(false);
@@ -91,16 +90,14 @@ U_NO_EXPORT void URDB::htAlloc()
 
    U_INTERNAL_DUMP("RDB_capacity = %u", RDB_capacity)
 
-   U_INTERNAL_ASSERT_MAJOR((uint32_t)RDB_capacity,sizeof(URDB::cache_node))
+   U_INTERNAL_ASSERT_MAJOR((uint32_t)RDB_capacity, sizeof(URDB::cache_node))
 
    node = RDB_off;
+          RDB_off += sizeof(URDB::cache_node);
 
    u_put_unalignedp(node, pnode);
-
-   RDB_off += sizeof(URDB::cache_node);
-
-   u_put_unaligned(0, RDB_node->left);
-   u_put_unaligned(0, RDB_node->right);
+   u_put_unaligned(    0, RDB_node->left);
+   u_put_unaligned(    0, RDB_node->right);
 }
 
 U_NO_EXPORT inline bool URDB::resizeJournal(uint32_t oversize)
@@ -153,7 +150,7 @@ U_NO_EXPORT inline bool URDB::resizeJournal(uint32_t oversize)
       data = data1;
 
       UCDB::khash = save;
-      
+
       (void) htLookup();
 
       U_RETURN(true);
@@ -315,18 +312,19 @@ bool URDB::open(uint32_t log_size, bool btruncate)
 
    if (journal.creat(flags))
       {
-      uint32_t journal_size = journal.size();
+      uint32_t journal_size   = journal.size(),
+               journal_new_sz = (journal_size   ? journal_size   :
+                                 log_size       ? log_size       :
+                                 UFile::st_size ? UFile::st_size : 512 * 1024);
 
-      if (journal_size == 0) journal_size = (log_size       ? log_size       :
-                                             UFile::st_size ? UFile::st_size : 512 * 1024);
-
-      if (journal.ftruncate(journal_size))
+      if (journal_new_sz == journal_size ||
+          journal.ftruncate(journal_new_sz))
          {
 #     if !defined(__CYGWIN__) && !defined(__MINGW32__)
-         if (journal_size < 32 * 1024 * 1024) journal_size = 32 * 1024 * 1024; // oversize mmap for optimize resizeJournal() with ftruncate()
+         if (journal_new_sz < 32 * 1024 * 1024) journal_new_sz = 32 * 1024 * 1024; // oversize mmap for optimize resizeJournal() with ftruncate()
 #     endif
 
-         if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_size))
+         if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_new_sz))
             {
             if (RDB_off == 0) RDB_off = sizeof(URDB::cache_struct);
 
@@ -348,7 +346,7 @@ void URDB::close()
 
    if (UFile::map_size) UFile::munmap(); // Constant DB
 
-   lock.lock();
+   lock();
 
    uint32_t sz = RDB_sync = RDB_off;
 
@@ -357,7 +355,7 @@ void URDB::close()
           journal.close();
           journal.reset();
 
-   lock.unlock();
+   unlock();
 }
 
 void URDB::reset()
@@ -381,7 +379,7 @@ bool URDB::beginTransaction()
 {
    U_TRACE(0, "URDB::beginTransaction()")
 
-   lock.lock();
+   lock();
 
    return reorganize();
 }
@@ -393,7 +391,7 @@ void URDB::commitTransaction()
    msync();
    fsync();
 
-   lock.unlock();
+   unlock();
 }
 
 void URDB::abortTransaction()
@@ -402,7 +400,7 @@ void URDB::abortTransaction()
 
    reset();
 
-   lock.unlock();
+   unlock();
 }
 
 void URDB::msync()
@@ -411,7 +409,7 @@ void URDB::msync()
 
    U_CHECK_MEMORY
 
-   lock.lock();
+   lock();
 
    U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u", RDB_off, RDB_sync)
 
@@ -421,7 +419,7 @@ void URDB::msync()
 
    U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u", RDB_off, RDB_sync)
 
-   lock.unlock();
+   unlock();
 }
 
 // Close a Reliable DataBase
@@ -452,7 +450,7 @@ U_NO_EXPORT bool URDB::reorganize()
 
    bool result = true;
 
-   lock.lock();
+   lock();
 
    U_INTERNAL_DUMP("RDB_off = %u", RDB_off)
 
@@ -520,7 +518,7 @@ U_NO_EXPORT bool URDB::reorganize()
          }
       }
 
-   lock.unlock();
+   unlock();
 
    U_RETURN(result);
 }
@@ -630,7 +628,20 @@ U_NO_EXPORT inline void URDB::call(vPFu function1, vPFpc function2)
 
    // prima si leggono le entry nella cache,..
 
-   for (int i = 0; i < CACHE_HASHTAB_LEN; ++i) if (RDB_hashtab[i]) function1(RDB_hashtab[i]);
+   for (int i = 0; i < CACHE_HASHTAB_LEN; ++i)
+      {
+      if (RDB_hashtab[i])
+         {
+         function1(RDB_hashtab[i]);
+
+         if (UCDB::internal.stop_call_for_all_entry)
+            {
+             UCDB::internal.stop_call_for_all_entry = false;
+
+            return;
+            }
+         }
+      }
 
    // ...poi si scansiona il constant database e si cercano le entry NON presenti nella cache...
 
@@ -696,7 +707,7 @@ UString URDB::print()
 
    if (_size)
       {
-      lock.lock();
+      lock();
 
       ptr_rdb = this;
 
@@ -708,7 +719,7 @@ UString URDB::print()
 
       call(&URDB::print1, &URDB::print2);
 
-      lock.unlock();
+      unlock();
 
       U_RETURN_STRING(buffer);
       }
@@ -756,7 +767,7 @@ void URDB::callForAllEntry(vPFprpr function)
 {
    U_TRACE(0, "URDB::callForAllEntry(%p)", function)
 
-   lock.lock();
+   lock();
 
    ptr_rdb = this;
 
@@ -766,7 +777,7 @@ void URDB::callForAllEntry(vPFprpr function)
 
    UCDB::setFunctionToCall(0);
 
-   lock.unlock();
+   unlock();
 }
 
 // gets KEY
@@ -814,7 +825,7 @@ void URDB::getKeys(UVector<UString>& vec)
 {
    U_TRACE(0, "URDB::getKeys(%p)", &vec)
 
-   lock.lock();
+   lock();
 
    kvec = &vec;
 
@@ -826,7 +837,7 @@ void URDB::getKeys(UVector<UString>& vec)
 
    U_ASSERT_EQUALS(vec.size(), vec.capacity())
 
-   lock.unlock();
+   unlock();
 }
 
 void URDB::callForAllEntrySorted(vPFprpr function)
@@ -935,7 +946,7 @@ bool URDB::fetch()
 
    UCDB::cdb_hash();
 
-   lock.lock();
+   lock();
 
    // Search one key/data pair in the cache or in the cdb
 
@@ -951,7 +962,7 @@ bool URDB::fetch()
          }
       }
 
-   lock.unlock();
+   unlock();
 
    U_RETURN(result);
 }
@@ -983,7 +994,7 @@ int URDB::store(int flag)
 
    UCDB::cdb_hash();
 
-   lock.lock();
+   lock();
 
    bool exist = htLookup(); // Search one key/data pair in the cache
 
@@ -1050,7 +1061,7 @@ int URDB::store(int flag)
    U_INTERNAL_DUMP("nrecord = %u", RDB_nrecord)
 
 end:
-   lock.unlock();
+   unlock();
 
    U_RETURN(result);
 }
@@ -1074,7 +1085,7 @@ int URDB::remove()
 
    UCDB::cdb_hash();
 
-   lock.lock();
+   lock();
 
    if (htLookup()) // Search one key/data pair in the cache
       {
@@ -1110,7 +1121,7 @@ int URDB::remove()
       }
 
 end:
-   lock.unlock();
+   unlock();
 
    U_RETURN(result);
 }
@@ -1151,7 +1162,7 @@ int URDB::substitute(UCDB::datum* key2, int flag)
 
    key1 = key;
 
-   lock.lock();
+   lock();
 
    // search for remove
 
@@ -1232,7 +1243,7 @@ int URDB::substitute(UCDB::datum* key2, int flag)
       }
 
 end:
-   lock.unlock();
+   unlock();
 
    U_RETURN(result);
 }
@@ -1313,7 +1324,7 @@ const char* URDB::dump(bool _reset) const
    *UObjectIO::os << "\n"
                   << "node                      " << node            << '\n'
                   << "pnode                     " << (void*)pnode    << '\n'
-                  << "lock    (ULock            " << (void*)&lock    << ")\n"
+                  << "_lock   (ULock            " << (void*)&_lock   << ")\n"
                   << "journal (UFile            " << (void*)&journal << ')';
 
    if (_reset)

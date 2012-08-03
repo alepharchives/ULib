@@ -19,9 +19,11 @@
 #ifdef USE_LIBPCRE
 #  include <ulib/pcre/pcre.h>
 #endif
-
 #ifdef USE_LIBZ
 #  include <ulib/base/coder/gzio.h>
+#endif
+#ifdef USE_LIBEXPAT
+#  include <ulib/xml/expat/xml2txt.h>
 #endif
 
 #ifndef __MINGW32__
@@ -57,10 +59,10 @@ UString UStringExt::BIOtoString(BIO* bio)
 }
 #endif
 
-#ifdef USE_LIBPCRE
 // Replace parts of a string using regular expressions. This method is the counterpart of the perl s// operator.
 // It replaces the substrings which matched the given regular expression with the supplied string
 
+#ifdef USE_LIBPCRE
 UString UStringExt::pregReplace(const UString& pattern, const UString& replacement, const UString& subject)
 {
    U_TRACE(0, "UStringExt::pregReplace(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(pattern), U_STRING_TO_TRACE(replacement), U_STRING_TO_TRACE(subject))
@@ -68,6 +70,23 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
    UPCRE _pcre(pattern, PCRE_FOR_REPLACE);
 
    UString result = _pcre.replace(subject, replacement);
+
+   U_RETURN_STRING(result);
+}
+#endif
+
+#ifdef USE_LIBEXPAT
+UString UStringExt::stripTags(const UString& html, UString* list_tags_allowed)
+{
+   U_TRACE(0, "UStringExt::stripTags(%.*S,%p)", U_STRING_TO_TRACE(html), list_tags_allowed)
+
+   UString tag_list, result;
+
+   if (list_tags_allowed) tag_list = *list_tags_allowed;
+
+   UXml2Txt converter(tag_list, false, true);
+
+   if (converter.parse(html)) result = converter.getText();
 
    U_RETURN_STRING(result);
 }
@@ -1197,9 +1216,7 @@ UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
 {
    U_TRACE(0, "UStringExt::deflate(%.*S,%b)", U_STRING_TO_TRACE(s), bheader)
 
-#ifdef USE_LIBZ
-   // compress with zlib
-
+#ifdef USE_LIBZ // compress with zlib
    uint32_t sz = s.size();
 
    U_INTERNAL_DUMP("size = %u", sz)

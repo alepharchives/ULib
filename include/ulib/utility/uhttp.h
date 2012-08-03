@@ -31,9 +31,10 @@
 #define U_HTTP_CACHE_REQUEST
 #endif
 
-#define U_MAX_UPLOAD_PROGRESS 16
-
 #define U_HTTP_REALM "Protected Area" // HTTP Access Authentication
+
+#define U_MAX_UPLOAD_PROGRESS         16
+#define U_MIN_SIZE_FOR_PARTIAL_WRITE (16U * 1024U)
 
 #define U_HTTP_BODY(str)      (str).substr(u_http_info.endHeader, u_http_info.clength)
 #define U_HTTP_HEADER(str)    (str).substr(u_http_info.startHeader, u_http_info.szHeader)
@@ -682,6 +683,7 @@ public:
 
    static UServletPage* usp_page_to_check;
 
+   static void callEndForAllUSP( UStringRep* key, void* value);
    static void callInitForAllUSP(UStringRep* key, void* value);
 
    typedef struct upload_progress {

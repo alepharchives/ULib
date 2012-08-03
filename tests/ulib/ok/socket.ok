@@ -16,23 +16,24 @@ Listening Server Socket - Socket Details
  - Port    : 11011
 
 Client Communication Socket on
- - Name    : 0.0.0.0
+ - Name    : localhost
  - Family  : IPv4
- - Address : 0.0.0.0
+ - Address : 127.0.0.1
  - Port    : 11011
 
 Is Connected to
  - Name    : localhost
  - Family  : IPv4
  - Address : 127.0.0.1
- - Port    : 49402
+ - Port    : 58543
 
 Host name       = 0.0.0.0
 Host address    = 0.0.0.0
-Node name       = stefano
-MAC address     = 0016ECFB46DA
+Node name       = localhost
+MAC address     = e0:cb:4e:c8:aa:2c
 Network device  = lo
-Network address = 10.0.0.0/255.0.0.0
+Gateway address = 192.168.1.131
+Network address = 0.0.10.0/0.0.255.0
 
 Received 11 bytes of data
 Buffer : [hello_World]
@@ -57,7 +58,7 @@ Socket Details - Local Information
  - Name    : localhost
  - Family  : IPv4
  - Address : 127.0.0.1
- - Port    : 49402
+ - Port    : 58543
 
 Socket Details - Server Information
  - Name    : localhost
@@ -93,7 +94,7 @@ Received datagram from :
  - Name    : localhost
  - Family  : IPv4
  - Address : 127.0.0.1
- - Port    : 51152
+ - Port    : 52375
  - Size    : 11 bytes
  - Buffer  : [hello_World]
 
@@ -120,7 +121,7 @@ Socket Details - Local Information
  - Name    : localhost
  - Family  : IPv4
  - Address : 127.0.0.1
- - Port    : 51152
+ - Port    : 52375
 
 Socket Details - Server Information
  - Name    : localhost

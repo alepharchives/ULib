@@ -58,6 +58,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_HUPS])
 
+	AC_MSG_CHECKING(if you want to enable client response partial write support)
+	AC_ARG_ENABLE(CRPWS,
+				[  --enable-CRPWS          enable Client Response Partial Write Support [[default=no]]])
+	if test -z "$enable_CRPWS" ; then
+		enable_CRPWS="no"
+	fi
+	if test "$enable_CRPWS" = "yes"; then
+      AC_DEFINE(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT, 1, [enable client response partial write support])
+	fi
+	AC_MSG_RESULT([$enable_CRPWS])
+
 	AC_MSG_CHECKING(if you want to enable use of precompiled headers)
 	AC_ARG_ENABLE(pch,
 				[  --enable-pch            enables precompiled header support (currently only gcc >= 3.4) [[default=no]]])

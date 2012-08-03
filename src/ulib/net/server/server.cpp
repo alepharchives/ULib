@@ -69,6 +69,7 @@
 #endif
 
 #ifndef __MINGW32__
+#  include <pwd.h>
 #  include <ulib/net/unixsocket.h>
 #  define U_TCP_SETTING yes
 #endif
@@ -350,6 +351,10 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    mod_name     = U_NEW(UString(U_CAPACITY));
    senvironment = U_NEW(UString(U_CAPACITY));
 
+#ifndef __MINGW32__
+   flag_use_tcp_optimization = true;
+#endif
+
    U_INTERNAL_DUMP("u_seed_hash = %u", u_seed_hash)
 
    u_init_ulib_hostname();
@@ -515,7 +520,6 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // --------------------------------------------------------------------------------------------------------------------------------------
 
    server                     = cfg[*str_SERVER];
-   as_user                    = cfg[*str_RUN_AS_USER],
    log_file                   = cfg[*str_LOG_FILE];
    allow_IP                   = cfg[*str_ALLOWED_IP];
    allow_IP_prv               = cfg[*str_ALLOWED_IP_PRIVATE];
@@ -528,7 +532,6 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    cgi_timeout                = cfg.readLong(*str_CGI_TIMEOUT);
    enable_rfc1918_filter      = cfg.readBoolean(*str_ENABLE_RFC1918_FILTER);
    set_realtime_priority      = cfg.readBoolean(*str_SET_REALTIME_PRIORITY);
-   flag_use_tcp_optimization  = cfg.readBoolean(*str_USE_TCP_OPTIMIZATION);
    UNotifier::max_connection  = cfg.readLong(*str_MAX_KEEP_ALIVE);
    u_printf_string_max_length = cfg.readLong(*str_LOG_MSG_SIZE);
 
@@ -568,6 +571,10 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
       }
 
    if (isPreForked()) monitoring_process = true;
+
+   x = cfg[*str_USE_TCP_OPTIMIZATION];
+
+   if (x.empty() == false) flag_use_tcp_optimization = x.strtob();
 #endif
 
    // write pid on file...
@@ -579,6 +586,30 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // open log
 
    if (log_file.empty() == false) log = U_NEW(ULog(log_file, cfg.readLong(*str_LOG_FILE_SZ), "(pid %P) %10D> "));
+
+   // If you want the webserver to run as a process of a defined user, you can do it.
+   // For the change of user to work, it's necessary to execute the server with root privileges.
+   // If it's started by a user that that doesn't have root privileges, this step will be omitted.
+
+   as_user = cfg[*str_RUN_AS_USER];
+
+   if (as_user.empty() == false)
+      {
+      if (UServices::isSetuidRoot() == false)
+         {
+         U_SRV_LOG("the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
+
+         as_user.clear();
+         }
+      else
+         {
+         U_INTERNAL_ASSERT(as_user.isNullTerminated())
+
+         struct passwd* pw = (struct passwd*) U_SYSCALL(getpwnam, "%S", as_user.data());
+
+         if (pw && pw->pw_dir) u_setHOME(pw->pw_dir);
+         }
+      }
 
    // DOCUMENT_ROOT: The directory out of which you will serve your documents
 
@@ -843,66 +874,10 @@ end:                                                                            
 U_PLUGIN_HANDLER(Init)
 U_PLUGIN_HANDLER(Fork)
 U_PLUGIN_HANDLER(Run)
+U_PLUGIN_HANDLER(Stop)
 U_PLUGIN_HANDLER(READ)
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
-
-void UServer_Base::runAsUser(bool is_child)
-{
-   U_TRACE(0, "UServer_Base::runAsUser(%b)", is_child)
-
-   if (pthis->as_user.empty())
-      {
-#  ifndef __MINGW32__
-      if (is_child       ||
-          (iBackLog != 1 &&
-           flag_use_tcp_optimization == false))
-         {
-         /* don't need these anymore. Good security policy says we get rid of them */
-
-         u_never_need_root();
-         u_never_need_group();
-         }
-#  endif
-      }
-   else
-      {
-      /* If you want the webserver to run as a process of a defined user, you can call it.
-       * For the change of user to work, it's necessary to execute the server with root privileges.
-       * If it's started by a user that that doesn't have root privileges, this step will be omitted.
-       */
-
-      if (UServices::isSetuidRoot() == false)
-         {
-         U_SRV_LOG("the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
-         }
-      else
-         {
-         U_INTERNAL_ASSERT(pthis->as_user.isNullTerminated())
-
-         const char* user = pthis->as_user.data();
-
-         if (u_runAsUser(user, false))
-            {
-            U_SRV_LOG("server run with user %S permission", user);
-
-            U_INTERNAL_ASSERT_POINTER(senvironment)
-
-            const char* home = U_SYSCALL(getenv, "%S", "HOME");
-
-            if (home) senvironment->snprintf_add("HOME=%s\n", home);
-
-            U_ASSERT_EQUALS(senvironment->isBinary(), false)
-            }
-         else
-            {
-#        ifndef __MINGW32__
-            U_ERROR("set user %S context failed...", user);
-#        endif
-            }
-         }
-      }
-}
 
 void UServer_Base::init()
 {
@@ -974,7 +949,7 @@ void UServer_Base::init()
 
    UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
 
-   if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("64.233.187.99"), 1001))
+   if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
       {
       socket->cLocalAddress = cClientSocket.cLocalAddress;
 
@@ -1155,7 +1130,7 @@ void UServer_Base::init()
       {
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
 
-      u_pthread_time = U_NEW(UTimeThread);
+      U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
       }
 #endif
 
@@ -1301,6 +1276,7 @@ void UServer_Base::runWatch()
 
    U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
 
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (--watch_counter) u_now->tv_sec += 1L;
    else
       {
@@ -1314,16 +1290,21 @@ void UServer_Base::runWatch()
 
    struct timeval _timeval;
    char data_1[17]; // 18/06/12 18:45:56
+   char  null1[1];  // 123456789012345678901234567890
    char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+   char  null2[1];  // 123456789012345678901234567890
    char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-   char    null[1]; // 123456789012345678901234567890
+   char  null3[1];  // 123456789012345678901234567890
    */
 
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17)
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval))
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17+1)
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+17+1+26+1)
 
    if (isLog())        (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
    if (isAnotherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
                        (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
+#endif
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
@@ -1402,8 +1383,9 @@ start:
 
    if (ptr->UEventFd::fd)
       {
-      if (timeoutMS != -1 &&
-          u_pthread_time)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      if (u_pthread_time &&
+          timeoutMS != -1)
          {
          // check for idle connection
 
@@ -1422,6 +1404,7 @@ start:
             goto next;
             }
          }
+#     endif
 back:
       if (++pindex >= eClientImage)
          {
@@ -1690,6 +1673,22 @@ int UServer_Base::UTimeoutConnection::handlerTime()
    U_RETURN(0);
 }
 
+void UServer_Base::runAsUser(const char* user)
+{
+   U_TRACE(0, "UServer_Base::runAsUser(%S)", user)
+
+#ifndef __MINGW32__
+   if (u_runAsUser(user, false))
+      {
+      U_SRV_LOG("server run with user %S permission", user);
+      }
+   else
+      {
+      U_ERROR("set user %S context failed...", user);
+      }
+#endif
+}
+
 void UServer_Base::run()
 {
    U_TRACE(0, "UServer_Base::run()")
@@ -1717,6 +1716,8 @@ void UServer_Base::run()
    UInterrupt::insert(              SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
    UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
+
+   const char* user = (pthis->as_user.empty() ? 0 : pthis->as_user.data());
 
    // -------------------------------------------------------------------------------------------------------------------------
    // PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
@@ -1800,7 +1801,18 @@ void UServer_Base::run()
                   U_ERROR("plugins forking FAILED. Going down...");
                   }
 
-               runAsUser(true);
+               if (user) runAsUser(user);
+               else
+                  {
+                  if (iBackLog != 1 &&
+                      flag_use_tcp_optimization == false)
+                     {
+                     /* don't need these anymore. Good security policy says we get rid of them */
+
+                     u_never_need_root();
+                     u_never_need_group();
+                     }
+                  }
 
                UNotifier::init();
 
@@ -1856,7 +1868,7 @@ void UServer_Base::run()
          /* Another little safety brake here: since children should not exit
           * too quickly, pausing before starting them should be harmless. */
 
-         to_sleep.nanosleep();
+         if (USemaphore::checkForDeadLock(to_sleep) == false) to_sleep.nanosleep();
          }
 
       U_INTERNAL_ASSERT(proc->parent())
@@ -1865,7 +1877,7 @@ void UServer_Base::run()
       }
    else
       {
-      runAsUser(false);
+      if (user) runAsUser(user);
 
       if (isLog()) ULog::log("waiting for connection\n");
 
@@ -1900,6 +1912,12 @@ void UServer_Base::run()
 
          (void) pthis->handlerRead();
          }
+      }
+
+   if (vplugin &&
+       pluginsHandlerStop() != U_PLUGIN_HANDLER_FINISHED)
+      {
+      U_WARNING("plugins stop FAILED...");
       }
 }
 

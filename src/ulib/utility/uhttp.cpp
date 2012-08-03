@@ -49,10 +49,10 @@
 #  endif
 #endif
 
-#define U_FLV_HEAD             "FLV\x1\x1\0\0\0\x9\0\0\0\x9"
-#define U_STORAGE_KEYID        "STID"
-#define U_TIME_FOR_EXPIRE      (u_now->tv_sec + (365 * U_ONE_DAY_IN_SECOND))
-#define U_MIN_SIZE_FOR_DEFLATE 150
+#define U_FLV_HEAD                   "FLV\x1\x1\0\0\0\x9\0\0\0\x9"
+#define U_STORAGE_KEYID              "STID"
+#define U_TIME_FOR_EXPIRE            (u_now->tv_sec + (365 * U_ONE_DAY_IN_SECOND))
+#define U_MIN_SIZE_FOR_DEFLATE       150
 
 int         UHTTP::inotify_wd;
 bool        UHTTP::bsendfile;
@@ -352,30 +352,9 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
    if (ptr)
       {
-      if (mime_index == U_usp)
-         {
-         UServletPage* usp_page = (UServletPage*)ptr;
-
-         // ------------------------------
-         // argument value for usp module:
-         // ------------------------------
-         //  0 -> init
-         // -1 -> reset
-         // -2 -> destroy
-         // -3 -> call it as service
-         // ------------------------------
-
-         if (usp_page->alias == false) (void) usp_page->runDynamicPage((void*)-2);
-
-         delete usp_page;
-         }
+           if (mime_index == U_usp) delete (UServletPage*)ptr;
 #  ifdef HAVE_LIBTCC
-      else if (mime_index == U_csp)
-         {
-         UCServletPage* csp = (UCServletPage*)ptr;
-
-         delete csp;
-         }
+      else if (mime_index == U_csp) delete (UCServletPage*)ptr;
 #  endif
       else
          {
@@ -1575,8 +1554,6 @@ end:
 
    U_INTERNAL_DUMP("u_http_info.startHeader(%u) = %.*S", u_http_info.startHeader, 20, ptr)
 
-   U_INTERNAL_ASSERT(U_STRNEQ(ptr, U_LF) || U_STRNEQ(ptr, U_CRLF))
-
    U_RETURN(true);
 }
 
@@ -1835,14 +1812,13 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
          // NB: check for 'Expect: 100-continue' (as curl does)...
 
-         if (body_byte_read == 0 &&
-             pbuffer->find(*USocket::str_expect_100_continue, u_http_info.startHeader, u_http_info.szHeader) != U_NOT_FOUND)
+         if (body_byte_read == 0                                                                                            &&
+             pbuffer->find(*USocket::str_expect_100_continue, u_http_info.startHeader, u_http_info.szHeader) != U_NOT_FOUND &&
+             USocketExt::write(s, U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"), UServer_Base::timeoutMS) == false)
             {
             U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
 
-            (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"));
-
-            (void) UServer_Base::pClientImage->handlerWrite();
+            U_RETURN(false);
             }
 
 #     ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
@@ -2648,7 +2624,10 @@ void UHTTP::manageHTTPRequestCache()
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
 
-      if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      if (u_pthread_time == 0)
+#  endif
+      (void) gettimeofday(u_now, 0);
 
       U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
@@ -2681,16 +2660,22 @@ bool UHTTP::readHTTPRequest(USocket* socket)
 
    U_HTTP_INFO_INIT(0);
 
+   bool result = false;
+
    if (readHTTPHeader(socket, *UClientImage_Base::request) &&
        (u_http_info.szHeader == 0 || checkHTTPRequestForHeader(*UClientImage_Base::request)))
       {
-      bool result = true, request_buffer_resize = false;
-
+      bool request_buffer_resize      = false;
       UClientImage_Base::size_request = u_http_info.endHeader;
 
       U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
 
-      if (u_http_info.clength || isHttpPOST())
+      if (u_http_info.clength == 0 &&
+          isHttpPOST()        == false)
+         {
+         result = true;
+         }
+      else
          {
          const char* ptr = UClientImage_Base::request->data(); // NB: it is possible a resize of the request string...
 
@@ -2725,23 +2710,49 @@ bool UHTTP::readHTTPRequest(USocket* socket)
                 ((u_http_info.host_len - u_http_info.host_vlen) > (1 + 5) || // NB: ':' + 0-65536
                  u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
                {
-               goto error;
+               result = false;
                }
             }
          else if (U_http_version == '1')
             {
             // HTTP 1.1 want header "Host: " ...
-error:
+
+            result = false;
+            }
+         }
+      }
+
+   if (socket->isClosed()) UClientImage_Base::write_off = true;
+
+   if (result == false)
+      {
+      U_http_is_connection_close = U_YES;
+
+      if (UClientImage_Base::wbuffer->empty())
+         {
+         // HTTP/1.1 compliance:
+         // -----------------------------------------------------
+         // Sends 501 for request-method != (GET|POST|HEAD)
+         // Sends 505 for protocol != HTTP/1.[0-1]
+         // Sends 400 for broken Request-Line
+         // Sends 411 for missing Content-Length on POST requests
+
+              if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+         else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
+         else
+            {
             setHTTPBadRequest();
 
             U_RETURN(false);
             }
 
-         U_RETURN(true);
+         setHTTPResponse(0, 0);
          }
+
+      U_RETURN(false);
       }
 
-   U_RETURN(false);
+   U_RETURN(true);
 }
 
 void UHTTP::getHTTPInfo(const UString& request, UString& method, UString& uri)
@@ -3100,7 +3111,7 @@ bool UHTTP::initSession(const char* location, uint32_t size)
       ((URDB*)db_session)->setShared(U_LOCK_HTTP_SESSION);
       }
 
-   U_SRV_LOG("db initialization of http session %S success", location);
+   U_SRV_LOG("db initialization of http session %s success", location);
 
    if (data_session == 0) data_session = U_NEW(UDataSession);
    if (data_storage == 0) data_storage = U_NEW(UDataSession);
@@ -3645,7 +3656,7 @@ void UHTTP::getFormValue(UString& buffer, uint32_t n)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
    if (n >= form_name_value->size()) buffer.clear();
-   else (void) buffer.replace((*form_name_value)[n]);
+   else                       (void) buffer.replace((*form_name_value)[n]);
 }
 
 void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len)
@@ -3657,7 +3668,7 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len)
    uint32_t index = form_name_value->find(name, len);
 
    if (index == U_NOT_FOUND) buffer.clear();
-   else (void) buffer.replace((*form_name_value)[index+1]);
+   else               (void) buffer.replace((*form_name_value)[index+1]);
 }
 
 void UHTTP::processHTTPForm()
@@ -3818,10 +3829,6 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
       {
       if (U_http_is_connection_close == U_YES)
          {
-#     ifdef DEBUG
-         if (U_http_keep_alive != '\0') U_INTERNAL_ASSERT(U_STATUS_DROPS_CONNECTION(u_http_info.nResponseCode))
-#     endif
-
          if (UClientImage_Base::isPipeline() == false) (void) ext.append(U_CONSTANT_TO_PARAM("Connection: close\r\n"));
          }
       else
@@ -4897,7 +4904,36 @@ void UHTTP::callInitForAllUSP(UStringRep* key, void* value)
       // -3 -> call it as service
       // ------------------------------
 
-      if (usp_page->alias == false) (void) usp_page->runDynamicPage(0);
+      if (usp_page->alias == false) (void) usp_page->runDynamicPage((void*)0);
+      }
+}
+
+void UHTTP::callEndForAllUSP(UStringRep* key, void* value)
+{
+   U_TRACE(0+256, "UHTTP::callEndForAllUSP(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
+
+   U_INTERNAL_ASSERT_POINTER(value)
+
+   UFileCacheData* cptr = (UFileCacheData*)value;
+
+   if (cptr->mime_index == U_usp)
+      {
+      UServletPage* usp_page = (UServletPage*)cptr->ptr;
+
+      U_INTERNAL_DUMP("usp_page->runDynamicPage = %p usp_page->alias", usp_page->runDynamicPage, usp_page->alias)
+
+      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
+
+      // ------------------------------
+      // argument value for usp module:
+      // ------------------------------
+      //  0 -> init
+      // -1 -> reset
+      // -2 -> destroy
+      // -3 -> call it as service
+      // ------------------------------
+
+      if (usp_page->alias == false) (void) usp_page->runDynamicPage((void*)-2);
       }
 }
 
@@ -4951,7 +4987,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
    U_INTERNAL_ASSERT_POINTER(pathname)
    U_INTERNAL_ASSERT_POINTER(cache_file)
 
-   file_data = U_NEW(UFileCacheData);
+   file_data = U_NEW(UFileCacheData); // NB: copy attribute from file...
 
    cache_file->insert(*pathname, file_data);
 
@@ -5092,19 +5128,35 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       }
    else if (u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
-      UString content = file->getContent(true,  false, true);
+      U_INTERNAL_DUMP("file_data->size = %u", file_data->size)
 
-      if (content.empty() == false)
+      if (file_data->size == 0)
          {
-         u_mime_index = -1;
-
-         putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
-         }
-      else
-         {
-         U_INTERNAL_ASSERT_EQUALS(file_data->size,0)
-
          U_SRV_LOG("warning: found empty file: %S", pathname->data());
+         }
+      else if (file->open())
+         {
+         UString content;
+
+         // NB: manage for eventually partial write in response...
+
+#     ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+         if (file_data->size > U_MIN_SIZE_FOR_PARTIAL_WRITE)
+            {
+            file_data->fd = file->fd;
+
+            (void) file->memmap(PROT_READ, &content);
+            }
+         else
+#     endif
+         content = file->getContent(true, false, true);
+
+         if (content.empty() == false)
+            {
+            u_mime_index = -1;
+
+            putDataInCache(getHeaderMimeType(content.data(), file->getMimeType(true), 0, U_TIME_FOR_EXPIRE), content);
+            }
          }
       }
 }
@@ -5232,6 +5284,17 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
    U_INTERNAL_ASSERT_POINTER(file_data)
 
+   if (U_http_is_accept_gzip &&
+       isDataCompressFromCache())
+      {
+      U_http_is_accept_gzip = '2';
+
+                                 *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(getDataFromCache( true, true), false);
+      if (isHttpHEAD() == false) *UClientImage_Base::body    =                          getDataFromCache(false, true);
+
+      U_RETURN(true);
+      }
+
    bool result    = true;
    UString header = getDataFromCache(true, false);
 
@@ -5242,32 +5305,37 @@ U_NO_EXPORT bool UHTTP::processFileCache()
    //
    // Range: bytes=0-31
 
-   range_size  = file_data->size;
+   uint32_t sz;
+
+   range_size  = sz = file_data->size;
    range_start = 0;
 
    if (u_http_info.range_len &&
        checkHTTPGetRequestIfRange(UString::getStringNull()))
       {
-      if (checkHTTPGetRequestForRange(header, getDataFromCache(false, false)) != U_PARTIAL) U_RETURN(true); // NB: we have a complete response...
+      if (checkHTTPGetRequestForRange(header, getDataFromCache(false, false)) != U_PARTIAL) // NB: we have a complete response...
+         {
+#     ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+         goto prepare_for_partial_write_at_response;
+#     else
+         U_RETURN(true);
+#     endif
+         }
+
+      // NB: range_start is modified only if we have as response from checkHTTPGetRequestForRange() U_PARTIAL...
+
+      sz -= range_start;
+
+      U_INTERNAL_DUMP("sz = %u", sz)
 
       u_http_info.nResponseCode = HTTP_PARTIAL;
-      }
-   else if (U_http_is_accept_gzip &&
-            isDataCompressFromCache())
-      {
-      U_http_is_accept_gzip = '2';
-
-                                                   header = getDataFromCache( true, true);
-      if (isHttpHEAD() == false) *UClientImage_Base::body = getDataFromCache(false, true);
-
-      goto build_response;
       }
 
    if (isHttpHEAD() == false)
       {
       U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
-      if (range_size >= min_size_for_sendfile)
+      if (sz >= min_size_for_sendfile)
          {
          // NB: for major size it is better to use sendfile()...
 
@@ -5285,6 +5353,20 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 build_response:
 
       *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(header, false);
+
+#ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+prepare_for_partial_write_at_response:
+
+      if (bsendfile == false          &&
+#        ifdef USE_LIBSSL
+          UServer_Base::bssl == false &&
+#        endif
+          sz > U_MIN_SIZE_FOR_PARTIAL_WRITE)
+         {
+         UServer_Base::pClientImage->sfd   = file_data->fd;
+         UServer_Base::pClientImage->start = range_start;
+         }
+#endif
       }
 
    U_RETURN(result);
@@ -5346,11 +5428,11 @@ U_NO_EXPORT bool UHTTP::checkPath(uint32_t len)
 
    file->path_relativ_len = len;
 
+   U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
+
    pathname->size_adjust_force(u_cwd_len + len);
 
    pathname->rep->setNullTerminated();
-
-   U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
 
    checkPath();
 
@@ -5442,9 +5524,9 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
 
       if (as_service)
          {
-         u_http_info.nResponseCode = usp->runDynamicPage((void*)-3);
+         u_http_info.nResponseCode = 0;
 
-         if (u_http_info.nResponseCode == U_NOT_FOUND) return;
+         (void) usp->runDynamicPage((void*)-3);
          }
       else
          {
@@ -5533,18 +5615,23 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
 
    if (form_name_value->size()) resetForm(true);
 
-   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d wbuffer(%u) = %.*S",
-                    u_http_info.nResponseCode, UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
+   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
+
+   U_INTERNAL_DUMP("wbuffer(%u) = %.*S ", UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
+   U_INTERNAL_DUMP("   body(%u) = %.*S ", UClientImage_Base::body->size(),    U_STRING_TO_TRACE(*UClientImage_Base::body))
 
    switch (u_http_info.nResponseCode)
       {
       case HTTP_OK:
          {
-         // NB: we assume to have as response an HTML without HTTP headers...
+         if (as_service == false)
+            {
+            // NB: we assume to have as response an HTML without HTTP headers...
 
-         u_http_info.clength = UClientImage_Base::wbuffer->size();
+            u_http_info.clength = UClientImage_Base::wbuffer->size();
 
-         setHTTPCgiResponse(false, isCompressable(), false);
+            setHTTPCgiResponse(false, isCompressable(), false);
+            }
 
          U_RETURN(true);
          }
@@ -5557,6 +5644,8 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
       case HTTP_GATEWAY_TIMEOUT: setHTTPResponse(0, 0);        break;
 
       case 0:
+      case HTTP_NO_CONTENT:
+      case HTTP_MOVED_TEMP:
          {
          if (as_service ||
              processCGIOutput())
@@ -5585,18 +5674,15 @@ bool UHTTP::callService(const UString& path)
 
    file->setPath(path, UClientImage_Base::environment);
 
-   if (isFileInCache() == false)
+   if (isFileInCache() == false) setHTTPNotFound();
+   else
       {
-      setHTTPNotFound();
+      U_INTERNAL_ASSERT_POINTER(file_data)
 
-      U_RETURN(false);
+      u_mime_index = file_data->mime_index;
+
+      if (runDynamicPage(UClientImage_Base::environment)) U_RETURN(true);
       }
-
-   U_INTERNAL_ASSERT_POINTER(file_data)
-
-   u_mime_index = file_data->mime_index;
-
-   if (runDynamicPage(UClientImage_Base::environment)) U_RETURN(true);
 
    U_INTERNAL_ASSERT_MAJOR(u_http_info.nResponseCode, 0)
 
@@ -5724,7 +5810,7 @@ next1:
       ptr  = pathname->c_pointer(u_cwd_len);
       len1 = pathname->size() -  u_cwd_len;
 
-      // NB: if status is file not found and we have virtual host
+      // NB: if status is 'file not found' and we have virtual host
       //     we check if it is present as shared file (without the virtual host prefix...)
 
       if (virtual_host &&
@@ -5748,7 +5834,7 @@ next1:
           }
       }
 
-   // NB: apply rewrite rule if requested and if status is file forbidden or not exist...
+   // NB: apply rewrite rule if requested and if status is 'file forbidden or not exist'...
 
    if (vRewriteRule &&
        U_http_request_check <= U_HTTP_REQUEST_IS_FORBIDDEN)
@@ -6226,10 +6312,13 @@ bool UHTTP::XSendfile(UString& _pathname, const UString& ext)
 
       processHTTPGetRequest(UString::getStringNull(), tmp);
 
-      U_INTERNAL_DUMP("bsendfile = %b", bsendfile)
+      if (UServer_Base::pClientImage->sfd == 0) file->close();
+      else
+         {
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd, file_data->fd)
 
-      if (bsendfile) UServer_Base::pClientImage->bclose |= U_PARTIAL;
-      else           file->close();
+         UServer_Base::pClientImage->bclose |= U_CLOSE;
+         }
 
       U_RETURN(true);
       }
@@ -6687,11 +6776,7 @@ bool UHTTP::processCGIRequest(UCommand& cmd, UString* penv, const char* cgi_dir,
 {
    U_TRACE(0, "UHTTP::processCGIRequest(%p,%p,%S,%b)", &cmd, penv, cgi_dir, async)
 
-#ifdef DEBUG
-   static int fd_stderr = UFile::creat("/tmp/processCGIRequest.err", O_WRONLY | O_APPEND, PERM_FILE);
-#else
-   static int fd_stderr = UServices::getDevNull();
-#endif
+   static int fd_stderr = UServices::getDevNull("/tmp/processCGIRequest.err");
 
    // process the CGI or script request
 
@@ -7483,6 +7568,22 @@ error:
          }
 
       *UClientImage_Base::body = mmap;
+
+      // NB: manage for eventually partial write in response...
+
+      U_INTERNAL_ASSERT_EQUALS(bsendfile, false)
+
+#  ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+      if (
+#        ifdef USE_LIBSSL
+          UServer_Base::bssl == false &&
+#        endif
+          (range_size - range_start) > U_MIN_SIZE_FOR_PARTIAL_WRITE)
+         {
+         UServer_Base::pClientImage->sfd   = file->fd;
+         UServer_Base::pClientImage->start = range_start;
+         }
+#  endif
       }
 }
 

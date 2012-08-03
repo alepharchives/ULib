@@ -360,7 +360,7 @@ void UIPAddress::resolveStrAddress()
 #ifdef HAVE_INET_NTOP
    result = U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, pcAddress.p, pcStrAddress, INET6_ADDRSTRLEN);
 #else
-   result = U_SYSCALL(inet_ntoa, "%p", *((struct in_addr*)pcAddress.p));
+   result = U_SYSCALL(inet_ntoa, "%u", *((struct in_addr*)pcAddress.p));
 
    if (result) (void) u_strcpy(pcStrAddress, result);
 #endif

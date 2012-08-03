@@ -326,6 +326,17 @@ int UHttpPlugIn::handlerRun()
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
+int UHttpPlugIn::handlerStop()
+{
+   U_TRACE(0, "UHttpPlugIn::handlerStop()")
+
+   U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
+
+   UHTTP::cache_file->callForAllEntry(UHTTP::callEndForAllUSP);
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
 // Connection-wide hooks
 
 int UHttpPlugIn::handlerREAD()
@@ -356,39 +367,13 @@ int UHttpPlugIn::handlerREAD()
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 #endif
 
-   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
-      {
-      U_http_is_connection_close = U_YES;
-
-      if (UClientImage_Base::wbuffer->empty())
-         {
-         // HTTP/1.1 compliance:
-         // -----------------------------------------------------
-         // Sends 501 for request-method != (GET|POST|HEAD)
-         // Sends 505 for protocol != HTTP/1.[0-1]
-         // Sends 400 for broken Request-Line
-         // Sends 411 for missing Content-Length on POST requests
-
-              if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
-         else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
-         else
-            {
-            UHTTP::setHTTPBadRequest();
-
-            U_RETURN(U_PLUGIN_HANDLER_ERROR);
-            }
-
-         UHTTP::setHTTPResponse(0, 0);
-         }
-
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
+   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
    result = UHTTP::checkHTTPRequest();
 
    if (result == U_PLUGIN_HANDLER_FINISHED)
       {
-      UServer_Base::bpluginsHandlerRequest = (UServer_Base::pClientImage->socket->isOpen() &&
+      UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off           == false &&
                                               UHTTP::isHTTPRequestAlreadyProcessed() == false);
 
       U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
@@ -434,7 +419,6 @@ int UHttpPlugIn::handlerRequest()
          }
       break;
 
-#  ifdef DEBUG
       case U_HTTP_REQUEST_NEED_PROCESSING:
          {
          U_ASSERT(UHTTP::isHTTPRequestNeedProcessing())
@@ -466,6 +450,7 @@ int UHttpPlugIn::handlerRequest()
          }
       break;
 
+#  ifdef DEBUG
       default: U_ASSERT(UHTTP::isHTTPRequestAlreadyProcessed()) break;
 #  endif
       }

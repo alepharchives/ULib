@@ -12,7 +12,10 @@
 // ============================================================================
 
 #include <ulib/file.h>
+#include <ulib/timeval.h>
 #include <ulib/utility/semaphore.h>
+
+USemaphore* USemaphore::first;
 
 /**
 The initial value of the semaphore can be specified. An initial value is often used when used to lock a finite
@@ -52,8 +55,17 @@ void USemaphore::init(sem_t* ptr, unsigned resource)
       (void) U_SYSCALL(pthread_mutexattr_init, "%p", &mutex_attr);
       (void) U_SYSCALL(pthread_mutexattr_setpshared, "%p,%p", &mutex_attr, PTHREAD_PROCESS_SHARED);
       (void) U_SYSCALL(pthread_mutex_init, "%p,%p", &mutex, &mutex_attr);
+
+      return;
       }
 #  endif
+   if (ptr)
+      {
+      next  = first;
+      first = this;
+
+      U_INTERNAL_DUMP("first = %p next = %p", first, next)
+      }
 #endif
 }
 
@@ -80,6 +92,42 @@ USemaphore::~USemaphore()
 
    if (bmmap) UFile::munmap(sem, sizeof(sem_t));
 #endif
+}
+
+// NB: check if process has restarted and it had a lock locked...
+
+bool USemaphore::checkForDeadLock(UTimeVal& time)
+{
+   U_TRACE(1, "USemaphore::wait(%p)", &time)
+
+   int value;
+   sem_t* sem;
+   bool sleeped = false;
+
+#ifndef __MINGW32__
+   for (USemaphore* item = first; item; item = item->next)
+      {
+      sem = item->sem;
+
+      U_INTERNAL_ASSERT_POINTER(sem)
+
+      if (U_SYSCALL(sem_getvalue, "%p,%p", sem, &value) == 0 && value > 0) continue;
+
+      time.nanosleep();
+
+      sleeped = true;
+
+      if (U_SYSCALL(sem_getvalue, "%p,%p", sem, &value) == 0 && value > 0) continue;
+
+      time.nanosleep();
+
+      if (U_SYSCALL(sem_getvalue, "%p,%p", sem, &value) == 0 && value > 0) continue;
+
+      (void) U_SYSCALL(sem_post, "%p", sem); /* Post sem */
+      }
+#endif
+
+   U_RETURN(sleeped);
 }
 
 /**

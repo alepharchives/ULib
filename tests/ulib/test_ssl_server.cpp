@@ -63,7 +63,7 @@ protected:
 
       *wbuffer = *rbuffer;
 
-      result = handlerWrite();
+      result = handlerResponse();
 
       U_RETURN(result);
       }

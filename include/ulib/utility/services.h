@@ -48,9 +48,9 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 
 struct U_EXPORT UServices {
 
-   static int  getDevNull();           /* return open(/dev/null) */
-   static bool isSetuidRoot();         /* UID handling: are we setuid-root...? */
-   static void closeStdInputOutput();  /* move stdin and stdout to /dev/null */
+   static bool isSetuidRoot();               // UID handling: are we setuid-root...
+   static void closeStdInputOutput();        // move stdin and stdout to /dev/null
+   static int  getDevNull(const char* file); // return open(/dev/null)
 
    /**
     * Read data from fd

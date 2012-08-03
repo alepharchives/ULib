@@ -203,7 +203,7 @@ int URDBClientImage::handlerRead()
 
    U_SRV_LOG_WITH_ADDR("method %.4S return %s for", ptr, res);
 
-   result = handlerWrite();
+   result = handlerResponse();
 
    U_RETURN(result);
 }

@@ -51,7 +51,7 @@
 "%.*s" \
 "%.*s" \
 "%.*s" \
-"\n\tU_RETURN(usp_as_service ? U_NOT_FOUND : %u);\n" \
+"\n\tU_RETURN(usp_as_service ? 0 : %u);\n" \
 "} }\n"
 
 class Application : public UApplication {

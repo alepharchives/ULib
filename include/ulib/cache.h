@@ -89,7 +89,7 @@ public:
 
    // OPEN/CREAT a cache file
 
-   bool open(const UString& path, uint32_t size);
+   bool open(const UString& path, uint32_t size, const UString* environment = 0);
 
    // OPERATION
 
@@ -115,8 +115,9 @@ public:
    // SERVICES
 
    UString     contentOf(const char* fmt, ...);
+   UString     contentOf(const UString& pathname);
    UString  addContentOf(const UString& pathname);
-   void    loadContentOf(const UString& directory);
+   void    loadContentOf(const UString& directory, const char* filter = 0, uint32_t filter_len = 0);
 
    void reset() { (void) memset(x, 0, info->size); }
 

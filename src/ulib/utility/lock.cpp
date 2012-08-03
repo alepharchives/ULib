@@ -39,20 +39,15 @@ void ULock::destroy()
       }
 }
 
-void ULock::lock()
+void ULock::lock(timeout_t timeout)
 {
-   U_TRACE(0, "ULock::lock()")
+   U_TRACE(0, "ULock::lock(%ld)", timeout)
 
    U_CHECK_MEMORY
 
    U_INTERNAL_DUMP("locked = %b", locked)
 
-   if (locked == false)
-      {
-      locked = true;
-
-      if (sem) sem->lock();
-      }
+   if (locked == false) locked = (sem ? sem->wait(timeout) : true);
 }
 
 void ULock::unlock()

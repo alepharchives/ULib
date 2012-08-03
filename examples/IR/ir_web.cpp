@@ -220,5 +220,5 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
       U_CONSTANT_TO_PARAM("  </div>\n</body>\n</html>")
    );
    
-   U_RETURN(usp_as_service ? U_NOT_FOUND : 200);
+   U_RETURN(usp_as_service ? 0 : 200);
 } }

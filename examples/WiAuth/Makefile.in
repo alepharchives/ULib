@@ -15,6 +15,7 @@
 
 @SET_MAKE@
 
+
 VPATH = @srcdir@
 pkgdatadir = $(datadir)/@PACKAGE@
 pkgincludedir = $(includedir)/@PACKAGE@
@@ -35,6 +36,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
+bin_PROGRAMS = cdbmake$(EXEEXT)
 subdir = examples/WiAuth
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -86,7 +88,7 @@ am__nobase_list = $(am__nobase_strip_setup); \
 am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__installdirs = "$(DESTDIR)$(moduledir)"
+am__installdirs = "$(DESTDIR)$(moduledir)" "$(DESTDIR)$(bindir)"
 LTLIBRARIES = $(module_LTLIBRARIES)
 wi_auth_la_LIBADD =
 am__wi_auth_la_SOURCES_DIST = wi_auth.cpp
@@ -99,6 +101,13 @@ wi_auth_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(wi_auth_la_LDFLAGS) $(LDFLAGS) -o $@
 @MINGW_FALSE@am_wi_auth_la_rpath = -rpath $(moduledir)
+PROGRAMS = $(bin_PROGRAMS)
+am_cdbmake_OBJECTS = cdbmake.$(OBJEXT)
+cdbmake_OBJECTS = $(am_cdbmake_OBJECTS)
+cdbmake_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+cdbmake_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
+	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
+	$(CXXFLAGS) $(cdbmake_LDFLAGS) $(LDFLAGS) -o $@
 depcomp = $(SHELL) $(top_srcdir)/autoconf/depcomp
 am__depfiles_maybe = depfiles
 am__mv = mv -f
@@ -124,8 +133,8 @@ am__v_CXXLD_0 = @echo "  CXXLD " $@;
 AM_V_GEN = $(am__v_GEN_$(V))
 am__v_GEN_ = $(am__v_GEN_$(AM_DEFAULT_VERBOSITY))
 am__v_GEN_0 = @echo "  GEN   " $@;
-SOURCES = $(wi_auth_la_SOURCES)
-DIST_SOURCES = $(am__wi_auth_la_SOURCES_DIST)
+SOURCES = $(wi_auth_la_SOURCES) $(cdbmake_SOURCES)
+DIST_SOURCES = $(am__wi_auth_la_SOURCES_DIST) $(cdbmake_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -263,6 +272,7 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 builddir = @builddir@
+cpp = @cpp@
 datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
@@ -282,6 +292,7 @@ libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
+mcpp = @mcpp@
 mkdir_p = @mkdir_p@
 ms_librarian = @ms_librarian@
 oldincludedir = @oldincludedir@
@@ -305,6 +316,9 @@ top_srcdir = @top_srcdir@
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 EXTRA_DIST = wi_auth.cpp wi_auth.usp
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+cdbmake_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
+cdbmake_SOURCES = cdbmake.cpp
+cdbmake_LDFLAGS = $(PRG_LDFLAGS)
 moduledir = $(libexecdir)/ulib/usp
 @MINGW_FALSE@module_LTLIBRARIES = wi_auth.la
 @MINGW_FALSE@wi_auth_la_SOURCES = wi_auth.cpp
@@ -378,6 +392,52 @@ clean-moduleLTLIBRARIES:
 	done
 wi_auth.la: $(wi_auth_la_OBJECTS) $(wi_auth_la_DEPENDENCIES) 
 	$(AM_V_CXXLD)$(wi_auth_la_LINK) $(am_wi_auth_la_rpath) $(wi_auth_la_OBJECTS) $(wi_auth_la_LIBADD) $(LIBS)
+install-binPROGRAMS: $(bin_PROGRAMS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(MKDIR_P) "$(DESTDIR)$(bindir)"
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	for p in $$list; do echo "$$p $$p"; done | \
+	sed 's/$(EXEEXT)$$//' | \
+	while read p p1; do if test -f $$p || test -f $$p1; \
+	  then echo "$$p"; echo "$$p"; else :; fi; \
+	done | \
+	sed -e 'p;s,.*/,,;n;h' -e 's|.*|.|' \
+	    -e 'p;x;s,.*/,,;s/$(EXEEXT)$$//;$(transform);s/$$/$(EXEEXT)/' | \
+	sed 'N;N;N;s,\n, ,g' | \
+	$(AWK) 'BEGIN { files["."] = ""; dirs["."] = 1 } \
+	  { d=$$3; if (dirs[d] != 1) { print "d", d; dirs[d] = 1 } \
+	    if ($$2 == $$4) files[d] = files[d] " " $$1; \
+	    else { print "f", $$3 "/" $$4, $$1; } } \
+	  END { for (d in files) print "f", d, files[d] }' | \
+	while read type dir files; do \
+	    if test "$$dir" = .; then dir=; else dir=/$$dir; fi; \
+	    test -z "$$files" || { \
+	    echo " $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files '$(DESTDIR)$(bindir)$$dir'"; \
+	    $(INSTALL_PROGRAM_ENV) $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL_PROGRAM) $$files "$(DESTDIR)$(bindir)$$dir" || exit $$?; \
+	    } \
+	; done
+
+uninstall-binPROGRAMS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
+	files=`for p in $$list; do echo "$$p"; done | \
+	  sed -e 'h;s,^.*/,,;s/$(EXEEXT)$$//;$(transform)' \
+	      -e 's/$$/$(EXEEXT)/' `; \
+	test -n "$$list" || exit 0; \
+	echo " ( cd '$(DESTDIR)$(bindir)' && rm -f" $$files ")"; \
+	cd "$(DESTDIR)$(bindir)" && rm -f $$files
+
+clean-binPROGRAMS:
+	@list='$(bin_PROGRAMS)'; test -n "$$list" || exit 0; \
+	echo " rm -f" $$list; \
+	rm -f $$list || exit $$?; \
+	test -n "$(EXEEXT)" || exit 0; \
+	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
+	echo " rm -f" $$list; \
+	rm -f $$list
+cdbmake$(EXEEXT): $(cdbmake_OBJECTS) $(cdbmake_DEPENDENCIES) 
+	@rm -f cdbmake$(EXEEXT)
+	$(AM_V_CXXLD)$(cdbmake_LINK) $(cdbmake_OBJECTS) $(cdbmake_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -385,6 +445,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdbmake.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/wi_auth.Plo@am__quote@
 
 .cpp.o:
@@ -501,9 +562,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES)
+all-am: Makefile $(LTLIBRARIES) $(PROGRAMS)
 installdirs:
-	for dir in "$(DESTDIR)$(moduledir)"; do \
+	for dir in "$(DESTDIR)$(moduledir)" "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -533,7 +594,7 @@ maintainer-clean-generic:
 	@echo "it deletes files that may require special tools to rebuild."
 clean: clean-am
 
-clean-am: clean-generic clean-libtool clean-local \
+clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
 	clean-moduleLTLIBRARIES mostlyclean-am
 
 distclean: distclean-am
@@ -560,7 +621,7 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am:
+install-exec-am: install-binPROGRAMS
 
 install-html: install-html-am
 
@@ -600,23 +661,24 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-moduleLTLIBRARIES
+uninstall-am: uninstall-binPROGRAMS uninstall-moduleLTLIBRARIES
 
 .MAKE: install-am install-strip
 
-.PHONY: CTAGS GTAGS all all-am check check-am clean clean-generic \
-	clean-libtool clean-local clean-moduleLTLIBRARIES ctags \
-	distclean distclean-compile distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-moduleLTLIBRARIES \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+.PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
+	clean-generic clean-libtool clean-local \
+	clean-moduleLTLIBRARIES ctags distclean distclean-compile \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-binPROGRAMS install-data install-data-am install-dvi \
+	install-dvi-am install-exec install-exec-am install-html \
+	install-html-am install-info install-info-am install-man \
+	install-moduleLTLIBRARIES install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-binPROGRAMS \
 	uninstall-moduleLTLIBRARIES
 
 

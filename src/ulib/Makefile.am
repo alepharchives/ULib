@@ -156,7 +156,7 @@ SRC_CPP += curl/curl.cpp
 endif
 
 if EXPAT
-SRC_CPP += xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp \
+SRC_CPP += xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 		     xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp
 endif
 
@@ -292,7 +292,7 @@ endif
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
 	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
-	$(SED) -i s/EXPORTS/;/ $(srcdir)/@ULIB@.def
+	$(SED) -i 's/EXPORTS/;/' $(srcdir)/@ULIB@.def
 
 if MINGW
 install-def-file:

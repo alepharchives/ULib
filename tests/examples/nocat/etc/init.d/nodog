@@ -15,10 +15,12 @@ STOP=39
 
 descr='nodog the excellent'
 cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
+#cmdline='strace -t -f -s 100 /usr/sbin/userver_tcp -c /etc/nodog.conf'
 errfile=/tmp/nodog.err
 pidfile=/tmp/nodog.pid
 log_file=/tmp/nodog.log
 conf_file=/etc/nodog.conf
+conf_file_portal=/etc/nodog.conf.portal
 ip_address=/tmp/IP_ADDRESS
 
 _pgrep() {
@@ -39,11 +41,13 @@ start() {
 
 	echo "starting $descr"
 
-	rm -f /tmp/nodog* $ip_address
+	rm -f /tmp/*.err $ip_address
 	until test `date '+%Y'` -gt 1970 ; do sleep 1 ; done
+	# get config from AUTH
+	/usr/sbin/uclient -c /etc/uclient.conf "http://wifi-aaa.comune.fi.it/get_config?ap=`uname -n`&key=`/usr/bin/tr -d '\n' < /etc/nodog.conf.key`" >$conf_file_portal
+	until test -s $conf_file_portal ; do sleep 1 ; done
 	$cmdline 2>> $errfile &
 	sleep 2
-#	/usr/lib/nodog/bin/send_info_to_auth_server.sh # send public address to AUTH
 	} &
 }
 
@@ -54,14 +58,15 @@ stop() {
 		echo "$descr is NOT running." ; return ; }
 
 # echo $0 [$$] `date`: signaling >> /root/nodog.log
-#	_pkill 0    "$cmdline" # check
-#	_pkill USR1 "$cmdline" # backup log
-   kill -USR1 `cat $pidfile` # backup log
+# _pkill 0     "$cmdline" # check
+# _pkill  USR1 "$cmdline" # backup log
+#   kill -USR1 `cat $pidfile` # backup log
 # echo $0 [$$] `date`: after signaling, `ls /tmp/*.gz` >> /root/nodog.log
-	sleep 2
+# sleep 2
 # echo $0 [$$] `date`: after sleep, `ls /tmp/*.gz` >> /root/nodog.log
 # echo $0 [$$] `date`: uploading >> /root/nodog.log
-	/usr/lib/nodog/bin/upload-logs.sh # send log
+# /usr/lib/nodog/bin/upload-logs.sh # send log
 # echo $0 [$$] `date`: killing >> /root/nodog.log
+
 	_pkill TERM "$cmdline"
 }

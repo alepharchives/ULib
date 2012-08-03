@@ -63,6 +63,8 @@ const UString* USSIPlugIn::str_servlet;
 
 UString* USSIPlugIn::body;
 UString* USSIPlugIn::header;
+UString* USSIPlugIn::environment;
+UString* USSIPlugIn::alternative_include;
 int      USSIPlugIn::alternative_response;
 
 void USSIPlugIn::str_allocate()
@@ -171,7 +173,10 @@ USSIPlugIn::~USSIPlugIn()
       {
       delete body;  
       delete header;
-      } 
+      delete alternative_include;
+      }
+
+   if (environment) delete environment;
 }
 
 U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& value, const UString& directory)
@@ -214,85 +219,36 @@ U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_l
    U_RETURN_STRING(content);
 }
 
-U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& value, bool bset)
+U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& value)
 {
-   U_TRACE(0, "USSIPlugIn::callService(%.*S,%.*S,%b)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value), bset)
+   U_TRACE(0, "USSIPlugIn::callService(%.*S,%.*S)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value))
 
-   if (name == *str_cmd) *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, UServices::getDevNull());
+   if (name == *str_cmd)
+      {
+      static int fd_stderr = UServices::getDevNull("/tmp/ssi.err");
+
+      *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, fd_stderr);
+      }
    else
       {
-      U_ASSERT(name == *str_cgi || name == *str_servlet)
+      U_ASSERT(name == *str_cgi ||
+               name == *str_servlet)
 
-      if (UHTTP::callService(value) == false)
+      if (UHTTP::isHttpPOST() &&
+          name == *str_cgi)
          {
-         U_INTERNAL_DUMP("body(%u) = %.*S", body->size(), U_STRING_TO_TRACE(*body))
-
-         U_ASSERT_EQUALS(body->empty(), false)
-
-         alternative_response = -1;
-
-         *body = *UClientImage_Base::body;
-
-         U_RETURN(false);
-         }
-      }
-
-   if (bset &&
-       name != *str_servlet)
-      {
-      // NB: check if there is an alternative response to elaborate...
-
-      UString rfile = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FILE_RESPONSE_HTML"), UClientImage_Base::wbuffer);
-
-      U_INTERNAL_DUMP("FILE_RESPONSE_HTML(%u) = %.*S", rfile.size(), U_STRING_TO_TRACE(rfile))
-
-      if (rfile.empty() == false)
-         {
-         alternative_response = 2;
-
-         *header = UFile::contentOf(rfile);
-
-         // NB: with an alternative response we cannot use the cached header response...
-
-         U_RETURN(false);
+         *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
          }
 
-      UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
-
-      U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
-
-      if (rheader.empty() == false)
+      if (UHTTP::callService(value) == false ||
+          alternative_response)
          {
+         // 1 => response already complete (nothing to do)
+
          alternative_response = 1;
 
-         uint32_t size = rheader.size();
-
-         UString _tmp(size);
-
-         (void) UEscape::decode(rheader, _tmp);
-
-         // NB: we cannot use directly the body attribute because is bounded to the param content...
-
-         UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
-
-         U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
-
-         if (rbody.empty()) (void) header->insert(0, _tmp);
-         else
-            {
-            *body = rbody;
-
-            // NB: with an alternative body response we cannot use the cached header response...
-
-            (void) header->replace(_tmp);
-
-            U_RETURN(false);
-            }
-
-         UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + size + 3);
+         U_RETURN(false);
          }
-
-      (void) UClientImage_Base::environment->append(*UClientImage_Base::wbuffer);
       }
 
    U_RETURN(true);
@@ -738,6 +694,15 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
             if (pathname.empty() == false)
                {
+               if (alternative_include->empty() == false &&
+                   pathname.equal(U_CONSTANT_TO_PARAM("$FILE_BODY_SHTML")))
+                  {
+                  (void) output.append(*alternative_include);
+                                        alternative_include->clear();
+
+                  break;
+                  }
+
                UHTTP::file->setPath(pathname, UClientImage_Base::environment);
 
                if (UHTTP::isFileInCache() &&
@@ -761,7 +726,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                include.clear();
                }
 
-            output.append(x);
+            (void) output.append(x);
 
                                  x.clear();
                           pathname.clear();
@@ -778,7 +743,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             {
             if (n == 2)
                {
-               if (callService(name_value[0], name_value[1], false) == false) U_RETURN_STRING(UString::getStringNull());
+               if (callService(name_value[0], name_value[1]) == false) U_RETURN_STRING(UString::getStringNull());
 
                (void) output.append(*UClientImage_Base::wbuffer);
                }
@@ -808,10 +773,78 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   }
                }
 
-            if (bvar == false &&
-                callService(name_value[0], name_value[1], true) == false)
+            if (bvar == false)
                {
-               U_RETURN_STRING(UString::getStringNull());
+               name  = name_value[0];
+               value = name_value[1];
+
+               if (callService(name, value) == false) U_RETURN_STRING(UString::getStringNull());
+
+               if (name != *str_servlet)
+                  {
+                  // NB: check if there is an alternative response to elaborate...
+
+                  UString rfile = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FILE_RESPONSE_HTML"), UClientImage_Base::wbuffer);
+
+                  U_INTERNAL_DUMP("FILE_RESPONSE_HTML(%u) = %.*S", rfile.size(), U_STRING_TO_TRACE(rfile))
+
+                  if (rfile.empty() == false)
+                     {
+                     // 2 => body response in var 'header' (take from from file of name: var environment 'FILE_RESPONSE_HTML')
+
+                     alternative_response = 2;
+
+                     *header = UFile::contentOf(rfile);
+
+                     // NB: with an alternative response we cannot use the cached header response...
+
+                     U_RETURN_STRING(UString::getStringNull());
+                     }
+
+                  UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
+
+                  U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
+
+                  if (rheader.empty() == false)
+                     {
+                     // 3 => var environment 'HTTP_RESPONSE_HEADER' inserted in header response (var 'header')
+
+                     alternative_response = 3;
+
+                     uint32_t hsz = rheader.size();
+
+                     UString _tmp(hsz);
+
+                     (void) UEscape::decode(rheader, _tmp);
+
+                     // NB: we cannot use directly the body attribute because is bounded at the param 'content'...
+
+                     UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
+
+                     U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
+
+                     if (rbody.empty()) (void) header->insert(0, _tmp);
+                     else
+                        {
+                        // 4 => var environment 'HTTP_RESPONSE_HEADER' set as header response (var 'header') and
+                        //      var environment 'HTTP_RESPONSE_BODY'   set as body   response (var 'body')
+
+                        alternative_response = 4;
+
+                        *body = rbody;
+
+                        // NB: with an alternative body response we cannot use the cached header response...
+
+                        (void) header->replace(_tmp);
+
+                        U_RETURN_STRING(UString::getStringNull());
+                        }
+
+                     UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + hsz + 3);
+                     }
+
+                  (void) UClientImage_Base::environment->append(*UClientImage_Base::wbuffer);
+                  }
                }
             }
          break;
@@ -853,7 +886,18 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
          UHTTP::ssi_alias = U_NEW(UString(x));
          }
 
-      file_environment = cfg[*UServer_Base::str_ENVIRONMENT];
+      x = cfg[*UServer_Base::str_ENVIRONMENT];
+
+      if (x.empty() == false)
+         {
+         environment = U_NEW(UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x))));
+
+         const char* home = U_SYSCALL(getenv, "%S", "HOME");
+
+         if (home) environment->snprintf_add("HOME=%s\n", home);
+
+         U_ASSERT_EQUALS(environment->isBinary(), false)
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -866,15 +910,9 @@ int USSIPlugIn::handlerInit()
    U_INTERNAL_ASSERT_EQUALS(body,0)
    U_INTERNAL_ASSERT_EQUALS(header,0)
 
-   body   = U_NEW(UString);
-   header = U_NEW(UString);
-
-   // NB: it must be here because only now runAsUser() was called...
-
-   if (file_environment.empty() == false)
-      {
-      (void) UServer_Base::senvironment->append(UStringExt::prepareForEnvironmentVar(UFile::contentOf(file_environment)));
-      }
+   body                = U_NEW(UString);
+   header              = U_NEW(UString);
+   alternative_include = U_NEW(UString);
 
    U_SRV_LOG("initialization of plugin success");
 
@@ -900,6 +938,8 @@ int USSIPlugIn::handlerRequest()
       // init
 
       *UClientImage_Base::environment = UHTTP::getCGIEnvironment();
+
+      if (environment) (void) UClientImage_Base::environment->append(*environment);
 
       if (UClientImage_Base::environment->empty())
          {
@@ -933,7 +973,7 @@ int USSIPlugIn::handlerRequest()
          U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
          U_INTERNAL_ASSERT_EQUALS(UHTTP::file_data->array->size(),2)
 
-         (void) header->append(UHTTP::getDataFromCache(true, false)); // NB: after file_data can change...
+         (void) header->append(UHTTP::getDataFromCache(true, false)); // NB: after now 'file_data' can change...
 
          *body = (UHTTP::isHttpGETorHEAD() && UClientImage_Base::body->empty() == false
                                            ? *UClientImage_Base::body
@@ -942,72 +982,66 @@ int USSIPlugIn::handlerRequest()
 
       // process the SSI file
 
-      if (UHTTP::isHttpPOST()) *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
-                               *UClientImage_Base::body = processSSIRequest(*body, 0);
+      UString output = processSSIRequest(*body, 0);
 
-      U_INTERNAL_DUMP("alternative_response = %d", alternative_response)
+      U_INTERNAL_DUMP("alternative_response = %d output(%u) = %.*S", alternative_response, output.size(), U_STRING_TO_TRACE(output))
 
-      if (UClientImage_Base::body->isNull())
+      if (alternative_response == 0)
          {
-         // NB: there is an alternative response to elaborate from #set...
+         U_ASSERT_EQUALS(output.empty(), false)
 
-         U_INTERNAL_DUMP("alternative_response = %d body(%u) = %.*S", alternative_response, body->size(), U_STRING_TO_TRACE(*body))
-
-         U_ASSERT_EQUALS(body->empty(), false)
-         U_INTERNAL_ASSERT(alternative_response)
-
-         *UClientImage_Base::body = *body;
-                                     body->clear();
-         }
-      else
-         {
 #     ifdef USE_PAGE_SPEED
-         UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", *UClientImage_Base::body);
+         UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", output);
 #     endif
 
-         if (alternative_response == 0)
+         U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+
+         if (U_http_is_accept_gzip)
             {
-            U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+            output = UStringExt::deflate(output, true);
 
-            if (U_http_is_accept_gzip)
-               {
-               *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
-
-               (void) header->insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
-               }
-
-            if (bcache)
-               {
-               // NB: adjusting the size of response...
-
-               (void) UHTTP::checkHTTPContentLength(*header, UClientImage_Base::body->size());
-               }
-            else
-               {
-               u_mime_index = U_ssi;
-
-               (void) header->append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, UClientImage_Base::body->size(), 0));
-               }
-
-            u_http_info.nResponseCode = HTTP_OK;
-
-            *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(*header, false);
+            (void) header->insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
             }
-         }
 
-      if (alternative_response > 0)
+         if (bcache)
+            {
+            // NB: adjusting the size of response...
+
+            (void) UHTTP::checkHTTPContentLength(*header, output.size());
+            }
+         else
+            { u_mime_index = U_ssi;
+
+            (void) header->append(UHTTP::getHeaderMimeType(0, U_CTYPE_HTML, output.size(), 0));
+            }
+
+         u_http_info.nResponseCode = HTTP_OK;
+
+         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(*header, false);
+         *UClientImage_Base::body    = output;
+         }
+      else if (alternative_response > 1)
          {
-         // NB: there is an alternative response to elaborate from #set...
+         // -----------------------------------------------------------------------------------------------------
+         // 1 => response already complete (nothing to do)
+         // ------------------------------------------------------------------------------------------------------
+         // 2 => body response in var 'header' (take from from file of name: var environment 'FILE_RESPONSE_HTML')
+         // ------------------------------------------------------------------------------------------------------
+         // 3 => var environment 'HTTP_RESPONSE_HEADER' inserted in header response (var 'header')
+         // ------------------------------------------------------------------------------------------------------
+         // 4 => var environment 'HTTP_RESPONSE_HEADER'      set as header response (var 'header') and
+         //      var environment 'HTTP_RESPONSE_BODY'        set as body   response (var 'body')
+         // ------------------------------------------------------------------------------------------------------
+
+         U_INTERNAL_DUMP("header(%u) = %.*S", header->size(), U_STRING_TO_TRACE(*header))
+         U_INTERNAL_DUMP("  body(%u) = %.*S",   body->size(), U_STRING_TO_TRACE(*body))
 
          (void) UClientImage_Base::wbuffer->replace(*header);
 
-         if (alternative_response == 2) header->clear();
-         else
+         if (alternative_response != 2)
             {
-            U_INTERNAL_ASSERT_EQUALS(alternative_response,1)
-
             (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
-            (void) UClientImage_Base::wbuffer->append(*UClientImage_Base::body);
+            (void) UClientImage_Base::wbuffer->append(alternative_response == 3 ? output : *body);
             }
 
          (void) UHTTP::processCGIOutput();
@@ -1026,15 +1060,16 @@ int USSIPlugIn::handlerRequest()
 
 const char* USSIPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "last_modified             " << last_modified            << '\n'
-                  << "use_size_abbrev           " << use_size_abbrev          << '\n'
-                  << "alternative_response      " << alternative_response     << '\n'
-                  << "body             (UString " << (void*)body              << ")\n"
-                  << "errmsg           (UString " << (void*)&errmsg           << ")\n"
-                  << "header           (UString " << (void*)header            << ")\n"
-                  << "timefmt          (UString " << (void*)&timefmt          << ")\n"
-                  << "docname          (UString " << (void*)&docname          << ")\n"
-                  << "file_environment (UString " << (void*)&file_environment << ')';
+   *UObjectIO::os << "last_modified                " << last_modified               << '\n'
+                  << "use_size_abbrev              " << use_size_abbrev             << '\n'
+                  << "alternative_response         " << alternative_response        << '\n'
+                  << "body                (UString " << (void*)body                 << ")\n"
+                  << "errmsg              (UString " << (void*)&errmsg              << ")\n"
+                  << "header              (UString " << (void*)header               << ")\n"
+                  << "timefmt             (UString " << (void*)&timefmt             << ")\n"
+                  << "docname             (UString " << (void*)&docname             << ")\n"
+                  << "environment         (UString " << (void*)environment          << ")\n"
+                  << "alternative_include (UString " << (void*)alternative_include  << ')';
 
    if (reset)
       {

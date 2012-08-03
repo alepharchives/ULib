@@ -84,6 +84,7 @@ class UProxyPlugIn;
 class UStreamPlugIn;
 class UModNoCatPeer;
 class UClientThread;
+class UWebSocketPlugIn;
 class UModProxyService;
 
 class U_EXPORT UServer_Base : public UEventFd {
@@ -236,6 +237,7 @@ public:
    static int pluginsHandlerInit();
    static int pluginsHandlerRun();
    static int pluginsHandlerFork();
+   static int pluginsHandlerStop();
 
    // Connection-wide hooks
    static int pluginsHandlerREAD();
@@ -267,9 +269,11 @@ public:
    // ---------------------------------
       struct timeval _timeval;
       char data_1[17]; // 18/06/12 18:45:56
+      char  null1[1];  // 123456789012345678901234567890
       char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+      char  null2[1];  // 123456789012345678901234567890
       char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-      char    null[1]; // 123456789012345678901234567890
+      char  null3[1];  // 123456789012345678901234567890
    // -------------------------------
    } shared_data;
 
@@ -467,14 +471,13 @@ protected:
    UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
    };
 
-   static UVector<UString>* vplugin_name;
    static UVector<UServerPlugIn*>* vplugin;
-
-   static void runWatch();
-   static void runAsUser(bool is_child);
+   static UVector<UString>*        vplugin_name;
 
    static const char* getNumConnection();
 
+   static void runWatch();
+   static void runAsUser(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
    static void handlerCloseConnection(UClientImage_Base* ptr);
 
@@ -518,6 +521,7 @@ private:
    friend class UStreamPlugIn;
    friend class UClientThread;
    friend class UModNoCatPeer;
+   friend class UWebSocketPlugIn;
    friend class UModProxyService;
    friend class UClientImage_Base;
 

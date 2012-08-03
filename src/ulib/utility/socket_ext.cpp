@@ -276,7 +276,15 @@ loop:
    U_INTERNAL_ASSERT_EQUALS(sum, ncount)
 #endif
 
-   if (UNotifier::waitForWrite(s->iSockDesc, timeoutMS) == 1) goto loop;
+   int res = UNotifier::waitForWrite(s->iSockDesc, timeoutMS);
+
+   if (res ==  1) goto loop;
+   if (res == -1)
+      {
+      s->iState = USocket::BROKEN;
+
+      s->_closesocket();
+      }
 
    U_RETURN(iBytesWrite);
 }
@@ -702,6 +710,211 @@ UString USocketExt::getIPAddress(int fd, const char* device)
    (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &(addr.psaIP4Addr.sin_addr), result.data(), INET_ADDRSTRLEN);
 
    result.size_adjust();
+#endif
+
+   U_RETURN_STRING(result);
+}
+
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#  include <linux/rtnetlink.h>
+#endif
+
+UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
+{
+   U_TRACE(1, "USocketExt::getGatewayAddress(%.*S,%u)", network_len, network, network_len)
+
+   UString result(100U);
+
+   // Ex: ip route show to exact 192.168.1.0/24
+
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+   static int sock = USocket::socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
+
+   if (sock != -1)
+      {
+      char msgBuf[4096];
+      (void) memset(msgBuf, 0, 4096);
+
+      /*
+      struct nlmsghdr {
+         __u32 nlmsg_len;    // Length of message including header
+         __u16 nlmsg_type;   // Type of message content
+         __u16 nlmsg_flags;  // Additional flags
+         __u32 nlmsg_seq;    // Sequence number
+         __u32 nlmsg_pid;    // PID of the sending process
+      };
+      */
+
+      // point the header and the msg structure pointers into the buffer
+
+      union uunlmsghdr {
+         char*            p;
+         struct nlmsghdr* h;
+      };
+
+      union uunlmsghdr nlMsg = { &msgBuf[0] };
+
+      // Fill in the nlmsg header
+
+      nlMsg.h->nlmsg_len   = NLMSG_LENGTH(sizeof(struct rtmsg)); // Length of message (28)
+      nlMsg.h->nlmsg_type  = RTM_GETROUTE;                       // Get the routes from kernel routing table
+      nlMsg.h->nlmsg_flags = NLM_F_DUMP | NLM_F_REQUEST;         // The message is a request for dump
+      nlMsg.h->nlmsg_seq   = 0;                                  // Sequence of the message packet
+      nlMsg.h->nlmsg_pid   = u_pid;                              // PID of process sending the request
+
+      // Send the request
+
+      if (U_SYSCALL(send, "%d,%p,%u,%u", sock, CAST(nlMsg.h), nlMsg.h->nlmsg_len, 0) == nlMsg.h->nlmsg_len)
+         {
+         // Read the response
+
+         int readLen;
+         uint32_t msgLen = 0;
+         char* bufPtr = msgBuf;
+         union uunlmsghdr nlHdr;
+
+         do {
+            // Receive response from the kernel
+
+            if ((readLen = U_SYSCALL(recv, "%d,%p,%u,%d", sock, CAST(bufPtr), 4096 - msgLen, 0)) < 0) break;
+
+            nlHdr.p = bufPtr;
+
+            // Check if the header is valid
+
+            if ((NLMSG_OK(nlHdr.h, (uint32_t)readLen) == 0) || (nlHdr.h->nlmsg_type == NLMSG_ERROR)) break;
+
+            // Check if it is the last message
+
+            U_INTERNAL_DUMP("nlmsg_type = %u nlmsg_seq = %u nlmsg_pid = %u nlmsg_flags = %B",
+                             nlHdr.h->nlmsg_type, nlHdr.h->nlmsg_seq, nlHdr.h->nlmsg_pid, nlHdr.h->nlmsg_flags)
+
+            if (nlHdr.h->nlmsg_type == NLMSG_DONE) break;
+            else
+               {
+               // Else move the pointer to buffer appropriately
+
+               bufPtr += readLen;
+               msgLen += readLen;
+               }
+
+            // Check if it is a multi part message
+
+            if ((nlHdr.h->nlmsg_flags & NLM_F_MULTI) == 0) break;
+            }
+         while ((nlHdr.h->nlmsg_seq != 1) || (nlHdr.h->nlmsg_pid != (uint32_t)u_pid));
+
+         U_INTERNAL_DUMP("msgLen = %u readLen = %u", msgLen, readLen)
+
+         // Parse the response
+
+         int rtLen;
+         char* dst;
+         char dstMask[32];
+         struct rtmsg* rtMsg;
+         struct rtattr* rtAttr;
+         char ifName[IF_NAMESIZE];
+         struct in_addr dstAddr, srcAddr, gateWay;
+
+         for(; NLMSG_OK(nlMsg.h,msgLen); nlMsg.h = NLMSG_NEXT(nlMsg.h,msgLen))
+            {
+            rtMsg = (struct rtmsg*) NLMSG_DATA(nlMsg.h);
+
+            U_INTERNAL_DUMP("rtMsg = %p msgLen = %u rtm_family = %u rtm_table = %u", rtMsg, msgLen, rtMsg->rtm_family, rtMsg->rtm_table)
+
+            /*
+            #define AF_INET   2 // IP protocol family
+            #define AF_INET6 10 // IP version 6
+            */
+
+            if ((rtMsg->rtm_family != AF_INET)) continue; // If the route is not for AF_INET then continue
+
+            /* Reserved table identifiers
+
+            enum rt_class_t {
+               RT_TABLE_UNSPEC=0,
+               RT_TABLE_COMPAT=252,
+               RT_TABLE_DEFAULT=253,
+               RT_TABLE_MAIN=254,
+               RT_TABLE_LOCAL=255,
+               RT_TABLE_MAX=0xFFFFFFFF }; */
+
+            if ((rtMsg->rtm_table != RT_TABLE_MAIN)) continue; // If the route does not belong to main routing table then continue
+
+            ifName[0] = '\0';
+            dstAddr.s_addr = srcAddr.s_addr = gateWay.s_addr = 0;
+
+            // get the rtattr field
+
+            rtAttr = (struct rtattr*) RTM_RTA(rtMsg);
+            rtLen  = RTM_PAYLOAD(nlMsg.h);
+
+            for (; RTA_OK(rtAttr,rtLen); rtAttr = RTA_NEXT(rtAttr,rtLen))
+               {
+               U_INTERNAL_DUMP("rtAttr = %p rtLen = %u rta_type = %u rta_len = %u", rtAttr, rtLen, rtAttr->rta_type, rtAttr->rta_len)
+
+               /* Routing message attributes
+
+               struct rtattr {
+                  unsigned short rta_len;  // Length of option
+                  unsigned short rta_type; //   Type of option
+               // Data follows
+               };
+
+               enum rtattr_type_t {
+                  RTA_UNSPEC,    // 0
+                  RTA_DST,       // 1
+                  RTA_SRC,       // 2
+                  RTA_IIF,       // 3
+                  RTA_OIF,       // 4
+                  RTA_GATEWAY,   // 5
+                  RTA_PRIORITY,  // 6
+                  RTA_PREFSRC,   // 7
+                  RTA_METRICS,   // 8
+                  RTA_MULTIPATH, // 9
+                  RTA_PROTOINFO, // no longer used
+                  RTA_FLOW,      // 11
+                  RTA_CACHEINFO, // 12
+                  RTA_SESSION,   // no longer used
+                  RTA_MP_ALGO,   // no longer used
+                  RTA_TABLE,     // 15
+                  RTA_MARK,      // 16
+                  __RTA_MAX }; */
+
+               switch (rtAttr->rta_type)
+                  {
+                  case RTA_OIF:     (void) if_indextoname(*(unsigned*)RTA_DATA(rtAttr), ifName);          break;
+                  case RTA_GATEWAY: (void) u__memcpy(&gateWay, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
+                  case RTA_PREFSRC: (void) u__memcpy(&srcAddr, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
+                  case RTA_DST:     (void) u__memcpy(&dstAddr, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
+                  }
+               }
+
+            U_DUMP("ifName = %S dstAddr = %S rtMsg->rtm_dst_len = %u srcAddr = %S gateWay = %S", ifName,
+                        UIPAddress::toString(dstAddr.s_addr).data(), rtMsg->rtm_dst_len,
+                        UIPAddress::toString(srcAddr.s_addr).data(),
+                        UIPAddress::toString(gateWay.s_addr).data())
+
+            dst = U_SYSCALL(inet_ntoa, "%u", dstAddr);
+
+            if (u__snprintf(dstMask, sizeof(dstMask), "%s/%u", dst, rtMsg->rtm_dst_len) == network_len &&
+                strncmp(dstMask, network, network_len) == 0)
+               {
+               if (gateWay.s_addr) (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &gateWay, result.data(), result.capacity());
+               else
+                  {
+                  U_INTERNAL_ASSERT_MAJOR(srcAddr.s_addr, 0)
+
+                  (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &srcAddr, result.data(), result.capacity());
+                  }
+
+               result.size_adjust();
+
+               break;
+               }
+            }
+         }
+      }
 #endif
 
    U_RETURN_STRING(result);

@@ -114,11 +114,11 @@ public:
       inc_num_file_object();
       }
 
-   UFile(const UString& path) : pathname(path) 
+   UFile(const UString& path, const UString* environment = 0) : pathname(path) 
       {
-      U_TRACE_REGISTER_OBJECT(0, UFile, "%.*S", U_STRING_TO_TRACE(path))
+      U_TRACE_REGISTER_OBJECT(0, UFile, "%.*S,%p", U_STRING_TO_TRACE(path), environment)
 
-      setPathRelativ();
+      setPathRelativ(environment);
 
       inc_num_file_object();
       }
@@ -617,9 +617,10 @@ public:
 
    bool memmap(int prot = PROT_READ, UString* str = 0, uint32_t offset = 0, uint32_t length = 0);
 
-   static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false);
    static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false);
-          UString getContent(                         bool brdonly = true,  bool bstat = false, bool bmap = false);
+   static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false, const UString* environment = 0);
+
+          UString getContent(bool brdonly = true,  bool bstat = false, bool bmap = false);
 
    // MIME TYPE
 
@@ -709,16 +710,19 @@ public:
    static bool writeTo(const UString& path,  const UString& data, bool append = false, bool bmkdirs = false);
    static bool writeToTmpl(const char* tmpl, const UString& data, bool append = false, bool bmkdirs = false);
 
-   // symlink
+   // symlink creates a symbolic link named newpath which contains the string oldpath
 
-#ifndef __MINGW32__
    static bool symlink(const char* oldpath, const char* newpath)
       {
       U_TRACE(1, "UFile::symlink(%S,%S)", oldpath, newpath)
 
+#  ifdef __MINGW32__
+      U_RETURN(false);
+#  else
       bool result = (U_SYSCALL(symlink, "%S,%S", oldpath, newpath) != -1);
 
       U_RETURN(result);
+#  endif
       }
 
    bool symlink(const char* newpath)
@@ -727,15 +731,16 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_POINTER(path_relativ)
+      U_INTERNAL_ASSERT(pathname.isNullTerminated())
 
-      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
-
-      bool result = symlink(path_relativ, newpath);
+#  ifdef __MINGW32__
+      U_RETURN(false);
+#  else
+      bool result = symlink(pathname.data(), newpath);
 
       U_RETURN(result);
+#  endif
       }
-#endif
 
    /*
    Expands all symbolic links and resolves references to '/./', '/../' and extra '/' characters in the null

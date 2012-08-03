@@ -35,6 +35,9 @@ public:
 
    static void    getARPCache(UVector<UString>& vec);
    static UString getNetworkInterfaceName(const char* ip);
+   static UString getGatewayAddress(const char* network, uint32_t network_len);
+
+   static UString getGatewayAddress(const UString& network) { return getGatewayAddress(U_STRING_TO_PARAM(network)); }
 
    static UString getIPAddress(     int fd, const char* device);        // eth0
    static UString getMacAddress(    int fd, const char* device_or_ip);  // eth0 | 192.168.1.1

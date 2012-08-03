@@ -49,6 +49,10 @@ public:
 
    static void str_allocate();
 
+   static UString* environment;
+   static UString* alternative_include;
+   static int      alternative_response;
+
    // COSTRUTTORI
 
             USSIPlugIn();
@@ -73,18 +77,17 @@ public:
 
 protected:
    time_t last_modified;
-   UString file_environment, docname, timefmt, errmsg;
+   UString docname, timefmt, errmsg;
    bool use_size_abbrev;
 
    static UString* body;
    static UString* header;
-   static int alternative_response;
 
 private:
    UString getInclude(const UString& include, int include_level) U_NO_EXPORT;
    UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
 
-   static bool    callService(const UString& name, const UString& value, bool bset) U_NO_EXPORT;
+   static bool    callService(const UString& name, const UString& value) U_NO_EXPORT;
    static UString getPathname(const UString& name, const UString& value, const UString& directory) U_NO_EXPORT;
 
    USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}

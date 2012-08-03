@@ -80,6 +80,9 @@ typedef DWORD  timeout_t;
 typedef time_t timeout_t;
 #endif
 
+class UTimeVal;
+class UServer_Base;
+
 /**
  A semaphore is generally used as a synchronization object between multiple threads or to protect a limited and finite
  resource such as a memory or thread pool. The semaphore has a counter which only permits access by one or more threads
@@ -103,6 +106,8 @@ public:
    USemaphore()
       {
       U_TRACE_REGISTER_OBJECT(0, USemaphore, "")
+
+      next = 0;
       }
 
    /**
@@ -137,8 +142,8 @@ public:
    /**
    Posting to a semaphore increments its current value and releases the first thread waiting for the semaphore
    if it is currently at 0. Interestingly, there is no support to increment a semaphore by any value greater than 1
-   to release multiple waiting threads in either pthread or the win32 API. Hence, if one wants to release
-   a semaphore to enable multiple threads to execute, one must perform multiple post operations
+   to release multiple waiting threads in either pthread. Hence, if one wants to release a semaphore to enable multiple
+   threads to execute, one must perform multiple post operations
    */
 
    void post();
@@ -150,6 +155,7 @@ public:
 #endif
 
 protected:
+   USemaphore* next;
 #ifdef __MINGW32__
    HANDLE sem;
 #elif defined(U_LOCKFILE)
@@ -163,6 +169,8 @@ protected:
    bool bmmap, broken;
 #endif
 
+   static USemaphore* first;
+   
 #if defined(DEBUG) || defined(U_TEST)
 #  if defined(__MINGW32__) || defined(U_LOCKFILE) || defined(U_MAYBE_BROKEN_SEM_IMPL)
    int getValue() { return -1; }
@@ -171,9 +179,13 @@ protected:
 #  endif
 #endif
 
+   static bool checkForDeadLock(UTimeVal& time); // NB: check if process has restarted and it had a lock locked...
+   
 private:
    USemaphore(const USemaphore&)            {}
    USemaphore& operator=(const USemaphore&) { return *this; }
+
+   friend class UServer_Base;
 };
 
 #endif

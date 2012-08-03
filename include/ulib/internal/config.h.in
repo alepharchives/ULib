@@ -206,6 +206,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the `clock_gettime' function. */
 #undef HAVE_CLOCK_GETTIME
 
+/* enable cpp preprocessor features */
+#undef HAVE_CPP
+
 /* Define to 1 if you have the `daemon' function. */
 #undef HAVE_DAEMON
 
@@ -385,6 +388,9 @@ typedef unsigned long long uint64;
 
 /* Define to 1 if you have the <mcheck.h> header file. */
 #undef HAVE_MCHECK_H
+
+/* enable mcpp preprocessor features */
+#undef HAVE_MCPP
 
 /* Define if struct siginfo have member <si_addr>. */
 #undef HAVE_MEMBER_SI_ADDR
@@ -927,6 +933,9 @@ typedef unsigned long long uint64;
 # undef __EXTENSIONS__
 #endif
 
+
+/* enable client response partial write support */
+#undef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
 
 /* disable HTTP cache request support */
 #undef U_HTTP_CACHE_REQUEST_DISABLE

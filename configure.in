@@ -1063,6 +1063,17 @@ case "$target_os" in
 	;;
 esac
 
+# cpp
+
+AC_PATH_PROG( cpp,  cpp, no)
+if test "$cpp" != "no"; then
+	AC_DEFINE(HAVE_CPP, 1, [enable cpp preprocessor features])
+fi
+AC_PATH_PROG(mcpp, mcpp, no)
+if test "$mcpp" != "no"; then
+	AC_DEFINE(HAVE_MCPP, 1, [enable mcpp preprocessor features])
+fi
+
 # manuale
 
 AC_PATH_PROG(DOXYGEN, doxygen, no)

@@ -324,15 +324,13 @@ int UWebSocketPlugIn::handlerRequest()
             UServices::generateDigest(U_HASH_MD5, 0, challenge, sizeof(challenge), *UClientImage_Base::body, -2);
             }
 
-         if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+         USocket* csocket = UServer_Base::pClientImage->socket;
+
+         if (USocketExt::write(csocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
             {
             UClientImage_Base::write_off = true;
 
-#        ifdef DEBUG
-            int fd_stderr = UFile::creat("/tmp/UWebSocketPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-#        else
-            int fd_stderr = UServices::getDevNull();
-#        endif
+            static int fd_stderr = UServices::getDevNull("/tmp/UWebSocketPlugIn.err");
 
             U_INTERNAL_ASSERT_POINTER(command)
 
@@ -353,8 +351,6 @@ int UWebSocketPlugIn::handlerRequest()
                UServer_Base::logCommandMsgError(command->getCommand());
 
                UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
-
-               USocket* csocket = UServer_Base::pClientImage->socket;
 
                if (handleDataFraming(csocket))
                   {

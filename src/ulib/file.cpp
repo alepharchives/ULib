@@ -462,57 +462,40 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
 
    UString fileContent;
 
-   if (st_size     == 0 &&
-       size(bstat) == 0)
+   if (st_size ||
+       size(bstat))
       {
-      goto end;
+      U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
+
+      if (bmap ||
+          st_size > (off_t)(16L * 1024L))
+         {
+         int                   prot  = PROT_READ;
+         if (brdonly == false) prot |= PROT_WRITE;
+
+         (void) memmap(prot, &fileContent, 0, st_size);
+         }
+      else
+         {
+         UString tmp(st_size);
+
+         char* ptr = tmp.data();
+
+         ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
+
+         if (value < 0L) value = 0L;
+
+         ptr[value] = '\0'; // NB: in this way we can use string function data()...
+
+         tmp.size_adjust(value);
+
+         fileContent = tmp;
+         }
       }
 
-   U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
-
-   if (bmap ||
-       st_size > (off_t)(16L * 1024L))
-      {
-      int                   prot  = PROT_READ;
-      if (brdonly == false) prot |= PROT_WRITE;
-
-      (void) memmap(prot, &fileContent, 0, st_size);
-      }
-   else
-      {
-      UString tmp(st_size);
-
-      char* ptr = tmp.data();
-
-      ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
-
-      if (value < 0L) value = 0L;
-
-      ptr[value] = '\0'; // NB: in this way we can use string function data()...
-
-      tmp.size_adjust(value);
-
-      fileContent = tmp;
-      }
-
-end:
    UFile::close();
 
    U_RETURN_STRING(fileContent);
-}
-
-UString UFile::contentOf(const char* _pathname, int flags, bool bstat)
-{
-   U_TRACE(0, "UFile::contentOf(%S,%d,%b)", _pathname, flags, bstat)
-
-   UFile file;
-   UString content;
-
-   file.reset();
-
-   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
-
-   U_RETURN_STRING(content);
 }
 
 UString UFile::contentOf(const UString& _pathname, int flags, bool bstat)
@@ -525,6 +508,22 @@ UString UFile::contentOf(const UString& _pathname, int flags, bool bstat)
    file.reset();
 
    if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
+
+   U_RETURN_STRING(content);
+}
+
+UString UFile::contentOf(const char* _pathname, int flags, bool bstat, const UString* environment)
+{
+   U_TRACE(0, "UFile::contentOf(%S,%d,%b,%p)", _pathname, flags, bstat, environment)
+
+   UFile file;
+   UString path(_pathname), content;
+
+   file.reset();
+
+   file.setPath(path, environment);
+
+   if (file.open(flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
 
    U_RETURN_STRING(content);
 }

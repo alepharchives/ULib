@@ -15,23 +15,22 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
-bool        UClientImage_Base::bIPv6;
-bool        UClientImage_Base::pipeline;
-bool        UClientImage_Base::write_off;
-uint32_t    UClientImage_Base::rstart;
-uint32_t    UClientImage_Base::counter;
-uint32_t    UClientImage_Base::size_request;
-UString*    UClientImage_Base::body;
-UString*    UClientImage_Base::rbuffer;
-UString*    UClientImage_Base::wbuffer;
-UString*    UClientImage_Base::request; // NB: it is only a pointer, not a string object...
-UString*    UClientImage_Base::pbuffer;
-UString*    UClientImage_Base::environment;
-UString*    UClientImage_Base::msg_welcome;
-const char* UClientImage_Base::rpointer;
+bool     UClientImage_Base::bIPv6;
+bool     UClientImage_Base::pipeline;
+bool     UClientImage_Base::write_off;
+uint32_t UClientImage_Base::rstart;
+uint32_t UClientImage_Base::counter;
+uint32_t UClientImage_Base::size_request;
+UString* UClientImage_Base::body;
+UString* UClientImage_Base::rbuffer;
+UString* UClientImage_Base::wbuffer;
+UString* UClientImage_Base::request; // NB: it is only a pointer, not a string object...
+UString* UClientImage_Base::pbuffer;
+UString* UClientImage_Base::environment;
+UString* UClientImage_Base::msg_welcome;
 
 #ifdef USE_LIBSSL
-SSL_CTX*    UClientImage_Base::ctx;
+SSL_CTX* UClientImage_Base::ctx;
 #endif
 
 // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
@@ -86,8 +85,8 @@ void UClientImage_Base::logResponse(const char* fileres)
    U_INTERNAL_ASSERT(UServer_Base::isLog())
    U_ASSERT_EQUALS(wbuffer->empty(), false)
 
+   uint32_t sz     = wbuffer->size(), u_printf_string_max_length_save = u_printf_string_max_length;
    const char* ptr = wbuffer->data();
-   uint32_t sz = wbuffer->size(), u_printf_string_max_length_save = u_printf_string_max_length;
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
@@ -155,9 +154,9 @@ void UClientImage_Base::init()
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   _value      = U_NEW(UString(U_CAPACITY));
-   _buffer     = U_NEW(UString(U_CAPACITY));
-   _encoded    = U_NEW(UString(U_CAPACITY));
+   _value   = U_NEW(UString(U_CAPACITY));
+   _buffer  = U_NEW(UString(U_CAPACITY));
+   _encoded = U_NEW(UString(U_CAPACITY));
 }
 
 void UClientImage_Base::clear()
@@ -249,8 +248,8 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
 
    if (pipeline)
       {
-      U_INTERNAL_ASSERT_EQUALS(pbuffer->isNull(),false)
-      U_INTERNAL_ASSERT_EQUALS(pbuffer->same(*rbuffer),false)
+      U_INTERNAL_ASSERT_EQUALS(pbuffer->isNull(),       false)
+      U_INTERNAL_ASSERT_EQUALS(pbuffer->same(*rbuffer), false)
 
       if (rstart == 0U) pipeline = false;
       else
@@ -260,11 +259,10 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
          if (request_buffer_resize == false) pbuffer->size_adjust(size_request);
          else
             {
-            // NB: we use request as the new read buffer... 
+            // NB: we use request as the new read buffer...
 
             pipeline = false;
             rstart   = size_request = 0;
-            rpointer = pbuffer->data();
 
             *(request = rbuffer) = *pbuffer;
                                     pbuffer->clear();
@@ -277,7 +275,7 @@ void UClientImage_Base::manageRequestSize(bool request_buffer_resize)
 
       if (pipeline)
          {
-         U_INTERNAL_ASSERT_EQUALS(rstart,0U)
+         U_INTERNAL_ASSERT_EQUALS(rstart, 0U)
          U_INTERNAL_ASSERT(pbuffer->isNull())
 
          *(request = pbuffer) = rbuffer->substr(0U, size_request);
@@ -387,6 +385,123 @@ bool UClientImage_Base::newConnection()
    U_RETURN(true);
 }
 
+int UClientImage_Base::handlerResponse()
+{
+   U_TRACE(0, "UClientImage_Base::handlerResponse()")
+
+   U_INTERNAL_ASSERT_EQUALS(count, 0)
+   U_INTERNAL_ASSERT(socket->isOpen())
+   U_ASSERT_EQUALS(wbuffer->empty(), false)
+   U_INTERNAL_ASSERT_EQUALS(write_off, false)
+
+   if (logbuf) logResponse();
+
+   size_t sz1      = wbuffer->size(),
+          sz2      =    body->size();
+   uint32_t ncount = sz1;
+   const char* ptr = wbuffer->data();
+
+   struct iovec _iov[2] = { { (caddr_t)ptr,          sz1 },
+                            { (caddr_t)body->data(), sz2 } };
+
+   int iBytesWrite = (sz2 ? (ncount += sz2, USocketExt::writev(socket, _iov, 2, ncount, UServer_Base::timeoutMS))
+                          :                 USocketExt::write( socket,        ptr, sz1, UServer_Base::timeoutMS));
+
+   if (iBytesWrite == (int)ncount)
+      {
+      if ((bclose & U_CLOSE) != 0)
+         {
+         U_INTERNAL_ASSERT_MAJOR(sfd, 0)
+
+         UFile::close(sfd);
+         }
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(_iov[0].iov_len + _iov[1].iov_len, ncount - iBytesWrite)
+
+#ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+   if (logbuf &&
+       socket->isOpen())
+      {
+      UServer_Base::log->log("%.*spartial write (%u bytes): count %u counter %u\n",
+                              U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, ncount, counter);
+      }
+#else
+   if (socket->isOpen())
+      {
+      // manage partial write in response...
+
+      if (sfd > 0)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+         U_INTERNAL_ASSERT_MAJOR(ncount, U_MIN_SIZE_FOR_PARTIAL_WRITE)
+
+         if (logbuf) UServer_Base::log->log("%.*spartial write (%u bytes): fd %d count %u counter %u\n",
+                                                U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, sfd, ncount, counter);
+
+         goto partial;
+         }
+
+      if (
+#        ifdef USE_LIBSSL
+          UServer_Base::bssl == false &&
+#        endif
+          ncount > U_MIN_SIZE_FOR_PARTIAL_WRITE)
+         {
+         char path[MAX_FILENAME_LEN];
+
+         uint32_t len = u__snprintf(path, sizeof(path), "%s/pwrite.%P.%4D", u_tmpdir);
+
+         sfd = UFile::creat(path);
+
+         if (sfd != -1)
+            {
+            if (UFile::_unlink(path) &&
+                (ncount -= iBytesWrite, UFile::writev(sfd, _iov, 2) == (int)ncount))
+               {
+               if (logbuf)
+                  {
+                  UServer_Base::log->log("%.*spartial write (%u bytes): create temporary file %.*S\n",
+                                          U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, len, path);
+                  }
+
+               bclose = U_CLOSE;
+
+               goto partial;
+               }
+
+            UFile::close(sfd);
+            }
+         }
+      }
+#endif
+
+   U_RETURN(U_NOTIFIER_DELETE);
+
+#ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+partial:
+   count = ncount;
+
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
+
+   UEventFd::op_mask = U_WRITE_OUT;
+
+   if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
+
+   U_INTERNAL_DUMP("state = %d start = %u", state, start)
+
+   if (state == U_PLUGIN_HANDLER_ERROR)
+      {
+      state   = U_PLUGIN_HANDLER_FINISHED;
+      bclose |= U_YES;
+      }
+
+   U_RETURN(U_NOTIFIER_OK);
+#endif
+}
+
 // define method VIRTUAL of class UEventFd
 
 void UClientImage_Base::handlerError(int sock_state)
@@ -423,7 +538,6 @@ int UClientImage_Base::handlerRead()
 
    rstart   = size_request = 0;
    pipeline = false;
-   rpointer = rbuffer->data();
 
 #ifndef U_HTTP_CACHE_REQUEST
    initAfterGenericRead();
@@ -436,39 +550,54 @@ loop:
 
    if (logbuf) logRequest();
 
+   sfd   = bclose = 0;
    state = UServer_Base::pluginsHandlerREAD(); // check request type...
 
-   if (state == U_PLUGIN_HANDLER_FINISHED)
+   U_INTERNAL_DUMP("state = %d pipeline = %b socket->isClosed() = %b write_off = %b UServer_Base::bpluginsHandlerRequest = %b",
+                    state, pipeline, socket->isClosed(), write_off, UServer_Base::bpluginsHandlerRequest)
+
+   if (state == U_PLUGIN_HANDLER_FINISHED &&
+       UServer_Base::bpluginsHandlerRequest)
       {
-      // NB: it is possible a resize of the read buffer string...
-
-      if (rpointer != rbuffer->data())
-         {
-          rpointer  = rbuffer->data();
-
-         if (pipeline) *pbuffer = rbuffer->substr(rstart);
-         }
-
-      if (UServer_Base::bpluginsHandlerRequest) state = UServer_Base::pluginsHandlerRequest(); // manage request...
+      state = UServer_Base::pluginsHandlerRequest(); // manage request...
       }
 
-   U_INTERNAL_DUMP("state = %d pipeline = %b socket->isClosed() = %b write_off = %b", state, pipeline, socket->isClosed(), write_off)
-
-   if (write_off ||
-       socket->isClosed())
+   if (write_off) write_off = false;
+   else
       {
-      if (write_off)
-         {
-         write_off = false;
+      U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
+      U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
-         goto next;
+      if (count == 0)
+         {
+         if (handlerResponse() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
          }
-      
-      goto error;
+      else
+         {
+         if (UEventFd::op_mask != U_WRITE_OUT)
+            {
+            U_ASSERT(body->empty())
+            U_ASSERT_EQUALS(wbuffer->empty(), false)
+
+            if (logbuf) logResponse();
+
+#        if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+            socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries...
+#        endif
+
+            if (USocketExt::write(socket, *wbuffer, UServer_Base::timeoutMS) == false)
+               {
+               state = U_PLUGIN_HANDLER_ERROR;
+
+               goto next;
+               }
+            }
+
+         if (handlerWrite() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
+         }
       }
 
-   if (handlerWrite() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
-
+next:
 #ifdef U_HTTP_CACHE_REQUEST
    if ((state & U_PLUGIN_HANDLER_AGAIN) != 0)
       {
@@ -477,7 +606,6 @@ loop:
       }
    else
 #endif
-next:
       if (UServer_Base::bpluginsHandlerReset &&
           UServer_Base::pluginsHandlerReset() == U_PLUGIN_HANDLER_ERROR)
       {
@@ -493,7 +621,6 @@ next:
         pipeline == false)                 ||
         UServer_Base::flag_loop == false)
       {
-error:
       if (UServer_Base::isParallelization()) U_EXIT(0);
   
       resetPipeline();
@@ -547,12 +674,14 @@ error:
 #ifdef U_HTTP_CACHE_REQUEST
 end:
 #endif
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (u_pthread_time)
       {
       last_response = u_now->tv_sec;
 
       U_INTERNAL_DUMP("last_response = %ld", last_response)
       }
+#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -561,145 +690,71 @@ int UClientImage_Base::handlerWrite()
 {
    U_TRACE(0, "UClientImage_Base::handlerWrite()")
 
-   U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
-   U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
+   U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B bclose = %B", sfd, count, UEventFd::op_mask, bclose)
 
+   U_INTERNAL_ASSERT_MAJOR(sfd, 0)
+   U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_EQUALS(write_off, false)
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
 
-   if (count)
+   bool bwrite  = (UEventFd::op_mask == U_WRITE_OUT);
+   off_t offset = start;
+
+   U_INTERNAL_DUMP("bwrite = %b", bwrite)
+
+#ifdef __MINGW32__
+   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
+#else
+   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
+#endif
+
+   if (value <= 0)
       {
-      U_INTERNAL_ASSERT_MAJOR(sfd, 0)
-      U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
+      U_INTERNAL_DUMP("errno = %d", errno)
 
-      if (UEventFd::op_mask == U_WRITE_OUT) goto send;
-
-      U_ASSERT(body->empty())
-
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-      socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-#  endif
+      if (errno != EAGAIN) U_RETURN(U_NOTIFIER_DELETE);
       }
-
-   U_ASSERT_EQUALS(wbuffer->empty(), false)
-
-   if (logbuf) logResponse();
-
-   {
-   size_t sz1      = wbuffer->size(),
-          sz2      =    body->size();
-   uint32_t ncount = sz1;
-   const char* ptr = wbuffer->data();
-
-   struct iovec _iov[2] = { { (caddr_t)ptr,          sz1 },
-                            { (caddr_t)body->data(), sz2 } };
-
-   int iBytesWrite = (sz2 ? (ncount += sz2, USocketExt::writev(socket, _iov, 2, ncount, UServer_Base::timeoutMS))
-                          :                 USocketExt::write( socket,        ptr, sz1, UServer_Base::timeoutMS));
-
-   if (iBytesWrite < (int)ncount)
+   else
       {
-      U_INTERNAL_ASSERT_EQUALS(_iov[0].iov_len + _iov[1].iov_len, ncount - iBytesWrite)
-
-      if (sfd      == 0               &&
-          pipeline == false           &&
-#        ifdef USE_LIBSSL
-          UServer_Base::bssl == false &&
-#        endif
-          socket->isOpen())
-         {
-         char path[MAX_FILENAME_LEN];
-
-         uint32_t len = u__snprintf(path, sizeof(path), "%s/pwrite.%P.%4D", u_tmpdir);
-
-         sfd = UFile::creat(path);
-
-         if (sfd != -1            &&
-             UFile::_unlink(path) &&
-             (ncount -= iBytesWrite, UFile::writev(sfd, _iov, 2) == (int)ncount))
-            {
-            if (logbuf)
-               {
-               UServer_Base::log->log("%.*spartial write (%u bytes): create temporary file %.*S\n",
-                                       U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, len, path);
-               }
-
-            start  = 0;
-            count  = ncount;
-            bclose = U_PARTIAL | U_http_is_connection_close;
-                                 U_http_is_connection_close = U_NOT;
-
-            UEventFd::op_mask = U_WRITE_OUT;
-
-            if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
-
-#        ifdef U_HTTP_CACHE_REQUEST
-            U_http_no_cache = true; 
-#        endif
-
-            U_RETURN(U_NOTIFIER_OK);
-            }
-
-         UFile::close(sfd);
-                      sfd = 0;
-         }
-
-      U_RETURN(U_NOTIFIER_DELETE);
-      }
-   }
-
-   if (count)
-      {
-      off_t offset;
-send:
-      U_INTERNAL_DUMP("sfd = %d count = %u bclose = %B", sfd, count, bclose)
-
-      offset = start;
-
-#  ifdef __MINGW32__
-      ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
-#  else
-      ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
-#  endif
-
-      if (value < 0L)
-         {
-         U_INTERNAL_DUMP("errno = %d", errno)
-
-         if (errno != EAGAIN) U_RETURN(U_NOTIFIER_DELETE);
-         }
-
       count -= value;
 
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-      // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries
-      if (UEventFd::op_mask != U_WRITE_OUT) socket->setTcpCork(0U);
-#  endif
+      if (logbuf) UServer_Base::log->log("%.*ssendfile write (%u bytes): fd %d count %u counter %u\n",
+                                          U_STRING_TO_TRACE(*UServer_Base::mod_name), value, sfd, count, counter);
 
       if (count)
          {
          start += value;
 
-         if (UEventFd::op_mask != U_WRITE_OUT)
+         if (bwrite == false)
             {
-             UEventFd::op_mask  = U_WRITE_OUT;
+            UEventFd::op_mask = U_WRITE_OUT;
 
             if (UNotifier::find(UEventFd::fd)) UNotifier::modify(this);
             }
          }
       else
          {
-         bool bwrite = (UEventFd::op_mask == U_WRITE_OUT);
-                        UEventFd::op_mask  = U_READ_IN;
+#     ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+         if (logbuf &&
+             bwrite)
+            {
+            UServer_Base::log->log("%.*spartial write completed: fd %d bclose %B\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), sfd, bclose);
+            }
+#     endif
 
-         if ((bclose & U_PARTIAL) != 0) UFile::close(sfd);
-                                                     sfd = 0;
+         if ((bclose & U_CLOSE) != 0) UFile::close(sfd);
+         if ((bclose & U_YES)   != 0) U_RETURN(U_NOTIFIER_DELETE);
 
-         if ((bclose & U_YES)     != 0) U_RETURN(U_NOTIFIER_DELETE);
+         UEventFd::op_mask = U_READ_IN;
 
          if (bwrite) UNotifier::modify(this);
          }
       }
+
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+   if (bwrite == false) socket->setTcpCork(0U); // On Linux, sendfile() depends on TCP_CORK option to avoid undesirable packet boundaries
+#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -719,17 +774,20 @@ void UClientImage_Base::handlerDelete()
       --UNotifier::num_connection;
 
       U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
-      U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B", sfd, count, UEventFd::op_mask)
 
       if (count)
          {
          // NB: pending sendfile...
 
+         U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B bclose = %B", sfd, count, UEventFd::op_mask, bclose)
+
          U_INTERNAL_ASSERT_MAJOR(sfd, 0)
 
-         sfd   = 0;
-         count = 0;
+         if ((bclose & U_CLOSE) != 0) UFile::close(sfd);
 
+         // reset
+
+         count             = 0;
          UEventFd::op_mask = U_READ_IN;
 
       // if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;

@@ -6,6 +6,12 @@ EXTRA_DIST = wi_auth.cpp wi_auth.usp
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
+cdbmake_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
+cdbmake_SOURCES = cdbmake.cpp
+cdbmake_LDFLAGS = $(PRG_LDFLAGS)
+
+bin_PROGRAMS = cdbmake
+
 moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 

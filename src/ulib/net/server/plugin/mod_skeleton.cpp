@@ -57,6 +57,15 @@ int USkeletonPlugIn::handlerFork()
    U_RETURN(result);
 }
 
+int USkeletonPlugIn::handlerStop()
+{
+   U_TRACE(0, "USkeletonPlugIn::handlerStop()")
+
+   int result = U_PLUGIN_HANDLER_GO_ON;
+
+   U_RETURN(result);
+}
+
 // Connection-wide hooks
 
 int USkeletonPlugIn::handlerREAD()

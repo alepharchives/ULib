@@ -268,7 +268,10 @@ void u_gettimeofday(void)
 
    U_INTERNAL_ASSERT_POINTER(u_now)
 
-   if (u_pthread_time == 0) (void) gettimeofday(u_now, 0);
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+   if (u_pthread_time == 0)
+#endif
+   (void) gettimeofday(u_now, 0);
 
    /* calculate number of seconds between UTC to current time zone
     *
@@ -1574,27 +1577,31 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                  width == 11 ? "%d/%b/%Y:%H:%M:%S %z"      :
                                "%a, %d %b %Y %H:%M:%S GMT");
 
-            /* NB: optimization for high traffic */
-
+#        if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
             if (width >= 10 &&
                 u_pthread_time)
                {
                /*
+               NB: optimization for high traffic
+
                u_now = &(ptr_shared_data->_timeval);
 
                struct timeval _timeval;
                char data_1[17]; // 18/06/12 18:45:56
+               char  null1[1];  // 123456789012345678901234567890
                char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+               char  null2[1];  // 123456789012345678901234567890
                char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-               char    null[1]; // 123456789012345678901234567890
+               char  null3[1];  // 123456789012345678901234567890
                */
+
                const char* ptr = (const char*)u_now + sizeof(struct timeval);
 
-               len = (width == 10 ?                17  :
-                      width == 11 ? (ptr += 17,    26) :
-                                    (ptr += 17+26, 29));
+               len = (width == 10 ?                    17  :
+                      width == 11 ? (ptr += 17+1,      26) :
+                                    (ptr += 17+1+26+1, 29));
 
-               U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)ptr, len), false)
+            // U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)ptr, len), false)
 
                (void) u__memcpy(bp, ptr, len);
 
@@ -1603,6 +1610,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                continue;
                }
+#        endif
 
             /* flag '#' => var-argument */
 

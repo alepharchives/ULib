@@ -206,6 +206,7 @@ public:
    bool isPrivate() __pure;
 
    static UString toString(uint8_t* paddr);
+   static UString toString(in_addr_t addr) { return toString((uint8_t*)&addr); } 
 
 #ifdef ENABLE_IPV6
    /********************************************************************************/

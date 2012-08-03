@@ -212,7 +212,7 @@ int UProxyPlugIn::handlerRequest()
 
             U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-            UServer_Base::log->log("%.*sproxy-server response (%u bytes) %.*S\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr);
+            UServer_Base::log->log("%.*sproxy-server response (%u bytes) '%.*s'\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr);
 
             u_printf_string_max_length = u_printf_string_max_length_save;
             }

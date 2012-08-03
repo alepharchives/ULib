@@ -207,7 +207,8 @@ enum AffermationType {
    U_MAYBE   = 0x000,
    U_YES     = 0x001,
    U_NOT     = 0x002,
-   U_PARTIAL = 0x004
+   U_PARTIAL = 0x004,
+   U_CLOSE   = 0x008
 };
 
 /* MIME type */

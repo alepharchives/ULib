@@ -475,6 +475,13 @@ void UCDB::callForAllEntryExt(vPFpc function)
          U_INTERNAL_DUMP("key = %.*S", key.dsize, key.dptr)
 
          function(ptr);
+
+         if (internal.stop_call_for_all_entry)
+            {
+            internal.stop_call_for_all_entry = false;
+
+            return;
+            }
          }
 
       ++slot;

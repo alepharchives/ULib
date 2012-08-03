@@ -119,6 +119,7 @@
 #  include "xml/expat/attribute.cpp"
 #  include "xml/expat/element.cpp"
 #  include "xml/expat/xml_parser.cpp"
+#  include "xml/expat/xml2txt.cpp"
 #  include "xml/soap/soap_encoder.cpp"
 #  include "xml/soap/soap_fault.cpp"
 #  include "xml/soap/soap_gen_method.cpp"

@@ -58,7 +58,6 @@ public:
    static UString* request; // NB: it is only a pointer, not a string object...
    static UString* pbuffer;
    static UString* environment;
-   static const char* rpointer;
    static bool bIPv6, pipeline, write_off;
    static uint32_t rstart, size_request, counter;
 
@@ -106,6 +105,7 @@ public:
    // method VIRTUAL to redefine
 
    virtual bool newConnection();
+   virtual int  handlerResponse();
 
    // manage if other request already available... (pipelining)
 

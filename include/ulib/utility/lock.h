@@ -48,7 +48,7 @@ public:
    void destroy();
    void init(sem_t* ptr);
 
-   void   lock();
+   void   lock(timeout_t timeout = 0);
    void unlock();
 
    bool isLocked()

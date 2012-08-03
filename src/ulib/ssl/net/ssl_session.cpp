@@ -18,6 +18,25 @@
 URDB*       USSLSession::db_ssl_session;
 UStringRep* USSLSession::pkey;
 
+/*
+ * Forward secrecy
+ *
+ * You should consider forward secrecy. Forward secrecy means that the keys for a connection aren't stored on disk. You might have limited the amount of information that you log
+ * in order to protect the privacy of your users, but if you don't have forward secrecy then your private key is capable of decrypting all past connections. Someone else might
+ * be doing the logging for you.
+ *
+ * In order to enable forward secrecy you need to have DHE or ECDHE ciphersuites as your top preference. DHE ciphersuites are somewhat expensive if you're terminating lots of
+ * SSL connections and you should be aware that your server will probably only allow 1024-bit DHE. I think 1024-bit DHE-RSA is preferable to 2048-bit RSA, but opinions vary. If
+ * you're using ECDHE, use P-256.
+ *
+ * You also need to be aware of Session Tickets in order to implement forward secrecy correctly. There are two ways to resume a TLS connection: either the server chooses a
+ * random number and both sides store the session information, of the server can encrypt the session information with a secret, local key and send that to the client. The former
+ * is called Session IDs and the latter is called Session Tickets.
+ *
+ * But Session Tickets are transmitted over the wire and so the server's Session Ticket encryption key is capable of decrypting past connections. Most servers will generate a
+ * random Session Ticket key at startup unless otherwise configured, but you should check.
+ */
+
 void USSLSession::deleteSessionCache()
 {
    U_TRACE(0, "USSLSession::deleteSessionCache()")
@@ -85,7 +104,7 @@ bool USSLSession::initSessionCache(SSL_CTX* ctx, const char* location, uint32_t 
 
    U_INTERNAL_DUMP("timeout = %d", SSL_CTX_get_timeout(ctx))
 
-   U_SRV_LOG("db initialization of SSL session %S success", location);
+   U_SRV_LOG("db initialization of SSL session %s success", location);
 
    U_RETURN(true);
 }
@@ -202,5 +221,7 @@ void USSLSession::removeSession(SSL_CTX* ctx, SSL_SESSION* sess)
 
    int result = db_ssl_session->remove(key);
 
-   if (result) U_SRV_LOG("remove of SSL session on db failed with error %d", result);
+   // -2: The entry was already marked deleted in the hash-tree
+
+   if (result && result != -2) U_SRV_LOG("remove of SSL session on db failed with error %d", result);
 }

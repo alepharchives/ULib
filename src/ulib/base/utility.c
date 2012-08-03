@@ -57,7 +57,7 @@
 /* Match */
 
 int        u_pfn_flags;
-bPFpcupcud u_pfn_match = u_dosmatch;
+bPFpcupcud u_pfn_match = u_dosmatch_with_OR;
 
 /* Services */
 
@@ -327,6 +327,22 @@ void u_never_need_group(void)
 #endif
 }
 
+void u_setHOME(const char* restrict dir)
+{
+   static char buffer[128];
+
+   U_INTERNAL_TRACE("u_setHOME(%s)", dir)
+
+   U_INTERNAL_ASSERT_POINTER(dir)
+
+   if (strcmp(buffer + U_CONSTANT_SIZE("HOME="), dir))
+      {
+      (void) snprintf(buffer, sizeof(buffer), "HOME=%s", dir);
+
+      (void) putenv(buffer);
+      }
+}
+
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
 bool u_runAsUser(const char* restrict user, bool change_dir)
@@ -347,13 +363,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
       return false;
       }
 
-   {
-   static char buffer[128];
-
-   (void) snprintf(buffer, sizeof(buffer), "HOME=%s", pw->pw_dir);
-
-   (void) putenv(buffer);
-   }
+   u_setHOME(pw->pw_dir);
 
    (void) u_strncpy(u_user_name, user, (u_user_name_len = u__strlen(user))); /* change user name */
 
@@ -1321,6 +1331,9 @@ __pure bool u_isHostName(const char* restrict ptr, uint32_t len)
 
    /* Host names may contain only alphanumeric characters, minus signs ("-"), and periods (".").
     * They must begin with an alphabetic character and end with an alphanumeric character
+    *
+    * Several well known Internet and technology companies have DNS records that use the underscore:
+    * http://domainkeys.sourceforge.net/underscore.html
     */
 
    if (u_isalpha(ch))
@@ -1331,7 +1344,7 @@ __pure bool u_isHostName(const char* restrict ptr, uint32_t len)
          {
          ch = *(unsigned char*)ptr;
 
-         if (u_isalnum(ch) == 0 && ch != '.' && ch != '-') return false;
+         if (u_ishname(ch) == false) return false;
          }
 
       return true;
@@ -2858,7 +2871,9 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define R 0x0100 /* carriage return or new line (a \r or \n) */
 #define T 0x0200 /* character appears in plain ASCII text */
 #define F 0x0400 /* character never appears in text */
-#define N 0x0800 /* character underbar '_' (95 0x60) */
+#define O 0x0800 /* character minus    '-' (45 0x2D) */
+#define N 0x1000 /* character point    '.' (46 0x2E) */
+#define M 0x2000 /* character underbar '_' (95 0x5F) */
 
 #define CS   (C | S)
 #define CT   (C | T)
@@ -2871,7 +2886,9 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define UX   (U | X)
 #define SB   (S | B)
 #define PT   (P | T)
+#define PTO  (P | T | O)
 #define PTN  (P | T | N)
+#define PTM  (P | T | M)
 #define LXT  (L | X | T)
 #define UXT  (U | X | T)
 #define SBT  (S | B | T)
@@ -2883,17 +2900,17 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define CSRT (C | S | R | T)
 
 const unsigned short u__ct_tab[256] = {
-   /*                                BEL  BS    HT    LF        FF    CR      */
-   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CSBT, CSRT, CSF, CST, CSRT, CF, CF, /* 0x0X */
-   /*                                                     ESC                 */
-   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF, /* 0x1X */
+   /*                                BEL  BS    HT    LF        FF    CR       */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CSBT, CSRT, CSF, CST, CSRT, CF,  CF, /* 0x0X */
+   /*                                                     ESC                  */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF, CF,   CF,   CF,  CT,  CF,  CF,  CF,  CF, /* 0x1X */
 
-   SBT, PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   PT,  PT,  PT,  PT,  PT, PT, /* 0x2X */
-   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   PT,  PT,  PT,  PT,  PT, PT, /* 0x3X */
-   PT,  UXT, UXT, UXT, UXT, UXT, UXT, UT,  UT,  UT,   UT,  UT,  UT,  UT,  UT, UT, /* 0x4X */
-   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  PT,  PT,  PT,  PT, PTN,/* 0x5X */
-   PT, LXT, LXT, LXT, LXT, LXT, LXT,  LT,  LT,  LT,   LT,  LT,  LT,  LT,  LT, LT, /* 0x6X */
-   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,  PT,  PT, CF, /* 0x7X */
+   SBT, PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   PT,  PT,  PT,  PTO, PTN, PT, /* 0x2X */
+   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   PT,  PT,  PT,  PT,  PT,  PT, /* 0x3X */
+   PT,  UXT, UXT, UXT, UXT, UXT, UXT, UT,  UT,  UT,   UT,  UT,  UT,  UT,  UT,  UT, /* 0x4X */
+   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  PT,  PT,  PT,  PT,  PTM,/* 0x5X */
+   PT, LXT, LXT, LXT, LXT, LXT, LXT,  LT,  LT,  LT,   LT,  LT,  LT,  LT,  LT,  LT, /* 0x6X */
+   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,  PT,  PT,  CF, /* 0x7X */
 
    /* Assume an ISO-1 character set */
 
@@ -2919,7 +2936,9 @@ const unsigned short u__ct_tab[256] = {
 #undef R
 #undef T
 #undef F
+#undef O
 #undef N
+#undef M
 
 #undef CS
 #undef CT
@@ -2932,7 +2951,9 @@ const unsigned short u__ct_tab[256] = {
 #undef UT
 #undef LT
 #undef PT
+#undef PTO
 #undef PTN
+#undef PTM
 #undef CSB
 #undef CSR
 #undef LXT

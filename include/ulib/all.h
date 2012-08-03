@@ -85,6 +85,7 @@
 #endif
 
 #ifdef USE_LIBEXPAT
+#  include <ulib/xml/expat/xml2txt.h>
 #  include <ulib/xml/soap/soap_client.h>
 #  include <ulib/xml/soap/soap_object.h>
 #endif

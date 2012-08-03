@@ -37,6 +37,7 @@ char*           ULog::file_limit;
 ULock*          ULog::lock;
 const char*     ULog::fmt = "*** %s %N (pid %P) [%U@%H] ***\n";
 const char*     ULog::prefix;
+const char*     ULog::dir_log_gz;
 ULog::log_data* ULog::ptr_log_data;
 
 #define LOG_ptr  ptr_log_data->file_ptr
@@ -122,6 +123,8 @@ bool ULog::open(uint32_t _size, mode_t mode)
 
 #  ifdef USE_LIBZ
       backup_log_function = &ULog::backup;
+
+      dir_log_gz = (const char*) U_SYSCALL(getenv, "%S", "DIR_LOG_GZ");
 
       UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
 #  endif
@@ -257,9 +260,9 @@ void ULog::log(const char* format, ...)
    write(iov, 1);
 }
 
-void ULog::logger(int priority, const char* format, ...)
+void ULog::logger(const char* ident, int priority, const char* format, ...)
 {
-   U_TRACE(0, "ULog::logger(%d,%S)", priority, format)
+   U_TRACE(0, "ULog::logger(%S,%d,%S)", ident, priority, format)
 
 #ifndef __MINGW32__
    static bool bopenlog;
@@ -268,7 +271,7 @@ void ULog::logger(int priority, const char* format, ...)
       {
        bopenlog  = true;
 
-      U_SYSCALL_VOID(openlog, "%S,%d,%d", getlogin(), 0, 0);
+      U_SYSCALL_VOID(openlog, "%S,%d,%d", ident, 0, 0);
       }
 
    uint32_t len;
@@ -281,7 +284,7 @@ void ULog::logger(int priority, const char* format, ...)
 
    va_end(argp);
 
-   U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", LOG_INFO, "%.*s", len, buffer);
+   U_SYSCALL_VOID(syslog, "%d,%S,%d,%p", priority, "%.*s", len, buffer);
 #endif
 }
 
@@ -308,6 +311,7 @@ int ULog::getPriorityForLogger(char* s)
    char* save;
    int fac, lev, res;
 
+#ifndef __MINGW32__
    for (save = s; *s && *s != '.'; ++s) {}
 
    if (*s)
@@ -325,6 +329,7 @@ int ULog::getPriorityForLogger(char* s)
    lev = decode(s, false);
 
    res = ((lev & LOG_PRIMASK) | (fac & LOG_FACMASK));
+#endif
 
    U_RETURN(res);
 }
@@ -388,8 +393,6 @@ void ULog::backup()
    U_INTERNAL_DUMP("pthis = %p bsyslog = %b", pthis, bsyslog)
 
    if (pthis == 0 || bsyslog) return;
-
-   static const char* dir_log_gz = (const char*) U_SYSCALL(getenv, "%S", "DIR_LOG_GZ");
 
    uint32_t len_suffix;
    char suffix[32], buffer_path[MAX_FILENAME_LEN];

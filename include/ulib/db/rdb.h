@@ -191,14 +191,19 @@ public:
    void msync();
    void fsync() { journal.fsync(); }
 
-   // TRANSACTION
+   // lock
 
    void setShared(sem_t* ptr = 0)
       {
       U_TRACE(0, "URDB::setShared(%p)", ptr)
 
-      lock.init(ptr);
+      _lock.init(ptr);
       }
+
+   void   lock() { _lock.lock(1000); }
+   void unlock() { _lock.unlock(); }
+
+   // TRANSACTION
 
    bool beginTransaction();
    void abortTransaction();
@@ -227,7 +232,7 @@ public:
 #endif
 
 protected:
-   ULock lock;
+   ULock _lock;
    UFile journal;
 
    // CACHE for CDB:

@@ -111,11 +111,7 @@ int UStreamPlugIn::handlerInit()
 
    if (command == 0) goto error;
 
-#ifdef DEBUG
-   fd_stderr = UFile::creat("/tmp/UStreamPlugIn.err", O_WRONLY | O_APPEND, PERM_FILE);
-#else
-   fd_stderr = UServices::getDevNull();
-#endif
+   fd_stderr = UServices::getDevNull("/tmp/UStreamPlugIn.err");
 
    result = command->execute(0, (UString*)-1, -1, fd_stderr);
 
@@ -220,7 +216,7 @@ int UStreamPlugIn::handlerRequest()
 
       csocket->setTcpCork(1U);
 
-      if (UServer_Base::pClientImage->handlerWrite() == U_NOTIFIER_OK)
+      if (USocketExt::write(csocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
          {
          int readd;
 

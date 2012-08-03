@@ -68,7 +68,7 @@ CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES = xml2txt.spec
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
-am_xml2txt_OBJECTS = xml2txt.$(OBJEXT)
+am_xml2txt_OBJECTS = main.$(OBJEXT)
 xml2txt_OBJECTS = $(am_xml2txt_OBJECTS)
 xml2txt_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 AM_V_lt = $(am__v_lt_$(V))
@@ -241,6 +241,7 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 builddir = @builddir@
+cpp = @cpp@
 datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
@@ -260,6 +261,7 @@ libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
+mcpp = @mcpp@
 mkdir_p = @mkdir_p@
 ms_librarian = @ms_librarian@
 oldincludedir = @oldincludedir@
@@ -283,7 +285,7 @@ top_srcdir = @top_srcdir@
 EXTRA_DIST = *.spec*
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 xml2txt_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la
-xml2txt_SOURCES = xml2txt.cpp
+xml2txt_SOURCES = main.cpp
 xml2txt_LDFLAGS = $(PRG_LDFLAGS)
 all: all-am
 
@@ -340,7 +342,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml2txt.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
 
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -33,5 +33,5 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
    
    (void) UClientImage_Base::wbuffer->append(UHTTP::getUploadProgress());
    
-   U_RETURN(usp_as_service ? U_NOT_FOUND : 0);
+   U_RETURN(usp_as_service ? 0 : 0);
 } }

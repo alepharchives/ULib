@@ -37,6 +37,8 @@ public:
 
    // SERVICES
 
+   UString getData() const { return data; }
+
    bool loadTable(UHashMap<UString>& table);
    bool loadVector(UVector<UString>& vec, const char* name = 0);
 

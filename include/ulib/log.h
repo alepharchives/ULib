@@ -35,6 +35,7 @@ public:
    static const char* fmt;
    static char* file_limit;
    static const char* prefix;
+   static const char* dir_log_gz;
    static log_data* ptr_log_data;
    static vPF backup_log_function;
    static bool bsyslog, log_data_must_be_unmapped;
@@ -104,18 +105,18 @@ public:
 
    // write with prefix
 
-   static void log(const char* format, ...);                  // (buffer write == 4096)
+   static void log(const char* format, ...);           // (buffer write == 4096)
 
    // write direct without prefix
 
-   static void write(const char* format, ...);                // (buffer write == 4096)
+   static void write(const char* format, ...);         // (buffer write == 4096)
    static void write(const struct iovec* iov, int n);
 
    // logger
 
    static int getPriorityForLogger(char* s); // decode a symbolic name to a numeric value
 
-   static void logger(int priority, const char* format, ...); // (buffer write == 4096)
+   static void logger(const char* ident, int priority, const char* format, ...); // (buffer write == 4096)
 
    // flushes changes made to memory mapped log file back to disk
 

@@ -271,7 +271,10 @@ bool USocket::checkTime(long time_limit, long& timeout)
 
    U_INTERNAL_ASSERT_RANGE(1,time_limit,8L*60L) // 8 minuts
 
-   if (u_pthread_time == 0) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+   if (u_pthread_time == 0)
+#endif
+   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
    if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 
@@ -912,17 +915,24 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesWrite;
+   int iBytesWrite, res;
 
 loop:
    iBytesWrite = send((const char*)pPayload, iPayloadLength);
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&
-       timeoutMS   != 0      &&
-       UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
+       timeoutMS   != 0)
       {
-      goto loop;
+      res = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+
+      if (res ==  1) goto loop;
+      if (res == -1)
+         {
+         iState = BROKEN;
+
+         _closesocket();
+         }
       }
 
    U_RETURN(iBytesWrite);
@@ -965,7 +975,9 @@ bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count, int timeoutMS)
             continue;
             }
 
-         iState = BROKEN | EPOLLERROR;
+         iState = BROKEN;
+
+         _closesocket();
 
          U_RETURN(false);
          }
@@ -1034,7 +1046,7 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesWrite;
+   int iBytesWrite, res;
 
 loop:
 #ifdef __MINGW32__
@@ -1045,10 +1057,17 @@ loop:
 
    if (iBytesWrite == -1     &&
        errno       == EAGAIN &&
-       timeoutMS   != 0      &&
-       UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
+       timeoutMS   != 0)
       {
-      goto loop;
+      res = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+
+      if (res ==  1) goto loop;
+      if (res == -1)
+         {
+         iState = BROKEN;
+
+         _closesocket();
+         }
       }
 
    U_RETURN(iBytesWrite);

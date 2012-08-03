@@ -63,11 +63,7 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
    for (; i < num_arguments; ++i) command->addArgument(theCall.getArgumentCStr(i));
 
-#ifdef DEBUG
-   static int fd_stderr = UFile::creat("/tmp/URPCGenericMethod.err", O_WRONLY | O_APPEND, PERM_FILE);
-#else
-   static int fd_stderr = UServices::getDevNull();
-#endif
+   static int fd_stderr = UServices::getDevNull("/tmp/URPCGenericMethod.err");
 
    if (URPCObject::isSuccessOrFailure(response_type))
       {

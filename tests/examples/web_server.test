@@ -158,5 +158,8 @@ RESULT=$?
 
 mv err/userver_tcp.err err/web_server.err
 
+# cut -d ' ' -f7 /var/log/httpd/access_log > /tmp/urls.txt
+# siege -c<concurreny rate> -b -f urls.txt
+
 # Test against expected output
 test_output_wc l web_server

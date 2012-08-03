@@ -321,6 +321,8 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
    U_INTERNAL_ASSERT(_length <= _capacity)
 
+   if (_length == 0) U_RETURN_STRING(UString::getStringNull());
+
    uint32_t i   = 0,
             len = 0;
 
@@ -328,7 +330,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
    len += (_length - 1) * tlen;
 
-   UString str(len);
+   UString str(len < U_CAPACITY ? U_CAPACITY : len);
 
    str.size_adjust(len);
 

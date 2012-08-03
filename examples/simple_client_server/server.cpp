@@ -66,7 +66,7 @@ protected:
                }
             }
 
-         result = UClientImage<UTCPSocket>::handlerWrite();
+         result = UClientImage<UTCPSocket>::handlerResponse();
          }
 
       U_RETURN(result);

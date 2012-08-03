@@ -10,7 +10,7 @@ typedef struct buffer {
 } buffer;
 
 #define BUFFER_INIT(op,fd,buf,len) { (buf), 0, (len), (fd), (op) }
-#define BUFFER_INSIZE 8192
+#define BUFFER_INSIZE  8192
 #define BUFFER_OUTSIZE 8192
 
 extern void buffer_init(buffer *,int (*)(),int,char *,unsigned int);

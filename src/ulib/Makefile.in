@@ -71,7 +71,7 @@ target_triplet = @target@
 @SSH_TRUE@am__append_29 = ssh/net/sshsocket.cpp
 @LDAP_TRUE@am__append_30 = ldap/ldap.cpp
 @CURL_TRUE@am__append_31 = curl/curl.cpp
-@EXPAT_TRUE@am__append_32 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp \
+@EXPAT_TRUE@am__append_32 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 @EXPAT_TRUE@		     xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp
 
 @LIBXML2_TRUE@am__append_33 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
@@ -200,12 +200,13 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	ssl/net/ssl_session.cpp ssl/timestamp.cpp \
 	ssh/net/sshsocket.cpp ldap/ldap.cpp curl/curl.cpp \
 	xml/expat/attribute.cpp xml/expat/element.cpp \
-	xml/expat/xml_parser.cpp xml/soap/soap_fault.cpp \
-	xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp \
-	xml/soap/soap_encoder.cpp xml/libxml2/node.cpp \
-	xml/libxml2/document.cpp xml/libxml2/schema.cpp \
-	magic/magic.cpp mysql/mysql.cpp dbi/dbi.cpp libevent/event.cpp \
-	net/unixsocket.cpp net/server/plugin/mod_rpc.cpp \
+	xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
+	xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp \
+	xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp \
+	xml/libxml2/node.cpp xml/libxml2/document.cpp \
+	xml/libxml2/schema.cpp magic/magic.cpp mysql/mysql.cpp \
+	dbi/dbi.cpp libevent/event.cpp net/unixsocket.cpp \
+	net/server/plugin/mod_rpc.cpp \
 	net/server/plugin/mod_shib/mod_shib.cpp \
 	net/server/plugin/mod_proxy_service.cpp \
 	net/server/plugin/mod_stream.cpp \
@@ -263,8 +264,8 @@ am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @LDAP_TRUE@am__objects_32 = ldap.lo
 @CURL_TRUE@am__objects_33 = curl.lo
 @EXPAT_TRUE@am__objects_34 = attribute.lo element.lo xml_parser.lo \
-@EXPAT_TRUE@	soap_fault.lo soap_gen_method.lo soap_parser.lo \
-@EXPAT_TRUE@	soap_encoder.lo
+@EXPAT_TRUE@	xml2txt.lo soap_fault.lo soap_gen_method.lo \
+@EXPAT_TRUE@	soap_parser.lo soap_encoder.lo
 @LIBXML2_TRUE@am__objects_35 = node.lo document.lo schema.lo
 @MAGIC_TRUE@am__objects_36 = magic.lo
 @MYSQL_TRUE@am__objects_37 = mysql.lo
@@ -503,6 +504,7 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 builddir = @builddir@
+cpp = @cpp@
 datadir = @datadir@
 datarootdir = @datarootdir@
 docdir = @docdir@
@@ -522,6 +524,7 @@ libexecdir = @libexecdir@
 localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
+mcpp = @mcpp@
 mkdir_p = @mkdir_p@
 ms_librarian = @ms_librarian@
 oldincludedir = @oldincludedir@
@@ -837,6 +840,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/value.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vector.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml2txt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml_parser.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zip.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ziptool.Plo@am__quote@
@@ -1801,6 +1805,14 @@ xml_parser.lo: xml/expat/xml_parser.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o xml_parser.lo `test -f 'xml/expat/xml_parser.cpp' || echo '$(srcdir)/'`xml/expat/xml_parser.cpp
 
+xml2txt.lo: xml/expat/xml2txt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT xml2txt.lo -MD -MP -MF $(DEPDIR)/xml2txt.Tpo -c -o xml2txt.lo `test -f 'xml/expat/xml2txt.cpp' || echo '$(srcdir)/'`xml/expat/xml2txt.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/xml2txt.Tpo $(DEPDIR)/xml2txt.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='xml/expat/xml2txt.cpp' object='xml2txt.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o xml2txt.lo `test -f 'xml/expat/xml2txt.cpp' || echo '$(srcdir)/'`xml/expat/xml2txt.cpp
+
 soap_fault.lo: xml/soap/soap_fault.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT soap_fault.lo -MD -MP -MF $(DEPDIR)/soap_fault.Tpo -c -o soap_fault.lo `test -f 'xml/soap/soap_fault.cpp' || echo '$(srcdir)/'`xml/soap/soap_fault.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/soap_fault.Tpo $(DEPDIR)/soap_fault.Plo
@@ -2262,7 +2274,7 @@ clean-local:
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
 	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
-	$(SED) -i s/EXPORTS/;/ $(srcdir)/@ULIB@.def
+	$(SED) -i 's/EXPORTS/;/' $(srcdir)/@ULIB@.def
 
 @MINGW_TRUE@install-def-file:
 @MINGW_TRUE@	$(INSTALL) $(srcdir)/@ULIB@.def $(DESTDIR)$(libdir)
