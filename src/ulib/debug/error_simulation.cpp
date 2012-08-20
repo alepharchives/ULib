@@ -54,9 +54,9 @@ void USimulationError::init()
       flag_init = true;
 
       // format: <file_error_simulation>
-      //                error.sim
+      //               error.sim
 
-      (void) sscanf(env, "%s", file);
+      (void) sscanf(env, "%254s", file);
 
       fd = open(file, O_RDONLY | O_BINARY, 0666);
 

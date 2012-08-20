@@ -262,7 +262,6 @@ public:
 
    // SERVICES
 
-   static UFile* file;
    static UString* alias;
    static UString* cbuffer;
    static UStringRep* pkey;
@@ -275,11 +274,13 @@ public:
    static UString* maintenance_mode_page;
    static UString* uri_strict_transport_security_mask;
 
+   static UFile*   file;
+   static UFile*   apache_like_log;
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
    static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
    static int  checkHTTPRequest();
-   static void writeApacheLikeLog(int fd);
+   static void writeApacheLikeLog();
    static bool callService(const UString& path);
    static void manageHTTPServletRequest(bool as_service);
    static void processHTTPGetRequest(const UString& request);
@@ -500,10 +501,11 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static void processHTTPForm();
-   static void resetForm(bool brmdir);
-   static void getFormValue(UString& value, uint32_t pos);
-   static void getFormValue(UString& value, const char* name, uint32_t len);
+   static void    processHTTPForm();
+   static void    resetForm(bool brmdir);
+   static void    getFormValue(UString& value, uint32_t pos);
+   static void    getFormValue(UString& value, const char* name, uint32_t len);
+   static UString getFormValue(                const char* name, uint32_t len, uint32_t start, uint32_t end);
 
    // COOKIE
 

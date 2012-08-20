@@ -823,6 +823,26 @@ UString& UString::replace(uint32_t pos, uint32_t n1, uint32_t n2, char c)
    return *this;
 }
 
+void UString::unQuote()
+{
+   U_TRACE(0, "UString::unQuote()")
+
+   uint32_t len = rep->_length;
+
+        if (len            <= 2) clear();
+   else if (rep->_capacity == 0) rep->unQuote();
+   else
+      {
+      len -= 2;
+
+      char* ptr = (char*) rep->str;
+
+      (void) U_SYSCALL(memmove, "%p,%p,%u", ptr, ptr + 1, len);
+
+      ptr[(rep->_length = len)] = '\0';
+      }
+}
+
 U_NO_EXPORT char* UString::__append(uint32_t n)
 {
    U_TRACE(0, "UString::__append(%u)", n)

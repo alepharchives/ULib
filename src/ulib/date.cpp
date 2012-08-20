@@ -271,8 +271,8 @@ UTimeDate::UTimeDate(const char* str, bool UTC)
    const char* format = (UTC ? "%02u%02u%02u" : "%d/%d/%d");
    int scanned = (str && *str ? U_SYSCALL(sscanf, "%S,%S,%p,%p,%p", str, format, &_day, &_month, &year) : 0);
 
-   if      (scanned == 0) return; 
-   else if (scanned == 3) setYear(year);
+   if (scanned == 0) return; 
+   if (scanned == 3) setYear(year);
    else
       {
       // Complete for the user

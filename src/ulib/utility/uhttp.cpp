@@ -62,6 +62,7 @@ bool        UHTTP::digest_authentication;
 bool        UHTTP::enable_caching_by_proxy_servers;
 void*       UHTTP::db_session;
 UFile*      UHTTP::file;
+UFile*      UHTTP::apache_like_log;
 UString*    UHTTP::alias;
 UString*    UHTTP::cbuffer;
 UString*    UHTTP::geoip;
@@ -1144,9 +1145,9 @@ uint32_t UHTTP::getUserAgent()
    U_RETURN(agent);
 }
 
-void UHTTP::writeApacheLikeLog(int fd)
+void UHTTP::writeApacheLikeLog()
 {
-   U_TRACE(0, "UHTTP::writeApacheLikeLog(%d)", fd)
+   U_TRACE(0, "UHTTP::writeApacheLikeLog()")
 
    const char* body;
    const char* agent;
@@ -1216,7 +1217,7 @@ void UHTTP::writeApacheLikeLog(int fd)
    ------------------------------------------------------------------------------------------------------------------------------------------------- 
    */
 
-   (void) U_SYSCALL(write, "%d,%p,%u", fd, buffer,
+   (void) U_SYSCALL(write, "%d,%p,%u", apache_like_log->getFd(), buffer,
                         u__snprintf(buffer, sizeof(buffer),
                                     "%s - - [%11D] \"%.*s\" %u %.*s \"%.*s\" \"%.*s\"\n",
                                     UServer_Base::client_address,
@@ -2663,7 +2664,9 @@ bool UHTTP::readHTTPRequest(USocket* socket)
    bool result = false;
 
    if (readHTTPHeader(socket, *UClientImage_Base::request) &&
-       (u_http_info.szHeader == 0 || checkHTTPRequestForHeader(*UClientImage_Base::request)))
+       (u_http_info.szHeader == 0                          ||
+        (isHTTPRequest()                                   &&
+         checkHTTPRequestForHeader(*UClientImage_Base::request))))
       {
       bool request_buffer_resize      = false;
       UClientImage_Base::size_request = u_http_info.endHeader;
@@ -3669,6 +3672,20 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len)
 
    if (index == U_NOT_FOUND) buffer.clear();
    else               (void) buffer.replace((*form_name_value)[index+1]);
+}
+
+UString UHTTP::getFormValue(const char* name, uint32_t len, uint32_t start, uint32_t end)
+{
+   U_TRACE(0, "UHTTP::getFormValue(%.*S,%u,%u,%u)", len, name, len, start, end)
+
+   U_INTERNAL_ASSERT_POINTER(form_name_value)
+
+   UString buffer;
+   uint32_t index = form_name_value->findRange(name, len, start, end);
+
+   if (index != U_NOT_FOUND) (void) buffer.replace((*form_name_value)[index+1]);
+
+   U_RETURN_STRING(buffer);
 }
 
 void UHTTP::processHTTPForm()
@@ -5005,10 +5022,11 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
          // NB: when a url ends by "servlet/*.[c|so|dll]" it is assumed to be a servlet page...
 
          UString key(100U);
-         char buffer[U_PATH_MAX];
 
          if (U_STRNEQ(suffix, U_LIB_SUFFIX))
             {
+            char buffer[U_PATH_MAX];
+
             UServletPage* usp_page = U_NEW(UHTTP::UServletPage);
 
             // NB: dlopen() fail if name is not prefixed with "./"...
@@ -5057,6 +5075,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 #     ifdef HAVE_LIBTCC
          else if (U_STRNEQ(suffix, "c"))
             {
+            char buffer[U_PATH_MAX];
+
             UString program = file->getContent();
             UCServletPage* csp_page = U_NEW(UHTTP::UCServletPage);
 
@@ -5694,7 +5714,6 @@ int UHTTP::checkHTTPRequest()
    U_TRACE(0, "UHTTP::checkHTTPRequest()")
 
    U_ASSERT(isHTTPRequestNotFound())
-   U_INTERNAL_ASSERT(isHTTPRequest())
    U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
 
    const char* ptr;

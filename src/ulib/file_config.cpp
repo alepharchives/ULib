@@ -523,6 +523,10 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
          value = UStringExt::trim(_start, ptr - _start);
 
+         // NB: var shell often need to be quoted...
+
+         if (c == '=' && value.isQuoted()) value.unQuote();
+
          _start = ptr;
          }
 

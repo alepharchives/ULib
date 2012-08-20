@@ -274,14 +274,13 @@ int unlink_w32(const char* path)
 
 int mkstemp(char* tmplate)
 {
-   char* pChr;
    int ret, iLen = u__strlen(tmplate);
 
    U_INTERNAL_TRACE("mkstemp(%s)", tmplate)
 
    if (iLen >= 6)
       {
-      pChr = tmplate + iLen - 6;
+      char* pChr = tmplate + iLen - 6;
 
       srand(u_now->tv_sec);
 

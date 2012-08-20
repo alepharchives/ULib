@@ -3,10 +3,11 @@
 # userver centos rc script
 # description: Start userver the fabulous
 
-#UTRACE="0 10M 0"
+#UTRACE="0 20M 1"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.accept"
- export UTRACE UOBJDUMP USIMERR
+UTRACE_LEVEL=5
+ export UTRACE UOBJDUMP USIMERR UTRACE_LEVEL
 
 prog="userver"
 

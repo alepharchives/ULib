@@ -110,6 +110,8 @@ inline bool UCDB::match(uint32_t pos)
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_DUMP("UFile::map = %p", UFile::map)
+
    if (UFile::map == MAP_FAILED)
       {
       char _buf[32];

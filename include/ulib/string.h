@@ -1123,13 +1123,7 @@ public:
 
    // ...unquote it
 
-   void unQuote()
-      {
-      U_TRACE(0, "UString::unQuote()")
-
-      if (rep->_length > 2) rep->unQuote();
-      else                  clear();
-      }
+   void unQuote();
 
    // set uniq
 

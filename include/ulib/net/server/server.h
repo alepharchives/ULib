@@ -374,11 +374,27 @@ public:
 
    // manage log server...
 
-   static ULog*         log;
-   static UFile* anotherLog;
+   static ULog*             log;
+   static UVector<UFile*>* vlog;
 
-   static bool isLog()        { return (       log != 0); }
-   static bool isAnotherLog() { return (anotherLog != 0); }
+   static bool addLog(UFile* _log)
+      {
+      U_TRACE(0, "UServer_Base::addLog%p()", _log)
+
+      U_INTERNAL_ASSERT_POINTER(vlog)
+
+      if (_log->creat(O_CREAT | O_WRONLY | O_APPEND, PERM_FILE))
+         {
+         vlog->push_back(_log);
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static bool isLog()      { return (log != 0); }
+   static bool isOtherLog() { return (vlog->empty() == false); }
 
    static void      logCommandMsgError(const char* cmd);
    static UCommand* loadConfigCommand(UFileConfig& cfg);

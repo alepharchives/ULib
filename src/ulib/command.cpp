@@ -19,6 +19,7 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 
+int   UCommand::status;
 int   UCommand::exit_value;
 int   UCommand::timeoutMS = -1;
 pid_t UCommand::pid;
@@ -291,7 +292,7 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
       }
 #endif
 
-   exit_value = -1;
+   exit_value = status = -1;
    pid        = UProcess::execute(U_PATH_CONV(argv_exec[0]), argv_exec+1, envp, flag_stdin, flag_stdout, flag_stderr);
 }
 
@@ -315,7 +316,7 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
       if (pid <= 0) UFile::close(UProcess::filedes[2]); // UProcess::filedes[2] for READING...
       }
 
-   exit_value = -1;
+   exit_value = status = -1;
 
    if (pid <= 0)
       {
@@ -335,7 +336,7 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
                    UProcess::filedes[1] = 0;
       }
 
-   exit_value = 0;
+   exit_value = status = 0;
 
    if (output &&
        output != (void*)-1) // special value...
@@ -384,8 +385,6 @@ U_NO_EXPORT bool UCommand::wait()
 {
    U_TRACE(0, "UCommand::wait()")
 
-   int status;
-
    UProcess::waitpid(pid, &status, 0);
 
    exit_value = UProcess::exitValue(status);
@@ -399,7 +398,7 @@ void UCommand::setMsgError(const char* cmd)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   U_INTERNAL_DUMP("pid = %d exit_value = %d", pid, exit_value)
+   U_INTERNAL_DUMP("pid = %d exit_value = %d status = %d", pid, exit_value, status)
 
    // NB: il carattere '<' e' riservato per xml...
 
@@ -411,13 +410,10 @@ void UCommand::setMsgError(const char* cmd)
       {
       u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S (pid %u) excedeed time (%d secs) for execution", cmd, pid, timeoutMS / 1000);
       }
-   else if (exit_value)
-      {
-      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S (pid %u) exit with value %d", cmd, pid, exit_value);
-      }
    else
       {
-      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S (pid %u) started", cmd, pid);
+      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S started (pid %u) and ended with status: %d (%d, %s)",
+                                                              cmd, pid, status, exit_value, UProcess::exitInfo(status));
       }
 }
 

@@ -80,7 +80,7 @@ public:
    // The base date for this computation is 31 Dec. of the previous year.
    // i.e., UTimeDate(-1,1901) = 31 Dec. 1900 and UTimeDate(1,1901) = 2 Jan. 1901
 
-   UTimeDate(int day,              int year);
+   UTimeDate(int day,            int year);
    UTimeDate(int day, int month, int year);
 
    ~UTimeDate()

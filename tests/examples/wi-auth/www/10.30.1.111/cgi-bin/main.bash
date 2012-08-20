@@ -14,6 +14,9 @@ HTTP_RESPONSE_BODY=""
 HTTP_RESPONSE_HEADER=""
 
 # external var
+# REGEX_HISTORICAL_LOGS=""
+# UNCOMPRESS_COMMAND_HISTORICAL_LOGS=""
+
 . $DIR_ROOT/etc/$VIRTUAL_HOST/script.conf
 # common func
 . $DIR_ROOT/etc/common.sh

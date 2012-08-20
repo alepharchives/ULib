@@ -16,7 +16,10 @@
  loadCss("css/fullv2.css","css/mobilev3.css");
 //-->
   </script>
-  <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+  <!--#exec servlet=$VIRTUAL_HOST/servlet/wi_auth -->
+  <!--#if expr="$HTTP_RESPONSE_CODE == 0" -->
+    <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+  <!--#endif -->
   <title><!--#echo var=$TITLE_TXT --></title>
   <!--#echo var=$HEAD_HTML -->
 </head>

@@ -1077,10 +1077,11 @@ public:
 
    void sort(bool ignore_case = false);
 
-   uint32_t find(const char* s, uint32_t n, uint32_t offset = 0) __pure;
-
    uint32_t find(      const UString& str, bool ignore_case = false) __pure;
    uint32_t findSorted(const UString& str, bool ignore_case = false) __pure;
+
+   uint32_t find(     const char* s, uint32_t n)                               __pure;
+   uint32_t findRange(const char* s, uint32_t n, uint32_t start, uint32_t end) __pure;
 
    // AS SET
 
@@ -1110,6 +1111,8 @@ protected:
 private:
    static void mksort(UStringRep** a, int n, int depth);
           bool _isEqual(UVector<UString>& vec, bool ignore_case);
+
+// uint32_t findWithDataOffset(const char* s, uint32_t n, uint32_t offset = 0) __pure;
 
    UVector<UString>(const UVector<UString>&) : UVector<UStringRep*>() {}
    UVector<UString>& operator=(const UVector<UString>&)               { return *this; }

@@ -100,11 +100,13 @@ bool USemaphore::checkForDeadLock(UTimeVal& time)
 {
    U_TRACE(1, "USemaphore::wait(%p)", &time)
 
-   int value;
-   sem_t* sem;
    bool sleeped = false;
 
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && !defined(U_LOCKFILE)
+
+   int value;
+   sem_t* sem;
+
    for (USemaphore* item = first; item; item = item->next)
       {
       sem = item->sem;

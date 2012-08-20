@@ -24,6 +24,10 @@ class UMimeMultipartMsg;
 class U_EXPORT UMagic {
 public:
 
+   static const UString* str_default;
+
+   static void str_allocate();
+
    // Check for memory error
    U_MEMORY_TEST
 
@@ -102,8 +106,7 @@ public:
 #endif
 
 protected:
-   static magic_t magic;         /* pointer to magic :-) */
-   static UString* str_default;
+   static magic_t magic; /* pointer to magic :-) */
 
 private:
    UMagic(const UMagic&)            {}

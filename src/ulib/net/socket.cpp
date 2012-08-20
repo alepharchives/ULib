@@ -915,7 +915,7 @@ int USocket::send(const void* pPayload, uint32_t iPayloadLength, int timeoutMS)
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesWrite, res;
+   int iBytesWrite;
 
 loop:
    iBytesWrite = send((const char*)pPayload, iPayloadLength);
@@ -924,7 +924,7 @@ loop:
        errno       == EAGAIN &&
        timeoutMS   != 0)
       {
-      res = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+      int res = UNotifier::waitForWrite(iSockDesc, timeoutMS);
 
       if (res ==  1) goto loop;
       if (res == -1)
@@ -1046,7 +1046,7 @@ int USocket::writev(const struct iovec* _iov, int iovcnt, int timeoutMS)
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesWrite, res;
+   int iBytesWrite;
 
 loop:
 #ifdef __MINGW32__
@@ -1059,7 +1059,7 @@ loop:
        errno       == EAGAIN &&
        timeoutMS   != 0)
       {
-      res = UNotifier::waitForWrite(iSockDesc, timeoutMS);
+      int res = UNotifier::waitForWrite(iSockDesc, timeoutMS);
 
       if (res ==  1) goto loop;
       if (res == -1)

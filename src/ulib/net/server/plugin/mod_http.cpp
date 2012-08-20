@@ -283,12 +283,12 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x.empty() == false)
          {
-         UServer_Base::anotherLog = U_NEW(UFile(x));
+         UHTTP::apache_like_log = U_NEW(UFile(x));
 
-         if (UServer_Base::anotherLog->creat(O_CREAT | O_RDWR | O_APPEND, PERM_FILE) == false)
+         if (UServer_Base::addLog(UHTTP::apache_like_log) == false)
             {
-            delete UServer_Base::anotherLog;
-                   UServer_Base::anotherLog = 0;
+            delete UHTTP::apache_like_log;
+                   UHTTP::apache_like_log = 0;
             }
          }
       }
@@ -456,7 +456,7 @@ int UHttpPlugIn::handlerRequest()
       }
 
 end:
-   if (UServer_Base::anotherLog) UHTTP::writeApacheLikeLog(UServer_Base::anotherLog->getFd());
+   if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
 
    // check for "Connection: close" in headers
 

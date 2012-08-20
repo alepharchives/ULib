@@ -217,7 +217,7 @@ public:
 
    static pid_t pid;
    static int timeoutMS; // specified the timeout value, in milliseconds for read output. A negative value indicates no timeout, i.e. an infinite wait.
-   static int exit_value;
+   static int exit_value, status;
 
    static void setTimeout(int seconds) { timeoutMS = (seconds * 1000); }
 

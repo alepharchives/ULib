@@ -155,9 +155,78 @@ void UVector<UString>::push(const UString& str) // add to end
    UVector<UStringRep*>::push(str.rep);
 }
 
-__pure uint32_t UVector<UString>::find(const char* s, uint32_t n, uint32_t offset)
+__pure uint32_t UVector<UString>::find(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UVector<UString>::find(%#.*S,%u)", n, s, n)
+   U_TRACE(0, "UVector<UString>::find(%.*S,%u)", n, s, n)
+
+   U_CHECK_MEMORY
+
+   UStringRep* r;
+
+   for (uint32_t i = 0; i < _length; ++i)
+      {
+      r = UVector<UStringRep*>::at(i);
+
+      if (r->equal(s, n)) U_RETURN(i);
+      }
+
+   U_RETURN(U_NOT_FOUND);
+}
+
+__pure uint32_t UVector<UString>::findRange(const char* s, uint32_t n, uint32_t start, uint32_t _end)
+{
+   U_TRACE(0, "UVector<UString>::findRange(%.*S,%u,%u,%u)", n, s, n, start, _end)
+
+   U_CHECK_MEMORY
+   U_INTERNAL_ASSERT(_end <= _length)
+
+   UStringRep* r;
+
+   for (uint32_t i = start; i < _end; ++i)
+      {
+      r = UVector<UStringRep*>::at(i);
+
+      if (r->equal(s, n)) U_RETURN(i);
+      }
+
+   U_RETURN(U_NOT_FOUND);
+}
+
+__pure uint32_t UVector<UString>::find(const UString& str, bool ignore_case)
+{
+   U_TRACE(0, "UVector<UString>::find(%.*S,%b)", U_STRING_TO_TRACE(str), ignore_case)
+
+   U_CHECK_MEMORY
+
+   uint32_t i;
+   UStringRep* r;
+
+   if (ignore_case)
+      {
+      for (i = 0; i < _length; ++i)
+         {
+         r = UVector<UStringRep*>::at(i);
+
+         if (str.equalnocase(r)) U_RETURN(i);
+         }
+      }
+   else
+      {
+      for (i = 0; i < _length; ++i)
+         {
+         r = UVector<UStringRep*>::at(i);
+
+         if (str.equal(r)) U_RETURN(i);
+         }
+      }
+
+   U_RETURN(U_NOT_FOUND);
+}
+
+/*
+__pure uint32_t UVector<UString>::findWithDataOffset(const char* s, uint32_t n, uint32_t offset)
+{
+   U_TRACE(0, "UVector<UString>::findWithDataOffset(%#.*S,%u)", n, s, n)
 
    U_CHECK_MEMORY
 
@@ -172,24 +241,7 @@ __pure uint32_t UVector<UString>::find(const char* s, uint32_t n, uint32_t offse
 
    U_RETURN(U_NOT_FOUND);
 }
-
-__pure uint32_t UVector<UString>::find(const UString& str, bool ignore_case)
-{
-   U_TRACE(0, "UVector<UString>::find(%.*S,%b)", U_STRING_TO_TRACE(str), ignore_case)
-
-   U_CHECK_MEMORY
-
-   UStringRep* r;
-
-   for (uint32_t i = 0; i < _length; ++i)
-      {
-      r = UVector<UStringRep*>::at(i);
-
-      if ((ignore_case ? str.equalnocase(r) : str.equal(r)) == true) U_RETURN(i);
-      }
-
-   U_RETURN(U_NOT_FOUND);
-}
+*/
 
 __pure uint32_t UVector<UString>::findSorted(const UString& str, bool ignore_case)
 {
@@ -243,12 +295,25 @@ uint32_t UVector<UString>::contains(const UString& str, bool ignore_case)
    UString elem;
    uint32_t i, n;
 
-   for (i = 0; i < _length; ++i)
+   if (ignore_case)
       {
-      elem = at(i);
-      n    = (ignore_case ? elem.findnocase(str) : elem.find(str));
+      for (i = 0; i < _length; ++i)
+         {
+         elem = at(i);
+         n    = elem.findnocase(str);
 
-      if (n != U_NOT_FOUND) U_RETURN(i);
+         if (n != U_NOT_FOUND) U_RETURN(i);
+         }
+      }
+   else
+      {
+      for (i = 0; i < _length; ++i)
+         {
+         elem = at(i);
+         n    = elem.find(str);
+
+         if (n != U_NOT_FOUND) U_RETURN(i);
+         }
       }
 
    U_RETURN(U_NOT_FOUND);

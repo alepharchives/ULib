@@ -613,18 +613,18 @@ int u_get_num_cpu(void)
       if (fp)
          {
          char buf[128];
-         const char* p;
          const char* q;
 
+         char nextc;          /* char after sscanf %u match */
          unsigned int a;      /* begin of range */
          unsigned int b;      /* end of range */
          unsigned int s;      /* stride */
-         const char *c1, *c2; /* next tokens after '-' or ',' */
-         char nextc;          /* char after sscanf %u match */
 
          if (fgets(buf, sizeof(buf), fp))
             {
-            int sret;        /* sscanf return (number of matches) */
+            int sret;            /* sscanf return (number of matches) */
+            const char* p;
+            const char *c1, *c2; /* next tokens after '-' or ',' */
 
             q = buf;
 

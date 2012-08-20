@@ -79,7 +79,6 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 #if defined(HAVE_SYS_SYSCALL_H) && defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (u_plock)
       {
-      char tid_buffer[32];
       static pid_t old_tid;
 
       pid_t tid = syscall(SYS_gettid);
@@ -88,6 +87,8 @@ void u_trace_writev(const struct iovec* restrict iov, int n)
 
       if (old_tid != tid)
          {
+         char tid_buffer[32];
+
          int sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %d]<--\n[tid %d]-->\n", old_tid, tid);
 
          old_tid = tid;
@@ -306,10 +307,16 @@ static void handlerSignal(void)
 {
    U_INTERNAL_TRACE("handlerSignal()")
 
-   if (u_trace_fd <= 0 ||
-       level_active < 0)
+   if (u_trace_fd   <= 0 ||
+       level_active <  0)
       {
-      (void) putenv((char*)"UTRACE=0");
+      static char buffer[16];
+
+      char* env = getenv("UTRACE_LEVEL");
+
+      (void) u__snprintf(buffer, sizeof(buffer), "UTRACE=%s", env ? env : "0");
+
+      (void) putenv(buffer);
 
       u_trace_init(true, true, false);
       }

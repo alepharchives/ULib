@@ -308,10 +308,12 @@ int ULog::getPriorityForLogger(char* s)
 {
    U_TRACE(0, "ULog::getPriorityForLogger(%S)", s)
 
-   char* save;
-   int fac, lev, res;
+   int res;
 
 #ifndef __MINGW32__
+   char* save;
+   int fac, lev;
+
    for (save = s; *s && *s != '.'; ++s) {}
 
    if (*s)

@@ -42,7 +42,7 @@ public:
             {
             istrstream is(U_STRING_TO_PARAM(records));
 
-            x.UFile::ftruncate(records.size() * 2);
+            x.UFile::ftruncate(UCDB::sizeFor(1) + records.size() * 2);
             x.UFile::memmap(PROT_READ | PROT_WRITE);
 
             is >> x; // NB: this do ftruncate() e munmap()...

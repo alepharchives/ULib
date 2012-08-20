@@ -23,6 +23,7 @@
 #include <ulib/net/client/smtp.h>
 #include <ulib/net/client/pop3.h>
 #include <ulib/net/client/imap.h>
+#include <ulib/internal/objectIO.h>
 #include <ulib/net/rpc/rpc_client.h>
 #include <ulib/net/rpc/rpc_object.h>
 #include <ulib/net/client/client_rdb.h>
@@ -35,10 +36,6 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/xml_escape.h>
 #include <ulib/utility/quoted_printable.h>
-
-#ifndef DEBUG
-#  include <ulib/internal/objectIO.h>
-#endif
 
 #ifdef USE_PARSER
 #  include <ulib/flex/flexer.h>
@@ -58,6 +55,7 @@
 #  ifdef HAVE_SSL_TS
 #     include <ulib/ssl/timestamp.h>
 #  endif
+#  include <ulib/utility/des3.h>
 #endif
 
 #ifdef USE_LIBSSH

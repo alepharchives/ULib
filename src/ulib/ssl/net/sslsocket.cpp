@@ -80,7 +80,7 @@ void USSLSocket::info_callback(const SSL* ssl, int where, int ret)
       {
       U_INTERNAL_DUMP("SSL_CB_HANDSHAKE_START")
 
-      USSLSocket* pobj = (USSLSocket*) SSL_get_app_data(ssl);
+      USSLSocket* pobj = (USSLSocket*) SSL_get_app_data((SSL*)ssl);
 
       if (pobj)
          {

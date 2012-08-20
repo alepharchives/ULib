@@ -227,7 +227,7 @@ void u_init_ulib_hostname(void)
 
          if (node)
             {
-            (void) fscanf(node, "%255s", u_hostname);
+            (void) fscanf(node, "%254s", u_hostname);
 
             (void) fclose(node);
             }
@@ -1558,6 +1558,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             with flag '3'  => format: %d/%m/%Y %T
             with flag '4'  => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
             with flag '5'  => format: %a, %d %b %Y %H:%M:%S %Z
+            with flag '6'  => format: %Y/%m/%d %T
             with flag '9'  => format: %d/%m/%y %T
             --------------------------------------------------------------
             with flag '10' => format: %d/%m/%y %T *** private for ULog ***
@@ -1572,6 +1573,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                  width ==  3 ? "%d/%m/%Y %H:%M:%S"         :
                  width ==  4 ? "%d%m%y_%H%M%S"             :
                  width ==  5 ? "%a, %d %b %Y %H:%M:%S %Z"  :
+                 width ==  6 ? "%Y/%m/%d %T"               :
               /* ------------------------------------------- */
                  width <= 10 ? "%d/%m/%y %H:%M:%S"         :
                  width == 11 ? "%d/%b/%Y:%H:%M:%S %z"      :

@@ -716,6 +716,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 }
 
 #if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#  include <linux/types.h>
 #  include <linux/rtnetlink.h>
 #endif
 
@@ -764,7 +765,7 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
 
       // Send the request
 
-      if (U_SYSCALL(send, "%d,%p,%u,%u", sock, CAST(nlMsg.h), nlMsg.h->nlmsg_len, 0) == nlMsg.h->nlmsg_len)
+      if (U_SYSCALL(send, "%d,%p,%u,%u", sock, CAST(nlMsg.h), nlMsg.h->nlmsg_len, 0) == (ssize_t)nlMsg.h->nlmsg_len)
          {
          // Read the response
 

@@ -102,7 +102,6 @@ time_t                     UServer_Base::expire;
 uint32_t                   UServer_Base::start;
 uint32_t                   UServer_Base::count;
 uint32_t                   UServer_Base::shared_data_add;
-UFile*                     UServer_Base::anotherLog;
 UString*                   UServer_Base::mod_name;
 UString*                   UServer_Base::host;
 UString*                   UServer_Base::senvironment;
@@ -113,6 +112,7 @@ const char*                UServer_Base::client_address;
 UEventTime*                UServer_Base::ptime;
 UServer_Base*              UServer_Base::pthis;
 struct linger              UServer_Base::lng = { 1, 0 };
+UVector<UFile*>*           UServer_Base::vlog;
 UVector<UString>*          UServer_Base::vplugin_name;
 UClientImage_Base*         UServer_Base::pindex;
 UClientImage_Base*         UServer_Base::vClientImage;
@@ -348,6 +348,8 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    port         = U_DEFAULT_PORT;
    pthis        = this;
+
+   vlog         = U_NEW(UVector<UFile*>);
    mod_name     = U_NEW(UString(U_CAPACITY));
    senvironment = U_NEW(UString(U_CAPACITY));
 
@@ -418,10 +420,12 @@ UServer_Base::~UServer_Base()
    if (vallow_IP)     delete vallow_IP;
    if (vallow_IP_prv) delete vallow_IP_prv;
 
-   if (anotherLog)
+   if (vlog)
       {
-             anotherLog->close();
-      delete anotherLog;
+      for (uint32_t i = 0, n = vlog->size(); i < n; ++i) (*vlog)[i]->close();
+
+             vlog->clear();
+      delete vlog;
       }
 
 #ifdef USE_LIBSSL
@@ -1126,7 +1130,7 @@ void UServer_Base::init()
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (isLog() ||
-       isAnotherLog())
+       isOtherLog())
       {
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
 
@@ -1301,9 +1305,9 @@ void UServer_Base::runWatch()
    U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17+1)
    U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+17+1+26+1)
 
-   if (isLog())        (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
-   if (isAnotherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
-                       (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
+   if (isLog())      (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
+   if (isOtherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
+                     (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
 #endif
 }
 
@@ -1324,8 +1328,9 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    // NB: for logrotate...
 
-   if (isLog())              ULog::reopen();
-   if (isAnotherLog()) anotherLog->reopen();
+   if (isLog()) ULog::reopen();
+
+   for (uint32_t i = 0, n = vlog->size(); i < n; ++i) (*vlog)[i]->reopen();
 
    sendSigTERM();
 

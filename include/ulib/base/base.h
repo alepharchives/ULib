@@ -176,6 +176,8 @@ with flag '2' => format:          %T (=> "%H:%M:%S) +n days
 with flag '3' => format: %d/%m/%Y %T
 with flag '4' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
 with flag '5' => format: %a, %d %b %Y %H:%M:%S %Z
+with flag '6'  => format: %Y/%m/%d %T
+with flag '9'  => format: %d/%m/%y %T
 ---------------------------------------------------------------------------------
 with flag '10' => format: %d/%m/%y %T
 with flag '11' => format: %d/%b/%Y:%H:%M:%S %z

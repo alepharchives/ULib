@@ -21,20 +21,18 @@ UStringRep* USSLSession::pkey;
 /*
  * Forward secrecy
  *
- * You should consider forward secrecy. Forward secrecy means that the keys for a connection aren't stored on disk. You might have limited the amount of information that you log
- * in order to protect the privacy of your users, but if you don't have forward secrecy then your private key is capable of decrypting all past connections. Someone else might
- * be doing the logging for you.
- *
- * In order to enable forward secrecy you need to have DHE or ECDHE ciphersuites as your top preference. DHE ciphersuites are somewhat expensive if you're terminating lots of
- * SSL connections and you should be aware that your server will probably only allow 1024-bit DHE. I think 1024-bit DHE-RSA is preferable to 2048-bit RSA, but opinions vary. If
- * you're using ECDHE, use P-256.
- *
- * You also need to be aware of Session Tickets in order to implement forward secrecy correctly. There are two ways to resume a TLS connection: either the server chooses a
- * random number and both sides store the session information, of the server can encrypt the session information with a secret, local key and send that to the client. The former
- * is called Session IDs and the latter is called Session Tickets.
- *
- * But Session Tickets are transmitted over the wire and so the server's Session Ticket encryption key is capable of decrypting past connections. Most servers will generate a
- * random Session Ticket key at startup unless otherwise configured, but you should check.
+ * You should consider forward secrecy. Forward secrecy means that the keys for a connection aren't stored on disk.
+ * You might have limited the amount of information that you log in order to protect the privacy of your users, but
+ * if you don't have forward secrecy then your private key is capable of decrypting all past connections. Someone else
+ * might be doing the logging for you. In order to enable forward secrecy you need to have DHE or ECDHE ciphersuites as
+ * your top preference. DHE ciphersuites are somewhat expensive if you're terminating lots of SSL connections and you
+ * should be aware that your server will probably only allow 1024-bit DHE. I think 1024-bit DHE-RSA is preferable to
+ * 2048-bit RSA, but opinions vary. If you're using ECDHE, use P-256. You also need to be aware of Session Tickets in
+ * order to implement forward secrecy correctly. There are two ways to resume a TLS connection: either the server chooses
+ * a random number and both sides store the session information, of the server can encrypt the session information with a
+ * secret, local key and send that to the client. The former is called Session IDs and the latter is called Session Tickets.
+ * But Session Tickets are transmitted over the wire and so the server's Session Ticket encryption key is capable of decrypting
+ * past connections. Most servers will generate a random Session Ticket key at startup unless otherwise configured, but you should check.
  */
 
 void USSLSession::deleteSessionCache()
@@ -137,7 +135,11 @@ SSL_SESSION* USSLSession::fromString(const UString& x)
 
    U_ASSERT_EQUALS(x.empty(), false)
 
+#ifdef HAVE_OPENSSL_97
+         unsigned char* p =       (unsigned char*)x.data();
+#else
    const unsigned char* p = (const unsigned char*)x.data();
+#endif
 
    SSL_SESSION* sess = (SSL_SESSION*) U_SYSCALL(d2i_SSL_SESSION, "%p,%p,%ld", 0, &p, (long)x.size());
 

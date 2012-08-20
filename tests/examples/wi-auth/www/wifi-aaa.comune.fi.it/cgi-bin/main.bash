@@ -13,24 +13,28 @@ WA_UID=""
 OUTPUT=""
 TMPFILE=""
 GATEWAY=""
+MAX_TIME=""
 FILE_CTX=""
 FILE_CNT=""
 FILE_UID=""
 REQ_FILE=""
 TITLE_TXT=""
-EXIT_VALUE=0
+EXIT_VALUE=""
 CALLER_ID=""
 HEAD_HTML=""
 SET_COOKIE=""
 BODY_STYLE=""
 BODY_SHTML=""
 CONSUME_ON=""
+MAX_TRAFFIC=""
 SIGNED_DATA=""
 UUID_TO_LOG=""
 AUTH_DOMAIN=""
 POLICY_FILE=""
+POLICY_RESET=""
 TMP_FORM_FILE=""
 USER_MAX_TIME=""
+BONUS_FOR_EXIT=""
 UUID_TO_APPEND=""
 CONNECTION_CLOSE=""
 USER_MAX_TRAFFIC=""
@@ -42,6 +46,21 @@ REMAINING_TRAFFIC_MB=""
 HTTP_RESPONSE_HEADER=""
 
 # external var
+# SERVICE=""
+# TELEFONO=""
+# HELP_URL=""
+# LOGIN_URL=""
+# WALLET_URL=""
+# LOGOUT_HTML=""
+# LOGOUT_NOTE=""
+# MSG_ANOMALIA=""
+# FMT_AUTH_CMD=""
+# URL_BANNER_AP=""
+# REDIRECT_DEFAULT=""
+# URL_BANNER_COMUNE=""
+# REGISTRAZIONE_URL=""
+# GET_USER_INFO_INTERVAL=0
+
 . $DIR_ROOT/etc/$VIRTUAL_HOST/script.conf
 # common func
 . $DIR_ROOT/etc/common.sh
@@ -263,10 +282,6 @@ main_page() {
 	# -----------------------------------------------------------------------------
 	# 00:e0:4c:d4:63:f5 10.30.1.105 http://google 10.30.1.131:5280 stefano 0 x lab2
 	# -----------------------------------------------------------------------------
-
-	if [ -n "$7" -a -n "$4" ]; then
-		update_ap_list "$7" "$4"
-	fi
 
 	get_user_context_connection "" "$1"
 
@@ -1858,7 +1873,7 @@ start_ap() {
 
 	write_LOG "$1 $INFO"
 
-	HTTP_RESPONSE_BODY=`egrep -v '^#' $DIR_ROOT/etc/AllowedWebHosts.txt | tr '\n' ' '`
+	HTTP_RESPONSE_BODY=`grep -svE '^[ \t]*(#|$)' $DIR_ROOT/etc/AllowedWebHosts.txt | sed 's/#.*//' | tr '\n' ' '`
 	HTTP_RESPONSE_HEADER="Connection: close\r\n"
 }
 
@@ -2040,7 +2055,7 @@ status_network() {
 
 			read_counter $UUID
 
-			check_if_user_connected_to_AP_NO_CONSUME "$AP"
+			check_if_user_connected_to_AP_NO_CONSUME $AP
 
 			if [ "$CONSUME_ON" = "true" ]; then
 				COLOR="green"
@@ -2059,8 +2074,8 @@ status_network() {
 											"$LOGIN_TIME" $POLICY \
 											"$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
 											$COLOR $CONSUME \
-											"http://$VIRTUAL_NAME/webif_ap?ap=$AP"  $GATEWAY \
-											"http://$VIRTUAL_NAME/status_ap?ap=$AP" $AP \
+											"http://$VIRTUAL_NAME/webif_ap?ap=$AP&address=$GATEWAY"  $GATEWAY \
+											"http://$VIRTUAL_NAME/status_ap?ap=$AP&address=$GATEWAY" $AP \
 											2>/dev/null`
 
 				OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
@@ -2104,6 +2119,8 @@ reset_policy() {
 	find $DIR_CTX	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
 	find $DIR_REQ	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
 	find $DIR_CLIENT -type d -mtime +1 -exec rm -rf {} \; 2>/dev/null
+
+	mkdir -p $DIR_CLIENT/$VIRTUAL_NAME
 
 	HTTP_RESPONSE_BODY="OK"
 	HTTP_RESPONSE_HEADER="Connection: close\r\n"
@@ -2316,7 +2333,7 @@ do_cmd() {
 			;;
 			/get_users_info)
 				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
-					get_users_info "$@" 
+					get_users_info "$@"
 				fi
 			;;
 			/reset_policy)
@@ -2326,7 +2343,7 @@ do_cmd() {
 			;;
 			/recovery)
 				if [ "$REMOTE_ADDR" = "$SERVER_ADDR" ]; then
-					recovery_user "$@" 
+					recovery_user "$@"
 				fi
 			;;
 			/view_user)
