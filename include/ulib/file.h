@@ -234,9 +234,9 @@ public:
    bool creat(                     int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
    bool creat(const UString& path, int flags = O_TRUNC | O_RDWR, mode_t mode = PERM_FILE);
 
-   void reopen()
+   void reopen(int flags = O_CREAT | O_WRONLY | O_APPEND)
       {
-      U_TRACE(0, "UFile::reopen()")
+      U_TRACE(0, "UFile::reopen(%d)", flags)
 
       U_CHECK_MEMORY
 
@@ -246,7 +246,7 @@ public:
 
       close();
 
-      creat(O_CREAT | O_RDWR | O_APPEND, PERM_FILE);
+      creat(flags, PERM_FILE);
       }
 
    bool isOpen()
@@ -360,7 +360,6 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-      U_INTERNAL_ASSERT_EQUALS(st_size,0)
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
@@ -620,7 +619,8 @@ public:
    static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false);
    static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false, const UString* environment = 0);
 
-          UString getContent(bool brdonly = true,  bool bstat = false, bool bmap = false);
+          UString  getContent(                   bool brdonly = true,  bool bstat = false, bool bmap = false);
+          UString _getContent(bool bsize = true, bool brdonly = false,                     bool bmap = false);
 
    // MIME TYPE
 

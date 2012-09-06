@@ -20,6 +20,8 @@
 
 struct U_EXPORT UDES3 {
 
+   static UString signData(const char* fmt, ...);
+
    static void setPassword(const char* passwd)
       {
       U_TRACE(0, "UDES3::setPassword(%S)", passwd)

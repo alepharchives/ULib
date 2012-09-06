@@ -96,6 +96,9 @@ U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restr
 U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
 U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 
+U_EXPORT char*       u_memoryDump(                    unsigned char* restrict cp, uint32_t n);
+U_EXPORT uint32_t    u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
+
 #if defined(HAVE_MEMMEM) && !defined(__USE_GNU)
 U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
 #endif
@@ -335,41 +338,43 @@ extern U_EXPORT const unsigned char u_uri_encoded_char[256];
 
 /* character type identification - Assumed an ISO-1 character set */
 
+extern U_EXPORT const unsigned short u__ct_tab[256];
 extern U_EXPORT const unsigned char  u__ct_tol[256];
 extern U_EXPORT const unsigned char  u__ct_tou[256];
-extern U_EXPORT const unsigned short u__ct_tab[256];
 
-static inline unsigned      u_cttab(  unsigned char c) { return u__ct_tab[c]; }
-static inline unsigned char u_tolower(unsigned char c) { return u__ct_tol[c]; }
-static inline unsigned char u_toupper(unsigned char c) { return u__ct_tou[c]; }
+/* NB: u__tolower(), u__toupper, u__isspace, ... conflit with /usr/include/unicode/uchar.h */
 
-static inline bool u_iscntrl(unsigned char c)  { return ((u_cttab(c) & 0x0001) != 0); } /* __C Control character */
-static inline bool u_isdigit(unsigned char c)  { return ((u_cttab(c) & 0x0002) != 0); } /* __D Digit */
-static inline bool u_islower(unsigned char c)  { return ((u_cttab(c) & 0x0004) != 0); } /* __L Lowercase */
-static inline bool u_ispunct(unsigned char c)  { return ((u_cttab(c) & 0x0008) != 0); } /* __P Punctuation */
-static inline bool u_isspace(unsigned char c)  { return ((u_cttab(c) & 0x0010) != 0); } /* __S Space */
-static inline bool u_isupper(unsigned char c)  { return ((u_cttab(c) & 0x0020) != 0); } /* __U Uppercase */
-                                                                    /* 0x0040              __X Hexadecimal */
-static inline bool u_isblank(unsigned char c)  { return ((u_cttab(c) & 0x0080) != 0); } /* __B Blank (a space or a tab) */
-static inline bool u_islterm(unsigned char c)  { return ((u_cttab(c) & 0x0100) != 0); } /* __R carriage return or new line (a \r or \n) */
-                                                                    /* 0x0200              __T character       appears in plain ASCII text */
-static inline bool u_istext( unsigned char c)  { return ((u_cttab(c) & 0x0400) == 0); } /* __F character never appears in plain ASCII text */
-                                                                    /* 0x0800              __O character minus    '-' (45 0x2D) */
-                                                                    /* 0x1000              __N character point    '.' (46 0x2E) */
-                                                                    /* 0x2000              __M character underbar '_' (95 0x5F) */
+static inline unsigned      u_cttab(   unsigned char c) { return u__ct_tab[c]; }
+static inline unsigned char u__tolower(unsigned char c) { return u__ct_tol[c]; }
+static inline unsigned char u__toupper(unsigned char c) { return u__ct_tou[c]; }
 
-static inline bool u_isalpha( unsigned char c) { return ((u_cttab(c) & 0x0024) != 0); } /* (__L | __U)                           */
-static inline bool u_isxdigit(unsigned char c) { return ((u_cttab(c) & 0x0042) != 0); } /* (__D | __X)                           */
-static inline bool u_isalnum( unsigned char c) { return ((u_cttab(c) & 0x0026) != 0); } /* (__D | __L | __U)                     */
-static inline bool u_isname(  unsigned char c) { return ((u_cttab(c) & 0x2026) != 0); } /* (__D | __L | __U | __M)               */
-static inline bool u_ishname( unsigned char c) { return ((u_cttab(c) & 0x3826) != 0); } /* (__D | __L | __U | __M  | __N | __O)  */
-static inline bool u_isgraph( unsigned char c) { return ((u_cttab(c) & 0x002E) != 0); } /* (__D | __L | __P | __U)               */
-static inline bool u_isprint( unsigned char c) { return ((u_cttab(c) & 0x003E) != 0); } /* (__D | __L | __P | __S | __U)         */
+static inline bool u__iscntrl(unsigned char c)  { return ((u_cttab(c) & 0x0001) != 0); } /* __C Control character */
+static inline bool u__isdigit(unsigned char c)  { return ((u_cttab(c) & 0x0002) != 0); } /* __D Digit */
+static inline bool u__islower(unsigned char c)  { return ((u_cttab(c) & 0x0004) != 0); } /* __L Lowercase */
+static inline bool u__ispunct(unsigned char c)  { return ((u_cttab(c) & 0x0008) != 0); } /* __P Punctuation */
+static inline bool u__isspace(unsigned char c)  { return ((u_cttab(c) & 0x0010) != 0); } /* __S Space */
+static inline bool u__isupper(unsigned char c)  { return ((u_cttab(c) & 0x0020) != 0); } /* __U Uppercase */
+                                                                     /* 0x0040              __X Hexadecimal */
+static inline bool u__isblank(unsigned char c)  { return ((u_cttab(c) & 0x0080) != 0); } /* __B Blank (a space or a tab) */
+static inline bool u__islterm(unsigned char c)  { return ((u_cttab(c) & 0x0100) != 0); } /* __R carriage return or new line (a \r or \n) */
+                                                                     /* 0x0200              __T character       appears in plain ASCII text */
+static inline bool u__istext( unsigned char c)  { return ((u_cttab(c) & 0x0400) == 0); } /* __F character never appears in plain ASCII text */
+                                                                     /* 0x0800              __O character minus    '-' (45 0x2D) */
+                                                                     /* 0x1000              __N character point    '.' (46 0x2E) */
+                                                                     /* 0x2000              __M character underbar '_' (95 0x5F) */
 
-static inline bool     u_isoctal( unsigned char c) { return ('0' <= c && c <= '7'); }
-static inline bool     u_isbase64(unsigned char c) { return (u_isalnum(c) || (c == '+') || (c == '/') || (c == '=')); }
-static inline unsigned u_hexc2int(unsigned char c) { return (u_isdigit(c) ? c - '0' : u_toupper(c) - 'A' + 10); }
-static inline unsigned u_octc2int(unsigned char c) { return ((c - '0') & 07); }
+static inline bool u__isalpha( unsigned char c) { return ((u_cttab(c) & 0x0024) != 0); } /* (__L | __U)                          */
+static inline bool u__isxdigit(unsigned char c) { return ((u_cttab(c) & 0x0042) != 0); } /* (__D | __X)                          */
+static inline bool u__isalnum( unsigned char c) { return ((u_cttab(c) & 0x0026) != 0); } /* (__D | __L | __U)                    */
+static inline bool u__isname(  unsigned char c) { return ((u_cttab(c) & 0x2026) != 0); } /* (__D | __L | __U | __M)              */
+static inline bool u__ishname( unsigned char c) { return ((u_cttab(c) & 0x3826) != 0); } /* (__D | __L | __U | __M  | __N | __O) */
+static inline bool u__isgraph( unsigned char c) { return ((u_cttab(c) & 0x002E) != 0); } /* (__D | __L | __P | __U)              */
+static inline bool u__isprint( unsigned char c) { return ((u_cttab(c) & 0x003E) != 0); } /* (__D | __L | __P | __S | __U)        */
+
+static inline bool     u__isoctal( unsigned char c) { return ('0' <= c && c <= '7'); }
+static inline bool     u__isbase64(unsigned char c) { return (u__isalnum(c) || (c == '+') || (c == '/') || (c == '=')); }
+static inline unsigned u__hexc2int(unsigned char c) { return (u__isdigit(c) ? c - '0' : u__toupper(c) - 'A' + 10); }
+static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
 /* buffer type identification */
 
@@ -393,10 +398,10 @@ U_EXPORT bool u_isBinary(const unsigned char* restrict s, uint32_t n) __pure;
 /* ip address type identification */
 
 static inline bool u_isIPv4Addr(const char* restrict p, uint32_t n)
-   { char c; uint32_t i = 0; for (; i < n; ++i) { c = p[i]; if (u_isdigit(c)  == 0 && c != '.')             return false; } return true; } 
+   { char c; uint32_t i = 0; for (; i < n; ++i) { c = p[i]; if (u__isdigit(c)  == 0 && c != '.')             return false; } return true; } 
 
 static inline bool u_isIPv6Addr(const char* restrict p, uint32_t n)
-   { char c; uint32_t i = 0; for (; i < n; ++i) { c = p[i]; if (u_isxdigit(c) == 0 && c != '.' && c != ':') return false; } return true; } 
+   { char c; uint32_t i = 0; for (; i < n; ++i) { c = p[i]; if (u__isxdigit(c) == 0 && c != '.' && c != ':') return false; } return true; } 
 
 static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n) : u_isIPv4Addr(p, n)); } 
 
@@ -407,7 +412,7 @@ static inline void u_int2hex(char* restrict p, uint32_t n)
    { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[((n >> s) & 0x0F)]; }
 
 static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
-   { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u_hexc2int(*p++); return n; }
+   { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }
 
 #ifdef USE_LIBSSL
 /*

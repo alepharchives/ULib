@@ -73,7 +73,7 @@ void UXml2Txt::characterData(const XML_Char* str, int len)
    if (U_NOT_OUTPUT) return;
 
    /*
-   while (u_isspace(*str) && len > 0)
+   while (u__isspace(*str) && len > 0)
       {
       ++str;
       --len;

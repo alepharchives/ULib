@@ -70,8 +70,8 @@ protected:
 
    static bool bGEOIP_CITY_EDITION_REV1;
 
+   bool setCountryCode();
    bool checkCountryForbidden();
-   bool setCountryCode(const char* ipaddress);
 
 private:
    UGeoIPPlugIn(const UGeoIPPlugIn&) : UServerPlugIn() {}

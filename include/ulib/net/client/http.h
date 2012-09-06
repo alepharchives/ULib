@@ -44,6 +44,9 @@ public:
    void reset();
    void setLocalHost(const UString& host) { localhost = host; }
 
+   bool getSaveHttpInfo() const            { return bSaveHttpInfo; }
+   void setSaveHttpInfo(bool saveHttpInfo) { bSaveHttpInfo = saveHttpInfo; }
+
    // Returns a modifiable sequence of MIME-type headers that will be used to form a request to the HTTP server
 
    UMimeHeader* getRequestHeader() { return requestHeader; }
@@ -122,7 +125,7 @@ public:
 
    UString getContent() const   { return body; }
    UString getSetCookie() const { return setcookie; }
-   int     responseCode() const { return u_http_info.nResponseCode; }
+   int     responseCode() const { return nResponseCode; }
 
    // DEBUG
 
@@ -134,7 +137,8 @@ protected:
    UMimeHeader* requestHeader;
    UMimeHeader* responseHeader;
    UString body, localhost, user, password, method, setcookie;
-   bool bFollowRedirects, bproxy;
+   int nResponseCode;
+   bool bFollowRedirects, bproxy, bSaveHttpInfo;
 
     UHttpClient_Base(UFileConfig* cfg);
    ~UHttpClient_Base();

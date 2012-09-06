@@ -187,7 +187,7 @@ inline bool UFtpClient::readPortToConnect()
 
    // find address in form ip1,ip2,ip3,ip4,p1,p2
 
-   while (*s && !u_isdigit(*s)) { ++s; }
+   while (*s && !u__isdigit(*s)) { ++s; }
 
    int i, addr[6];
 
@@ -195,7 +195,7 @@ inline bool UFtpClient::readPortToConnect()
       {
       addr[i] = 0;
 
-      while (u_isdigit(*s)) { addr[i] = 10 * addr[i] + *s++ - '0'; }
+      while (u__isdigit(*s)) { addr[i] = 10 * addr[i] + *s++ - '0'; }
 
       if (*s == ',' || i == 5)
          {
@@ -236,18 +236,18 @@ inline void UFtpClient::readNumberOfByte()
          {
          ++p;
 
-         while (u_isspace(*p)) ++p;
+         while (u__isspace(*p)) ++p;
 
-         if (u_isdigit(*p))
+         if (u__isdigit(*p))
             {
-            while (u_isdigit(*p)) { bytes_to_read = 10 * bytes_to_read + (*p++ - '0'); }
+            while (u__isdigit(*p)) { bytes_to_read = 10 * bytes_to_read + (*p++ - '0'); }
 
-            while (u_isspace(*p)) ++p;
+            while (u__isspace(*p)) ++p;
 
-            if (u_tolower(*p)     == 'b' &&
-                u_tolower(*(p+1)) == 'y' &&
-                u_tolower(*(p+2)) == 't' &&
-                u_tolower(*(p+3)) == 'e')
+            if (u__tolower(*p)     == 'b' &&
+                u__tolower(*(p+1)) == 'y' &&
+                u__tolower(*(p+2)) == 't' &&
+                u__tolower(*(p+3)) == 'e')
                {
                break;   
                }

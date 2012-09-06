@@ -85,9 +85,8 @@ public:
 
    // Open a Reliable DataBase
 
-   bool open(uint32_t log_size = 1024 * 1024, bool btruncate = false);
-
-   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false)
+   bool open(                       uint32_t log_size = 1024 * 1024, bool btruncate = false, bool brdonly = true);
+   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false, bool brdonly = true)
       {
       U_TRACE(0, "URDB::open(%.*S,%u,%b)", U_STRING_TO_TRACE(pathdb), log_size, btruncate)
 
@@ -200,13 +199,13 @@ public:
       _lock.init(ptr);
       }
 
-   void   lock() { _lock.lock(1000); }
+   void   lock() { _lock.lock(0); }
    void unlock() { _lock.unlock(); }
 
    // TRANSACTION
 
-   bool beginTransaction();
-   void abortTransaction();
+   bool  beginTransaction();
+   void  abortTransaction();
    void commitTransaction();
 
    // Call function for all entry
@@ -235,12 +234,14 @@ protected:
    ULock _lock;
    UFile journal;
 
+   // ----------------------------------------------------------------------------------------------------------------
    // CACHE for CDB:
    // ----------------------------------------------------------------------------------------------------------------
    // This code implements a chained hash table where we use binary search trees instead of linked lists as chains.
    // Let's call this a hash tree. This code uses blobs, not 0-terminated strings. While these routines can be used
    // as associative hash, they are meant as a cache for a larger, disk-base database or mmap'ed file. And I provide
    // functions to mark a record as deleted, so that this can be used to cache deltas to a constant database like CDB
+   // ----------------------------------------------------------------------------------------------------------------
    // NB: offsets relative to the starting address of the mapping should be employed...
    // ----------------------------------------------------------------------------------------------------------------
 
@@ -264,26 +265,15 @@ protected:
       // -----> data storage...            // RDB_ptr
    } cache_struct;
 
-   uint32_t node; // RDB_node
+   typedef void (*vPFu)(uint32_t offset);
 
    // Manage shared cache
 
-   typedef void (*vPFu)(uint32_t offset);
+   UString at();
 
-   bool isDeleted() const
-      {
-      U_TRACE(0, "URDB::isDeleted()")
-
-      U_CHECK_MEMORY
-
-      bool result = (RDB_node_data_pr == 0);
-
-#  ifdef DEBUG
-      if (result) { U_INTERNAL_ASSERT_EQUALS(RDB_node_data_sz, U_NOT_FOUND) }
-#  endif
-
-      U_RETURN(result);
-      }
+   int  remove();
+   bool isDeleted();
+   int  substitute(UCDB::datum* new_key, int flag);
 
    bool cdbLookup() // NB: valorizza struct UCDB::data..
       {
@@ -298,11 +288,6 @@ protected:
       U_RETURN(result);
       }
 
-   UString at();
-
-   int remove();
-   int substitute(UCDB::datum* new_key, int flag);
-
    // utility - especially created for net interface class
 
    static char* parseLine(const char* ptr, UCDB::datum* key, UCDB::datum* data);
@@ -310,16 +295,19 @@ protected:
           char* parseLine(const char* ptr) { return parseLine(ptr, &key, &data); }
 
 private:
+   uint32_t   node; // RDB_node
    uint32_t* pnode;
 
    static URDB* ptr_rdb;
    static UCDB::datum key1;
    static UVector<UString>* kvec;
 
-   void htAlloc() U_NO_EXPORT;    // Alloc one node for the hash tree
-   bool htLookup() U_NO_EXPORT;   // Search one key/data pair in the cache
-   void htInsert() U_NO_EXPORT;   // Insert one key/data pair in the cache
-   bool reorganize() U_NO_EXPORT; // Combines the old cdb file and the diffs in a new cdb file
+   void htAlloc() U_NO_EXPORT;       // Alloc one node for the hash tree
+   bool htLookup() U_NO_EXPORT;      // Search one key/data pair in the cache
+   void htInsert() U_NO_EXPORT;      // Insert one key/data pair in the cache
+   void htRemoveAlloc() U_NO_EXPORT; // remove one node allocated for the hash tree
+
+   bool reorganize() U_NO_EXPORT;    // Combines the old cdb file and the diffs in a new cdb file
 
    bool logJournal(int op) U_NO_EXPORT;
    bool writev(const struct iovec* iov, int n, uint32_t size) U_NO_EXPORT;

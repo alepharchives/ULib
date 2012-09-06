@@ -1506,17 +1506,17 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_DUMP("u__ct_tab['\\r'] = %d %B", u__ct_tab['\r'], u__ct_tab['\r'])
    U_INTERNAL_DUMP("u__ct_tab['\\n'] = %d %B", u__ct_tab['\n'], u__ct_tab['\n'])
 
-   U_INTERNAL_DUMP("u_islterm('\\r') = %b", u_islterm('\r'))
-   U_INTERNAL_DUMP("u_islterm('\\n') = %b", u_islterm('\n'))
+   U_INTERNAL_DUMP("u__islterm('\\r') = %b", u__islterm('\r'))
+   U_INTERNAL_DUMP("u__islterm('\\n') = %b", u__islterm('\n'))
 
    U_INTERNAL_DUMP("u__ct_tab[0xC3] = %d %B", u__ct_tab[0xC3], u__ct_tab[0xC3]) // ü
-   U_INTERNAL_DUMP("u_istext( 0xC3) = %b", u_istext(0xC3))
+   U_INTERNAL_DUMP("u__istext( 0xC3) = %b", u__istext(0xC3))
 
    U_INTERNAL_DUMP("u__ct_tab[0xBC] = %d %B", u__ct_tab[0xBC], u__ct_tab[0xBC]) // @
-   U_INTERNAL_DUMP("u_istext( 0xBC) = %b", u_istext(0xBC))
+   U_INTERNAL_DUMP("u__istext( 0xBC) = %b", u__istext(0xBC))
 
    U_INTERNAL_DUMP("u__ct_tab['\377'] = %d %B", u_cttab('\377'), u_cttab('\377'))
-   U_INTERNAL_DUMP("u_isdigit('\377') = %b", u_isdigit('\377'))
+   U_INTERNAL_DUMP("u__isdigit('\377') = %b", u__isdigit('\377'))
 
    int n = (argc > 1 ? atoi(argv[1]) : 1);
 
@@ -1800,17 +1800,17 @@ U_EXPORT main (int argc, char* argv[])
    str     = "The string \xC3\xBC@foo-bar"; // "The string ü@foo-bar"
    str_len = strlen(str);
 
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == true )
+   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
    U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == true )
    U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
    U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == false )
 
    z = UString::fromUTF8((const unsigned char*)str, str_len);
 
-   U_INTERNAL_ASSERT( z.isText()   == true )
+   U_INTERNAL_ASSERT( z.isText()   == false )
    U_INTERNAL_ASSERT( z.isUTF8()   == false )
    U_INTERNAL_ASSERT( z.isUTF16()  == false )
-   U_INTERNAL_ASSERT( z.isBinary() == false )
+   U_INTERNAL_ASSERT( z.isBinary() == true )
 
    U_INTERNAL_ASSERT( UString::toUTF8((const unsigned char*)z.data(), z.size()) == str )
 

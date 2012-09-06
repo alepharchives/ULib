@@ -328,6 +328,21 @@ public:
    static void manageHTTPRequestCache();
 #endif
 
+   // manage HTTP request service
+
+   typedef struct service_info {
+      const char* name;
+      uint32_t    len;
+      vPF         function;
+   } service_info;
+
+#  define  GET_ENTRY(name) {#name,U_CONSTANT_SIZE(#name), GET_##name}
+#  define POST_ENTRY(name) {#name,U_CONSTANT_SIZE(#name),POST_##name}
+
+   static void manageRequest(UString* request_uri, UString* client_address,
+                             const struct UHTTP::service_info*  GET_table, uint32_t n1,
+                             const struct UHTTP::service_info* POST_table, uint32_t n2);
+
    // request state processing
 
 #  define U_HTTP_REQUEST_IS_ALREADY_PROCESSED  '4'
@@ -503,9 +518,11 @@ public:
 
    static void    processHTTPForm();
    static void    resetForm(bool brmdir);
-   static void    getFormValue(UString& value, uint32_t pos);
+
    static void    getFormValue(UString& value, const char* name, uint32_t len);
-   static UString getFormValue(                const char* name, uint32_t len, uint32_t start, uint32_t end);
+   static void    getFormValue(UString& value,                                                 uint32_t pos);
+   static UString getFormValue(                const char* name, uint32_t len, uint32_t start,               uint32_t end);
+   static void    getFormValue(UString& value, const char* name, uint32_t len, uint32_t start, uint32_t pos, uint32_t end);
 
    // COOKIE
 
@@ -637,7 +654,7 @@ public:
    static bool processCGIOutput();
    static bool isGenCGIRequest() __pure;
    static void setHTTPCgiResponse(bool header_content_type, bool bcompress, bool connection_close);
-   static bool processCGIRequest(UCommand& cmd, UString* environment, const char* cgi_dir, bool async);
+   static bool processCGIRequest(UCommand& cmd, UString* environment, const char* cgi_dir, bool& async);
 
    // URI PROTECTED
 

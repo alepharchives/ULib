@@ -235,7 +235,7 @@ void ULog::write(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   struct iovec iov[1] = { { (caddr_t)buffer, u_vsnprintf(buffer, sizeof(buffer), format, argp) } };
+   struct iovec iov[1] = { { (caddr_t)buffer, u__vsnprintf(buffer, sizeof(buffer), format, argp) } };
 
    va_end(argp);
 
@@ -252,8 +252,8 @@ void ULog::log(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   if (prefix) iov[0].iov_len  = u__snprintf(buffer,                  sizeof(buffer),                  prefix, 0);
-               iov[0].iov_len += u_vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp);
+   if (prefix) iov[0].iov_len  = u__snprintf( buffer,                  sizeof(buffer),                  prefix, 0);
+               iov[0].iov_len += u__vsnprintf(buffer + iov[0].iov_len, sizeof(buffer) - iov[0].iov_len, format, argp);
 
    va_end(argp);
 
@@ -265,13 +265,11 @@ void ULog::logger(const char* ident, int priority, const char* format, ...)
    U_TRACE(0, "ULog::logger(%S,%d,%S)", ident, priority, format)
 
 #ifndef __MINGW32__
-   static bool bopenlog;
-
-   if (bopenlog == false)
+   if (format == 0)
       {
-       bopenlog  = true;
-
       U_SYSCALL_VOID(openlog, "%S,%d,%d", ident, 0, 0);
+
+      return;
       }
 
    uint32_t len;
@@ -280,7 +278,7 @@ void ULog::logger(const char* ident, int priority, const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   len = u_vsnprintf(buffer, sizeof(buffer), format, argp);
+   len = u__vsnprintf(buffer, sizeof(buffer), format, argp);
 
    va_end(argp);
 
@@ -290,45 +288,45 @@ void ULog::logger(const char* ident, int priority, const char* format, ...)
 
 // Decode a symbolic name to a numeric value
 
-__pure U_NO_EXPORT int ULog::decode(const char* name, bool bfacility)
+__pure U_NO_EXPORT int ULog::decode(const char* name, uint32_t len, bool bfacility)
 {
-   U_TRACE(0, "ULog::decode(%S,%b)", name, bfacility)
+   U_TRACE(0, "ULog::decode(%.*S,%u,%b)", len, name, len, bfacility)
 
 #ifndef __MINGW32__
    for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c)
       {
-      if (strcasecmp(name, c->c_name) == 0) U_RETURN(c->c_val);
+      if (strncasecmp(name, c->c_name, len) == 0) U_RETURN(c->c_val);
       }
 #endif
 
    U_RETURN(-1);
 }
 
-int ULog::getPriorityForLogger(char* s)
+int ULog::getPriorityForLogger(const char* s)
 {
    U_TRACE(0, "ULog::getPriorityForLogger(%S)", s)
 
    int res;
 
 #ifndef __MINGW32__
-   char* save;
    int fac, lev;
+   const char* ptr;
 
-   for (save = s; *s && *s != '.'; ++s) {}
+   for (ptr = s; *ptr && *ptr != '.'; ++ptr) {}
 
-   if (*s)
+   if (*ptr)
       {
-      *s   = '\0';
-      fac  = decode(save, true);
-      *s++ = '.';
+      U_INTERNAL_ASSERT_EQUALS(*ptr, '.')
+
+      fac = decode(s, ptr++ - s, true);
       }
    else
       {
-      s    = save;
-      fac  = LOG_USER;
+      ptr = s;
+      fac = LOG_USER;
       }
 
-   lev = decode(s, false);
+   lev = decode(s, ptr - s, false);
 
    res = ((lev & LOG_PRIMASK) | (fac & LOG_FACMASK));
 #endif

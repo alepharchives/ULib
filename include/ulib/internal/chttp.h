@@ -206,10 +206,14 @@ extern "C" {
 #endif
 
 extern U_EXPORT uhttpinfo u_http_info;
+extern U_EXPORT uhttpinfo u_http_info_save;
 
 #ifdef __cplusplus
 }
 #endif
+
+#define U_HTTP_INFO_SAVE    (u_http_info_save = u_http_info)
+#define U_HTTP_INFO_RESTORE (u_http_info      = u_http_info_save)
 
 #define U_HTTP_INFO_INIT(c) (void)U_SYSCALL(memset,"%p,%d,%u",&u_http_info,c,sizeof(uhttpinfo))
 

@@ -117,9 +117,9 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
 
       // Check for continuation of preceding header
 
-      if (u_isspace(*prev))
+      if (u__isspace(*prev))
          {
-         do { ++prev; } while (prev < _end && u_isspace(*prev));
+         do { ++prev; } while (prev < _end && u__isspace(*prev));
 
          U_INTERNAL_ASSERT_MINOR(prev,ptr)
 
@@ -142,7 +142,7 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
 
          (void) key.assign(prev, pkv - prev);
 
-         do { ++pkv; } while (pkv < _end && u_isspace(*pkv));
+         do { ++pkv; } while (pkv < _end && u__isspace(*pkv));
 
          (void) value.assign(pkv, ptr - pkv - cr);
 

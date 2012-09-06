@@ -52,6 +52,8 @@ struct U_EXPORT UServices {
    static void closeStdInputOutput();        // move stdin and stdout to /dev/null
    static int  getDevNull(const char* file); // return open(/dev/null)
 
+   static int  askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char* fmt, va_list argp);
+
    /**
     * Read data from fd
     *
@@ -244,7 +246,6 @@ struct U_EXPORT UServices {
 
    static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
    static bool    verifySignature(  int alg, const UString& data, const UString& signature, const UString& pkey,                                    ENGINE* e = 0);
-
 #endif
 };
 

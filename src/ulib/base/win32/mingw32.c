@@ -158,7 +158,7 @@ char* u_slashify(const char* src, char slash_from, char slash_to)
    U_INTERNAL_TRACE("u_slashify(%s,%c,%c)", src, slash_from, slash_to)
 
    /* Skip over the disk name in MSDOS pathnames
-   if (u_isalpha(src[0]) && src[1] == ':') src += 2;
+   if (u__isalpha(src[0]) && src[1] == ':') src += 2;
    */
 
    while (*src)

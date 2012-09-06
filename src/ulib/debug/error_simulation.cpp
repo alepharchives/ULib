@@ -110,15 +110,15 @@ void* USimulationError::checkForMatch(const char* call_name)
 
          for (; file_ptr <= limit; ++file_ptr)
             {
-            while (u_isspace(*file_ptr)) ++file_ptr;
+            while (u__isspace(*file_ptr)) ++file_ptr;
 
             if (*file_ptr != '#')
                {
-               while (u_isspace(*file_ptr)) ++file_ptr;
+               while (u__isspace(*file_ptr)) ++file_ptr;
 
                U_INTERNAL_PRINT("file_ptr = %.*s", len, file_ptr);
 
-               if (u_isspace(file_ptr[len]) &&
+               if (u__isspace(file_ptr[len]) &&
                    memcmp(file_ptr, call_name, len) == 0)
                   {
                   match = true;
@@ -140,7 +140,7 @@ void* USimulationError::checkForMatch(const char* call_name)
 
          if (match)
             {
-            while (u_isspace(*file_ptr)) ++file_ptr;
+            while (u__isspace(*file_ptr)) ++file_ptr;
 
             char type = *file_ptr++;
 

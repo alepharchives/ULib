@@ -54,12 +54,12 @@ uint32_t u_hexdump_decode(const char* restrict input, uint32_t len, unsigned cha
    while (i < (int32_t)len)
       {
       /*
-      U_INTERNAL_ASSERT(u_isxdigit(input[i]))
-      U_INTERNAL_ASSERT(u_isxdigit(input[i+1]))
+      U_INTERNAL_ASSERT(u__isxdigit(input[i]))
+      U_INTERNAL_ASSERT(u__isxdigit(input[i+1]))
       */
 
-      c =            u_hexc2int(input[i++]);
-      c = (c << 4) | u_hexc2int(input[i++]);
+      c =            u__hexc2int(input[i++]);
+      c = (c << 4) | u__hexc2int(input[i++]);
 
       *r++ = (unsigned char) c;
       }

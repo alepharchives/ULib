@@ -95,7 +95,7 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
       {
       ch = *input++;
 
-      if (u_isalnum(ch) || strchr("\"&'<>", ch) == 0) *r++ = ch;
+      if (u__isalnum(ch) || strchr("\"&'<>", ch) == 0) *r++ = ch;
       else
          {
          switch (ch)

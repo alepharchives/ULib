@@ -294,7 +294,7 @@ U_NO_EXPORT void UImapClient::setEnd()
 
    end -= 2;
 
-   for (ptr1 = ptr2 = buffer.c_pointer(end); !u_isspace(*ptr1); --ptr1) {}
+   for (ptr1 = ptr2 = buffer.c_pointer(end); !u__isspace(*ptr1); --ptr1) {}
 
    // "\r" -> "\nU0001 OK ..."
 

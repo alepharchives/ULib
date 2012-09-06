@@ -450,9 +450,50 @@ void UFile::msync(char* ptr, char* page, int flags)
    (void) U_SYSCALL(msync, "%p,%u,%d", (char*)start, length * PAGESIZE, flags);
 }
 
+UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
+{
+   U_TRACE(0, "UFile::_getContent(%b,%b,%b)", bsize, brdonly, bmap)
+
+   U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
+
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+   U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+   UString fileContent;
+
+   if (bsize) readSize();
+
+   if (bmap ||
+       st_size > (off_t)(16L * 1024L))
+      {
+      int                   prot  = PROT_READ;
+      if (brdonly == false) prot |= PROT_WRITE;
+
+      (void) memmap(prot, &fileContent, 0, st_size);
+      }
+   else
+      {
+      UString tmp(st_size);
+
+      char* ptr = tmp.data();
+
+      ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
+
+      if (value < 0L) value = 0L;
+
+      ptr[value] = '\0'; // NB: in this way we can use string function data()...
+
+      tmp.size_adjust(value);
+
+      fileContent = tmp;
+      }
+
+   U_RETURN_STRING(fileContent);
+}
+
 UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
 {
-   U_TRACE(1, "UFile::getContent(%b,%b,%b)", brdonly, bstat, bmap)
+   U_TRACE(0, "UFile::getContent(%b,%b,%b)", brdonly, bstat, bmap)
 
    if (isOpen()                          == false &&
        open(brdonly ? O_RDONLY : O_RDWR) == false)
@@ -465,32 +506,7 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
    if (st_size ||
        size(bstat))
       {
-      U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
-
-      if (bmap ||
-          st_size > (off_t)(16L * 1024L))
-         {
-         int                   prot  = PROT_READ;
-         if (brdonly == false) prot |= PROT_WRITE;
-
-         (void) memmap(prot, &fileContent, 0, st_size);
-         }
-      else
-         {
-         UString tmp(st_size);
-
-         char* ptr = tmp.data();
-
-         ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
-
-         if (value < 0L) value = 0L;
-
-         ptr[value] = '\0'; // NB: in this way we can use string function data()...
-
-         tmp.size_adjust(value);
-
-         fileContent = tmp;
-         }
+      fileContent = _getContent(false, brdonly, bmap);
       }
 
    UFile::close();

@@ -106,8 +106,8 @@
 #endif
 
 #ifdef USE_LIBSSL
-#  include "base/ssl/des3.c"
 #  include "base/ssl/dgst.c"
+#  include "base/ssl/cdes3.c"
 #endif
 
 #ifdef ENABLE_ZIP

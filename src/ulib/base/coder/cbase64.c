@@ -153,7 +153,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
 
    u_base64_errors = 0;
 
-   while ((ptr < end) && (*ptr != '\0') && (member[(int)*(ptr)] == 1 || *ptr == PAD || u_isspace(*ptr))) ++ptr;
+   while ((ptr < end) && (*ptr != '\0') && (member[(int)*(ptr)] == 1 || *ptr == PAD || u__isspace(*ptr))) ++ptr;
 
    input_len = ptr - input;
 
@@ -167,7 +167,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
 
       if (!member[(int)c]) continue;
 
-      U_INTERNAL_ASSERT(u_isbase64(c))
+      U_INTERNAL_ASSERT(u__isbase64(c))
 
       bits += decoder[(int)c];
 

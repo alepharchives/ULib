@@ -4,4 +4,4 @@
 
 PROGRAM=`basename $0 .sh`
 
-exec /home/unirel/userver/bin/send_req_to_portal.sh $PROGRAM "get_users_info?ap=$1\&gateway=$2"
+exec /home/unirel/userver/bin/send_req_to_portal.sh $PROGRAM "get_users_info?ap=ap@$1\&public=$2"

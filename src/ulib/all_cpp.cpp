@@ -102,6 +102,7 @@
 #  include "ssl/mime/mime_pkcs7.cpp"
 #  include "ssl/net/sslsocket.cpp"
 #  include "ssl/net/ssl_session.cpp"
+#  include "utility/des3.cpp"
 #  ifdef HAVE_SSL_TS
 #     include "ssl/timestamp.cpp"
 #  endif

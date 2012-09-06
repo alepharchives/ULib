@@ -368,9 +368,9 @@ uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, in
 
       if (_flags & PCRE_CASELESS)
          {
-         z = u_toupper(_expression.first_char());
+         z = u__toupper(_expression.first_char());
 
-         for (pos = 0; pos < length; ++pos) _piece.push_back(u_toupper(piece.c_char(pos)));
+         for (pos = 0; pos < length; ++pos) _piece.push_back(u__toupper(piece.c_char(pos)));
          }
       else
          {

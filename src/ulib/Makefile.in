@@ -63,9 +63,9 @@ target_triplet = @target@
 @LIBZ_TRUE@am__append_23 = base/coder/cgzio.c
 @USE_PARSER_TRUE@am__append_24 = flex/flexer.cpp flex/bison.cpp
 @PCRE_TRUE@am__append_25 = pcre/pcre.cpp
-@SSL_TRUE@am__append_26 = base/ssl/des3.c base/ssl/dgst.c
+@SSL_TRUE@am__append_26 = base/ssl/cdes3.c base/ssl/dgst.c
 @SSL_TRUE@am__append_27 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
-@SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp
+@SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp
 
 @SSL_TRUE@@SSL_TS_TRUE@am__append_28 = ssl/timestamp.cpp
 @SSH_TRUE@am__append_29 = ssh/net/sshsocket.cpp
@@ -167,7 +167,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	replace/fallocate.c replace/fallocate64.c replace/pread.c \
 	replace/assert.c base/zip/inflate.c base/zip/dostime.c \
 	base/zip/pushback.c base/zip/ziptool.c base/coder/cgzio.c \
-	base/ssl/des3.c base/ssl/dgst.c base/win32/mingw32.c \
+	base/ssl/cdes3.c base/ssl/dgst.c base/win32/mingw32.c \
 	internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	db/cdb.cpp db/rdb.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
 	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
@@ -197,7 +197,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	flex/flexer.cpp flex/bison.cpp pcre/pcre.cpp \
 	ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
 	ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp \
-	ssl/net/ssl_session.cpp ssl/timestamp.cpp \
+	ssl/net/ssl_session.cpp utility/des3.cpp ssl/timestamp.cpp \
 	ssh/net/sshsocket.cpp ldap/ldap.cpp curl/curl.cpp \
 	xml/expat/attribute.cpp xml/expat/element.cpp \
 	xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
@@ -238,7 +238,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 @ZIP_TRUE@am__objects_18 = inflate.lo dostime.lo pushback.lo \
 @ZIP_TRUE@	ziptool.lo
 @LIBZ_TRUE@am__objects_19 = cgzio.lo
-@SSL_TRUE@am__objects_20 = des3.lo dgst.lo
+@SSL_TRUE@am__objects_20 = cdes3.lo dgst.lo
 @MINGW_TRUE@am__objects_21 = mingw32.lo
 am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 	cbase64.lo cquoted_printable.lo curl_coder.lo cxml_coder.lo \
@@ -258,7 +258,7 @@ am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 @USE_PARSER_TRUE@am__objects_27 = flexer.lo bison.lo
 @PCRE_TRUE@am__objects_28 = pcre.lo
 @SSL_TRUE@am__objects_29 = certificate.lo pkcs7.lo crl.lo pkcs10.lo \
-@SSL_TRUE@	mime_pkcs7.lo sslsocket.lo ssl_session.lo
+@SSL_TRUE@	mime_pkcs7.lo sslsocket.lo ssl_session.lo des3.lo
 @SSL_TRUE@@SSL_TS_TRUE@am__objects_30 = timestamp.lo
 @SSH_TRUE@am__objects_31 = sshsocket.lo
 @LDAP_TRUE@am__objects_32 = ldap.lo
@@ -697,6 +697,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cache.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cbase64.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdb.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cdes3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/certificate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cescape.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cgzio.Plo@am__quote@
@@ -1133,13 +1134,13 @@ cgzio.lo: base/coder/cgzio.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cgzio.lo `test -f 'base/coder/cgzio.c' || echo '$(srcdir)/'`base/coder/cgzio.c
 
-des3.lo: base/ssl/des3.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT des3.lo -MD -MP -MF $(DEPDIR)/des3.Tpo -c -o des3.lo `test -f 'base/ssl/des3.c' || echo '$(srcdir)/'`base/ssl/des3.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/des3.Tpo $(DEPDIR)/des3.Plo
+cdes3.lo: base/ssl/cdes3.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cdes3.lo -MD -MP -MF $(DEPDIR)/cdes3.Tpo -c -o cdes3.lo `test -f 'base/ssl/cdes3.c' || echo '$(srcdir)/'`base/ssl/cdes3.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/cdes3.Tpo $(DEPDIR)/cdes3.Plo
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='base/ssl/des3.c' object='des3.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='base/ssl/cdes3.c' object='cdes3.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o des3.lo `test -f 'base/ssl/des3.c' || echo '$(srcdir)/'`base/ssl/des3.c
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cdes3.lo `test -f 'base/ssl/cdes3.c' || echo '$(srcdir)/'`base/ssl/cdes3.c
 
 dgst.lo: base/ssl/dgst.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT dgst.lo -MD -MP -MF $(DEPDIR)/dgst.Tpo -c -o dgst.lo `test -f 'base/ssl/dgst.c' || echo '$(srcdir)/'`base/ssl/dgst.c
@@ -1748,6 +1749,14 @@ ssl_session.lo: ssl/net/ssl_session.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='ssl/net/ssl_session.cpp' object='ssl_session.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ssl_session.lo `test -f 'ssl/net/ssl_session.cpp' || echo '$(srcdir)/'`ssl/net/ssl_session.cpp
+
+des3.lo: utility/des3.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT des3.lo -MD -MP -MF $(DEPDIR)/des3.Tpo -c -o des3.lo `test -f 'utility/des3.cpp' || echo '$(srcdir)/'`utility/des3.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/des3.Tpo $(DEPDIR)/des3.Plo
+@am__fastdepCXX_FALSE@	$(AM_V_CXX) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='utility/des3.cpp' object='des3.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o des3.lo `test -f 'utility/des3.cpp' || echo '$(srcdir)/'`utility/des3.cpp
 
 timestamp.lo: ssl/timestamp.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT timestamp.lo -MD -MP -MF $(DEPDIR)/timestamp.Tpo -c -o timestamp.lo `test -f 'ssl/timestamp.cpp' || echo '$(srcdir)/'`ssl/timestamp.cpp

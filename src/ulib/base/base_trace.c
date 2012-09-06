@@ -460,7 +460,7 @@ void u_trace_dump(const char* restrict format, ...)
    va_list argp;
    va_start(argp, format);
 
-   buffer_len = u_vsnprintf(buffer, sizeof(buffer), format, argp);
+   buffer_len = u__vsnprintf(buffer, sizeof(buffer), format, argp);
 
    va_end(argp);
 

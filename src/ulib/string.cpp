@@ -415,7 +415,7 @@ void UStringRep::trim()
 
    // skip white space from start
 
-   while (_length && u_isspace(*str))
+   while (_length && u__isspace(*str))
       {
       ++str;
       --_length;
@@ -425,7 +425,7 @@ void UStringRep::trim()
 
    // skip white space from end
 
-   while (_length && u_isspace(str[_length-1])) --_length;
+   while (_length && u__isspace(str[_length-1])) --_length;
 }
 
 // ----------------------------------------------
@@ -461,7 +461,7 @@ __pure bool UStringRep::someWhiteSpace(uint32_t pos) const
 
    for (; pos < _length; ++pos)
       {
-      if (u_isspace(str[pos])) U_RETURN(true);
+      if (u__isspace(str[pos])) U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -481,7 +481,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       u_line_terminator     = U_CRLF;
       u_line_terminator_len = 2;
 
-      U_INTERNAL_ASSERT(u_islterm(str[pos]))
+      U_INTERNAL_ASSERT(u__islterm(str[pos]))
 
       U_RETURN(true);
       }
@@ -491,7 +491,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       u_line_terminator     = U_LF;
       u_line_terminator_len = 1;
 
-      U_INTERNAL_ASSERT(u_islterm(str[pos]))
+      U_INTERNAL_ASSERT(u__islterm(str[pos]))
 
       U_RETURN(true);
       }
@@ -1237,13 +1237,13 @@ __pure bool UStringRep::strtob() const
       char c = str[0];
 
       if (          c  == '1' ||
-          u_toupper(c) == 'Y')
+          u__toupper(c) == 'Y')
          {
          U_RETURN(true);
          }
 
       U_INTERNAL_ASSERT(          c  == '0' ||
-                        u_toupper(c) == 'N')
+                        u__toupper(c) == 'N')
       }
 
    U_RETURN(false);
@@ -1528,7 +1528,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
       if (in.flags() & ios::skipws)
          {
          while ((c != EOF) &&
-                u_isspace(c))
+                u__isspace(c))
             {
             c = sb->sbumpc();
             }
@@ -1544,7 +1544,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
                              : str.max_size());
 
          while (extracted < n &&
-                u_isspace(c) == false)
+                u__isspace(c) == false)
             {
             str._append(c);
 
@@ -1615,7 +1615,7 @@ istream& UString::getline(istream& in, char delim)
                   {
                   // compress multiple white-space in a single new-line...
 
-                  do { c = sb->sbumpc(); } while (c != EOF && u_isspace(c));
+                  do { c = sb->sbumpc(); } while (c != EOF && u__isspace(c));
 
                   if (c != EOF)
                      {

@@ -60,7 +60,7 @@ bool USSLSession::initSessionCache(SSL_CTX* ctx, const char* location, uint32_t 
 
    db_ssl_session = U_NEW(URDB(pathdb, false));
 
-   if (((URDB*)db_ssl_session)->open(sz, true) == false) // NB: we want truncate...
+   if (((URDB*)db_ssl_session)->open(sz, true, true) == false) // NB: we want truncate...
       {
       U_SRV_LOG("db initialization of SSL session failed...");
 

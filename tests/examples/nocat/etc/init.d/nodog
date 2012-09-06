@@ -70,3 +70,9 @@ stop() {
 
 	_pkill TERM "$cmdline"
 }
+
+restart() {
+	stop
+	sleep 2
+	start
+}

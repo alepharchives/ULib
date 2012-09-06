@@ -114,9 +114,6 @@ GET http://hypnotoad.org:1234?hail=all HTTP/1.0
 
 GET http://hypnotoad.org:1234 HTTP/1.0
 
-GET /δ¶/δt/pope?q=1#narf HTTP/1.1
-Host: github.com
-
 GET home_0.netscape.com:443 HTTP/1.0
 User-agent: Mozilla/1.1N
 Proxy-authorization: basic aGVsbG86d29ybGQ=
@@ -137,4 +134,7 @@ VR0fBDgwNjA0oDKgMIYuaHR0cDovL2NhLmdyaWQt5hYy51ay9wdWIv
 Yhixw1aKEPzNjNowuIseVogKOLXxWI5vAi5HgXdS0/ES5gDGsABo4fqovUKlgop3
 RA==
 -----END CERTIFICATE-----
+
+GET /δ¶/δt/pope?q=1#narf HTTP/1.1
+Host: github.com
 

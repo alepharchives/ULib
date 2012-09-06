@@ -64,6 +64,7 @@ bPFpcupcud u_pfn_match = u_dosmatch_with_OR;
 int              u_num_cpu       = -1;
 const char*      u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 struct uhttpinfo u_http_info;
+struct uhttpinfo u_http_info_save;
 
 #ifdef DEBUG
 uint32_t u_ptr2int(void* ptr)
@@ -568,6 +569,106 @@ void u_printSize(char* restrict buffer, uint64_t bytes)
    else       (void) sprintf(buffer, "%7.0f Bytes", size);
 }
 
+uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n)
+{
+   char text[16];
+   unsigned char c;
+   unsigned int offset = 0;
+   char* restrict start_buffer = bp;
+   int i, j, line, remain, _remain = 16;
+   bool prev_is_zero = false, print_nothing = false;
+
+   static char bufzero[16];
+
+   U_INTERNAL_TRACE("u_memory_dump(%p,%p,%u)", bp, cp, n)
+
+   line   = n / 16;
+   remain = n % 16;
+
+   for (i = 0; i < line; ++i, offset += 16)
+      {
+      if (memcmp(cp, bufzero, sizeof(bufzero))) prev_is_zero = print_nothing = false;
+      else
+         {
+         if (prev_is_zero == false) prev_is_zero = true;
+         else
+            {
+            if (print_nothing == false)
+               {
+               print_nothing = true;
+
+               *bp++ = '*';
+               *bp++ = '\n';
+               }
+
+            cp += 16;
+
+            continue;
+            }
+         }
+iteration:
+      (void) sprintf(bp, "%07X|", offset);
+
+      bp += 8;
+
+      for (j = 0; j < 16; ++j)
+         {
+         if (j < _remain)
+            {
+            c = *cp++;
+
+            *bp++   = u_hex_lower[((c >> 4) & 0x0F)];
+            *bp++   = u_hex_lower[( c       & 0x0F)];
+
+            text[j] = (u__isprint(c) ? c : '.');
+            }
+         else
+            {
+            *bp++   = ' ';
+            *bp++   = ' ';
+            text[j] = ' ';
+            }
+
+         *bp++ = (j == 7 ? ':' : ' ');
+         }
+
+                               *bp++ = '|';
+      for (j = 0; j < 16; ++j) *bp++ = text[j];
+                               *bp++ = '\n';
+      }
+
+   if (remain &&
+       remain != _remain)
+      {
+      _remain = remain;
+
+      goto iteration;
+      }
+
+   if (print_nothing)
+      {
+      (void) sprintf(bp, "%07X\n", offset);
+
+      bp += 8;
+      }
+
+   return (bp - start_buffer);
+}
+
+char* u_memoryDump(unsigned char* restrict cp, uint32_t n)
+{
+   uint32_t written;
+   static char buffer[4096];
+
+   U_INTERNAL_TRACE("u_memoryDump(%p,%u)", cp, n)
+
+   written = u_memory_dump(buffer, cp, n);
+
+   buffer[written] = '\0';
+
+   return buffer;
+}
+
 /* get the number of the processors including offline CPUs */
 
 static inline const char* nexttoken(const char* q, int sep)
@@ -849,7 +950,7 @@ __pure const char* u_strpend(const char* restrict s, uint32_t slen,
 loop:
       c = *++s;
 
-      if (u_isspace(c)) continue;
+      if (u__isspace(c)) continue;
 
       if (c == skip_line_comment)
          {
@@ -1009,7 +1110,7 @@ __pure const char* u_skip(const char* restrict s, const char* restrict end, cons
       {
 skipws:
       while (s < end &&
-             u_isspace(*s))
+             u__isspace(*s))
          {
          ++s;
          }
@@ -1078,7 +1179,7 @@ const char* u_delimit_token(const char* restrict s, const char** restrict p, con
       // find next white space
 
       while (s < end &&
-             u_isspace(*s) == false)
+             u__isspace(*s) == false)
          {
          ++s;
          }
@@ -1146,11 +1247,11 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
       {
       while (s < end_s)
          {
-         c2 = u_tolower(*mask);
+         c2 = u__tolower(*mask);
 
          if (c2 == '*') break;
 
-         c1 = u_tolower(*s);
+         c1 = u__tolower(*s);
 
          if (c2 != c1 &&
              c2 != '?') return (flags & FNM_INVERT ? true : false);
@@ -1172,7 +1273,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
             return (flags & FNM_INVERT ? (result != true) : result);
             }
 
-         c2 = u_tolower(*mask);
+         c2 = u__tolower(*mask);
 
          if (c2 == '*')
             {
@@ -1184,7 +1285,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
             continue;
             }
 
-         c1 = u_tolower(*s);
+         c1 = u__tolower(*s);
 
          U_INTERNAL_PRINT("c1 = %c c2 = %c", c1, c2)
 
@@ -1336,15 +1437,15 @@ __pure bool u_isHostName(const char* restrict ptr, uint32_t len)
     * http://domainkeys.sourceforge.net/underscore.html
     */
 
-   if (u_isalpha(ch))
+   if (u__isalpha(ch))
       {
-      if (u_isalnum(end[-1]) == false) return false;
+      if (u__isalnum(end[-1]) == false) return false;
 
       while (++ptr < end)
          {
          ch = *(unsigned char*)ptr;
 
-         if (u_ishname(ch) == false) return false;
+         if (u__ishname(ch) == false) return false;
          }
 
       return true;
@@ -1354,8 +1455,8 @@ __pure bool u_isHostName(const char* restrict ptr, uint32_t len)
       {
       ch = *(unsigned char*)ptr;
 
-      if ((u_isdigit( ch) == 0 && ch != '.') &&
-          (u_isxdigit(ch) == 0 && ch != '.'  && ch != ':'))
+      if ((u__isdigit( ch) == 0 && ch != '.')   &&
+          (u__isxdigit(ch) == 0 && ch != '.'  && ch != ':'))
          {
          return false;
          }
@@ -1406,7 +1507,7 @@ __pure const char* u_isUrlScheme(const char* restrict url, uint32_t len)
        */
 
       special      = (ch == '+' || ch == '-' || ch == '.');
-      alphanumeric = (ch > 0 && u_isalnum(ch));
+      alphanumeric = (ch > 0 && u__isalnum(ch));
 
       if (alphanumeric            == false &&
           (ptr != url && special) == false)
@@ -1474,7 +1575,7 @@ __pure bool u_isURL(const char* restrict url, uint32_t len)
 
             U_INTERNAL_PRINT("ch = %c", ch)
 
-            if (u_isdigit(ch) == 0) return false;
+            if (u__isdigit(ch) == 0) return false;
             }
          }
 
@@ -1502,7 +1603,7 @@ __pure bool u_isMacAddr(const char* restrict p, uint32_t len)
             }
          else
             {
-            if (!u_isxdigit(p[c])) return false;
+            if (!u__isxdigit(p[c])) return false;
             }
          }
 
@@ -1522,7 +1623,7 @@ __pure bool u_isMacAddr(const char* restrict p, uint32_t len)
             }
          else
             {
-            if (!u_isxdigit(p[c])) return false;
+            if (!u__isxdigit(p[c])) return false;
             }
          }
 
@@ -1634,12 +1735,12 @@ __pure int u_strnatcmp(char const* restrict a, char const* restrict b)
       cb = b[bi];
 
       /* skip over leading spaces or zeros */
-      while (u_isspace(ca) || ca == '0') ca = a[++ai];
-      while (u_isspace(cb) || cb == '0') cb = b[++bi];
+      while (u__isspace(ca) || ca == '0') ca = a[++ai];
+      while (u__isspace(cb) || cb == '0') cb = b[++bi];
 
       /* process run of digits */
-      if (u_isdigit(ca) &&
-          u_isdigit(cb))
+      if (u__isdigit(ca) &&
+          u__isdigit(cb))
          {
          int bias = 0;
 
@@ -1649,14 +1750,14 @@ __pure int u_strnatcmp(char const* restrict a, char const* restrict b)
 
          while (true)
             {
-            if (!u_isdigit(ca) &&
-                !u_isdigit(cb))
+            if (!u__isdigit(ca) &&
+                !u__isdigit(cb))
                {
                goto done_number;
                }
 
-            else if (!u_isdigit(ca)) return -1;
-            else if (!u_isdigit(cb)) return  1;
+            else if (!u__isdigit(ca)) return -1;
+            else if (!u__isdigit(cb)) return  1;
             else if (ca < cb)
                {
                if (!bias) bias = -1;
@@ -1690,8 +1791,8 @@ done_number:
       /*
       if (fold_case)
          {
-         ca = u_toupper(ca);
-         cb = u_toupper(cb);
+         ca = u__toupper(ca);
+         cb = u__toupper(cb);
          }
       */
 
@@ -1899,7 +2000,7 @@ bool u_canonicalize_pathname(char* restrict path)
    U_INTERNAL_TRACE("u_canonicalize_pathname(%s)", path)
 
 #ifdef __MINGW32__
-   if (u_isalpha(path[0]) && path[1] == ':') lpath += 2; /* Skip over the disk name in MSDOS pathnames */
+   if (u__isalpha(path[0]) && path[1] == ':') lpath += 2; /* Skip over the disk name in MSDOS pathnames */
 #endif
 
    /* Collapse multiple slashes */
@@ -2439,7 +2540,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
    if ((negate = (*pattern == '!' || *pattern == '^')) != 0) ++pattern;
 
-   if (flags & FNM_CASEFOLD) test = u_tolower((unsigned char)test);
+   if (flags & FNM_CASEFOLD) test = u__tolower((unsigned char)test);
 
    /*
    * A right bracket shall lose its special meaning and represent
@@ -2459,7 +2560,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
       if (c == '/' && (flags & FNM_PATHNAME)) return 0;
 
-      if (flags & FNM_CASEFOLD) c = u_tolower((unsigned char)c);
+      if (flags & FNM_CASEFOLD) c = u__tolower((unsigned char)c);
 
       if (*pattern == '-' && (c2 = *(pattern+1)) != ']' && (pattern+1) != end_p)
          {
@@ -2469,7 +2570,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
          if (pattern > end_p) return (-1); /* if (c2 == EOS) return (RANGE_ERROR); */
 
-         if (flags & FNM_CASEFOLD) c2 = u_tolower((unsigned char)c2);
+         if (flags & FNM_CASEFOLD) c2 = u__tolower((unsigned char)c2);
 
          if (c <= test && test <= c2) ok = 1;
          }
@@ -2620,7 +2721,7 @@ norm:
             if (c == *string)
                {
                }
-            else if ((flags & FNM_CASEFOLD) && (u_tolower((unsigned char)c) == u_tolower((unsigned char)*string)))
+            else if ((flags & FNM_CASEFOLD) && (u__tolower((unsigned char)c) == u__tolower((unsigned char)*string)))
                {
                }
             else
@@ -2689,7 +2790,7 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 
 __pure bool u_isName(const char* restrict s, uint32_t n)
 {
-   U_LOOP_STRING( if (u_isname(c) == false) return false )
+   U_LOOP_STRING( if (u__isname(c) == false) return false )
 
    U_INTERNAL_TRACE("u_isName(%.*s,%u)", U_min(n,128), s, n)
 
@@ -2698,7 +2799,7 @@ __pure bool u_isName(const char* restrict s, uint32_t n)
 
 __pure bool u_isBase64(const char* restrict s, uint32_t n)
 {
-   U_LOOP_STRING( if (u_isbase64(c) == false) return false )
+   U_LOOP_STRING( if (u__isbase64(c) == false) return false )
  
    U_INTERNAL_TRACE("u_isBase64(%.*s,%u)", U_min(n,128), s, n)
 
@@ -2707,7 +2808,7 @@ __pure bool u_isBase64(const char* restrict s, uint32_t n)
 
 __pure bool u_isWhiteSpace(const char* restrict s, uint32_t n)
 {
-   U_LOOP_STRING( if (u_isspace(c) == false) return false )
+   U_LOOP_STRING( if (u__isspace(c) == false) return false )
 
    U_INTERNAL_TRACE("u_isWhiteSpace(%.*s,%u)", U_min(n,128), s, n)
 
@@ -2716,7 +2817,7 @@ __pure bool u_isWhiteSpace(const char* restrict s, uint32_t n)
 
 __pure bool u_isText(const unsigned char* restrict s, uint32_t n)
 {
-   U_LOOP_STRING( if (u_istext(c) == false) return false )
+   U_LOOP_STRING( if (u__istext(c) == false) return false )
 
    U_INTERNAL_TRACE("u_isText(%.*s,%u)", U_min(n,128), s, n)
 
@@ -2869,8 +2970,8 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define X 0x0040 /* Hexadecimal */
 #define B 0x0080 /* Blank (a space or a tab) */
 #define R 0x0100 /* carriage return or new line (a \r or \n) */
-#define T 0x0200 /* character appears in plain ASCII text */
-#define F 0x0400 /* character never appears in text */
+#define T 0x0200 /* character       appears in plain ASCII text */
+#define F 0x0400 /* character never appears in plain ASCII text */
 #define O 0x0800 /* character minus    '-' (45 0x2D) */
 #define N 0x1000 /* character point    '.' (46 0x2E) */
 #define M 0x2000 /* character underbar '_' (95 0x5F) */
@@ -2885,6 +2986,8 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define LT   (L | T)
 #define UX   (U | X)
 #define SB   (S | B)
+#define SF   (S | F)
+#define PF   (P | F)
 #define PT   (P | T)
 #define PTO  (P | T | O)
 #define PTN  (P | T | N)
@@ -2912,17 +3015,26 @@ const unsigned short u__ct_tab[256] = {
    PT, LXT, LXT, LXT, LXT, LXT, LXT,  LT,  LT,  LT,   LT,  LT,  LT,  LT,  LT,  LT, /* 0x6X */
    LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,  PT,  PT,  CF, /* 0x7X */
 
-   /* Assume an ISO-1 character set */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,   CF,  CF,  CF,  CF,  CF,  CF, /* 0x8X */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,   CF,  CF,  CF,  CF,  CF,  CF, /* 0x9X */
+   SF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,   PF,  PF,  PF,  PF,  PF,  PF, /* 0xaX */
+   PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,   PF,  PF,  PF,  PF,  PF,  PF, /* 0xbX */
+    F,   F,   F,   F,   F,   F,   F,   F,   F,   F,    F,   F,   F,   F,   F,   F, /* 0xcX */
+    F,   F,   F,   F,   F,   F,   F,  PF,   F,   F,    F,   F,   F,   F,   F,   F, /* 0xdX */
+    F,   F,   F,   F,   F,   F,   F,   F,   F,   F,    F,   F,   F,   F,   F,   F, /* 0xeX */
+    F,   F,   F,   F,   F,   F,   F,  PF,   F,   F,    F,   F,   F,   F,   F,   F  /* 0xfX */
 
-   /*                NEL                                             */
-   C,  C,  C,  C,  C, CT,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C, /* 0x8X */
-   C,  C,  C,  C,  C,  C,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C, /* 0x9X */
-   S,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P, /* 0xaX */
-   P,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P, /* 0xbX */
-   U,  U,  U,  U,  U,  U,  U,  U,  U,    U,   U,   U,   U,  U,   U,  U, /* 0xcX */
-   U,  U,  U,  U,  U,  U,  U,  P,  U,    U,   U,   U,   U,  U,   U, LU, /* 0xdX */
-   L,  L,  L,  L,  L,  L,  L,  L,  L,    L,   L,   L,   L,  L,   L,  L, /* 0xeX */
-   L,  L,  L,  L,  L,  L,  L,  P,  L,    L,   L,   L,   L,  L,   L,  L  /* 0xfX */
+   /* ISO-1 character set
+
+   C,  C,  C,  C,  C, CT,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C,
+   C,  C,  C,  C,  C,  C,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C,
+   S,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P,
+   P,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P,
+   U,  U,  U,  U,  U,  U,  U,  U,  U,    U,   U,   U,   U,  U,   U,  U,
+   U,  U,  U,  U,  U,  U,  U,  P,  U,    U,   U,   U,   U,  U,   U, LU,
+   L,  L,  L,  L,  L,  L,  L,  L,  L,    L,   L,   L,   L,  L,   L,  L,
+   L,  L,  L,  L,  L,  L,  L,  P,  L,    L,   L,   L,   L,  L,   L,  L 
+   */
 };
 
 #undef C
@@ -2947,9 +3059,11 @@ const unsigned short u__ct_tab[256] = {
 #undef LX
 #undef UX
 #undef SB
+#undef SF
 #undef DT
 #undef UT
 #undef LT
+#undef PF
 #undef PT
 #undef PTO
 #undef PTN

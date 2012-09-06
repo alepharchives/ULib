@@ -318,7 +318,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
 
    while (s < _end)
       {
-      if (u_isspace(*s))
+      if (u__isspace(*s))
          {
          ++s;
 
@@ -366,7 +366,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
 
          U_INTERNAL_DUMP("*ptr = %C", *ptr)
 
-         for (c = *ptr; u_isspace(c) && --ptr > p; c = *ptr) {}
+         for (c = *ptr; u__isspace(c) && --ptr > p; c = *ptr) {}
 
          len = (ptr - p) + 1;
 
@@ -399,7 +399,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
                break;
                }
 
-            U_INTERNAL_ASSERT(u_isname(c))
+            U_INTERNAL_ASSERT(u__isname(c))
             }
          }
 
@@ -448,10 +448,10 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
       _end = 1;
 
       while (_end < n &&
-             u_isname(p[_end]))
+             u__isname(p[_end]))
          {
          U_INTERNAL_ASSERT_DIFFERS(p[_end], '$')
-         U_INTERNAL_ASSERT_EQUALS(u_isspace(p[_end]), false)
+         U_INTERNAL_ASSERT_EQUALS(u__isspace(p[_end]), false)
 
          ++_end;
          }
@@ -533,7 +533,7 @@ loop:
 
          U_INTERNAL_DUMP("c = %C", c)
 
-         if (u_isname(c) ||
+         if (u__isname(c) ||
              c == '#') // NB: check if commented...
             {
             start += n;
@@ -573,7 +573,7 @@ loop:
                }
             else
                {
-               if (u_isspace(c1) == false) continue;
+               if (u__isspace(c1) == false) continue;
                }
 
             U_INTERNAL_DUMP("ptr - s = %ld", ptr - s)
@@ -788,13 +788,13 @@ UString UStringExt::trim(const char* s, uint32_t n)
 
    // skip white space from start
 
-   while (i < (int32_t)n && u_isspace(s[i])) ++i;
+   while (i < (int32_t)n && u__isspace(s[i])) ++i;
 
    U_INTERNAL_DUMP("i = %d", i)
 
    if (i < (int32_t)n) // not only white space
       {
-      while (u_isspace(s[--n])) {} // skip white space from end
+      while (u__isspace(s[--n])) {} // skip white space from end
 
       n += 1 - i;
 
@@ -820,13 +820,13 @@ UString UStringExt::trimPunctuation(const char* s, uint32_t n)
 
    // skip punctuation character from start
 
-   while (i < (int32_t)n && u_ispunct(s[i])) ++i;
+   while (i < (int32_t)n && u__ispunct(s[i])) ++i;
 
    U_INTERNAL_DUMP("i = %d", i)
 
    if (i < (int32_t)n) // not only punctuation character
       {
-      while (u_ispunct(s[--n])) {} // skip punctuation character from end
+      while (u__ispunct(s[--n])) {} // skip punctuation character from end
 
       n += 1 - i;
 
@@ -856,7 +856,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 
    while (s < _end)
       {
-      if (u_isspace(*s))
+      if (u__isspace(*s))
          {
          ++s;
 
@@ -866,7 +866,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
       p = s++;
 
       while (s < _end &&
-             u_isspace(*s) == false)
+             u__isspace(*s) == false)
          {
          ++s;
          }
@@ -880,7 +880,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
       if (++s < _end) str[sz++] = ' ';
       }
 
-   if (sz && u_isspace(str[sz-1])) --sz;
+   if (sz && u__isspace(str[sz-1])) --sz;
 
    result.size_adjust(sz);
 
@@ -904,7 +904,7 @@ UString UStringExt::removeWhiteSpace(const char* s, uint32_t n)
 
    while (s < _end)
       {
-      if (u_isspace(*s))
+      if (u__isspace(*s))
          {
          ++s;
 
@@ -914,7 +914,7 @@ UString UStringExt::removeWhiteSpace(const char* s, uint32_t n)
       p = s++;
 
       while (s < _end &&
-             u_isspace(*s) == false)
+             u__isspace(*s) == false)
          {
          ++s;
          }
@@ -926,7 +926,7 @@ UString UStringExt::removeWhiteSpace(const char* s, uint32_t n)
       sz += sz1;
       }
 
-   if (sz && u_isspace(str[sz-1])) --sz;
+   if (sz && u__isspace(str[sz-1])) --sz;
 
    result.size_adjust(sz);
 
@@ -950,7 +950,7 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
 
    while (s < _end)
       {
-      if (u_islterm(*s))
+      if (u__islterm(*s))
          {
          ++s;
 
@@ -960,7 +960,7 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
       p = s++;
 
       while (s < _end &&
-             u_islterm(*s) == false)
+             u__islterm(*s) == false)
          {
          ++s;
          }
@@ -974,11 +974,34 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
       if (++s < _end) str[sz++] = '\n';
       }
 
-   if (sz && u_islterm(str[sz-1])) --sz;
+   if (sz && u__islterm(str[sz-1])) --sz;
 
    result.size_adjust(sz);
 
    U_RETURN_STRING(result);
+}
+
+// Within a string we can count number of occurrence of another string by using substr_count function.
+// This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string.
+
+uint32_t UStringExt::substr_count(const char* s, uint32_t n, const char* a, uint32_t n1)
+{
+   U_TRACE(0, "UStringExt::substr_count(%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1)
+
+   uint32_t num    = 0;
+   const char* ptr = s;
+   const char* end = s + n;
+
+   while (true)
+      {
+      ptr = (const char*) u_find(ptr, end - ptr, a, n1);
+
+      if (ptr == 0) U_RETURN(num);
+
+      ++num;
+
+      ptr += n1;
+      }
 }
 
 UString UStringExt::dirname(const UString& s)
@@ -1093,19 +1116,19 @@ __pure int UStringExt::compareversion(const char* a, uint32_t alen, const char* 
       apos1 = apos2;
       bpos1 = bpos2;
 
-      if (u_isdigit(a[apos2]))
+      if (u__isdigit(a[apos2]))
          {
          isnum = true;
 
-         while (apos2 < alen && u_isdigit(a[apos2])) apos2++;
-         while (bpos2 < blen && u_isdigit(b[bpos2])) bpos2++;
+         while (apos2 < alen && u__isdigit(a[apos2])) apos2++;
+         while (bpos2 < blen && u__isdigit(b[bpos2])) bpos2++;
          }
       else
          {
          isnum = false;
 
-         while (apos2 < alen && !u_isdigit(a[apos2])) apos2++;
-         while (bpos2 < blen && !u_isdigit(b[bpos2])) bpos2++;
+         while (apos2 < alen && !u__isdigit(a[apos2])) apos2++;
+         while (bpos2 < blen && !u__isdigit(b[bpos2])) bpos2++;
          }
 
       U_INTERNAL_ASSERT_DIFFERS(apos1,apos2) 
@@ -1305,7 +1328,7 @@ UString UStringExt::tolower(const UString& x)
    const char* s   = x.rep->str;
    const char* end = s + x.rep->_length;
 
-   while (s < end) *ptr++ = u_tolower(*s++);
+   while (s < end) *ptr++ = u__tolower(*s++);
 
    U_INTERNAL_ASSERT(r.invariant())
 
@@ -1327,7 +1350,7 @@ UString UStringExt::toupper(const UString& x)
    const char* s   = x.rep->str;
    const char* end = s + x.rep->_length;
 
-   while (s < end) *ptr++ = u_toupper(*s++);
+   while (s < end) *ptr++ = u__toupper(*s++);
 
    U_INTERNAL_ASSERT(r.invariant())
 
@@ -1367,7 +1390,7 @@ next:
 
    ptr_header_value = buffer.c_pointer(header_line + name.size());
 
-   while (u_isspace(*ptr_header_value)) ++ptr_header_value;
+   while (u__isspace(*ptr_header_value)) ++ptr_header_value;
 
    if (*ptr_header_value != ':')
       {
@@ -1377,7 +1400,7 @@ next:
       goto loop;
       }
 
-   do { ++ptr_header_value; } while (u_isspace(*ptr_header_value));
+   do { ++ptr_header_value; } while (u__isspace(*ptr_header_value));
 
    U_RETURN(ptr_header_value);
 }
@@ -1606,14 +1629,14 @@ void UStringExt::minifyCssJs(UString& x)
 
          for (s += 2; s < _end && *s != '\n'; ++s) {}
          }
-      else if (u_isspace(*s))
+      else if (u__isspace(*s))
          {
          // whitespace: scan to end of whitespace; put a single space into the
          // consumer if necessary to separate tokens, otherwise put nothing
 
          start = s;
 
-         do { ++s; } while (s < _end && u_isspace(*s));
+         do { ++s; } while (s < _end && u__isspace(*s));
 
          if (s < _end                          &&
              start > begin                     &&

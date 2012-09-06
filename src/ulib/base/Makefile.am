@@ -22,7 +22,7 @@ SRC += coder/cgzio.c
 endif
 
 if SSL
-SRC += ssl/des3.c
+SRC += ssl/cdes3.c
 endif
 
 if WIN32

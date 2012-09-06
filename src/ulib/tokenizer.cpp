@@ -217,7 +217,7 @@ tok:
 
       if (avoid_punctuation)
          {
-         while (u_ispunct(*p))
+         while (u__ispunct(*p))
             {
             --n;
             ++p;
@@ -225,7 +225,7 @@ tok:
             if (p == s) goto loop;
             }
 
-         while (u_ispunct(p[n-1]))
+         while (u__ispunct(p[n-1]))
             {
             --n;
 
@@ -291,7 +291,7 @@ bool UTokenizer::skipNumber(bool& isReal)
       {
       c = *s;
 
-      if (u_isdigit(c) || c == '-') continue;
+      if (u__isdigit(c) || c == '-') continue;
 
       if (c == '.' ||
           c == 'e' ||
@@ -323,8 +323,8 @@ UString UTokenizer::getTokenQueryParser()
       }
    else
       {
-      while (s < end &&  // u_isname(*s)
-             (u_isspace(*s) == false &&
+      while (s < end &&  // u__isname(*s)
+             (u__isspace(*s) == false &&
               *s != '(' &&
               *s != ')'))
          {
@@ -373,7 +373,7 @@ loop:
 
    c = *s++;
 
-   if (u_isspace(c)) goto loop;
+   if (u__isspace(c)) goto loop;
 
    switch (c)
       {
@@ -390,7 +390,7 @@ loop:
          {
          tid = U_TK_VALUE;
 
-         while (s < end && u_isdigit(*s)) ++s;
+         while (s < end && u__isdigit(*s)) ++s;
 
          p2 = s;
          }
@@ -461,7 +461,7 @@ loop:
                {
                p1 = s;
 
-               while (s < end && u_isname(*s)) ++s;
+               while (s < end && u__isname(*s)) ++s;
 
                p2 = s;
                }
@@ -490,8 +490,8 @@ loop:
          {
          c = *s;
 
-         if (u_isdigit(c) ||
-             u_isspace(c))
+         if (u__isdigit(c) ||
+             u__isspace(c))
             {
             p2  = s;
             tid = U_TK_DIV;
@@ -513,7 +513,7 @@ value:
             if (c == '(' ||
                 c == ')' ||
                 c == ',' ||
-                u_isgraph(c) == false)
+                u__isgraph(c) == false)
                {         
                break;
                }

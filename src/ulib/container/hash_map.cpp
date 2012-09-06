@@ -547,7 +547,7 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
          }
 
       do {
-         do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
+         do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
 
       // U_INTERNAL_DUMP("c = %C", c)
 
@@ -568,7 +568,7 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
             continue;
             }
 
-         U_INTERNAL_ASSERT_EQUALS(u_isspace(c),false)
+         U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
 
          sb->sputbackc(c);
 
@@ -577,13 +577,13 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
          U_INTERNAL_ASSERT(key.isNullTerminated())
          U_INTERNAL_ASSERT_EQUALS(key.empty(),false)
 
-         do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
+         do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
 
       // U_INTERNAL_DUMP("c = %C", c)
 
          if (c == EOF) break;
 
-         U_INTERNAL_ASSERT_EQUALS(u_isspace(c),false)
+         U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
 
          sb->sputbackc(c);
 

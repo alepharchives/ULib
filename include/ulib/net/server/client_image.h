@@ -78,6 +78,13 @@ public:
    int  genericRead() __pure;
    void logCertificate(void* x509); // aggiungo nel log il certificato Peer del client ("issuer","serial")
 
+   bool isPendingWrite()
+      {
+      U_TRACE(0, "UClientImage_Base::isPendingWrite()")
+
+      U_RETURN(count > 0);
+      }
+
    static void init();
    static void clear();
    static void initAfterGenericRead();
@@ -144,6 +151,7 @@ public:
 protected:
    uint32_t start, count;
    int state, sfd, bclose;
+   const char* client_address;
 
    static UString* msg_welcome;
 

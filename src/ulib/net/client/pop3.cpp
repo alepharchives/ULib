@@ -330,7 +330,7 @@ int UPop3Client::getUIDL(UVector<UString>& vec)
          {
          // skip white space
 
-         if (u_isspace(*s))
+         if (u__isspace(*s))
             {
             ++s;
 

@@ -107,11 +107,10 @@ int UStreamPlugIn::handlerInit()
    U_TRACE(0, "UStreamPlugIn::handlerInit()")
 
    bool result;
-   int fd_stderr;
 
    if (command == 0) goto error;
 
-   fd_stderr = UServices::getDevNull("/tmp/UStreamPlugIn.err");
+   static int fd_stderr = UServices::getDevNull("/tmp/UStreamPlugIn.err");
 
    result = command->execute(0, (UString*)-1, -1, fd_stderr);
 

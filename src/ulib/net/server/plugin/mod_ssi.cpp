@@ -179,6 +179,100 @@ USSIPlugIn::~USSIPlugIn()
    if (environment) delete environment;
 }
 
+void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
+{
+   U_TRACE(0, "USSIPlugIn::setAlternativeRedirect(%S)", fmt)
+
+   UString format(U_CAPACITY), buffer(U_CAPACITY);
+
+   format.snprintf(U_CTYPE_HTML "\r\nRefresh: 0; url=%s\r\n", fmt);
+
+   va_list argp;
+   va_start(argp, fmt);
+
+   buffer.vsnprintf(format.data(), argp);
+
+   va_end(argp);
+
+   U_http_is_connection_close = U_YES;
+   u_http_info.nResponseCode  = HTTP_OK;
+
+   UHTTP::setHTTPResponse(&buffer, 0);
+
+   alternative_response = 1;
+}
+
+void USSIPlugIn::setAlternativeResponse(const UString& _body)
+{
+   U_TRACE(0, "USSIPlugIn::setAlternativeResponse(%.*S)", U_STRING_TO_TRACE(_body))
+
+   alternative_response = 1;
+
+   U_http_is_connection_close = U_YES;
+
+   if (_body.empty())
+      {
+      u_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+      UHTTP::setHTTPResponse(0, 0);
+      }
+   else
+      {
+      u_http_info.nResponseCode = HTTP_OK;
+
+      UHTTP::setHTTPResponse(UHTTP::str_ctype_html, &_body);
+      }
+}
+
+void USSIPlugIn::setAlternativeInclude(const UString& tmpl, const char* title_txt,  const char* head_html, const char* body_style, ...)
+{
+   U_TRACE(0, "USSIPlugIn::setAlternativeInclude(%.*S,%S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, head_html, body_style)
+
+   alternative_include->setBuffer(tmpl.size() + 256 * 1024);
+
+   va_list argp;
+   va_start(argp, body_style);
+
+   alternative_include->vsnprintf(tmpl.data(), argp);
+
+   va_end(argp);
+
+   u_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+   UString buffer(U_CAPACITY);
+
+   U_INTERNAL_ASSERT_POINTER(title_txt)
+
+                   buffer.snprintf(    "'TITLE_TXT=%s'\n", title_txt);
+   if (head_html)  buffer.snprintf_add("'HEAD_HTML=%s'\n", head_html);
+   if (body_style) buffer.snprintf_add("BODY_STYLE=%s\n",  body_style);
+
+   (void) UClientImage_Base::environment->append(buffer);
+}
+
+void USSIPlugIn::setMessagePage(const UString& tmpl, const char* title_txt, const char* message)
+{
+   U_TRACE(0, "USSIPlugIn::setMessagePage(%.*S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, message)
+
+   setAlternativeInclude(tmpl, title_txt, 0, 0, title_txt, message);
+}
+
+void USSIPlugIn::setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...)
+{
+   U_TRACE(0, "USSIPlugIn::setMessagePageWithVar(%.*S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, fmt)
+
+   UString buffer(U_CAPACITY);
+
+   va_list argp;
+   va_start(argp, fmt);
+
+   buffer.vsnprintf(fmt, argp);
+
+   va_end(argp);
+
+   setMessagePage(tmpl, title_txt, buffer.data());
+}
+
 U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& value, const UString& directory)
 {
    U_TRACE(0, "USSIPlugIn::getPathname(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value), U_STRING_TO_TRACE(directory))

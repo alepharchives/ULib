@@ -205,6 +205,14 @@ main (int argc, char *argv[])
    static char longstr[] = "Good morning, Doctor Chandra.  This is Hal.  \
    I am ready for my first lesson today.";
 
+   /*
+   char buffer[11];
+   uint32_t written = u__snprintf(buffer, 10, "%ld", 3821975508); // u_now->tv_sec
+
+   U_INTERNAL_ASSERT_EQUALS(written, 10)
+   U_INTERNAL_ASSERT_EQUALS(strncmp(buffer, "3821975508", 10), 0)
+   */
+
    fmtchk("%.4x");
    fmtchk("%04x");
    fmtchk("%4.4x");

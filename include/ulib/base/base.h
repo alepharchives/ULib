@@ -170,14 +170,14 @@ static inline bool u_is_html(void) { return (u_mime_index == U_html); }
 
 with flag '#' => var-argument
 ---------------------------------------------------------------------------------
-           0  => format: %d/%m/%y
-with flag '1' => format:          %T (=> "%H:%M:%S)
-with flag '2' => format:          %T (=> "%H:%M:%S) +n days
-with flag '3' => format: %d/%m/%Y %T
-with flag '4' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-with flag '5' => format: %a, %d %b %Y %H:%M:%S %Z
-with flag '6'  => format: %Y/%m/%d %T
-with flag '9'  => format: %d/%m/%y %T
+            0  => format: %d/%m/%y
+with flag  '1' => format:          %T (=> "%H:%M:%S)
+with flag  '2' => format:          %T (=> "%H:%M:%S) +n days
+with flag  '3' => format: %d/%m/%Y %T
+with flag  '4' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
+with flag  '5' => format: %a, %d %b %Y %H:%M:%S %Z
+with flag  '6' => format: %Y/%m/%d %T
+with flag  '9' => format: %d/%m/%y %T
 ---------------------------------------------------------------------------------
 with flag '10' => format: %d/%m/%y %T
 with flag '11' => format: %d/%b/%Y:%H:%M:%S %z
@@ -187,11 +187,13 @@ with flag '12' => format: %a, %d %b %Y %H:%M:%S GMT
 extern U_EXPORT int     u_printf_fileno;
 extern U_EXPORT int32_t u_printf_string_max_length;
 
-/* NB: u_printf() and u_snprintf conflit with /usr/include/unicode/urename.h */
+/* NB: u_printf(), u_vsnprintf and u_snprintf conflit with /usr/include/unicode/urename.h */
 
-U_EXPORT void       u__printf(                                             const char* restrict format, ...);
-U_EXPORT uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
-U_EXPORT uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
+U_EXPORT void     u__printf(                                                const char* restrict format, ...);
+U_EXPORT void     u_printf2(int fd,                                         const char* restrict format, ...);
+U_EXPORT void     u_internal_print(bool abrt,                               const char* restrict format, ...);
+U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
+U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 
 #ifdef __cplusplus
 }

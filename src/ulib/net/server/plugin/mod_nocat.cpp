@@ -428,6 +428,8 @@ int UNoCatPlugIn::handlerTime()
       if (u_http_info.method) flag_check_peers_for_info = true;
       else
          {
+         (void) gettimeofday(u_now, 0);
+
          // check firewall status
 
          fw.setArgument(3, "openlist");
@@ -660,9 +662,15 @@ void UNoCatPlugIn::setRedirectLocation(UModNoCatPeer* peer, const UString& redir
 
    location.snprintf_add("%.*s&redirect=", U_STRING_TO_TRACE(value_encoded));
 
-   Url::encode(redirect, value_encoded);
+   uint32_t pos = redirect.find('&');
 
-   location.snprintf_add("%.*s&gateway=", U_STRING_TO_TRACE(value_encoded));
+   if (pos != U_NOT_FOUND) location.snprintf_add("%.*s&gateway=", U_STRING_TO_TRACE(redirect));
+   else
+      {
+      Url::encode(redirect, value_encoded);
+
+      location.snprintf_add("%.*s&gateway=", U_STRING_TO_TRACE(value_encoded));
+      }
 
    Url::encode(peer->gateway, value_encoded);
 
@@ -784,7 +792,14 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    action = args[*str_Action];
 
-        if (action == *str_Permit) permit(peer, args[*str_Timeout].strtol());
+   if (action == *str_Permit)
+      {
+      time_t timeout = args[*str_Timeout].strtol();
+
+      if (timeout < 1800) timeout *= 60; // NB: time in minutes...
+
+      permit(peer, timeout);
+      }
    else if (action == *str_Deny)
       {
       getTraffic();
@@ -827,6 +842,8 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
    // get traffic available
 
    peer->traffic_available = args[*str_Traffic].strtoll();
+
+   if (peer->traffic_available < (1024ULL * 1024ULL)) peer->traffic_available *= (1024ULL * 1024ULL); // NB: traffic in MB...
 
    U_INTERNAL_DUMP("traffic_available = %llu", peer->traffic_available)
 
@@ -931,12 +948,12 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 
    (void) peer->ip.assign(peer->UIPAddress::pcStrAddress);
 
-   U_ASSERT(peer->ip == UServer_Base::client_address)
+   U_ASSERT(peer->ip == UServer_Base::getClientAddress())
 
    peer->mac = UServer_Base::getMacAddress(peer->UIPAddress::pcStrAddress);
 
-   if (peer->mac.empty() && ip.equal(UServer_Base::client_address)) peer->mac = UServer_Base::getMacAddress(extdev.data());
-   if (peer->mac.empty())                                           peer->mac = *str_without_mac;
+   if (peer->mac.empty() && ip.equal(UServer_Base::getClientAddress())) peer->mac = UServer_Base::getMacAddress(extdev.data());
+   if (peer->mac.empty())                                               peer->mac = *str_without_mac;
 
    setNewPeer(peer, index_AUTH);
 
@@ -947,7 +964,7 @@ void UNoCatPlugIn::checkOldPeer(UModNoCatPeer* peer)
 {
    U_TRACE(0, "UNoCatPlugIn::checkOldPeer(%p)", peer)
 
-   UString mac = UServer_Base::getMacAddress(UServer_Base::client_address); // NB: get mac from arp cache...
+   UString mac = UServer_Base::getMacAddress(UServer_Base::getClientAddress()); // NB: get mac from arp cache...
 
    if (mac != peer->mac      &&
        (mac.empty() == false ||
@@ -1049,9 +1066,11 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
          if (peer->ctraffic == 0 &&
              last_request   >= check_expire)
             {
+            /*
             peer->ctime += last_request; // NB: bonus for logout implicito...
 
             U_INTERNAL_ASSERT(u_now->tv_sec >= peer->ctime)
+            */
 
             deny(peer, false, false);
 
@@ -1275,7 +1294,7 @@ UString UNoCatPlugIn::getIPAddress(const char* ptr, uint32_t len)
       {
       c = ptr[i];
 
-      if (u_isdigit(c) == 0 && c != '.' && c != ':') break;
+      if (u__isdigit(c) == 0 && c != '.' && c != ':') break;
 
       x._append(c);
       }
@@ -1841,7 +1860,7 @@ int UNoCatPlugIn::handlerRequest()
       UModNoCatPeer* peer = 0;
       UString _host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY);
 
-      U_INTERNAL_DUMP("_host = %.*S UServer_Base::client_address = %S", U_STRING_TO_TRACE(_host), UServer_Base::client_address)
+      U_INTERNAL_DUMP("_host = %.*S UServer_Base::getClientAddress() = %S", U_STRING_TO_TRACE(_host), UServer_Base::getClientAddress())
 
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
 
@@ -1849,7 +1868,7 @@ int UNoCatPlugIn::handlerRequest()
 
       // NB: check for request from AUTHs
 
-      uint32_t index_AUTH = vauth_ip.contains(UServer_Base::client_address);
+      uint32_t index_AUTH = vauth_ip.contains(UServer_Base::getClientAddress());
 
       if (index_AUTH != U_NOT_FOUND)
          {
@@ -1934,14 +1953,18 @@ int UNoCatPlugIn::handlerRequest()
                   }
                }
 
-            if (peer &&
-                peer->status == UModNoCatPeer::PEER_ACCEPT)
+            if (peer == 0) UHTTP::setHTTPBadRequest();
+            else
                {
-               getTraffic();
+               if (peer->status != UModNoCatPeer::PEER_ACCEPT) setStatusContent(peer); // NB: peer == 0 -> request from AUTH to get status access point...
+               else
+                  {
+                  getTraffic();
 
-               deny(peer, false, false);
+                  deny(peer, false, false);
 
-               notifyAuthOfUsersInfo(index_AUTH);
+                  notifyAuthOfUsersInfo(index_AUTH);
+                  }
                }
 
             goto end;
@@ -1984,16 +2007,16 @@ int UNoCatPlugIn::handlerRequest()
           * it was decided to give it one.
           */
 
-         U_SRV_LOG("detected strange initial WiFi request from peer: IP %S", UServer_Base::client_address);
+         U_SRV_LOG("detected strange initial WiFi request from peer: IP %S", UServer_Base::getClientAddress());
 
          setHTTPResponse(*str_IPHONE_SUCCESS);
 
          goto end;
          }
 
-      index_AUTH = getIndexAUTH(UServer_Base::client_address);
+      index_AUTH = getIndexAUTH(UServer_Base::getClientAddress());
       url        = *(vauth_url[index_AUTH]);
-      peer       = (*peers)[UServer_Base::client_address];
+      peer       = (*peers)[UServer_Base::getClientAddress()];
 
       if (U_HTTP_URI_STRNEQ("/cpe"))
          {
@@ -2024,14 +2047,20 @@ int UNoCatPlugIn::handlerRequest()
             goto set_redirection_url;
             }
 
+         UString uid;
          uint32_t len    = output.size() - U_CONSTANT_SIZE("uid=");
          const char* ptr = output.data() + U_CONSTANT_SIZE("uid=");
 
          (void) buffer.assign(ptr, len);
 
-         U_SRV_LOG("validation login request for uid %.*S from peer: IP %S", U_STRING_TO_TRACE(buffer), UServer_Base::client_address);
+         len = buffer.find('&');
 
-         if (vLoginValidate.isContained(buffer) == false) vLoginValidate.push(buffer);
+         if (len == U_NOT_FOUND)        uid = buffer;
+         else                    (void) uid.assign(ptr, len);
+
+         U_SRV_LOG("validation login request for uid %.*S from peer: IP %S", U_STRING_TO_TRACE(uid), UServer_Base::getClientAddress());
+
+         if (vLoginValidate.isContained(uid) == false) vLoginValidate.push(uid);
 
          url.setPath(U_CONSTANT_TO_PARAM("/login_validate"));
 
@@ -2050,7 +2079,7 @@ int UNoCatPlugIn::handlerRequest()
 
          if (checkSignedData(ptr, len) == false)
             {
-            U_SRV_LOG("Invalid ticket from peer: IP %S", UServer_Base::client_address);
+            U_SRV_LOG("Invalid ticket from peer: IP %S", UServer_Base::getClientAddress());
 
             goto set_redirection_url;
             }
@@ -2081,7 +2110,7 @@ int UNoCatPlugIn::handlerRequest()
           U_http_version == '1' &&
           _host          == peer->gateway)
          {
-         U_SRV_LOG("Missing ticket from peer: IP %S", UServer_Base::client_address);
+         U_SRV_LOG("Missing ticket from peer: IP %S", UServer_Base::getClientAddress());
          }
 
 set_redirection_url:
@@ -2090,7 +2119,7 @@ set_redirection_url:
       buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(_host), U_HTTP_URI_TO_TRACE);
 
 set_redirect_to_AUTH:
-      if (peer)   checkOldPeer(peer);
+      if  (peer)  checkOldPeer(peer);
       else peer = creatNewPeer(index_AUTH);
 
       setRedirectLocation(peer, buffer, url);

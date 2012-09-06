@@ -159,28 +159,28 @@ retry:
 
       if (_start == _end) break;
 
-      U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]), false)
+      U_INTERNAL_ASSERT_EQUALS(u__isspace(_start[0]), false)
 
       U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
       if (_start[0] != section[0]               ||
           (len && memcmp(_start, section, len)) ||
-          (u_isspace(_start[(len ? len : 1)]) == false)) // check for partial match of the name section...
+          (u__isspace(_start[(len ? len : 1)]) == false)) // check for partial match of the name section...
          {
-         while (u_isspace(*_start) == false) ++_start;
+         while (u__isspace(*_start) == false) ++_start;
 
          continue;
          }
 
       _start += (len ? len : 1);
 
-      U_INTERNAL_ASSERT(u_isspace(_start[0]))
+      U_INTERNAL_ASSERT(u__isspace(_start[0]))
 
       if (len)
          {
          // check the caracter after the name of the section...
 
-         while (u_isspace(*_start)) ++_start;
+         while (u__isspace(*_start)) ++_start;
 
          if (*_start != '{') continue;
 
@@ -257,7 +257,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
 
    if (_start == _end) U_RETURN(false);
 
-   U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]), false)
+   U_INTERNAL_ASSERT_EQUALS(u__isspace(_start[0]), false)
 
    U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
@@ -273,9 +273,9 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
 
       _start += len;
 
-      U_INTERNAL_ASSERT(u_isspace(_start[0]))
+      U_INTERNAL_ASSERT(u__isspace(_start[0]))
 
-      while (u_isspace(*_start)) ++_start;
+      while (u__isspace(*_start)) ++_start;
       }
 
    if (_start[0] == '[' ||
@@ -368,7 +368,7 @@ bool UFileConfig::loadINI()
 
       if (_start == _end) break;
 
-      U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),false)
+      U_INTERNAL_ASSERT_EQUALS(u__isspace(_start[0]),false)
 
       U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 
@@ -463,7 +463,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
       {
       // skip white space
 
-      if (u_isspace(*_start))
+      if (u__isspace(*_start))
          {
          ++_start;
 
@@ -486,7 +486,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
          continue;
          }
 
-      U_INTERNAL_ASSERT_EQUALS(u_isspace(_start[0]),false)
+      U_INTERNAL_ASSERT_EQUALS(u__isspace(_start[0]),false)
 
       U_INTERNAL_DUMP("_start = %.*S", 10, _start)
 

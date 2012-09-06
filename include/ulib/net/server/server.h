@@ -196,7 +196,6 @@ public:
    static int         getReqTimeout()    { return (timeoutMS / 1000); }
    static bool        isIPv6()           { return UClientImage_Base::bIPv6; }
    static UString     getHost()          { return *host; }
-   static const char* getClientAddress() { return client_address; }
 
    // The directory out of which you will serve your documents...
 
@@ -317,6 +316,15 @@ public:
    static UClientImage_Base* pClientImage;
    static UClientImage_Base* eClientImage;
 
+   static const char* getClientAddress()
+      {
+      U_TRACE(0, "UServer_Base::getClientAddress()")
+
+      U_INTERNAL_ASSERT_POINTER(pClientImage->client_address)
+
+      U_RETURN(pClientImage->client_address);
+      }
+
    static bool isPreForked()
       {
       U_TRACE(0, "UServer_Base::isPreForked()")
@@ -374,27 +382,20 @@ public:
 
    // manage log server...
 
-   static ULog*             log;
-   static UVector<UFile*>* vlog;
+   typedef struct file_LOG {
+      UFile* LOG;
+      int    flags;
+   } file_LOG;
 
-   static bool addLog(UFile* _log)
-      {
-      U_TRACE(0, "UServer_Base::addLog%p()", _log)
+   static ULog*                log;
+   static UVector<file_LOG*>* vlog;
 
-      U_INTERNAL_ASSERT_POINTER(vlog)
-
-      if (_log->creat(O_CREAT | O_WRONLY | O_APPEND, PERM_FILE))
-         {
-         vlog->push_back(_log);
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   static void reopenLog();
 
    static bool isLog()      { return (log != 0); }
    static bool isOtherLog() { return (vlog->empty() == false); }
+
+   static bool addLog(UFile* _log, int flags = O_CREAT | O_WRONLY | O_APPEND);
 
    static void      logCommandMsgError(const char* cmd);
    static UCommand* loadConfigCommand(UFileConfig& cfg);
@@ -441,7 +442,6 @@ protected:
    static UServer_Base* pthis;
    static UString* senvironment;
    static uint32_t start, count;
-   static const char* client_address;
    static UVector<UIPAllow*>* vallow_IP;
    static int sfd, bclose, watch_counter;
    static UVector<UIPAllow*>* vallow_IP_prv;

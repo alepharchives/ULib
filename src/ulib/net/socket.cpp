@@ -398,13 +398,13 @@ void USocket::setRemote()
       }
 }
 
-void USocket::getRemoteInfo(UString& result)
+void USocket::getRemoteInfo(UString& result, const char* address)
 {
-   U_TRACE(0, "USocket::getRemoteInfo(%.*S)", U_STRING_TO_TRACE(result))
+   U_TRACE(0, "USocket::getRemoteInfo(%.*S,%S)", U_STRING_TO_TRACE(result), address)
 
    UString buffer(100U);
 
-   const char* address = getRemoteInfo();
+   if (address == 0) address = getRemoteInfo();
 
    buffer.snprintf("%2d '%s:%u'", iSockDesc, address, iRemotePort);
 

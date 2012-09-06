@@ -439,7 +439,7 @@ public:
       va_list argp;
       va_start(argp, format);
 
-      u_buffer_len = u_vsnprintf((u_buffer_ptr = u_buffer), sizeof(u_buffer), format, argp);
+      u_buffer_len = u__vsnprintf((u_buffer_ptr = u_buffer), sizeof(u_buffer), format, argp);
 
       va_end(argp);
 

@@ -245,6 +245,28 @@ get_user_context_connection() {
    fi
 }
 
+check_if_user_is_connected() {
+
+	# $1 -> mac
+	# $2 -> ip
+	# $3 -> gateway
+	# $4 -> ap
+	# $5 -> uid
+
+	get_user_context_connection "$5" "$1"
+
+	if [ -n "$FILE_CTX" ]; then
+
+		if [ "$MAC"		 != "$1" -o \
+			  "$IP"		 != "$2" -o \
+			  "$GATEWAY" != "$3" -o \
+			  "$AP"		 != "$4" ]; then
+
+			OP=RENEW
+		fi
+	fi
+}
+
 check_if_user_connected_to_AP_NO_CONSUME() {
 
 	# List of Access Point with NO CONSUME
@@ -692,28 +714,6 @@ save_connection_context() {
 
 	write_FILE "$1 $2 $3 $4 $5 $6" $FILE_CTX
 	# -------------------------------------------------------------------------
-}
-
-check_if_user_is_connected() {
-
-	# $1 -> mac
-	# $2 -> ip
-	# $3 -> gateway
-	# $4 -> ap
-	# $5 -> uid
-
-	get_user_context_connection "$5" "$1"
-
-	if [ -n "$FILE_CTX" ]; then
-
-		if [ "$MAC"		 != "$1" -o \
-			  "$IP"		 != "$2" -o \
-			  "$GATEWAY" != "$3" -o \
-			  "$AP"		 != "$4" ]; then
-
-			OP=RENEW
-		fi
-	fi
 }
 
 login_with_problem() {
@@ -2116,11 +2116,9 @@ reset_policy() {
 	done
 
 	# cleaning
-	find $DIR_CTX	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
-	find $DIR_REQ	  -type f -mtime +2 -exec rm -f  {} \; 2>/dev/null
-	find $DIR_CLIENT -type d -mtime +1 -exec rm -rf {} \; 2>/dev/null
-
-	mkdir -p $DIR_CLIENT/$VIRTUAL_NAME
+	find $DIR_CTX	  -type f -mtime +2 -exec rm -f {} \; 2>/dev/null
+	find $DIR_REQ	  -type f -mtime +2 -exec rm -f {} \; 2>/dev/null
+	find $DIR_CLIENT -type f -mtime +1 -exec rm -f {} \; 2>/dev/null
 
 	HTTP_RESPONSE_BODY="OK"
 	HTTP_RESPONSE_HEADER="Connection: close\r\n"
@@ -2196,6 +2194,7 @@ polling_attivazione() {
 </form>
 "
 
+		HEAD_HTML=""
 		TITLE="LE TUE CREDENZIALI SONO:"
 		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><!-- <p class=\"bigger\">Password: $WA_PASSWORD</p> -->"
 	fi

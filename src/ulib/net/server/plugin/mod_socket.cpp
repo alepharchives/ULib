@@ -64,8 +64,8 @@ void UWebSocketPlugIn::getPart(const char* key, unsigned char* part)
 
    while ((c1 = key[i++]) != c2)
       {
-           if (u_isdigit(c1)) number[n++] = c1;
-      else if (u_isspace(c1)) ++space;
+           if (u__isdigit(c1)) number[n++] = c1;
+      else if (u__isspace(c1)) ++space;
       }
 
    number[n] = '\0';

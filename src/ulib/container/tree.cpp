@@ -88,7 +88,7 @@ U_EXPORT istream& operator>>(istream& is, UTree<UString>& t)
 
       while (c != EOF)
          {
-         do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
+         do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
 
       // U_INTERNAL_DUMP("c = %C", c)
 
@@ -101,7 +101,7 @@ U_EXPORT istream& operator>>(istream& is, UTree<UString>& t)
             continue;
             }
 
-         U_INTERNAL_ASSERT_EQUALS(u_isspace(c),false)
+         U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
 
          sb->sputbackc(c);
 
@@ -110,7 +110,7 @@ U_EXPORT istream& operator>>(istream& is, UTree<UString>& t)
          t.setRoot(str);
 
          do {
-            do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
+            do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
 
          // U_INTERNAL_DUMP("c = %C", c)
 
@@ -135,7 +135,7 @@ U_EXPORT istream& operator>>(istream& is, UTree<UString>& t)
                }
             else
                {
-               U_INTERNAL_ASSERT_EQUALS(u_isspace(c),false)
+               U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
 
                sb->sputbackc(c);
 

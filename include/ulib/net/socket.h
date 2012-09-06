@@ -342,7 +342,6 @@ public:
       return cRemoteAddress;
       }
 
-         void  getRemoteInfo(UString& buffer);
    const char* getRemoteInfo()
       {
       U_TRACE(0, "USocket::getRemoteInfo()")
@@ -353,6 +352,8 @@ public:
 
       U_RETURN(address);
       }
+
+   void  getRemoteInfo(UString& buffer, const char* address = 0);
 
    /**
    This method manage the buffer of the socket connection

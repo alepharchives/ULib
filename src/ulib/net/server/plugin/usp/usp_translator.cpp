@@ -178,8 +178,8 @@ public:
                tmp = UStringExt::trim(vec[i]);
                ptr = tmp.data();
 
-               do { ++ptr; } while (u_isspace(*ptr) == false);
-               do { ++ptr; } while (u_isspace(*ptr) == true);
+               do { ++ptr; } while (u__isspace(*ptr) == false);
+               do { ++ptr; } while (u__isspace(*ptr) == true);
 
                name = tmp.substr(tmp.distance(ptr));
                pos  = name.find('(');
@@ -214,8 +214,8 @@ public:
                tmp = UStringExt::trim(vec[i]);
                ptr = tmp.data();
 
-               do { ++ptr; } while (u_isspace(*ptr) == false);
-               do { ++ptr; } while (u_isspace(*ptr) == true);
+               do { ++ptr; } while (u__isspace(*ptr) == false);
+               do { ++ptr; } while (u__isspace(*ptr) == true);
 
                name = tmp.substr(tmp.distance(ptr));
                pos  = name.find('(');
@@ -337,7 +337,7 @@ public:
 
          // no trailing \n...
 
-         for (ptr = t.getPointer(); u_islterm(*ptr); ++ptr) {}
+         for (ptr = t.getPointer(); u__islterm(*ptr); ++ptr) {}
 
          t.setPointer(ptr);
          }

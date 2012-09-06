@@ -100,7 +100,7 @@ bool UMimeEntity::parse()
       const char* ptr  = str;
       const char* _end = data.rep->end();
 
-      while ((ptr < _end) && u_isspace(*ptr)) ++ptr;
+      while ((ptr < _end) && u__isspace(*ptr)) ++ptr;
 
       endHeader = ptr - str;
       }

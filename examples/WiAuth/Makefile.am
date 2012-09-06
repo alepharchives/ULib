@@ -10,7 +10,11 @@ cdbmake_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
 cdbmake_SOURCES = cdbmake.cpp
 cdbmake_LDFLAGS = $(PRG_LDFLAGS)
 
-bin_PROGRAMS = cdbmake
+rdbdump_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la
+rdbdump_SOURCES = rdbdump.cpp
+rdbdump_LDFLAGS = $(PRG_LDFLAGS)
+
+bin_PROGRAMS = cdbmake rdbdump
 
 moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version

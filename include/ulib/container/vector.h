@@ -760,7 +760,7 @@ public:
 
          while (c != EOF)
             {
-            do { c = sb->sbumpc(); } while (u_isspace(c) && c != EOF); // skip white-space
+            do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
 
          // U_INTERNAL_DUMP("c = %C", c)
 
@@ -775,7 +775,7 @@ public:
                continue;
                }
 
-            U_INTERNAL_ASSERT_EQUALS(u_isspace(c),false)
+            U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
 
             sb->sputbackc(c);
 

@@ -461,11 +461,11 @@ view_user() {
 		message_page "Visualizzazione dati utente: utente non registrato" "Visualizzazione dati utente: $1 non registrato!"
 	fi
 
-	ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=$1"
-
-	if [ ! -s $TMPFILE.out ]; then
-		message_page "Visualizzazione dati utente: utente non attivato" "Visualizzazione dati utente: $1 non attivato!"
-	fi
+#  ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waUsedBy=$1"
+#
+#  if [ ! -s $TMPFILE.out ]; then
+#     message_page "Visualizzazione dati utente: utente non attivato" "Visualizzazione dati utente: $1 non attivato!"
+#  fi
 
 	rm -f $TMPFILE.out $TMPFILE.err
 

@@ -49,10 +49,6 @@ public:
 
    static void str_allocate();
 
-   static UString* environment;
-   static UString* alternative_include;
-   static int      alternative_response;
-
    // COSTRUTTORI
 
             USSIPlugIn();
@@ -68,6 +64,19 @@ public:
    // Connection-wide hooks
 
    virtual int handlerRequest();
+
+   // SERVICES
+
+   static UString* environment;
+   static UString* alternative_include;
+   static int      alternative_response;
+
+   static void setMessagePage(       const UString& tmpl, const char* title_txt, const char* message);
+   static void setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...);
+
+   static void setAlternativeRedirect(const char* fmt, ...);
+   static void setAlternativeResponse(const UString& _body);
+   static void setAlternativeInclude(const UString& tmpl, const char* title_txt, const char* head_html, const char* body_style, ...);
 
    // DEBUG
 

@@ -141,6 +141,15 @@ public:
    static UString getPidProcess();
    static UString evalExpression(const UString& expr, const UString& environment);
 
+   // Within a string we can count number of occurrence of another string by using substr_count function.
+   // This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string.
+
+   static uint32_t substr_count(const char* s, uint32_t n, const char* a, uint32_t n1);
+
+   static uint32_t substr_count(const UString& s,       char  a)             { return substr_count(U_STRING_TO_PARAM(s), &a, 1); }
+   static uint32_t substr_count(const UString& s, const char* a, uint32_t n) { return substr_count(U_STRING_TO_PARAM(s),  a, n); }
+   static uint32_t substr_count(const UString& s, const UString& a)          { return substr_count(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
+
    static void putenv(const char* name, uint32_t value)
       {
       U_TRACE(1, "UStringExt::putenv(%S,%u)", name, value)

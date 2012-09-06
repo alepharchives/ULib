@@ -11,12 +11,13 @@
 //
 // ============================================================================
 
-#include <ulib/file.h>
 #include <ulib/date.h>
-#include <ulib/notifier.h>
+#include <ulib/command.h>
+#include <ulib/file_config.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/hexdump.h>
 #include <ulib/utility/services.h>
+#include <ulib/net/server/server.h>
 
 unsigned char UServices::key[16];
 
@@ -187,6 +188,41 @@ read:
    buffer.size_adjust_force(start + byte_read); // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
    U_RETURN(true);
+}
+
+int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char* fmt, va_list argp)
+{
+   U_TRACE(0, "UServices::::askToLDAP(%p,%p,%S)", pinput, ptable, fmt)
+
+   UString buffer(U_CAPACITY);
+
+   buffer.vsnprintf(fmt, argp);
+
+   UString output;
+   UCommand cmd(buffer);
+
+   int fd_stderr = getDevNull("/tmp/askToLDAP.err");
+
+   bool result = cmd.execute(pinput, &output, -1, fd_stderr);
+
+   UServer_Base::logCommandMsgError(cmd.getCommand());
+
+   if (pinput == 0) ptable->clear();
+
+   if (result)
+      {
+      if (pinput == 0 &&
+          output.empty() == false)
+         {
+         (void) UFileConfig::loadProperties(*ptable, output.data(), output.end());
+         }
+
+      U_RETURN(1);
+      }
+
+   if (UCommand::exit_value == 255) U_RETURN(-1); // Can't contact LDAP server (-1)
+
+   U_RETURN(0);
 }
 
 #ifdef USE_LIBUUID

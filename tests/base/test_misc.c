@@ -105,7 +105,7 @@ main (int argc, char* argv[])
 #ifdef DEBUG
    sprintf(buf, "%s", "0000000|70 69 70 70 6f ff 70 69:70 70 6f ff 70 69 70 70 |pippo.pippo.pipp\n"
                       "0000010|6f ff 70 69 70 70 6f ff:                        |o.pippo.        \n");
-   u__snprintf(buffer, 4096, "%M", sizeof(bytes), bytes);
+   u__snprintf(buffer, 4096, "%M", bytes, sizeof(bytes));
    if (strcmp(buf, buffer)) goto failed;
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN

@@ -1159,17 +1159,17 @@ void UHTTP::writeApacheLikeLog()
 
    U_INTERNAL_DUMP("u_http_info.startHeader = %u", u_http_info.startHeader)
 
-   if (u_isspace(request[request_len]) == false &&
-       u_isspace(request[request_len-1]))
+   if (u__isspace(request[request_len]) == false &&
+       u__isspace(request[request_len-1]))
       {
-      while (u_isspace(request[--request_len])) {}
+      while (u__isspace(request[--request_len])) {}
 
       ++request_len;
       }
 
    U_INTERNAL_DUMP("request(%u) = %.*S", request_len, request_len, request)
 
-   while (u_isspace(*request))
+   while (u__isspace(*request))
       {
       ++request;
       --request_len;
@@ -1220,7 +1220,7 @@ void UHTTP::writeApacheLikeLog()
    (void) U_SYSCALL(write, "%d,%p,%u", apache_like_log->getFd(), buffer,
                         u__snprintf(buffer, sizeof(buffer),
                                     "%s - - [%11D] \"%.*s\" %u %.*s \"%.*s\" \"%.*s\"\n",
-                                    UServer_Base::client_address,
+                                    UServer_Base::getClientAddress(),
                                     request_len, request,
                                     u_http_info.nResponseCode,
                                     body_len,    body,
@@ -1261,9 +1261,9 @@ __pure bool UHTTP::isHTTPRequest(const char* ptr)
 {
    U_TRACE(0, "UHTTP::isHTTPRequest(%.*S)", 30, ptr)
 
-   while (u_isspace(*ptr)) ++ptr; // skip space...
+   while (u__isspace(*ptr)) ++ptr; // skip space...
 
-   unsigned char c = u_toupper(ptr[0]);
+   unsigned char c = u__toupper(ptr[0]);
 
    if (c != 'G' && // GET
        c != 'P' && // POST/PUT
@@ -1342,7 +1342,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
       {
       // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected"
 
-      if (u_isspace(c)) while (u_isspace((c = *++ptr)));
+      if (u__isspace(c)) while (u__isspace((c = *++ptr)));
 
       // DELETE
       // GET
@@ -1390,7 +1390,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
       case 'P': // POST/PUT
          {
-         if (u_toupper(ptr[1]) == 'O')
+         if (u__toupper(ptr[1]) == 'O')
             {
             U_http_method_type     = HTTP_POST;
             u_http_info.method_len = 4;
@@ -1444,7 +1444,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
       case 'C': // COPY
          {
-         if (u_toupper(ptr[2]) != 'P') U_RETURN(false);
+         if (u__toupper(ptr[2]) != 'P') U_RETURN(false);
 
          U_http_method_type     = HTTP_COPY;
          u_http_info.method_len = 4;
@@ -1473,9 +1473,9 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
    U_INTERNAL_DUMP("c (after method) = %C", *ptr)
 
-   if (u_isspace((*ptr)) == false) U_RETURN(false);
+   if (u__isspace((*ptr)) == false) U_RETURN(false);
 
-   while (u_isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
+   while (u__isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
    u_http_info.uri = ptr;
 
@@ -1487,7 +1487,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
       /* check uri for invalid characters (NB: \n can happen because openssl base64...) */
 
-      if (u_iscntrl(c))
+      if (u__iscntrl(c))
          {
          U_WARNING("invalid character %C in URI %.*S", c, ptr - u_http_info.uri, u_http_info.uri);
 
@@ -1525,7 +1525,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
 
    U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
-   while (u_isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
+   while (u__isspace(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
    if (U_STRNCMP(ptr, "HTTP/1.")) U_RETURN(false);
 
@@ -1536,7 +1536,7 @@ bool UHTTP::scanfHTTPHeader(const char* ptr)
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
 end:
-   while (u_islterm((c = *++ptr)) == false) {} 
+   while (u__islterm((c = *++ptr)) == false) {} 
 
    if (c == '\r')
       {
@@ -1977,7 +1977,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
                break;
                }
 
-            U_INTERNAL_ASSERT(u_isxdigit(*inp))
+            U_INTERNAL_ASSERT(u__isxdigit(*inp))
 
             while (*inp++ != '\n') {} // discard the rest of the line
 
@@ -2136,7 +2136,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
          {
          pos1 += n;
 
-         while (u_isspace(ptr[pos1])) ++pos1;
+         while (u__isspace(ptr[pos1])) ++pos1;
 
          U_INTERNAL_DUMP("n = %u ptr[pos1] = %C", n, ptr[pos1])
 
@@ -2147,7 +2147,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
             goto next;
             }
 
-         do { ++pos1; } while (u_isspace(ptr[pos1]));
+         do { ++pos1; } while (u__isspace(ptr[pos1]));
 
          if (pos1 >= end) U_RETURN(false); // NB: we can have too much advanced...
 
@@ -2166,7 +2166,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                if (memcmp(ptrT, p, 7) == 0) // 7 -> sizeof("ontent-")
                   {
                   p += 8;
-                  c1 = u_toupper(p[-1]);
+                  c1 = u__toupper(p[-1]);
 
                   if (c1 == 'T' &&
                       U_MEMCMP(p, "ype") == 0)
@@ -2243,7 +2243,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                   else
                      {
                      p += 7;
-                     c1 = u_toupper(p[-1]);
+                     c1 = u__toupper(p[-1]);
 
                      if (c1 == 'E' &&
                          U_MEMCMP(p, "ncoding") == 0)
@@ -2302,11 +2302,11 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                {
                if (p[0] == '-')
                   {
-                  c1 = u_toupper(p[1]);
+                  c1 = u__toupper(p[1]);
 
                   if (c1 == 'F') // "X-Forwarded-For"
                      {
-                     if (u_toupper(p[11]) == 'F'       &&
+                     if (u__toupper(p[11]) == 'F'      &&
                          memcmp(ptrX+2,  p+2,  9) == 0 && // 9 -> sizeof("orwarded-")
                          memcmp(ptrX+12, p+12, 2) == 0)   // 2 -> sizeof("or")
                         {
@@ -2318,8 +2318,8 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                      }
                   else if (c1 == 'R') // "X-Real-IP"
                      {
-                     if (u_toupper(p[6]) == 'I' &&
-                         u_toupper(p[7]) == 'P' &&
+                     if (u__toupper(p[6]) == 'I' &&
+                         u__toupper(p[7]) == 'P' &&
                          memcmp(ptrP+2, p+2, 4) == 0) // 4 -> sizeof("eal-")
                         {
                         u_http_info.ip_client     = ptr + (ptrdiff_t)pos1;
@@ -2337,7 +2337,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                      do {
                         c = p2[n];
 
-                        if (u_isspace(c) || c == ',') break;
+                        if (u__isspace(c) || c == ',') break;
                         }
                      while (++n < u_http_info.ip_client_len);
 
@@ -2351,9 +2351,11 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
                         buffer[n] = '\0';
 
-                        UServer_Base::client_address = buffer;
+                        U_INTERNAL_ASSERT_POINTER(UServer_Base::pClientImage->client_address)
 
-                        U_INTERNAL_DUMP("UServer_Base::client_address = %S", UServer_Base::client_address)
+                        UServer_Base::pClientImage->client_address = buffer;
+
+                        U_INTERNAL_DUMP("UServer_Base::getClientAddress() = %S", UServer_Base::getClientAddress())
                         }
                      }
                   }
@@ -2362,7 +2364,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
             case 'U':
                {
-               if (u_toupper(p[4]) == 'A'       &&
+               if (u__toupper(p[4]) == 'A'       &&
                    memcmp(ptrU,   p,   4) == 0  && // 4 -> sizeof("ser-")
                    memcmp(ptrU+5, p+5, 4) == 0)    // 4 -> sizeof(     "gent")
                   {
@@ -2376,8 +2378,8 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
             case 'I':
                {
-               if (u_toupper(p[2])  == 'M'        &&
-                   u_toupper(p[11]) == 'S'        &&
+               if (u__toupper(p[2])  == 'M'        &&
+                   u__toupper(p[11]) == 'S'        &&
                    memcmp(ptrI,    p,    2) == 0  && // 2 -> sizeof("f-")
                    memcmp(ptrI+3,  p+3,  8) == 0  && // 8 -> sizeof(   "odified-")
                    memcmp(ptrI+12, p+12, 4) == 0)    // 4 -> sizeof(            "ince")
@@ -2439,7 +2441,7 @@ next:
          // \n\n     (U_LF2)
          // \r\n\r\n (U_CRLF2)
 
-         if (u_islterm(c))
+         if (u__islterm(c))
             {
             if (p1[-1] == '\r' &&
                 p1[ 2] == '\n')
@@ -2528,7 +2530,7 @@ int UHTTP::checkHTTPRequestCache()
 
                   for (uint32_t i = 0; i < 4; ++i)
                      {
-                     if (u_toupper(p[i]) == 'K')
+                     if (u__toupper(p[i]) == 'K')
                         {
                         U_INTERNAL_ASSERT_EQUALS(U_STRNCASECMP(p+i, "keep-alive"), 0);
 
@@ -2876,7 +2878,7 @@ void UHTTP::setHTTPCookie(const UString& param)
 
                keyID->setBuffer(100U);
 
-               keyID->snprintf("%s_%u_%P_%u", UServer_Base::client_address, getUserAgent(), ++sid_counter_gen);
+               keyID->snprintf("%s_%u_%P_%u", UServer_Base::getClientAddress(), getUserAgent(), ++sid_counter_gen);
 
                item = *keyID;
                }
@@ -3037,9 +3039,9 @@ bool UHTTP::getHTTPCookie(UString* cookie)
                {
                // HTTP Session Hijacking mitigation: IP_USER-AGENT_PID_COUNTER
 
-               len = u__strlen(UServer_Base::client_address);
+               len = u__strlen(UServer_Base::pClientImage->client_address);
 
-               if (token.compare(0U, len, UServer_Base::client_address, len) == 0) // IP
+               if (token.compare(0U, len, UServer_Base::pClientImage->client_address, len) == 0) // IP
                   {
                   agent = strtol(token.c_pointer(len+1), &ptr, 0);
 
@@ -3099,7 +3101,7 @@ bool UHTTP::initSession(const char* location, uint32_t size)
 
       bool btruncate = (UServer_Base::pid == 0); // NB: no truncate, if we have started as replacement of child preforked...
 
-      if (((URDB*)db_session)->open(size, btruncate) == false)
+      if (((URDB*)db_session)->open(size, btruncate, true) == false)
          {
          U_SRV_LOG("db initialization of http session failed...");
 
@@ -3686,6 +3688,24 @@ UString UHTTP::getFormValue(const char* name, uint32_t len, uint32_t start, uint
    if (index != U_NOT_FOUND) (void) buffer.replace((*form_name_value)[index+1]);
 
    U_RETURN_STRING(buffer);
+}
+
+void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32_t start, uint32_t pos, uint32_t end)
+{
+   U_TRACE(0, "UHTTP::getFormValue(%.*S,%.*S,%u,%u,%u,%u)", U_STRING_TO_TRACE(buffer), len, name, len, start, pos, end)
+
+   U_INTERNAL_ASSERT_MINOR(pos, end)
+   U_INTERNAL_ASSERT_POINTER(form_name_value)
+
+   UStringRep* r = form_name_value->UVector<UStringRep*>::at(pos-1);
+
+   if (r->equal(name, len) == false) getFormValue(buffer, name, len);
+   else
+      {
+      (void) buffer.replace((*form_name_value)[pos]);
+
+      U_ASSERT_EQUALS(buffer, getFormValue(name, len, start, end))
+      }
 }
 
 void UHTTP::processHTTPForm()
@@ -4608,7 +4628,7 @@ bool UHTTP::checkUriProtected()
       if (ok &&
           u_http_info.ip_client_len)
          {
-         ok = UIPAllow::isAllowed(UServer_Base::client_address, *vallow_IP);
+         ok = UIPAllow::isAllowed(UServer_Base::getClientAddress(), *vallow_IP);
          }
 
       if (ok == false)
@@ -4631,6 +4651,92 @@ bool UHTTP::checkUriProtected()
       }
 
    U_RETURN(true);
+}
+
+void UHTTP::manageRequest(UString* request_uri,
+                          UString* client_address,
+                          const struct UHTTP::service_info*  GET_table, uint32_t n1,
+                          const struct UHTTP::service_info* POST_table, uint32_t n2)
+{
+   U_TRACE(0, "UHTTP::manageRequest(%p,%p,%p,%u,%p,%u)", request_uri, client_address, GET_table, n1, POST_table, n2)
+
+   U_INTERNAL_ASSERT_POINTER(request_uri)
+
+   int32_t high;
+   const struct UHTTP::service_info* table;
+
+   if (UHTTP::isHttpGET())
+      {
+      high  = n1;
+      table = GET_table;
+      }
+   else if (UHTTP::isHttpPOST())
+      {
+      high  = n2;
+      table = POST_table;
+      }
+   else
+      {
+      u_http_info.nResponseCode = HTTP_BAD_METHOD;
+
+      return;
+      }
+
+   if (high == 0)
+      {
+not_found:
+      u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+
+      return;
+      }
+
+   int32_t cmp = -1, probe, low = -1;
+   const struct UHTTP::service_info* key;
+
+   *request_uri = getRequestURI(false);
+
+   // NB: skip '/'...
+
+   uint32_t target_len = request_uri->size()  - 1;  
+   const char* target  = request_uri->c_pointer(1);
+
+   U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
+
+   while ((high - low) > 1)
+      {
+      probe = ((low + high) & 0xFFFFFFFFL) >> 1;
+
+      U_INTERNAL_DUMP("low = %d high = %d probe = %d", low, high, probe)
+
+      key = table + probe;
+
+      U_INTERNAL_DUMP("key(%u) = %.*S", key->len, key->len, key->name)
+
+      cmp = memcmp(key->name, target, U_min(key->len, target_len));
+
+      if (cmp == 0) cmp = (key->len - target_len);
+      
+           if (cmp  > 0) high = probe;
+      else if (cmp == 0) goto found;
+      else               low = probe;
+      }
+
+   if (low == -1 ||
+       (key = table + low, memcmp(key->name, target, U_min(key->len, target_len))) != 0)
+      {
+      goto not_found;
+      }
+
+   probe = low;
+
+found:
+   if (client_address) (void) client_address->assign(UServer_Base::getClientAddress());
+
+   table[probe].function();
+
+   U_INTERNAL_DUMP("u_http_info.nResponseCode = %d", u_http_info.nResponseCode)
+
+   if (u_http_info.nResponseCode == 0) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
 }
 
 UString UHTTP::getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire)
@@ -5594,7 +5700,8 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
 
    U_INTERNAL_DUMP("u_mime_index = %C u_is_cgi() = %b u_is_usp() = %b", u_mime_index, u_is_cgi(), u_is_usp())
 
-   bool as_service = (penvironment != 0);
+   bool async      = false,
+        as_service = (penvironment != 0);
 
    if (u_is_cgi() == false) manageHTTPServletRequest(as_service);
    else
@@ -5626,9 +5733,9 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
 
       // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
 
-      bool async = (as_service == false                   &&
-                    UServer_Base::preforked_num_kids <= 0 &&
-                    UClientImage_Base::isPipeline()  == false);
+      async = (as_service == false                   &&
+               UServer_Base::preforked_num_kids == 0 &&
+               UClientImage_Base::isPipeline()  == false);
 
       (void) processCGIRequest(cmd, penvironment, cgi_dir, async);
       }
@@ -5667,7 +5774,8 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
       case HTTP_NO_CONTENT:
       case HTTP_MOVED_TEMP:
          {
-         if (as_service ||
+         if (async      ||
+             as_service ||
              processCGIOutput())
             {
             U_RETURN(true);
@@ -5881,8 +5989,8 @@ next2:
 
       U_INTERNAL_DUMP("u_mime_index = %C U_http_is_navigation = %b", u_mime_index, U_http_is_navigation)
 
-      if ((u_is_usp()               ||
-           u_isdigit(u_mime_index)) &&
+      if ((u_is_usp()                ||
+           u__isdigit(u_mime_index)) &&
           U_http_is_navigation == false)
          {
          (void) runDynamicPage(0);
@@ -6097,6 +6205,8 @@ UString UHTTP::getCGIEnvironment()
 {
    U_TRACE(0, "UHTTP::getCGIEnvironment()")
 
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::pClientImage->client_address)
+
    const char* cgi_dir;
    UString uri = getRequestURI(false),
            buffer(4000U + u_http_info.query_len + u_http_info.referer_len + u_http_info.user_agent_len);
@@ -6129,9 +6239,9 @@ UString UHTTP::getCGIEnvironment()
                    // PHP
                    "REQUEST_METHOD=%.*s\n",   // dealing with POST requests
                    (isHttpPOST() ? UClientImage_Base::body->size() : 0),
-                   UServer_Base::client_address,
+                   UServer_Base::pClientImage->client_address,
                    UServer_Base::pClientImage->socket->remotePortNumber(),
-                   UServer_Base::client_address, getUserAgent(),
+                   UServer_Base::pClientImage->client_address, getUserAgent(),
                    (U_http_version ? U_http_version : '0'),
                    U_HTTP_URI_TO_TRACE,
                    // ext
@@ -6205,7 +6315,14 @@ UString UHTTP::getCGIEnvironment()
    if (u_http_info.content_type_len)    buffer.snprintf_add("'CONTENT_TYPE=%.*s'\n",         U_HTTP_CTYPE_TO_TRACE);
    if (u_http_info.accept_language_len) buffer.snprintf_add("'HTTP_ACCEPT_LANGUAGE=%.*s'\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
 
-   if (buffer.isBinary()) U_RETURN_STRING(UString::getStringNull());
+   if (buffer.isBinary())
+      {
+      U_INTERNAL_DUMP("buffer:\n"
+                      "--------------------------------------\n"
+                      "%s", u_memoryDump((unsigned char*)U_STRING_TO_PARAM(buffer)))
+
+      U_RETURN_STRING(UString::getStringNull());
+      }
 
    // contains the parameters of the request
    if (u_http_info.query_len) buffer.snprintf_add("'QUERY_STRING=%.*s'\n", U_HTTP_QUERY_TO_TRACE);
@@ -6247,7 +6364,14 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
          ptr  = 0;
          sz   = 0;
 
-         if (item.empty() == false) U_WARNING("Found binary data in form: %.*S", U_STRING_TO_TRACE(item));
+         if (item.empty() == false)
+            {
+            U_INTERNAL_DUMP("form item:\n"
+                            "--------------------------------------\n"
+                            "%s", u_memoryDump((unsigned char*)U_STRING_TO_PARAM(item)))
+
+            U_WARNING("Found binary data in form item: %.*S", U_STRING_TO_TRACE((*form_name_value)[i-1]));
+            }
          }
       else
          {
@@ -6427,10 +6551,10 @@ bool UHTTP::processCGIOutput()
 
    // NB: we check for <h(1|tml)> (HTML without HTTP headers..)
 
-   while (u_isspace(*ptr)) ++ptr; // skip space...
+   while (u__isspace(*ptr)) ++ptr; // skip space...
 
    if (          ptr[0]  == '<' &&
-       u_toupper(ptr[1]) == 'H')
+       u__toupper(ptr[1]) == 'H')
       {
       goto no_headers;
       }
@@ -6484,7 +6608,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
       {
       U_INTERNAL_DUMP("ptr = %.*S", 20, ptr)
 
-      switch (u_toupper(*ptr))
+      switch (u__toupper(*ptr))
          {
          case 'H': // response line: HTTP/1.n nnn <ssss>
             {
@@ -6695,7 +6819,7 @@ no_headers: // NB: we assume to have HTML without HTTP headers...
                {
                ptr += U_CONSTANT_SIZE("Content-");
 
-               char c = u_toupper(*ptr++);
+               char c = u__toupper(*ptr++);
 
                if (c == 'T' &&
                    U_STRNEQ(ptr, "ype: "))
@@ -6791,7 +6915,7 @@ error:
    U_RETURN(false);
 }
 
-bool UHTTP::processCGIRequest(UCommand& cmd, UString* penv, const char* cgi_dir, bool async)
+bool UHTTP::processCGIRequest(UCommand& cmd, UString* penv, const char* cgi_dir, bool& async)
 {
    U_TRACE(0, "UHTTP::processCGIRequest(%p,%p,%S,%b)", &cmd, penv, cgi_dir, async)
 
@@ -6808,12 +6932,18 @@ bool UHTTP::processCGIRequest(UCommand& cmd, UString* penv, const char* cgi_dir,
       U_RETURN(false);
       }
 
-   if (async &&
-       UServer_Base::parallelization())
+   if (async)
       {
-      if (form_name_value->size()) resetForm(false);
+      if (UServer_Base::parallelization())
+         {
+         if (form_name_value->size()) resetForm(false);
 
-      U_RETURN(true);
+         // NB: UServer_Base::parallelization() set UClientImage_Base::write_off to true...
+
+         U_RETURN(true);
+         }
+
+      async = false; // NB: we need to distinghish between child and parent...
       }
 
    UString environment;
@@ -6897,7 +7027,7 @@ bool UHTTP::checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos)
       ptr = x.c_pointer(pos + USocket::str_content_length->size() + 1);
       }
 
-   if (u_isspace(*ptr)) ++ptr; // NB: weighttp need at least a space...
+   if (u__isspace(*ptr)) ++ptr; // NB: weighttp need at least a space...
 
    char* nptr;
    uint32_t clength = (uint32_t) strtoul(ptr, &nptr, 0);
@@ -6913,7 +7043,7 @@ bool UHTTP::checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos)
 
       U_INTERNAL_DUMP("sz_len1 = %u sz_len2 = %u", sz_len1, sz_len2)
 
-      while (u_isspace(*ptr))
+      while (u__isspace(*ptr))
          {
          if (sz_len1 == sz_len2) break;
 

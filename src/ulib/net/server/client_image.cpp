@@ -15,19 +15,19 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/server/server.h>
 
-bool     UClientImage_Base::bIPv6;
-bool     UClientImage_Base::pipeline;
-bool     UClientImage_Base::write_off;
-uint32_t UClientImage_Base::rstart;
-uint32_t UClientImage_Base::counter;
-uint32_t UClientImage_Base::size_request;
-UString* UClientImage_Base::body;
-UString* UClientImage_Base::rbuffer;
-UString* UClientImage_Base::wbuffer;
-UString* UClientImage_Base::request; // NB: it is only a pointer, not a string object...
-UString* UClientImage_Base::pbuffer;
-UString* UClientImage_Base::environment;
-UString* UClientImage_Base::msg_welcome;
+bool        UClientImage_Base::bIPv6;
+bool        UClientImage_Base::pipeline;
+bool        UClientImage_Base::write_off;
+uint32_t    UClientImage_Base::rstart;
+uint32_t    UClientImage_Base::counter;
+uint32_t    UClientImage_Base::size_request;
+UString*    UClientImage_Base::body;
+UString*    UClientImage_Base::rbuffer;
+UString*    UClientImage_Base::wbuffer;
+UString*    UClientImage_Base::request; // NB: it is only a pointer, not a string object...
+UString*    UClientImage_Base::pbuffer;
+UString*    UClientImage_Base::environment;
+UString*    UClientImage_Base::msg_welcome;
 
 #ifdef USE_LIBSSL
 SSL_CTX* UClientImage_Base::ctx;
@@ -130,6 +130,7 @@ UClientImage_Base::UClientImage_Base()
 
    start = count = 0;
    state = sfd = bclose = 0;
+   client_address = 0;
 }
 
 // ------------------------------------------------------------------------
@@ -355,7 +356,7 @@ bool UClientImage_Base::newConnection()
       bool berror = false;
       UString tmp(U_CAPACITY);
 
-      socket->getRemoteInfo(*logbuf);
+      socket->getRemoteInfo(*logbuf, client_address);
 
       if (ULog::prefix) tmp.snprintf(ULog::prefix);
 
@@ -389,8 +390,8 @@ int UClientImage_Base::handlerResponse()
 {
    U_TRACE(0, "UClientImage_Base::handlerResponse()")
 
-   U_INTERNAL_ASSERT_EQUALS(count, 0)
    U_INTERNAL_ASSERT(socket->isOpen())
+   U_ASSERT_EQUALS(isPendingWrite(), false)
    U_ASSERT_EQUALS(wbuffer->empty(), false)
    U_INTERNAL_ASSERT_EQUALS(write_off, false)
 
@@ -425,6 +426,8 @@ int UClientImage_Base::handlerResponse()
    if (logbuf &&
        socket->isOpen())
       {
+      resetPipeline();
+
       UServer_Base::log->log("%.*spartial write (%u bytes): count %u counter %u\n",
                               U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, ncount, counter);
       }
@@ -543,6 +546,8 @@ int UClientImage_Base::handlerRead()
    initAfterGenericRead();
 #endif
 
+   U_INTERNAL_DUMP("client_address = %S", client_address)
+
 loop:
    ++counter;
 
@@ -568,7 +573,7 @@ loop:
       U_INTERNAL_DUMP("wbuffer(%u) = %.*S", wbuffer->size(), U_STRING_TO_TRACE(*wbuffer))
       U_INTERNAL_DUMP("   body(%u) = %.*S",    body->size(), U_STRING_TO_TRACE(*body))
 
-      if (count == 0)
+      if (isPendingWrite() == false)
          {
          if (handlerResponse() == U_NOTIFIER_DELETE) state = U_PLUGIN_HANDLER_ERROR;
          }
@@ -692,8 +697,8 @@ int UClientImage_Base::handlerWrite()
 
    U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B bclose = %B", sfd, count, UEventFd::op_mask, bclose)
 
+   U_ASSERT(isPendingWrite())
    U_INTERNAL_ASSERT_MAJOR(sfd, 0)
-   U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_EQUALS(write_off, false)
    U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
@@ -722,7 +727,7 @@ int UClientImage_Base::handlerWrite()
       if (logbuf) UServer_Base::log->log("%.*ssendfile write (%u bytes): fd %d count %u counter %u\n",
                                           U_STRING_TO_TRACE(*UServer_Base::mod_name), value, sfd, count, counter);
 
-      if (count)
+      if (isPendingWrite())
          {
          start += value;
 
@@ -775,7 +780,7 @@ void UClientImage_Base::handlerDelete()
 
       U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
 
-      if (count)
+      if (isPendingWrite())
          {
          // NB: pending sendfile...
 
@@ -795,7 +800,8 @@ void UClientImage_Base::handlerDelete()
 
       // NB: to reuse object...
 
-      UEventFd::fd = 0;
+      UEventFd::fd   = 0;
+      client_address = 0;
 
       U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
 #  ifdef HAVE_ACCEPT4

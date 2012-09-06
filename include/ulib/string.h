@@ -1039,7 +1039,7 @@ public:
    bool equalnocase(UStringRep* _rep) const               { return same(_rep) || rep->equalnocase(_rep); }
    bool equalnocase(const UString& str) const __pure;
 
-   bool equal(UStringRep* _rep, bool ignore_case) const   { return same(_rep) || rep->equal(_rep, ignore_case); }
+   bool equal(UStringRep* _rep,   bool ignore_case) const { return same(_rep) || rep->equal(_rep, ignore_case); }
    bool equal(const UString& str, bool ignore_case) const { return equal(str.rep, ignore_case); }
 
    // STREAM
@@ -1190,7 +1190,7 @@ public:
 
       // NB: +1 because we want space for null-terminator...
 
-      rep->_length = u_vsnprintf(rep->data(), rep->_capacity+1, format, argp); 
+      rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, argp); 
 
       U_INTERNAL_DUMP("ret = %u buffer_size = %u", rep->_length, rep->_capacity+1)
 
@@ -1208,7 +1208,7 @@ public:
 
       // NB: +1 because we want space for null-terminator...
 
-      uint32_t ret = u_vsnprintf(c_pointer(rep->_length), rep->space()+1, format, argp); 
+      uint32_t ret = u__vsnprintf(c_pointer(rep->_length), rep->space()+1, format, argp); 
 
       U_INTERNAL_DUMP("ret = %u buffer_size = %u", ret, rep->space()+1)
 

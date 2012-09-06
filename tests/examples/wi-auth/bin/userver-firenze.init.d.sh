@@ -6,7 +6,7 @@
 #UTRACE="0 20M 1"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.accept"
-UTRACE_LEVEL=5
+#UTRACE_LEVEL=5
  export UTRACE UOBJDUMP USIMERR UTRACE_LEVEL
 
 prog="userver"
@@ -25,7 +25,7 @@ errfile2=/tmp/userver-firenze_ssl.err
 
 export DIR_LOG_GZ=/var/log
 
-log_files=`ls /var/log/userver-*.log /var/log/uclient-*.log /var/log/wifi-portal 2>/dev/null`
+log_files=`ls /var/log/userver-*.log /var/log/uclient-*.log /var/log/wifi-portal /var/log/wifi-warning 2>/dev/null`
 
 # Source function library.
 . /etc/rc.d/init.d/functions

@@ -225,16 +225,16 @@ unsigned char u_escape_decode_ptr(const char** restrict s)
 
       /* check control code */
 
-      case '^': c = u_toupper(*t++) - '@'; break;
+      case '^': c = u__toupper(*t++) - '@'; break;
 
       /* check sequenza escape esadecimale */
 
       case 'x':
          {
-         if (u_isxdigit(*t))
+         if (u__isxdigit(*t))
             {
-                                c =            u_hexc2int(*t++);
-            if (u_isxdigit(*t)) c = (c << 4) | u_hexc2int(*t++);
+                                c =            u__hexc2int(*t++);
+            if (u__isxdigit(*t)) c = (c << 4) | u__hexc2int(*t++);
             }
          }
       break;
@@ -246,10 +246,10 @@ unsigned char u_escape_decode_ptr(const char** restrict s)
          {
          c -= '0';
 
-         if (u_isoctal(*t))
+         if (u__isoctal(*t))
             {
-                               c = (c << 3) | u_octc2int(*t++);
-            if (u_isoctal(*t)) c = (c << 3) | u_octc2int(*t++);
+                               c = (c << 3) | u__octc2int(*t++);
+            if (u__isoctal(*t)) c = (c << 3) | u__octc2int(*t++);
             }
          }
       break;
@@ -263,11 +263,11 @@ unsigned char u_escape_decode_ptr(const char** restrict s)
 
          t += 2;
 
-         U_INTERNAL_ASSERT(u_isxdigit(t[0]))
-         U_INTERNAL_ASSERT(u_isxdigit(t[1]))
+         U_INTERNAL_ASSERT(u__isxdigit(t[0]))
+         U_INTERNAL_ASSERT(u__isxdigit(t[1]))
 
-         c =            u_hexc2int(*t++);
-         c = (c << 4) | u_hexc2int(*t++);
+         c =            u__hexc2int(*t++);
+         c = (c << 4) | u__hexc2int(*t++);
          }
       break;
       }

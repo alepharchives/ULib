@@ -76,52 +76,51 @@
 
 #define U_DEFAULT_PORT 80
 
-int                        UServer_Base::sfd;
-int                        UServer_Base::port;
-int                        UServer_Base::bclose;
-int                        UServer_Base::iBackLog = SOMAXCONN;
-int                        UServer_Base::timeoutMS = -1;
-int                        UServer_Base::cgi_timeout;
-int                        UServer_Base::watch_counter;
-int                        UServer_Base::verify_mode;
-int                        UServer_Base::preforked_num_kids;
-bool                       UServer_Base::bssl;
-bool                       UServer_Base::bipc;
-bool                       UServer_Base::flag_loop;
-bool                       UServer_Base::public_address;
-bool                       UServer_Base::monitoring_process;
-bool                       UServer_Base::bpluginsHandlerReset;
-bool                       UServer_Base::bpluginsHandlerRequest;
-bool                       UServer_Base::accept_edge_triggered;
-bool                       UServer_Base::enable_rfc1918_filter;
-bool                       UServer_Base::set_realtime_priority;
-bool                       UServer_Base::flag_use_tcp_optimization;
-ULog*                      UServer_Base::log;
-pid_t                      UServer_Base::pid;
-time_t                     UServer_Base::expire;
-uint32_t                   UServer_Base::start;
-uint32_t                   UServer_Base::count;
-uint32_t                   UServer_Base::shared_data_add;
-UString*                   UServer_Base::mod_name;
-UString*                   UServer_Base::host;
-UString*                   UServer_Base::senvironment;
-USocket*                   UServer_Base::socket;
-UProcess*                  UServer_Base::proc;
-UEventFd*                  UServer_Base::handler_inotify;
-const char*                UServer_Base::client_address;
-UEventTime*                UServer_Base::ptime;
-UServer_Base*              UServer_Base::pthis;
-struct linger              UServer_Base::lng = { 1, 0 };
-UVector<UFile*>*           UServer_Base::vlog;
-UVector<UString>*          UServer_Base::vplugin_name;
-UClientImage_Base*         UServer_Base::pindex;
-UClientImage_Base*         UServer_Base::vClientImage;
-UClientImage_Base*         UServer_Base::pClientImage;
-UClientImage_Base*         UServer_Base::eClientImage;
-UVector<UIPAllow*>*        UServer_Base::vallow_IP;
-UVector<UIPAllow*>*        UServer_Base::vallow_IP_prv;
-UVector<UServerPlugIn*>*   UServer_Base::vplugin;
-UServer_Base::shared_data* UServer_Base::ptr_shared_data;
+int                               UServer_Base::sfd;
+int                               UServer_Base::port;
+int                               UServer_Base::bclose;
+int                               UServer_Base::iBackLog = SOMAXCONN;
+int                               UServer_Base::timeoutMS = -1;
+int                               UServer_Base::cgi_timeout;
+int                               UServer_Base::watch_counter;
+int                               UServer_Base::verify_mode;
+int                               UServer_Base::preforked_num_kids;
+bool                              UServer_Base::bssl;
+bool                              UServer_Base::bipc;
+bool                              UServer_Base::flag_loop;
+bool                              UServer_Base::public_address;
+bool                              UServer_Base::monitoring_process;
+bool                              UServer_Base::bpluginsHandlerReset;
+bool                              UServer_Base::bpluginsHandlerRequest;
+bool                              UServer_Base::accept_edge_triggered;
+bool                              UServer_Base::enable_rfc1918_filter;
+bool                              UServer_Base::set_realtime_priority;
+bool                              UServer_Base::flag_use_tcp_optimization;
+ULog*                             UServer_Base::log;
+pid_t                             UServer_Base::pid;
+time_t                            UServer_Base::expire;
+uint32_t                          UServer_Base::start;
+uint32_t                          UServer_Base::count;
+uint32_t                          UServer_Base::shared_data_add;
+UString*                          UServer_Base::mod_name;
+UString*                          UServer_Base::host;
+UString*                          UServer_Base::senvironment;
+USocket*                          UServer_Base::socket;
+UProcess*                         UServer_Base::proc;
+UEventFd*                         UServer_Base::handler_inotify;
+UEventTime*                       UServer_Base::ptime;
+UServer_Base*                     UServer_Base::pthis;
+struct linger                     UServer_Base::lng = { 1, 0 };
+UVector<UString>*                 UServer_Base::vplugin_name;
+UClientImage_Base*                UServer_Base::pindex;
+UClientImage_Base*                UServer_Base::vClientImage;
+UClientImage_Base*                UServer_Base::pClientImage;
+UClientImage_Base*                UServer_Base::eClientImage;
+UVector<UIPAllow*>*               UServer_Base::vallow_IP;
+UVector<UIPAllow*>*               UServer_Base::vallow_IP_prv;
+UVector<UServerPlugIn*>*          UServer_Base::vplugin;
+UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
+UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
 const UString* UServer_Base::str_ENABLE_IPV6;
 const UString* UServer_Base::str_PORT;
@@ -349,7 +348,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    port         = U_DEFAULT_PORT;
    pthis        = this;
 
-   vlog         = U_NEW(UVector<UFile*>);
+   vlog         = U_NEW(UVector<file_LOG*>);
    mod_name     = U_NEW(UString(U_CAPACITY));
    senvironment = U_NEW(UString(U_CAPACITY));
 
@@ -422,7 +421,15 @@ UServer_Base::~UServer_Base()
 
    if (vlog)
       {
-      for (uint32_t i = 0, n = vlog->size(); i < n; ++i) (*vlog)[i]->close();
+      file_LOG* item;
+
+      for (uint32_t i = 0, n = vlog->size(); i < n; ++i)
+         {
+         item = (*vlog)[i];
+
+                item->LOG->close();
+         delete item->LOG;
+         }
 
              vlog->clear();
       delete vlog;
@@ -1274,6 +1281,41 @@ next:
    if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
 }
 
+bool UServer_Base::addLog(UFile* _log, int flags)
+{
+   U_TRACE(0, "UServer_Base::addLog(%p,%d)", _log, flags)
+
+   U_INTERNAL_ASSERT_POINTER(vlog)
+
+   if (_log->creat(flags, PERM_FILE))
+      {
+      file_LOG* item = U_NEW(file_LOG);
+
+      item->LOG   = _log;
+      item->flags = flags;
+
+      vlog->push_back(item);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+void UServer_Base::reopenLog()
+{
+   U_TRACE(0, "UServer_Base::reopenLog()")
+
+   file_LOG* item;
+
+   for (uint32_t i = 0, n = vlog->size(); i < n; ++i)
+      {
+      item = (*vlog)[i];
+
+      item->LOG->reopen(item->flags);
+      }
+}
+
 void UServer_Base::runWatch()
 {
    U_TRACE(0, "UServer_Base::runWatch()")
@@ -1328,9 +1370,8 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    // NB: for logrotate...
 
-   if (isLog()) ULog::reopen();
-
-   for (uint32_t i = 0, n = vlog->size(); i < n; ++i) (*vlog)[i]->reopen();
+   if (isLog())      ULog::reopen();
+   if (isOtherLog())       reopenLog();
 
    sendSigTERM();
 
@@ -1448,9 +1489,9 @@ next:
 
    U_INTERNAL_ASSERT(csocket->isConnected())
 
-   client_address = csocket->remoteIPAddress().getAddressString();
+   ptr->client_address = csocket->remoteIPAddress().getAddressString();
 
-   U_INTERNAL_DUMP("client_address = %S", client_address)
+   U_INTERNAL_DUMP("client_address = %S", ptr->client_address)
 
    if (vallow_IP &&
        ptr->isAllowed(*vallow_IP) == false)
@@ -1460,7 +1501,7 @@ next:
       // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
       // immediately. A warning is logged on the server but nothing is sent to the client.
 
-      U_SRV_LOG("new client connected from %S, connection denied by Access Control List", client_address);
+      U_SRV_LOG("new client connected from %S, connection denied by Access Control List", ptr->client_address);
 
       goto error;
       }
@@ -1474,7 +1515,7 @@ next:
         ptr->isAllowed(*vallow_IP_prv) == false))
       {
       U_SRV_LOG("new client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
-                  client_address); 
+                  ptr->client_address); 
 
       goto error;
       }
@@ -1482,7 +1523,7 @@ next:
 #if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (csocket->iSockDesc >= FD_SETSIZE)
       {
-      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)", client_address, FD_SETSIZE);
+      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)", ptr->client_address, FD_SETSIZE);
 
       goto error;
       }
@@ -1493,7 +1534,7 @@ next:
        --UNotifier::num_connection;
 
       U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
-                        client_address, UNotifier::max_connection - UNotifier::min_connection);
+                  ptr->client_address, UNotifier::max_connection - UNotifier::min_connection);
 
       goto error;
       }
@@ -1864,6 +1905,8 @@ void UServer_Base::run()
             --i;
 
             baffinity = false;
+
+            u_gettimeofday();
 
             U_INTERNAL_DUMP("down to %u children", i)
 

@@ -106,7 +106,7 @@ public:
       {
       U_TRACE(0, "UTokenizer::skipSpaces()")
 
-      while (s < end && u_isspace(*s)) ++s;
+      while (s < end && u__isspace(*s)) ++s;
       }
 
    void setPointer(const char* ptr)

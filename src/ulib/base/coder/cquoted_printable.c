@@ -177,11 +177,11 @@ uint32_t u_quoted_printable_decode(const char* restrict inptr, uint32_t len, uns
          c0 = *(inptr+1);
          c1 = *(inptr+2);
 
-         if (u_isxdigit(c0) &&
-             u_isxdigit(c1))
+         if (u__isxdigit(c0) &&
+             u__isxdigit(c1))
             {
-            v = ((u_hexc2int(c0) & 0x0f) << 4) |
-                 (u_hexc2int(c1) & 0x0f);
+            v = ((u__hexc2int(c0) & 0x0f) << 4) |
+                 (u__hexc2int(c1) & 0x0f);
 
             if (v == 0x0D)
                {
@@ -190,7 +190,7 @@ uint32_t u_quoted_printable_decode(const char* restrict inptr, uint32_t len, uns
                   {
                   *outptr++ = '\n';
 
-                  inptr += (u_isalnum(*(inptr+5)) ? 5 : 6);
+                  inptr += (u__isalnum(*(inptr+5)) ? 5 : 6);
 
                   continue;
                   }

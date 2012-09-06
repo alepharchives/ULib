@@ -632,7 +632,7 @@ int UShibPlugIn::handlerRequest()
       UShibTarget::hostname    = strndup(host.data(), pos);
       UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
       UShibTarget::method      = strndup(U_HTTP_METHOD_TO_PARAM);
-      UShibTarget::remote_addr = strdup(UServer_Base::client_address);
+      UShibTarget::remote_addr = strdup(UServer_Base::getClientAddress());
       UShibTarget::cookies     = (u_http_info.cookie_len ? ((void)cookies.replace(u_http_info.cookie, u_http_info.cookie_len), cookies.c_str()) : "");
 
       int mode              = 0;

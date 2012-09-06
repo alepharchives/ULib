@@ -72,7 +72,7 @@ public:
           bsyslog == false &&
           file_limit == 0)
          {
-         pthis->UFile::reopen();
+         pthis->UFile::reopen(O_CREAT | O_RDWR | O_APPEND);
          }
       }
 
@@ -114,7 +114,7 @@ public:
 
    // logger
 
-   static int getPriorityForLogger(char* s); // decode a symbolic name to a numeric value
+   static int getPriorityForLogger(const char* s); // decode a symbolic name to a numeric value
 
    static void logger(const char* ident, int priority, const char* format, ...); // (buffer write == 4096)
 
@@ -141,7 +141,7 @@ protected:
 #endif
 
 private:
-   static int decode(const char* name, bool bfacility) __pure U_NO_EXPORT;
+   static int decode(const char* name, uint32_t len, bool bfacility) __pure U_NO_EXPORT;
 
    ULog(const ULog&) : UFile()  {}
    ULog& operator=(const ULog&) { return *this; }

@@ -297,7 +297,7 @@ int USocketExt::vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, con
 
    U_INTERNAL_ASSERT(s->isOpen())
 
-   uint32_t buffer_len = u_vsnprintf(buffer, buffer_size-2, format, argp);
+   uint32_t buffer_len = u__vsnprintf(buffer, buffer_size-2, format, argp);
 
    buffer[buffer_len++] = '\r';
    buffer[buffer_len++] = '\n';
@@ -316,7 +316,7 @@ int USocketExt::vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, c
 
    U_INTERNAL_ASSERT(s->isOpen())
 
-   uint32_t buffer_len = u_vsnprintf(buffer, buffer_size-2, format, argp);
+   uint32_t buffer_len = u__vsnprintf(buffer, buffer_size-2, format, argp);
 
    buffer[buffer_len++] = '\r';
    buffer[buffer_len++] = '\n';
@@ -347,7 +347,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
 
    (void) U_SYSCALL(memcpy, "%p,%p,%u", p, token, token_len);
 
-   uint32_t buffer_len = token_len + u_vsnprintf(p+token_len, buffer.capacity(), format, argp);
+   uint32_t buffer_len = token_len + u__vsnprintf(p+token_len, buffer.capacity(), format, argp);
 
    p[buffer_len++] = '\r';
    p[buffer_len++] = '\n';

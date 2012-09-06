@@ -44,7 +44,7 @@ UTrace::UTrace(int level, const char* format, ...)
       va_list argp;
       va_start(argp, format);
 
-      buffer_trace_len = u_vsnprintf(buffer_trace, sizeof(buffer_trace), format, argp);
+      buffer_trace_len = u__vsnprintf(buffer_trace, sizeof(buffer_trace), format, argp);
 
       va_end(argp);
 
@@ -96,7 +96,7 @@ void UTrace::trace_return(const char* format, ...)
       va_list argp;
       va_start(argp, format);
 
-      buffer_trace_len += u_vsnprintf(buffer_trace + buffer_trace_len, sizeof(buffer_trace) - buffer_trace_len, format, argp);
+      buffer_trace_len += u__vsnprintf(buffer_trace + buffer_trace_len, sizeof(buffer_trace) - buffer_trace_len, format, argp);
 
       va_end(argp);
 
@@ -111,7 +111,7 @@ void UTrace::trace_syscall(const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   buffer_syscall_len = u_vsnprintf(buffer_syscall, sizeof(buffer_trace), format, argp);
+   buffer_syscall_len = u__vsnprintf(buffer_syscall, sizeof(buffer_trace), format, argp);
 
    va_end(argp);
 
@@ -179,7 +179,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
          va_list argp;
          va_start(argp, format);
 
-         buffer_syscall_len += u_vsnprintf(buffer_syscall + buffer_syscall_len, sizeof(buffer_syscall) - buffer_syscall_len, format, argp);
+         buffer_syscall_len += u__vsnprintf(buffer_syscall + buffer_syscall_len, sizeof(buffer_syscall) - buffer_syscall_len, format, argp);
 
          va_end(argp);
 

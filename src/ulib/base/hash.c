@@ -197,12 +197,12 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
       {
       while (len >= 12)
          {
-         a += (u_tolower(k[0]) + ((uint32_t)u_tolower(k[1]) << 8) + 
-                                 ((uint32_t)u_tolower(k[2]) <<16) + ((uint32_t)u_tolower(k[3])<<24));
-         b += (u_tolower(k[4]) + ((uint32_t)u_tolower(k[5]) << 8) +
-                                 ((uint32_t)u_tolower(k[6]) <<16) + ((uint32_t)u_tolower(k[7])<<24));
-         c += (u_tolower(k[8]) + ((uint32_t)u_tolower(k[9]) << 8) +
-                                 ((uint32_t)u_tolower(k[10])<<16) + ((uint32_t)u_tolower(k[11])<<24));
+         a += (u__tolower(k[0]) + ((uint32_t)u__tolower(k[1]) << 8) + 
+                                 ((uint32_t)u__tolower(k[2]) <<16) + ((uint32_t)u__tolower(k[3])<<24));
+         b += (u__tolower(k[4]) + ((uint32_t)u__tolower(k[5]) << 8) +
+                                 ((uint32_t)u__tolower(k[6]) <<16) + ((uint32_t)u__tolower(k[7])<<24));
+         c += (u__tolower(k[8]) + ((uint32_t)u__tolower(k[9]) << 8) +
+                                 ((uint32_t)u__tolower(k[10])<<16) + ((uint32_t)u__tolower(k[11])<<24));
 
          mix(a,b,c);
 
@@ -214,18 +214,18 @@ uint32_t u_hash(unsigned char* k, uint32_t length, bool ignore_case)
 
       switch (len) // all the case statements fall through
          {
-         case 11: c += ((uint32_t)u_tolower(k[10])<<24);
-         case 10: c += ((uint32_t)u_tolower(k[9])<<16);
-         case 9 : c += ((uint32_t)u_tolower(k[8])<<8);
+         case 11: c += ((uint32_t)u__tolower(k[10])<<24);
+         case 10: c += ((uint32_t)u__tolower(k[9])<<16);
+         case 9 : c += ((uint32_t)u__tolower(k[8])<<8);
          // the first byte of c is reserved for the length
-         case 8 : b += ((uint32_t)u_tolower(k[7])<<24);
-         case 7 : b += ((uint32_t)u_tolower(k[6])<<16);
-         case 6 : b += ((uint32_t)u_tolower(k[5])<<8);
-         case 5 : b += u_tolower(k[4]);
-         case 4 : a += ((uint32_t)u_tolower(k[3])<<24);
-         case 3 : a += ((uint32_t)u_tolower(k[2])<<16);
-         case 2 : a += ((uint32_t)u_tolower(k[1])<<8);
-         case 1 : a += u_tolower(k[0]);
+         case 8 : b += ((uint32_t)u__tolower(k[7])<<24);
+         case 7 : b += ((uint32_t)u__tolower(k[6])<<16);
+         case 6 : b += ((uint32_t)u__tolower(k[5])<<8);
+         case 5 : b += u__tolower(k[4]);
+         case 4 : a += ((uint32_t)u__tolower(k[3])<<24);
+         case 3 : a += ((uint32_t)u__tolower(k[2])<<16);
+         case 2 : a += ((uint32_t)u__tolower(k[1])<<8);
+         case 1 : a += u__tolower(k[0]);
          // case 0: nothing left to add
          }
       }
@@ -332,7 +332,7 @@ uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
          {
          // xor the bottom with the current octet
 
-         hval ^= (uint32_t) u_tolower(*bp++);
+         hval ^= (uint32_t) u__tolower(*bp++);
 
          // multiply by the 32 bit FNV magic prime mod 2^32
 
@@ -398,7 +398,7 @@ uint32_t __pure u_cdb_hash(unsigned char* restrict t, uint32_t tlen, bool ignore
 
    U_INTERNAL_TRACE("u_cdb_hash(%.*s,%u,%d)", U_min(tlen,128), t, tlen, ignore_case)
 
-   if (ignore_case) while (tlen--) h = ((h << 5) + h) ^ u_tolower(*t++);
+   if (ignore_case) while (tlen--) h = ((h << 5) + h) ^ u__tolower(*t++);
    else             while (tlen--) h = ((h << 5) + h) ^           *t++;
 
    return h;
@@ -435,10 +435,10 @@ uint32_t __pure u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
       for (; i; ++i)
          {
          u.i    = blocks[i];
-         u.d[0] = u_tolower(u.d[0]);
-         u.d[1] = u_tolower(u.d[1]);
-         u.d[2] = u_tolower(u.d[2]);
-         u.d[3] = u_tolower(u.d[3]);
+         u.d[0] = u__tolower(u.d[0]);
+         u.d[1] = u__tolower(u.d[1]);
+         u.d[2] = u__tolower(u.d[2]);
+         u.d[3] = u__tolower(u.d[3]);
          k1     = u.i;
 
          k1 *= c1;

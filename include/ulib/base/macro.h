@@ -27,9 +27,7 @@
  */
 
 #ifdef DEBUG_DEBUG
-#  define U_INTERNAL_TRACE(format,args...) \
-      { char u_internal_buf[16 * 1024]; (void) sprintf(u_internal_buf, format"\n" , ##args); \
-        (void) write(STDERR_FILENO, u_internal_buf, strlen(u_internal_buf)); }
+#  define U_INTERNAL_TRACE(format,args...) u_internal_print(false, format"\n" , ##args);
 #  define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
 #else
 #  define U_INTERNAL_TRACE(format,args...)

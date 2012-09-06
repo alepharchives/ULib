@@ -236,6 +236,8 @@ UHttpClient_Base::UHttpClient_Base(UFileConfig* cfg) : UClient_Base(cfg)
 
    requestHeader    = U_NEW(UMimeHeader);
    responseHeader   = U_NEW(UMimeHeader);
+   nResponseCode    = 0;
+   bSaveHttpInfo    = false;
    bFollowRedirects = true;
 
    if (str_www_authenticate == 0) str_allocate();
@@ -648,8 +650,11 @@ bool UHttpClient_Base::sendRequest(UString& data)
 {
    U_TRACE(0, "UHttpClient_Base::sendRequest(%.*S)", U_STRING_TO_TRACE(data))
 
+   bool esito = true;
    uint32_t startHeader;
    int result = -1, redirectCount = 0, send_count = 0;
+
+   if (bSaveHttpInfo) U_HTTP_INFO_SAVE;
 
    // check if we need to compose the request to the HTTP server...
 
@@ -704,9 +709,9 @@ bool UHttpClient_Base::sendRequest(UString& data)
                      ? checkResponse(redirectCount)
                      : -1);
 
-      if (result ==  1) continue;       // redirection, use the same socket connection...
-      if (result == -2) U_RETURN(true); // pass HTTP_UNAUTHORISED response to the HTTP client...
-      if (result ==  2)                 // no redirection, read body...
+      if (result ==  1) continue; // redirection, use the same socket connection...
+      if (result == -2) goto end; // pass HTTP_UNAUTHORISED response to the HTTP client...
+      if (result ==  2)           // no redirection, read body...
          {
          U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
 
@@ -716,7 +721,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
               (U_http_chunked = responseHeader->isChunked()) == false) ||
               UHTTP::readHTTPBody(socket, &response, body))
             {
-            U_RETURN(true);
+            goto end;
             }
 
          if (u_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
@@ -736,7 +741,14 @@ bool UHttpClient_Base::sendRequest(UString& data)
       UClient_Base::socket->close();
       }
 
-   U_RETURN(false);
+   esito = false;
+
+end:
+   nResponseCode = u_http_info.nResponseCode;
+
+   if (bSaveHttpInfo) U_HTTP_INFO_RESTORE;
+
+   U_RETURN(esito);
 }
 
 #define U_HTTP_POST_REQUEST \
@@ -818,6 +830,8 @@ const char* UHttpClient_Base::dump(bool _reset) const
 
    *UObjectIO::os << '\n'
                   << "bproxy                              " << bproxy                  << '\n'
+                  << "bSaveHttpInfo                       " << bSaveHttpInfo           << '\n'
+                  << "nResponseCode                       " << nResponseCode           << '\n'
                   << "bFollowRedirects                    " << bFollowRedirects        << '\n'
                   << "body           (UString             " << (void*)&body            << ")\n"
                   << "user           (UString             " << (void*)&user            << ")\n"

@@ -22,6 +22,28 @@
 
 #ifdef DEBUG
 #  include <ulib/debug/common.h>
+#  define U_INTERNAL_ERROR(assertion,format,args...) \
+      if ((bool)(assertion) == false) { \
+         u_internal_print(true, \
+         " file: %s\n" \
+         " line: %d\n" \
+         " function: %s\n" \
+         " assertion: \"(%s)\" \n" \
+         "-------------------------------------\n" \
+         format "\n", \
+         __FILE__, \
+         __LINE__, \
+         __PRETTY_FUNCTION__, \
+         #assertion , ##args); \
+      }
+#else
+#  define U_INTERNAL_ERROR(assertion,format,args...)
+/*
+#  undef  U_INTERNAL_TRACE
+#  define U_INTERNAL_TRACE(format,args...) u_internal_print(false, format"\n" , ##args);
+#  undef  U_INTERNAL_PRINT
+#  define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
+*/
 #endif
 
 #include <time.h>
@@ -51,19 +73,6 @@
 #ifdef HAVE_TERMIOS_H
 #  include <termios.h>
 #endif
-
-/*
-#ifndef DEBUG
-# undef  U_INTERNAL_TRACE
-
-# define U_INTERNAL_TRACE(format,args...) \
-   { char u_internal_buf[16 * 1024]; (void) sprintf(u_internal_buf, format"\n" , ##args); \
-      (void) write(STDERR_FILENO, u_internal_buf, strlen(u_internal_buf)); }
-
-# undef  U_INTERNAL_PRINT
-# define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
-#endif
-*/
 
 /* Startup */
 bool                 u_is_tty;
@@ -138,7 +147,7 @@ __pure const char* u_basename(const char* restrict path)
    U_INTERNAL_TRACE("u_basename(%s)", path)
 
 #ifdef __MINGW32__
-   if (u_isalpha(path[0]) && path[1] == ':') path += 2; /* Skip over the disk name in MSDOS pathnames */
+   if (u__isalpha(path[0]) && path[1] == ':') path += 2; /* Skip over the disk name in MSDOS pathnames */
 #endif
 
    for (base = path; *path; ++path) if (IS_DIR_SEPARATOR(*path)) base = path + 1;
@@ -362,22 +371,6 @@ void u_init_ulib(char** restrict argv)
    (void) atexit(u_exit);
 
    u_gettimeofday();
-}
-
-uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
-{
-   uint32_t bytes_written;
-
-// U_INTERNAL_TRACE("u__snprintf(%s)", format)
-
-   va_list argp;
-   va_start(argp, format);
-
-   bytes_written = u_vsnprintf(buffer, buffer_size, format, argp);
-
-   va_end(argp);
-
-   return bytes_written;
 }
 
 /*
@@ -792,6 +785,81 @@ uint32_t u_strftime(char* restrict s, uint32_t maxsize, const char* restrict for
    return u__strftime(s, maxsize, format);
 }
 
+#ifdef DEBUG
+#  include <ulib/base/trace.h>
+
+static bool u_askForContinue(void)
+{
+   U_INTERNAL_TRACE("u_askForContinue()")
+
+   if (u_is_tty &&
+       isatty(STDIN_FILENO))
+      {
+      char ch[2];
+
+      // NB: we use U_MESSAGE here, but we are already inside u__printf()...
+
+      int u_flag_exit_save = u_flag_exit;
+                             u_flag_exit = 0;
+
+      U_MESSAGE("Press '%Wc%W' to continue, '%W%s%W' to exit: %W", GREEN, YELLOW, RED, "Enter", YELLOW, RESET);
+
+      (void) read(STDIN_FILENO, ch, 1);
+
+      if (ch[0] == 'c')
+         {
+         (void) read(STDIN_FILENO, ch, 1); /* get 'return' key */
+
+         return true;
+         }
+
+      u_flag_exit = u_flag_exit_save;
+      }
+
+   return false;
+}
+#endif
+
+void u_internal_print(bool abrt, const char* restrict format, ...)
+{
+   uint32_t bytes_written;
+   char u_internal_buf[16 * 1024];
+
+   va_list argp;
+   va_start(argp, format);
+
+   (void) vsnprintf(u_internal_buf, sizeof(u_internal_buf), format, argp);
+
+   va_end(argp);
+
+   if (abrt) u_printError();
+
+   bytes_written = strlen(u_internal_buf);
+
+   (void) write(STDERR_FILENO, u_internal_buf, bytes_written);
+
+   if (abrt)
+      {
+      /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
+
+      if (u_trace_fd > STDERR_FILENO)
+         {
+         struct iovec iov[1] = { { (caddr_t)u_internal_buf, bytes_written } };
+
+         u_trace_writev(iov, 1);
+         }
+
+      if (u_askForContinue() == false)
+         {
+         u_debug_at_exit();
+
+         u_execOnExit();
+
+         abort();
+         }
+      }
+}
+
 #ifndef __MINGW32__
 static const char* tab_color[] = { U_RESET_STR,
    U_BLACK_STR,       U_RED_STR,           U_GREEN_STR,       U_YELLOW_STR,
@@ -822,7 +890,7 @@ static const char* tab_color[] = { U_RESET_STR,
 ----------------------------------------------------------------------------
 */
 
-uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp)
+uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp)
 {
    int pads;     /* extra padding size */
    int dpad;     /* extra 0 padding needed for integers */
@@ -875,18 +943,13 @@ uint32_t u_vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* re
    uint32_t len, ret = 0;  /* return value accumulator */
    char* restrict bp = buffer;
 
-   U_INTERNAL_TRACE("u_vsnprintf(%s)", format)
+   U_INTERNAL_TRACE("u__vsnprintf(%p,%u,%s)", buffer, buffer_size, format)
 
-   U_INTERNAL_ASSERT_MAJOR(buffer_size,0)
+   U_INTERNAL_ERROR(buffer_size, "ZERO BUFFER SIZE at u__vsnprintf()", 0);
 
    while (true)
       {
-      if (ret >= buffer_size)
-         {
-         U_INTERNAL_ASSERT_MSG(false, "BUFFER OVERFLOW at u_vsnprintf()...")
-
-         break;
-         }
+      U_INTERNAL_ERROR(ret <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u", ret, buffer_size);
 
       fmark = format;
 
@@ -990,7 +1053,7 @@ minus:
                n  = 10 * n + (ch - '0');
                ch = *format++;
                }
-            while (u_isdigit(ch));
+            while (u__isdigit(ch));
 
             width = n;
 
@@ -1023,7 +1086,7 @@ minus:
                goto rflag;
                }
 
-            for (n = 0; u_isdigit(ch); ch = *format++) n = 10 * n + (ch - '0');
+            for (n = 0; u__isdigit(ch); ch = *format++) n = 10 * n + (ch - '0');
 
             prec = (n < 0 ? -1 : n);
 
@@ -1101,12 +1164,10 @@ minus:
 
             if (!cp) cp = (unsigned char* restrict)"(null)";
 
-            U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
-
             sign = '\0';
             size = (prec >= 0 ? prec : (int) u__strlen((const char*)cp));
 
-            U_INTERNAL_ASSERT_MINOR_MSG(size, remaining, "WE ARE GOING TO BUFFER OVERFLOW - CHECK THE PARAMETERS OF printf()...")
+            U_INTERNAL_ERROR(size <= remaining, "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %u", size, remaining);
 
             /* if a width from format is specified, the 0 flag for padding will be ignored... */
 
@@ -1120,7 +1181,7 @@ minus:
                {
                long long* p = VA_ARG(long long*);
 
-               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+               U_INTERNAL_ERROR(p, "NULL pointer at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
                *p = ret;
                }
@@ -1128,7 +1189,7 @@ minus:
                {
                long* p = VA_ARG(long*);
 
-               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+               U_INTERNAL_ERROR(p, "NULL pointer at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
                *p = ret;
                }
@@ -1136,7 +1197,7 @@ minus:
                {
                short* p = VA_ARG(short*);
 
-               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+               U_INTERNAL_ERROR(p, "NULL pointer at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
                *p = ret;
                }
@@ -1144,7 +1205,7 @@ minus:
                {
                int* p = VA_ARG(int*);
 
-               U_INTERNAL_ASSERT_POINTER_MSG(p, "CHECK THE PARAMETERS OF printf()...")
+               U_INTERNAL_ERROR(p, "NULL pointer at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
                *p = ret;
                }
@@ -1386,7 +1447,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 #        ifndef __MINGW32__
             if (u_is_tty)
                {
-               U_INTERNAL_ASSERT(n <= BRIGHTWHITE)
+               U_INTERNAL_ERROR(n <= BRIGHTWHITE, "INVALID COLOR(%d) at u__vsnprintf() - CHECK THE PARAMETERS", n);
 
                len = sizeof(U_RESET_STR) - (n == RESET);
 
@@ -1402,7 +1463,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'H': /* print host name */
             {
-            U_INTERNAL_ASSERT_MAJOR(u_hostname_len,0)
+            U_INTERNAL_ERROR(u_hostname_len, "HOSTNAME NULL at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
             (void) u__memcpy(bp, u_hostname, u_hostname_len);
 
@@ -1414,7 +1475,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'w': /* print current working directory */
             {
-            U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
+            U_INTERNAL_ERROR(u_cwd_len, "CURRENT WORKING DIRECTORY NULL at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
             (void) u__memcpy(bp, u_cwd, u_cwd_len);
 
@@ -1508,7 +1569,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'U': /* print user name */
             {
-            U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
+            U_INTERNAL_ERROR(u_user_name_len, "USER NAME NULL at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
             (void) u__memcpy(bp, u_user_name, u_user_name_len);
 
@@ -1552,14 +1613,14 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             /*
             --------------------------------------------------------------
-                       0   => format: %d/%m/%y
-            with flag '1'  => format:          %T (=> "%H:%M:%S)
-            with flag '2'  => format:          %T (=> "%H:%M:%S) +n days
-            with flag '3'  => format: %d/%m/%Y %T
-            with flag '4'  => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
-            with flag '5'  => format: %a, %d %b %Y %H:%M:%S %Z
-            with flag '6'  => format: %Y/%m/%d %T
-            with flag '9'  => format: %d/%m/%y %T
+                        0  => format: %d/%m/%y
+            with flag  '1' => format:          %T (=> "%H:%M:%S)
+            with flag  '2' => format:          %T (=> "%H:%M:%S) +n days
+            with flag  '3' => format: %d/%m/%Y %T
+            with flag  '4' => format: %d%m%y_%H%M%S_millisec (for file name, backup, etc...)
+            with flag  '5' => format: %a, %d %b %Y %H:%M:%S %Z
+            with flag  '6' => format: %Y/%m/%d %T
+            with flag  '9' => format: %d/%m/%y %T
             --------------------------------------------------------------
             with flag '10' => format: %d/%m/%y %T *** private for ULog ***
             with flag '11' => format: %d/%b/%Y:%H:%M:%S %z
@@ -1603,9 +1664,15 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                       width == 11 ? (ptr += 17+1,      26) :
                                     (ptr += 17+1+26+1, 29));
 
-            // U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)ptr, len), false)
-
                (void) u__memcpy(bp, ptr, len);
+
+               /*
+               U_INTERNAL_ERROR(u_isBinary((const unsigned char*)bp, len) == false,
+                                "binary data at date time optimization:\n"
+                                "--------------------------------------\n"
+                                "%s",
+                                u_memoryDump((unsigned char*)bp, len));
+               */
 
                bp  += len;
                ret += len;
@@ -1730,8 +1797,6 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                continue;
                }
 
-            U_INTERNAL_ASSERT_POINTER_MSG(cp, "CHECK THE PARAMETERS OF printf()...")
-
             U_INTERNAL_PRINT("prec = %d u_printf_string_max_length = %d", prec, u_printf_string_max_length)
 
             maxlen = (u_printf_string_max_length > 0 ? u_printf_string_max_length : 128);
@@ -1830,89 +1895,13 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'M': /* print memory dump */
             {
-            char text[16];
-            unsigned char c;
-            unsigned int offset = 0;
-            char* restrict start_buffer = bp;
-            int i, j, line, remain, _remain = 16;
-            bool prev_is_zero = false, print_nothing = false;
-
-            static char bufzero[16];
-
-            n  = VA_ARG(int);
             cp = VA_ARG(unsigned char* restrict);
+            n  = VA_ARG(int);
 
-            line   = n / 16;
-            remain = n % 16;
+            len = u_memory_dump(bp, cp, n);
 
-            for (i = 0; i < line; ++i, offset += 16)
-               {
-               if (memcmp(cp, bufzero, sizeof(bufzero))) prev_is_zero = print_nothing = false;
-               else
-                  {
-                  if (prev_is_zero == false) prev_is_zero = true;
-                  else
-                     {
-                     if (print_nothing == false)
-                        {
-                        print_nothing = true;
-
-                        *bp++ = '*';
-                        *bp++ = '\n';
-                        }
-
-                     cp += 16;
-
-                     continue;
-                     }
-                  }
-iteration:
-               (void) sprintf(bp, "%07X|", offset);
-
-               bp += 8;
-
-               for (j = 0; j < 16; ++j)
-                  {
-                  if (j < _remain)
-                     {
-                     c = *cp++;
-
-                     *bp++   = u_hex_lower[((c >> 4) & 0x0F)];
-                     *bp++   = u_hex_lower[( c       & 0x0F)];
-
-                     text[j] = (isprint(c) ? c : '.');
-                     }
-                  else
-                     {
-                     *bp++   = ' ';
-                     *bp++   = ' ';
-                     text[j] = ' ';
-                     }
-
-                  *bp++ = (j == 7 ? ':' : ' ');
-                  }
-
-                                        *bp++ = '|';
-               for (j = 0; j < 16; ++j) *bp++ = text[j];
-                                        *bp++ = '\n';
-               }
-
-            if (remain &&
-                remain != _remain)
-               {
-               _remain = remain;
-
-               goto iteration;
-               }
-
-            if (print_nothing)
-               {
-               (void) sprintf(bp, "%07X\n", offset);
-
-               bp += 8;
-               }
-
-            ret += bp - start_buffer;
+            bp  += len;
+            ret += len;
 
             continue;
             }
@@ -1979,15 +1968,7 @@ iteration:
 
       ret += (width > fieldsz ? width : fieldsz);
 
-      if (ret >= buffer_size)
-         {
-         U_ABORT("BUFFER OVERFLOW at u_vsnprintf() - ret = %u buffer_size = %u - size = %d width = %d prec = %d dprec = %d sign = %C",
-                                                     ret,     buffer_size,       size,     width,     prec,     dprec,     sign);
-
-         ret -= (width > fieldsz ? width : fieldsz);
-
-         break;
-         }
+      U_INTERNAL_ERROR(ret <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u", ret, buffer_size);
 
       /* right-adjusting blank padding */
 
@@ -2049,61 +2030,56 @@ iteration:
       }
 
 done:
-   *bp = '\0';
-
    U_INTERNAL_PRINT("ret = %u buffer_size = %u", ret, buffer_size)
 
-   U_INTERNAL_ASSERT_MINOR(ret,buffer_size)
+   if (ret < buffer_size) *bp = '\0';
+
+   U_INTERNAL_ERROR(ret <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u", ret, buffer_size);
 
    return ret;
 }
 
-#ifdef DEBUG
-#  include <ulib/base/trace.h>
-
-static bool u_askForContinue(void)
+void u_printf2(int fd, const char* restrict format, ...)
 {
-   U_INTERNAL_TRACE("u_askForContinue()")
+   char buffer[4096];
 
-   if (u_is_tty &&
-       isatty(STDIN_FILENO))
-      {
-      char ch[2];
+   U_INTERNAL_TRACE("u_printf2(%d,%s)", fd, format)
 
-      // NB: we use U_MESSAGE here, but we are already inside u__printf()...
+   va_list argp;
+   va_start(argp, format);
 
-      int u_flag_exit_save = u_flag_exit;
-                             u_flag_exit = 0;
+   (void) write(fd, buffer, u__vsnprintf(buffer, sizeof(buffer), format, argp));
 
-      U_MESSAGE("Press '%Wc%W' to continue, '%W%s%W' to exit: %W", GREEN, YELLOW, RED, "Enter", YELLOW, RESET);
-
-      (void) read(STDIN_FILENO, ch, 1);
-
-      if (ch[0] == 'c')
-         {
-         (void) read(STDIN_FILENO, ch, 1); /* get 'return' key */
-
-         return true;
-         }
-
-      u_flag_exit = u_flag_exit_save;
-      }
-
-   return false;
+   va_end(argp);
 }
-#endif
+
+uint32_t u__snprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...)
+{
+   uint32_t bytes_written;
+
+   va_list argp;
+   va_start(argp, format);
+
+   U_INTERNAL_TRACE("u__snprintf(%p,%u,%s)", buffer, buffer_size, format)
+
+   bytes_written = u__vsnprintf(buffer, buffer_size, format, argp);
+
+   va_end(argp);
+
+   return bytes_written;
+}
 
 void u__printf(const char* format, ...)
 {
    char buffer[4096];
    uint32_t bytes_written;
 
-// U_INTERNAL_TRACE("u__printf(%s)", format)
+   U_INTERNAL_TRACE("u__printf(%s)", format)
 
    va_list argp;
    va_start(argp, format);
 
-   bytes_written = u_vsnprintf(buffer, sizeof(buffer)-1, format, argp);
+   bytes_written = u__vsnprintf(buffer, sizeof(buffer)-1, format, argp);
 
    va_end(argp);
 
