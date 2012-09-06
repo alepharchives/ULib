@@ -1315,7 +1315,7 @@ void UNoCatPlugIn::setHTTPResponse(const UString& content)
    UHTTP::setHTTPCgiResponse(false, UHTTP::isCompressable(), false);
 }
 
-uint32_t UNoCatPlugIn::getIndexAUTH(const char* ip_address)
+__pure uint32_t UNoCatPlugIn::getIndexAUTH(const char* ip_address)
 {
    U_TRACE(0, "UNoCatPlugIn::getIndexAUTH(%S)", ip_address)
 

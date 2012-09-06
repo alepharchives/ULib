@@ -832,12 +832,15 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
 
    va_end(argp);
 
+#ifdef DEBUG
    if (abrt) u_printError();
+#endif
 
    bytes_written = strlen(u_internal_buf);
 
    (void) write(STDERR_FILENO, u_internal_buf, bytes_written);
 
+#ifdef DEBUG
    if (abrt)
       {
       /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
@@ -858,6 +861,7 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
          abort();
          }
       }
+#endif
 }
 
 #ifndef __MINGW32__

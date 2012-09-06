@@ -984,7 +984,7 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
 // Within a string we can count number of occurrence of another string by using substr_count function.
 // This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string.
 
-uint32_t UStringExt::substr_count(const char* s, uint32_t n, const char* a, uint32_t n1)
+__pure uint32_t UStringExt::substr_count(const char* s, uint32_t n, const char* a, uint32_t n1)
 {
    U_TRACE(0, "UStringExt::substr_count(%.*S,%u,%.*S,%u)", n, s, n, n1, a, n1)
 

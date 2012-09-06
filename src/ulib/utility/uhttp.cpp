@@ -3694,17 +3694,20 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32
 {
    U_TRACE(0, "UHTTP::getFormValue(%.*S,%.*S,%u,%u,%u,%u)", U_STRING_TO_TRACE(buffer), len, name, len, start, pos, end)
 
-   U_INTERNAL_ASSERT_MINOR(pos, end)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
-   UStringRep* r = form_name_value->UVector<UStringRep*>::at(pos-1);
-
-   if (r->equal(name, len) == false) getFormValue(buffer, name, len);
+   if (pos >= end) buffer.clear();
    else
       {
-      (void) buffer.replace((*form_name_value)[pos]);
+      UStringRep* r = form_name_value->UVector<UStringRep*>::at(pos-1);
 
-      U_ASSERT_EQUALS(buffer, getFormValue(name, len, start, end))
+      if (r->equal(name, len) == false) getFormValue(buffer, name, len);
+      else
+         {
+         (void) buffer.replace((*form_name_value)[pos]);
+
+         U_ASSERT_EQUALS(buffer, getFormValue(name, len, start, end))
+         }
       }
 }
 

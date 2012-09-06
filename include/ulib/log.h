@@ -114,7 +114,7 @@ public:
 
    // logger
 
-   static int getPriorityForLogger(const char* s); // decode a symbolic name to a numeric value
+   static int getPriorityForLogger(const char* s) __pure; // decode a symbolic name to a numeric value
 
    static void logger(const char* ident, int priority, const char* format, ...); // (buffer write == 4096)
 

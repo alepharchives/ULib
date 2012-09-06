@@ -189,7 +189,7 @@ protected:
 
    // VARIE
 
-   uint32_t getIndexAUTH(const char* ip_address);
+   uint32_t getIndexAUTH(const char* ip_address) __pure;
 
    void           checkOldPeer(UModNoCatPeer* peer);
    void             setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH);

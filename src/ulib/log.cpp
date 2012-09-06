@@ -302,7 +302,7 @@ __pure U_NO_EXPORT int ULog::decode(const char* name, uint32_t len, bool bfacili
    U_RETURN(-1);
 }
 
-int ULog::getPriorityForLogger(const char* s)
+__pure int ULog::getPriorityForLogger(const char* s)
 {
    U_TRACE(0, "ULog::getPriorityForLogger(%S)", s)
 

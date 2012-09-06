@@ -1827,7 +1827,7 @@
                                         ap->data(), "/logged_login_request", url_banner_comune->data());
    }
    
-   //#define U_MANAGED_BY_MAIN_BASH 1 
+   #define U_MANAGED_BY_MAIN_BASH 1 
    
    static void GET_admin()
    {
@@ -2413,7 +2413,7 @@
    
       USSIPlugIn::setAlternativeInclude(cache->contentOf("%.*s/stato_utente.tmpl", U_STRING_TO_TRACE(*dir_template)),
                                         "Stato utente", 0, 0,
-                                        user_rec->_user.c_str(), uid->c_str(), ap->c_str(), user_rec->_gateway.c_str(), result.data());
+                                        user_rec->_user.c_str(), uid->c_str(), ap->c_str(), user_rec->_gateway.c_str(), U_STRING_TO_TRACE(result));
    #endif
    }
    
