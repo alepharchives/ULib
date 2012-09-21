@@ -137,7 +137,15 @@ public:
    // PATH
 
    void setRoot();
-   void setPath(const UString& path, const UString* environment = 0);
+   void setPath(const UString& path,   const UString* environment = 0);
+   void setPath(const char* _pathname, const UString* environment = 0)
+      {
+      U_TRACE(0, "UFile::setPath(%S,%p)", _pathname, environment)
+
+      UString path(_pathname);
+
+      setPath(path, environment);
+      }
 
    // NB: la stringa potrebbe non essere scrivibile e quindi path_relativ[path_relativ_len] potrebbe non essere '\0'...
 
@@ -260,6 +268,17 @@ public:
       U_RETURN(result);
       }
 
+   bool isPath()
+      {
+      U_TRACE(0, "UFile::isPath()")
+
+      U_CHECK_MEMORY
+
+      bool result = (pathname.empty() == false);
+
+      U_RETURN(result);
+      }
+
    void close()
       {
       U_TRACE(0, "UFile::close()")
@@ -378,6 +397,28 @@ public:
       U_CHECK_MEMORY
 
       U_RETURN(st_size);
+      }
+
+   static off_t getSize(int _fd)
+      {
+      U_TRACE(1, "UFile::getSize(%d)", _fd)
+
+      U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
+
+      off_t result = U_SYSCALL(lseek, "%d,%u,%d", _fd, U_SEEK_BEGIN, SEEK_END);
+
+      U_RETURN(result);
+      }
+
+   static off_t getSize(const char* _pathname)
+      {
+      U_TRACE(1, "UFile::getSize(%S)", _pathname)
+
+      struct stat tmp;
+
+      if (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(_pathname), &tmp) == 0) U_RETURN(tmp.st_size);
+
+      U_RETURN(0);
       }
 
    bool empty() const
@@ -792,7 +833,8 @@ public:
 
    static uint32_t buildFilenameListFrom(UVector<UString>& vec, const UString& arg, char sep = ',');
 
-   static uint32_t listContentOf(UVector<UString>& vec,         const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
+          uint32_t listContentOf(UVector<UString>& vec,                                 const char* filter,     uint32_t filter_len);
+   static uint32_t listContentOf(UVector<UString>& vec,         const UString* dir,     const char* filter,     uint32_t filter_len);
    static void     listRecursiveContentOf(UTree<UString>& tree, const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
 
    // DEBUG

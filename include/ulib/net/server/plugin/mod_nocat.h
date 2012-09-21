@@ -68,11 +68,11 @@ public:
 #endif
 
 protected:
-   time_t connected, expire, logout, ctime;
    uint64_t traffic_done, traffic_available;
-   uint32_t ifindex, ctraffic, rulenum, index_AUTH;
    UString ip, mac, token, user, ifname, label, gateway;
    UCommand fw;
+   time_t connected, expire, logout, ctime;
+   uint32_t ctraffic, rulenum, index_AUTH, index_device, index_network;
    int status;
    bool allowed;
 
@@ -182,6 +182,7 @@ protected:
    static UString* status_content;
    static int fd_stderr, check_type;
    static UVector<UIPAddress*>** vaddr;
+   static const UString* label_to_match;
    static bool flag_check_peers_for_info;
    static UHashMap<UModNoCatPeer*>* peers;
    static time_t last_request, last_request_check, check_expire;
@@ -197,10 +198,10 @@ protected:
 
    void setPeerListInfo();
    void checkPeersForInfo();
-   void setStatusContent(UModNoCatPeer* peer);
    bool checkAuthMessage(UModNoCatPeer* peer);
    bool checkSignedData(const char* ptr, uint32_t len);
    void addPeerInfo(UModNoCatPeer* peer, time_t logout);
+   void setStatusContent(UModNoCatPeer* peer, const UString& label);
    void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
    bool sendMsgToPortal(UCommand& cmd, uint32_t index_AUTH, const UString& msg, UString* poutput = 0);
 

@@ -3548,7 +3548,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
       if (UFile::chdir(ptr, true) == false) goto end; 
       }
 
-   if ((n = UFile::listContentOf(vec)) > 1) vec.sort();
+   if ((n = UFile::listContentOf(vec, 0, 0, 0)) > 1) vec.sort();
 
    pos = buffer.size();
 
@@ -3711,11 +3711,13 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32
       }
 }
 
-void UHTTP::processHTTPForm()
+uint32_t UHTTP::processHTTPForm()
 {
    U_TRACE(0, "UHTTP::processHTTPForm()")
 
    U_ASSERT_EQUALS(form_name_value->size(), 0)
+
+   uint32_t len = 0;
 
    if (isHttpGETorHEAD())
       {
@@ -3750,7 +3752,7 @@ void UHTTP::processHTTPForm()
    formMulti->setBoundary(boundary);
    formMulti->setContent(*UClientImage_Base::body);
 
-   if (formMulti->parse() == false) return;
+   if (formMulti->parse() == false) U_RETURN(0);
    }
 
    // create temporary directory with files upload...
@@ -3758,11 +3760,11 @@ void UHTTP::processHTTPForm()
    {
    tmpdir->snprintf("%s/formXXXXXX", u_tmpdir);
 
-   if (UFile::mkdtemp(*tmpdir) == false) return;
+   if (UFile::mkdtemp(*tmpdir) == false) U_RETURN(0);
 
    UMimeEntity* item;
+   uint32_t sz = tmpdir->size();
    const char* ptr = tmpdir->data();
-   uint32_t len, sz = tmpdir->size();
    UString content, name, filename, basename;
 
    for (uint32_t i = 0, j = formMulti->getNumBodyPart(); i < j; ++i)
@@ -3793,12 +3795,16 @@ void UHTTP::processHTTPForm()
       form_name_value->push_back(content);
       }
 
-   return;
+   len = form_name_value->size();
+
+   U_RETURN(len);
    }
 
 get_name_value:
 
-   if (qcontent->empty() == false) (void) UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
+   if (qcontent->empty() == false) len = UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
+
+   U_RETURN(len);
 }
 
 // set HTTP main error message
@@ -5678,7 +5684,7 @@ void UHTTP::manageHTTPServletRequest(bool as_service)
       // retrieve information on specific HTML form elements
       // (such as checkboxes, radio buttons, and text fields), or uploaded files
 
-      uint32_t i, n = (processHTTPForm(), form_name_value->size());
+      uint32_t i, n = processHTTPForm();
       const char** argv = U_MALLOC_VECTOR(n+1, const char);
 
       for (i = 0; i < n; ++i) argv[i] = (*form_name_value)[i].c_str();
@@ -6031,7 +6037,7 @@ check:
          {
          setHTTPRequestNeedProcessing();
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         goto next4;
          }
 
 #  ifdef U_HTTP_CACHE_REQUEST
@@ -6068,7 +6074,7 @@ check:
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
-
+next4:
       // check if the uri need a certificate
 
 #  ifdef USE_LIBSSL
@@ -6352,7 +6358,7 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
    char c;
    UString item;
    const char* ptr;
-   uint32_t i, sz, n = (processHTTPForm(), form_name_value->size());
+   uint32_t i, sz, n = processHTTPForm();
 
    for (i = 1; i < n; i += 2)
       {

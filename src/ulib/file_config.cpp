@@ -15,7 +15,7 @@
 #include <ulib/file_config.h>
 #include <ulib/utility/escape.h>
 #include <ulib/utility/services.h>
-#include <ulib/container/vector.h>
+#include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
 #ifdef HAVE_STRSTREAM_H
@@ -57,49 +57,61 @@ UFileConfig::UFileConfig()
    if (str_FILE == 0) str_allocate();
 }
 
-bool UFileConfig::open()
+bool UFileConfig::processData()
 {
-   U_TRACE(0, "UFileConfig::open()")
+   U_TRACE(0, "UFileConfig::processData()")
 
    U_CHECK_MEMORY
 
-   bool result =  UFile::open()      &&
-                 (UFile::size() > 0) &&
-                  UFile::memmap(PROT_READ, &data);
+   bool result = false;
 
-   if (result)
+   // manage if we need preprocessing...
+
+#if defined(HAVE_CPP) || defined(HAVE_MCPP)
+   if (u_dosmatch(U_STRING_TO_PARAM(data), U_CONSTANT_TO_PARAM("*#*include *\n*"), 0))
       {
-      const char* suffix;
+      static int fd_stderr = UServices::getDevNull("/tmp/cpp.err");
 
-      // manage if we need preprocessing...
+      UString command(200U), _dir = UStringExt::dirname(pathname);
 
-#  if defined(HAVE_CPP) || defined(HAVE_MCPP)
-      if (u_dosmatch(U_STRING_TO_PARAM(data), U_CONSTANT_TO_PARAM("*#*include *\n*"), 0))
+#  ifdef HAVE_MCPP
+      command.snprintf("mcpp                    -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
+#  else
+      command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
+#  endif
+
+      if (UFile::isOpen())
          {
-         static int fd_stderr = UServices::getDevNull("/tmp/cpp.err");
-
          (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
-
-         UString command(200U), _dir = UStringExt::dirname(pathname);
-
-#     ifdef HAVE_MCPP
-         command.snprintf("mcpp                    -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
-#     else
-         command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
-#     endif
 
          data = UCommand::outputCommand(command, environ, UFile::getFd(), fd_stderr);
          }
-#  endif
+      else
+         {
+         UCommand cmd(command);
+         UString output(U_CAPACITY);
 
-      if (data.empty()) goto err;
+         bool esito = cmd.execute(&data, &output, -1, fd_stderr);
 
-      _end   = data.end();
-      _start = data.data();
-      _size  = data.size();
+         UServer_Base::logCommandMsgError(cmd.getCommand());
+         
+         if (esito == false) U_RETURN(false);
 
-      if (table.capacity() == 0) table.allocate();
+         data = output;
+         }
+      }
+#endif
 
+   if (data.empty()) U_RETURN(false);
+
+   _end   = data.end();
+   _start = data.data();
+   _size  = data.size();
+
+   if (table.capacity() == 0) table.allocate();
+
+   if (UFile::isPath())
+      {
       // Loads configuration information from the file.
       // The file type is determined by the file extension.
       // The following extensions are supported:
@@ -107,32 +119,37 @@ bool UFileConfig::open()
       // .properties - properties file (JAVA Properties)
       // .ini        - initialization file (Windows INI)
 
-      suffix = UFile::getSuffix();
+      const char* suffix = UFile::getSuffix();
 
-      if (suffix)
-         {
-         U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
+      U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
 
-         if (_size == 0) goto err;
+      ++suffix;
 
-         ++suffix;
-
-              if (U_STRNEQ(suffix, "ini"))        { result = loadINI();        goto next; }
-         else if (U_STRNEQ(suffix, "properties")) { result = loadProperties(); goto next; }
-         }
-
-      result = load(0, 0);
+           if (U_STRNEQ(suffix, "ini"))        { result = loadINI();        goto end; }
+      else if (U_STRNEQ(suffix, "properties")) { result = loadProperties(); goto end; }
       }
 
-next:
-   if (result)
-      {
-      if (UFile::isOpen()) UFile::close();
+   result = load(0, 0);
 
-      U_RETURN(true);
-      }
+end:
+   U_RETURN(result);
+}
 
-err:
+bool UFileConfig::open()
+{
+   U_TRACE(0, "UFileConfig::open()")
+
+   U_CHECK_MEMORY
+
+   bool result = (UFile::open()                   &&
+                  UFile::size() > 0               &&
+                  UFile::memmap(PROT_READ, &data) &&
+                  processData());
+
+   if (UFile::isOpen()) UFile::close();
+
+   if (result) U_RETURN(true);
+
    U_ERROR("configuration file %S not valid...", UFile::getPath().data());
 
    U_RETURN(false);

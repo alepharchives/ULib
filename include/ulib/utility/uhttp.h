@@ -516,8 +516,8 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static void    processHTTPForm();
-   static void    resetForm(bool brmdir);
+   static uint32_t processHTTPForm();
+   static void     resetForm(bool brmdir);
 
    static void    getFormValue(UString& value, const char* name, uint32_t len);
    static void    getFormValue(UString& value,                                                 uint32_t pos);

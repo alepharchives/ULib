@@ -1,7 +1,9 @@
 	{Call   routine1(2,3)
+		{Call   routine2(2,3)
+		}Return routine2(2,3) = 6
 	}Return routine1(2,3) = 6
 	c = 6
-	::signal(4,0x400e80) = (nil)
+	::signal(4,0x4010d0) = (nil)
 	{Call   manage_sigpipe(4)
 		::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp"...,2,666) = -1 - ENOENT (2, No such file or directory)
 		::open("tmp/prova",102,666) = 4

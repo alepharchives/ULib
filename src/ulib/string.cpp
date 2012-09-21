@@ -428,6 +428,28 @@ void UStringRep::trim()
    while (_length && u__isspace(str[_length-1])) --_length;
 }
 
+__pure int UStringRep::compare(const UStringRep* rep, uint32_t depth) const
+{
+   U_TRACE(0, "UStringRep::compare(%p,%u)", rep, depth)
+
+   int r;
+   uint32_t min = U_min(_length, rep->_length);
+
+   U_INTERNAL_DUMP("min = %u", min)
+
+   if (depth > min) goto next;
+
+   r = memcmp(str + depth, rep->str + depth, min - depth);
+
+   U_INTERNAL_DUMP("str[%u] = %.*S", depth, min - depth, str + depth)
+
+   if (r == 0)
+next:
+      r = (_length - rep->_length);
+
+   U_RETURN(r);
+}
+
 // ----------------------------------------------
 // gcc: call is unlikely and code size would grow
 // ----------------------------------------------

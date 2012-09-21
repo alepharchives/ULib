@@ -555,6 +555,18 @@ do_cmd() {
 					print_page "`date`" "`cat $TMPFILE.out`"
 				fi
 			;;
+			/admin_status_nodog)
+				TMPFILE=/tmp/status_nodog.$$
+
+				$CLIENT_HTTP "http://$VIRTUAL_NAME/status_nodog?outfile=$TMPFILE.out" >/dev/null 2>>/tmp/CLIENT_HTTP.err
+
+				if [ $? -eq 0 ]; then
+					TITLE_TXT="Firenze WiFi: stato access point"
+					HEAD_HTML="<meta http-equiv=\"refresh\" content=\"30\">"
+
+					print_page "`date`" "`cat $TMPFILE.out`"
+				fi
+			;;
 
 			*) print_page ;;
 		esac

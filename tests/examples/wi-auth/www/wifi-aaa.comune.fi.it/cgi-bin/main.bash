@@ -19,7 +19,7 @@ FILE_CNT=""
 FILE_UID=""
 REQ_FILE=""
 TITLE_TXT=""
-EXIT_VALUE=""
+EXIT_VALUE=0
 CALLER_ID=""
 HEAD_HTML=""
 SET_COOKIE=""
@@ -1762,7 +1762,7 @@ stato_utente() {
 		FMT=`cat $DIR_TEMPLATE/stato_utente.tmpl 2>/dev/null`
 		DATE=`date`
 
-		BODY_SHTML=`printf "$FMT" "$USER" $UUID $AP $GATEWAY "$OUTPUT" 2>/dev/null`
+		BODY_SHTML=`printf "$FMT" "$USER" $UUID $AP "$OUTPUT" 2>/dev/null`
 	fi
 }
 
@@ -2074,8 +2074,8 @@ status_network() {
 											"$LOGIN_TIME" $POLICY \
 											"$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
 											$COLOR $CONSUME \
-											"http://$VIRTUAL_NAME/webif_ap?ap=$AP&address=$GATEWAY"  $GATEWAY \
-											"http://$VIRTUAL_NAME/status_ap?ap=$AP&address=$GATEWAY" $AP \
+											"http://$VIRTUAL_NAME/webif_ap?ap=$AP&public=$GATEWAY"  $GATEWAY \
+											"http://$VIRTUAL_NAME/status_ap?ap=$AP&public=$GATEWAY" $AP \
 											2>/dev/null`
 
 				OUTPUT=`echo "$OUTPUT"; echo "$RIGA" 2>/dev/null`
@@ -2208,7 +2208,11 @@ uscita() {
 
 	rm -f $TMPFILE.out $TMPFILE.err
 
-	exit $EXIT_VALUE
+	if [ $EXIT_VALUE -eq 0 ]; then
+		exit 0
+	fi
+
+	exit 400 # Bad Request
 }
 
 write_SSI() {

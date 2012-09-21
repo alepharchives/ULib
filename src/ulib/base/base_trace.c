@@ -314,7 +314,7 @@ static void handlerSignal(void)
 
       char* env = getenv("UTRACE_LEVEL");
 
-      (void) u__snprintf(buffer, sizeof(buffer), "UTRACE=%s", env ? env : "0");
+      (void) u__snprintf(buffer, sizeof(buffer), "UTRACE=%s 10M 1", env ? env : "0");
 
       (void) putenv(buffer);
 

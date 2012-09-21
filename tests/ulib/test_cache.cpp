@@ -288,8 +288,11 @@ U_EXPORT main (int argc, char* argv[])
       strcat(strcpy(buffer2, tbl[i]), "/udp");
 
       ok = c[UString(buffer1)] == UString(data[i]);
+
       U_INTERNAL_ASSERT( ok )
+
       ok = c[UString(buffer2)] == UString(data[i]);
+
       U_INTERNAL_ASSERT( ok )
       }
 
@@ -303,8 +306,11 @@ U_EXPORT main (int argc, char* argv[])
    // +3,7:two->Another
 
    ok = c[U_STRING_FROM_CONSTANT("one")] == U_STRING_FROM_CONSTANT("Another");
+
    U_INTERNAL_ASSERT( ok )
+
    ok = c[U_STRING_FROM_CONSTANT("two")] == U_STRING_FROM_CONSTANT("Another");
+
    U_INTERNAL_ASSERT( ok )
 
    // handles long keys and data
@@ -315,6 +321,7 @@ U_EXPORT main (int argc, char* argv[])
 #     define LDATA "152e113d5deec3638ead782b93e1b9666d265feb5aebc840e79aa69e2cfc1a2ce4b3254b79fa73c338d22a75e67cfed4cd17b92c405e204a48f21c31cdcf7da46312dc80debfbdaf6dc39d74694a711\n6d170c5fde1a81806847cf71732c7f3217a38c6234235951af7b7c1d32e62d480d7c82a63a9d94291d92767ed97dd6a6809d1eb856ce23eda20268cb53fda31c016a19fc20e80aec3bd594a3eb82a5a\n"
 
    ok = c[U_STRING_FROM_CONSTANT(LKEY)] == U_STRING_FROM_CONSTANT(LDATA);
+
    U_INTERNAL_ASSERT( ok )
 
    cout << c;

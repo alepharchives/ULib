@@ -273,22 +273,6 @@ public:
 
    int compare(const UStringRep* rep) const { return compare(rep->str, rep->_length); }
 
-   int compare(const UStringRep* rep, uint32_t depth) const
-      {
-      U_TRACE(0, "UStringRep::compare(%.*S,%u)", U_min(_length, rep->_length) - depth, rep->str+depth, depth)
-
-      U_INTERNAL_ASSERT(depth <=      _length)
-      U_INTERNAL_ASSERT(depth <= rep->_length)
-
-      int r = memcmp(str + depth, rep->str + depth, U_min(_length, rep->_length) - depth);
-
-      U_INTERNAL_DUMP("str[%u] = %.*S", depth, U_min(_length, rep->_length) - depth, str + depth)
-
-      if (r == 0) r = (_length - rep->_length);
-
-      U_RETURN(r);
-      }
-
    int compare(uint32_t pos, uint32_t n1, const char* s, uint32_t n2) const
       {
       U_TRACE(0, "UStringRep::compare(%u,%u,%.*S,%u)", pos, n1, n2, s, n2)
@@ -301,6 +285,8 @@ public:
 
       U_RETURN(r);
       }
+
+   int compare(const UStringRep* rep, uint32_t depth) const __pure;
 
    // Compare with ignore case
 

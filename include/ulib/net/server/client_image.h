@@ -238,9 +238,7 @@ public:
       
       if (logbuf) UClientImage_Base::logCertificate(getSocket()->getPeerCertificate());
 
-      if (UClientImage_Base::newConnection()) U_RETURN(true);
-
-      U_RETURN(false);
+      return UClientImage_Base::newConnection();
       }
 
    // DEBUG

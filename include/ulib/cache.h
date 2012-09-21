@@ -14,7 +14,7 @@
 #ifndef ULIB_CACHE_H
 #define ULIB_CACHE_H 1
 
-#include <ulib/string.h>
+#include <ulib/file.h>
 
 /**
    @class UCache
@@ -59,67 +59,45 @@ public:
    UCache()
       {
       U_TRACE_REGISTER_OBJECT(0, UCache, "")
+
+      fd = -1;
       }
 
-   ~UCache()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UCache)
-      }
-
-   // INIT
-
-   void set(char* ptr)
-      {
-      U_TRACE(0, "UCache::set(%p)", ptr)
-
-      x    = ptr + sizeof(UCache::cache_info);
-      info = (cache_info*)ptr;
-      }
-
-   void initStart()
-      {
-      U_TRACE(0, "UCache::initStart()")
-
-      u_gettimeofday();
-
-      start = u_now->tv_sec;
-      }
-
-   void init(uint32_t size);
+   ~UCache();
 
    // OPEN/CREAT a cache file
 
-   bool open(const UString& path, uint32_t size, const UString* environment = 0);
+   bool open(const UString& path, uint32_t size,               const UString* environment = 0);
+   bool open(const UString& path, const UString& dir_template, const UString* environment = 0);
 
    // OPERATION
 
-   void add(const UString& _key, const UString& _data, uint32_t _ttl = 0)
+   uint32_t getHSize(uint32_t size) const
       {
-      U_TRACE(1, "UCache::add(%.*S,%.*S,%u)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_data), _ttl)
+      U_TRACE(0, "UCache::getHSize(%u)", size)
 
-      const char*  key =  _key.data();
-      const char* data = _data.data();
-      uint32_t keylen  =  _key.size(),
-               datalen = _data.size();
+      // sizeof(uint32_t) <= hsize <= size / sizeof(cache_hash_table_entry) (hsize is a power of 2)
 
-      char* ptr = add(key, keylen, datalen, _ttl);
+      uint32_t hsize = sizeof(uint32_t);
 
-      (void) u__memcpy(ptr,           key,  keylen);
-      (void) u__memcpy(ptr + keylen, data, datalen);
+      while (hsize <= (size / sizeof(UCache::cache_hash_table_entry))) hsize <<= 1U;
+
+      U_RETURN(hsize);
       }
+
+   void add(       const UString& key, const UString& data,    uint32_t _ttl = 0);
+   void addContent(const UString& key, const UString& content, uint32_t _ttl = 0); // NB: + null terminator...
+
+   UString get(       const char* key, uint32_t len);
+   UString getContent(const char* key, uint32_t len); // NB: - null terminator...
+
+   void loadContentOf(const UString& directory, const char* filter = 0, uint32_t filter_len = 0);
 
    // operator []
 
-   UString operator[](const UString& key);
+   UString operator[](const UString& key) { return get(U_STRING_TO_PARAM(key)); }
 
    // SERVICES
-
-   UString     contentOf(const char* fmt, ...);
-   UString     contentOf(const UString& pathname);
-   UString  addContentOf(const UString& pathname);
-   void    loadContentOf(const UString& directory, const char* filter = 0, uint32_t filter_len = 0);
-
-   void reset() { (void) memset(x, 0, info->size); }
 
    uint32_t getTTL() const
       {
@@ -168,7 +146,8 @@ protected:
    // ------> datalen array of char...
    } cache_hash_table_entry;
 
-   char* x;          // cache pointer
+   int fd;
+   char* x;          // cache      pointer
    cache_info* info; // cache info pointer
    time_t start;     // time of reference
    uint32_t ttl;     // time to live (scadenza entry)
@@ -208,6 +187,8 @@ protected:
       {
       U_TRACE(0, "UCache::entry(%u)", pos)
 
+      U_INTERNAL_DUMP("info->size = %u", info->size)
+
       U_INTERNAL_ASSERT(pos <= (info->size - sizeof(uint32_t)))
 
       cache_hash_table_entry* e = (cache_hash_table_entry*)(x + pos);
@@ -233,12 +214,13 @@ protected:
       U_INTERNAL_DUMP("*ptr = %u", value)
       }
 
-   char* add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t ttl);
-
    void print(ostream& os, uint32_t& pos) const;
+
+   char* add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t ttl);
 
 private:
    inline uint32_t hash(const char* key, uint32_t keylen) U_NO_EXPORT;
+          void     init(UFile& _x, uint32_t size, bool bexist) U_NO_EXPORT;
 
    UCache(const UCache&)            {}
    UCache& operator=(const UCache&) { return *this; }

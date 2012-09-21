@@ -300,7 +300,7 @@ __pure int UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
 
-   handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method)...
+   handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method: we use the pointer 'this')
 
    // reset buffer before read
 

@@ -887,9 +887,9 @@ void UVector<UString>::mksort(UStringRep** a, int n, int depth)
    r  = U_min(pa - a,  pb - pa);     vecswap2(a,  pb - r, r);
    r  = U_min(pd - pc, pn - pd - 1); vecswap2(pb, pn - r, r);
 
-   if ((r = pb - pa)  > 1) mksort(a, r, depth);
-   if (ch(a+r)       != 0) mksort(a + r, pa - a + pn - pd - 1, depth + 1);
-   if ((r = pd - pc)  > 1) mksort(a + n - r, r, depth);
+   if ((r = pb - pa)  > 1) mksort(        a,                    r, depth);
+   if (ch(a + r)     != 0) mksort(a     + r, pa - a + pn - pd - 1, depth + 1);
+   if ((r = pd - pc)  > 1) mksort(a + n - r,                    r, depth);
 }
 
 // STREAMS

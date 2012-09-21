@@ -1030,7 +1030,7 @@ bool UFile::rmdir(const char* path, bool remove_all)
          const char* file;
          UString tmp(path);
          UVector<UString> vec;
-         uint32_t n = listContentOf(vec, &tmp);
+         uint32_t n = listContentOf(vec, &tmp, 0, 0);
 
          for (uint32_t i = 0; i < n; ++i)
             {
@@ -1181,6 +1181,34 @@ void UFile::ftw_vector_push()
    UString str((void*)ptr, len);
 
    vector->push(str);
+}
+
+uint32_t UFile::listContentOf(UVector<UString>& vec, const char* filter, uint32_t filter_len)
+{
+   U_TRACE(0, "UFile::listContentOf(%p,%.*S,%u)", &vec, filter_len, filter, filter_len)
+
+   uint32_t n = vec.size();
+
+   if (chdir(path_relativ, true) &&
+       UServices::setFtw(0, filter, filter_len))
+      {
+      vector = &vec;
+
+      u_ftw_ctx.call              = ftw_vector_push;
+      u_ftw_ctx.depth             = false;
+      u_ftw_ctx.sort_by           = 0;
+      u_ftw_ctx.call_if_directory = false;
+
+      u_ftw();
+
+      u_buffer_len = 0;
+
+      (void) chdir(0, true);
+      }
+
+   uint32_t result = (vec.size() - n);
+
+   U_RETURN(result);
 }
 
 uint32_t UFile::listContentOf(UVector<UString>& vec, const UString* dir, const char* filter, uint32_t filter_len)

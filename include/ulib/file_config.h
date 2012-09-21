@@ -37,8 +37,6 @@ public:
 
    // SERVICES
 
-   UString getData() const { return data; }
-
    bool loadTable(UHashMap<UString>& table);
    bool loadVector(UVector<UString>& vec, const char* name = 0);
 
@@ -112,6 +110,11 @@ public:
       }
 
    // EXT
+
+   bool processData();
+
+   UString getData() const                { return  data; }
+   void    setData(const UString& _data)  { data = _data; }
 
    // This implementation of a Configuration reads properties
    // from a legacy Windows initialization (.ini) file.

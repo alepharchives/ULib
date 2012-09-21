@@ -241,6 +241,8 @@ bool UClient_Base::connect()
       U_RETURN(true);
       }
 
+   response.setBuffer(100U);
+
    response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port), 0); // NB: the last argument (0) is necessary...
 
    if (log)

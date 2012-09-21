@@ -1413,9 +1413,9 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
-   time_t idle = 0;
    uint32_t counter = 0;
    UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
+   time_t threshold_for_timeout;
 
 start:
    ptr = pindex;
@@ -1435,15 +1435,12 @@ start:
          {
          // check for idle connection
 
-         if (idle == 0)
-            {
-            idle = (u_now->tv_sec - (timeoutMS / 1000));
+         threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000));
 
-            U_INTERNAL_DUMP("idle          = %ld", idle)
-            U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
-            }
+         U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
+         U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
 
-         if (ptr->last_response <= idle)
+         if (ptr->last_response <= threshold_for_timeout)
             {
             if (handlerTimeoutConnection(ptr)) UNotifier::erase(ptr);
 
@@ -1678,12 +1675,25 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    U_INTERNAL_ASSERT_POINTER(cimg)
    U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
 
    U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
 
    if (cimg != pthis &&
        cimg != handler_inotify)
       {
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(DEBUG)
+      if (u_pthread_time)
+         {
+         time_t threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
+
+         U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
+         U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
+
+         U_INTERNAL_ASSERT(((UClientImage_Base*)cimg)->last_response <= threshold_for_timeout)
+         }
+#  endif
+
       ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
       U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
