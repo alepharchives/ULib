@@ -938,7 +938,11 @@ void UNoCatPlugIn::setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH)
 
    UString x;
 
-   if (peer->index_network >= vLocalNetwork.size()) x = ip;
+   if (peer->ifname.empty() ||
+       peer->index_network >= vLocalNetwork.size())
+      {
+      x = ip;
+      }
    else
       {
       x = vLocalNetwork[peer->index_network];

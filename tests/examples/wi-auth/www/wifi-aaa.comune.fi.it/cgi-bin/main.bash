@@ -625,11 +625,11 @@ set_ap() {
 	GATEWAY=""
 	ACCESS_POINT_NAME=${1##*@}
 
-	ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
+	ACCESS_POINT=`egrep "$ACCESS_POINT_NAME" $ACCESS_POINT_LIST.down 2>/dev/null`
 
 	if [ -z "$ACCESS_POINT" ]; then
 
-		ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.up 2>/dev/null`
+		ACCESS_POINT=`egrep "$ACCESS_POINT_NAME" $ACCESS_POINT_LIST.up 2>/dev/null`
 
 		if [ -n "$ACCESS_POINT" ]; then
 			GATEWAY=`echo -n $ACCESS_POINT | cut -d' ' -f2 2>/dev/null`
@@ -667,7 +667,7 @@ send_request_to_nodog() {
 
 			# si aggiunge access point alla lista di quelli non contattabili...
 
-			ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
+			ACCESS_POINT=`egrep "$ACCESS_POINT_NAME" $ACCESS_POINT_LIST.down 2>/dev/null`
 
 			if [ -z "$ACCESS_POINT" ]; then
 				append_to_FILE "$ACCESS_POINT_NAME $GATEWAY" $ACCESS_POINT_LIST.down
@@ -1773,7 +1773,7 @@ update_ap_list() {
 
 	ACCESS_POINT_NAME=${1##*@}
 
-	ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.up 2>/dev/null`
+	ACCESS_POINT=`egrep "$ACCESS_POINT_NAME" $ACCESS_POINT_LIST.up 2>/dev/null`
 
 	if [ -z "$ACCESS_POINT" ]; then
 
@@ -1786,11 +1786,11 @@ update_ap_list() {
 		fi
 	fi
 
-	ACCESS_POINT=`egrep "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
+	ACCESS_POINT=`egrep "$ACCESS_POINT_NAME" $ACCESS_POINT_LIST.down 2>/dev/null`
 
 	if [ -n "$ACCESS_POINT" ]; then
 
-		LIST=`egrep -v "^$ACCESS_POINT_NAME " $ACCESS_POINT_LIST.down 2>/dev/null`
+		LIST=`egrep -v "$ACCESS_POINT_NAME" $ACCESS_POINT_LIST.down 2>/dev/null`
 
 		if [ -n "$LIST" ]; then
 

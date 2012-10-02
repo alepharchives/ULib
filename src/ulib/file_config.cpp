@@ -74,10 +74,16 @@ bool UFileConfig::processData()
 
       UString command(200U), _dir = UStringExt::dirname(pathname);
 
-#  ifdef HAVE_MCPP
-      command.snprintf("mcpp                    -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
+#  ifdef DEBUG
+#  define DBG_DEF " -DDEBUG "
 #  else
-      command.snprintf("cpp -undef -nostdinc -w -P -C -I%.*s -", U_STRING_TO_TRACE(_dir));
+#  define DBG_DEF
+#  endif
+
+#  ifdef HAVE_MCPP
+      command.snprintf("mcpp                    -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
+#  else
+      command.snprintf("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
 #  endif
 
       if (UFile::isOpen())

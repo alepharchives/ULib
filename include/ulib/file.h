@@ -254,7 +254,9 @@ public:
 
       close();
 
-      creat(flags, PERM_FILE);
+      U_INTERNAL_ASSERT(pathname.isNullTerminated())
+
+      fd = open(pathname.data(), flags, PERM_FILE);
       }
 
    bool isOpen()

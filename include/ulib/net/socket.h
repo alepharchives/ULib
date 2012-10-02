@@ -470,6 +470,15 @@ public:
 #  endif
       }
 
+   void setTcpFastOpen(uint32_t value)
+      {
+      U_TRACE(0, "USocket::setTcpFastOpen(%u)", value)
+
+#  ifdef TCP_FASTOPEN
+      (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const void*)&value, sizeof(uint32_t));
+#  endif
+      }
+
    void setTcpCongestion(const char* value)
       {
       U_TRACE(0, "USocket::setTcpCongestion(%S)", value)

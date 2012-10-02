@@ -1040,6 +1040,8 @@ void UServer_Base::init()
       // socket->setBufferRCV(128 * 1024);
       // socket->setBufferSND(128 * 1024);
 
+         socket->setTcpFastOpen(5U);
+
          /* Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
           * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
           * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
@@ -1161,7 +1163,7 @@ void UServer_Base::init()
 
       ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
 
-      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION,0)
+      U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION, 0)
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
@@ -1380,6 +1382,8 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 #else
    UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
+
+   if (isPreForked()) U_TOT_CONNECTION = 0;
 }
 
 RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
@@ -1404,6 +1408,17 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 #  else
       UInterrupt::erase(SIGTERM); // async signal
 #  endif
+
+      /*
+      if (isPreForked())
+         {
+         uint32_t num_conn = UNotifier::num_connection - UNotifier::min_connection - 1;
+
+         U_INTERNAL_DUMP("num_conn = %u", num_conn)
+
+         if (num_conn) U_TOT_CONNECTION -= num_conn;
+         }
+      */
 
       U_EXIT(0);
       }
@@ -1635,8 +1650,18 @@ const char* UServer_Base::getNumConnection()
 
    static char buffer[32];
 
-   if (isPreForked()) (void) u__snprintf(buffer, sizeof(buffer), "(%d/%d)", UNotifier::num_connection - UNotifier::min_connection -1, U_TOT_CONNECTION);
-   else               (void) u__snprintf(buffer, sizeof(buffer),  "%d",     UNotifier::num_connection - UNotifier::min_connection -1);
+   char* ptr = buffer;
+
+   if (isPreForked()) *ptr++ = '(';
+
+   uint32_t noutput = u__snprintf(ptr, sizeof(buffer), "%u", UNotifier::num_connection - UNotifier::min_connection - 1);
+
+   if (isPreForked())
+      {
+      U_INTERNAL_ASSERT_MAJOR(U_TOT_CONNECTION, 0)
+
+      (void) u__snprintf(ptr+noutput, sizeof(buffer), "/%u)", U_TOT_CONNECTION - 1);
+      }
 
    U_RETURN(buffer);
 }
@@ -1646,13 +1671,6 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
    U_TRACE(0, "UServer_Base::handlerCloseConnection(%p)", ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
-
-   if (isPreForked())
-      {
-      U_TOT_CONNECTION--;
-
-      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
-      }
 
    if (isLog())
       {
@@ -1664,6 +1682,13 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
       U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
 
       ptr->logbuf->setEmpty();
+      }
+
+   if (isPreForked())
+      {
+      U_TOT_CONNECTION--;
+
+      U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
       }
 
    if (isClassic()) U_EXIT(0);
@@ -1682,6 +1707,10 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    if (cimg != pthis &&
        cimg != handler_inotify)
       {
+      ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
+
+      U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
+
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(DEBUG)
       if (u_pthread_time)
          {
@@ -1690,13 +1719,15 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
          U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
 
-         U_INTERNAL_ASSERT(((UClientImage_Base*)cimg)->last_response <= threshold_for_timeout)
+         if (((UClientImage_Base*)cimg)->last_response > threshold_for_timeout)
+            {
+            U_SRV_LOG_WITH_ADDR("client have last_response (#3D) > threshold_for_timeout (#3D)",
+                 ((UClientImage_Base*)cimg)->last_response,        threshold_for_timeout);
+
+            U_INTERNAL_ASSERT(false)
+            }
          }
 #  endif
-
-      ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
-
-      U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
 
       U_RETURN(true);
       }
@@ -1916,7 +1947,10 @@ void UServer_Base::run()
 
             baffinity = false;
 
-            u_gettimeofday();
+#        if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+            if (u_pthread_time == 0)
+#        endif
+            (void) gettimeofday(u_now, 0);
 
             U_INTERNAL_DUMP("down to %u children", i)
 
@@ -1987,7 +2021,7 @@ bool UServer_Base::parallelization()
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
-   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::isPipeline(),false)
+   U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::isPipeline(), false)
 
    if (proc->parent()) proc->wait(); // NB: to avoid fork bomb...
 

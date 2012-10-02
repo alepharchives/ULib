@@ -826,6 +826,10 @@ loop:
       (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
       U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
 #     endif
+#     ifdef TCP_FASTOPEN
+      (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_FASTOPEN, (void*)&value, tmp);
+      U_INTERNAL_DUMP("TCP_FASTOPEN = %d", value)
+#     endif
 #     ifdef SO_KEEPALIVE
       (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
       U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)

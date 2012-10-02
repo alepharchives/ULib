@@ -4042,9 +4042,11 @@ UString UHTTP::getUrlEncodedForResponse(const char* format)
       {
       char output[500U];
 
+      UString uri = getRequestURI(true);
+
       // NB: encoding to avoid cross-site scripting (XSS)...
 
-      sz = u_xml_encode((const unsigned char*)u_http_info.uri, U_min(100, U_HTTP_URI_QUERY_LEN), (unsigned char*)output);
+      sz = u_xml_encode((const unsigned char*)uri.data(), U_min(100, uri.size()), (unsigned char*)output);
 
       result.snprintf(format, sz, output);
       }
@@ -4977,7 +4979,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
        * browser creators keep re-introducing into their products. Safari 5.0.2? No problem. Safari 5.0.3? Complete failure.
        * Safari 5.0.4? No problem. Safari 5.0.5? Inconsistent and broken.
        *
-       * Sending raw DEFLATE data is just not a good idea. As Mark says "[it's] simply more reliable to only use GZIP."
+       * Sending raw DEFLATE data is just not a good idea. As Mark says "[it's] simply more reliable to only use GZIP"
        */
 
       content = UStringExt::deflate(content, (gzip = true));
@@ -5734,13 +5736,13 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
       if (cgi->interpreter) command.snprintf("%s %.*s", cgi->interpreter, U_STRING_TO_TRACE(path));
       else           (void) command.assign(path);
 
-      // ULIB facility: check if present form data and convert it in parameters for shell script...
+      // ULIB facility: check if present form data and convert them in parameters for shell script...
 
       if (cgi->sh_script) setCGIShellScript(command);
 
       UCommand cmd(command);
 
-      // NB: if server no preforked (ex: nodog) process the HTTP CGI request with fork....
+      // NB: if server is no preforked (ex: nodog) process the HTTP CGI request with fork....
 
       async = (as_service == false                   &&
                UServer_Base::preforked_num_kids == 0 &&
@@ -5982,13 +5984,13 @@ next2:
    // in general at this point, after checkPath(), we can have as status:
    // ------------------------------------------------------------------
    // 1) file is forbidden (not in DOC_ROOT)
-   // 2) DOC_ROOT dir need to be processed (can be forbidden)
-   // 3) file is in FILE CACHE with/without content (stat() cache)
+   // 2) DOC_ROOT dir need to be processed (and can be forbidden...)
+   // 3) file is in FILE CACHE with/without content (stat() cache...)
    // 4) file do not exist
 
    U_INTERNAL_DUMP("file_data = %p U_http_request_check = %C u_http_info.flag = %.8S", file_data, U_http_request_check, u_http_info.flag)
 
-   if (isHTTPRequestInFileCache())
+   if (isHTTPRequestInFileCache()) // 3
       {
       U_INTERNAL_ASSERT_POINTER(file_data)
 
@@ -6047,8 +6049,9 @@ check:
 
    U_INTERNAL_DUMP("isHTTPRequestNotFound() = %b", isHTTPRequestNotFound())
 
-   if (isHTTPRequestNotFound() == false)
+   if (isHTTPRequestNotFound() == false) // 4
       {
+next4:
       // check if the uri use HTTP Strict Transport Security to force client to use secure connections only
 
       if (uri_strict_transport_security_mask                                                                                 &&
@@ -6074,7 +6077,7 @@ check:
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
-next4:
+
       // check if the uri need a certificate
 
 #  ifdef USE_LIBSSL

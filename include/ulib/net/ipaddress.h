@@ -187,7 +187,7 @@ public:
 
    u_short getAddressFamily() const { return iAddressType; }
 
-   // Returns if it belongs to a private IP address space (RFC 1918)
+   // Returns if it belongs to a private (non-routable) IP address space (RFC 1918) 
 
    static bool isPrivate(uint32_t i)
       {

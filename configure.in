@@ -970,7 +970,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 # -------------------------------------------------------------------------------------
 
 	if test "$enable_debug" = "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
 		if test "$USE_LIBSSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi

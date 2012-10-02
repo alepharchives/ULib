@@ -734,6 +734,7 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
    if (sock != -1)
       {
       char msgBuf[4096];
+
       (void) memset(msgBuf, 0, 4096);
 
       /*
@@ -899,9 +900,12 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
             dst = U_SYSCALL(inet_ntoa, "%u", dstAddr);
 
             if (u__snprintf(dstMask, sizeof(dstMask), "%s/%u", dst, rtMsg->rtm_dst_len) == network_len &&
-                strncmp(dstMask, network, network_len) == 0)
+                    strncmp(dstMask, network, network_len) == 0)
                {
-               if (gateWay.s_addr) (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &gateWay, result.data(), result.capacity());
+               if (gateWay.s_addr)
+                  {
+                  (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &gateWay, result.data(), result.capacity());
+                  }
                else
                   {
                   U_INTERNAL_ASSERT_MAJOR(srcAddr.s_addr, 0)
