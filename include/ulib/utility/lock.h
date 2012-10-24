@@ -33,7 +33,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, ULock, "")
 
       sem    = 0;
-      locked = false;
+      locked = 0;
       }
 
    ~ULock()
@@ -55,7 +55,7 @@ public:
       {
       U_TRACE(0, "ULock::isLocked()")
 
-      U_RETURN(locked);
+      U_RETURN(locked > 0);
       }
 
    bool isShared()
@@ -75,7 +75,7 @@ public:
 
 protected:
    USemaphore* sem;
-   bool locked; // manage lock recursivity...
+   int32_t locked; // manage lock recursivity...
 
 private:
    ULock(const ULock&)            {}

@@ -90,14 +90,16 @@ public:
 
    void setIPAddress(UIPAddress& cAddr)
       {
+      U_TRACE(0, "SocketAddress::setIPAddress()")
+
       addr.psaGeneric.sa_family = cAddr.getAddressFamily();
 
 #  ifdef ENABLE_IPV6
       if (addr.psaGeneric.sa_family == AF_INET6)
-         (void) u__memcpy(&(addr.psaIP6Addr.sin6_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
+         U__MEMCPY(&(addr.psaIP6Addr.sin6_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
       else
 #  endif
-         (void) u__memcpy(&(addr.psaIP4Addr.sin_addr),  cAddr.get_in_addr(), cAddr.getInAddrLength());
+         U__MEMCPY(&(addr.psaIP4Addr.sin_addr),  cAddr.get_in_addr(), cAddr.getInAddrLength());
       }
 
    // Sets the port number part of the sockaddr structure. Based on the value
@@ -171,15 +173,17 @@ public:
    */
    void set(struct addrinfo* result)
       {
+      U_TRACE(0, "SocketAddress::set(%p)", result)
+
       addr.psaGeneric.sa_family = result->ai_family;
 
 #  ifdef ENABLE_IPV6
       if (addr.psaGeneric.sa_family == AF_INET6)
-         (void) u__memcpy(&(addr.psaIP6Addr.sin6_addr),
+         U__MEMCPY(&(addr.psaIP6Addr.sin6_addr),
                          &((struct sockaddr_in6*)result->ai_addr)->sin6_addr, sizeof(in6_addr));
       else
 #  endif
-         (void) u__memcpy(&(addr.psaIP4Addr.sin_addr),
+         U__MEMCPY(&(addr.psaIP4Addr.sin_addr),
                          &((struct sockaddr_in*)result->ai_addr)->sin_addr,   sizeof(in_addr));
       }
 #endif

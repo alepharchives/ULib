@@ -42,21 +42,6 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UModNoCatPeer)
       }
 
-   // VARIE
-
-   void setCommand(const UString& script)
-      {
-      U_TRACE(0, "UModNoCatPeer::setCommand(%.*S)", U_STRING_TO_TRACE(script))
-
-      // NB: request(arp|permit|deny|clear|reset|initialize) mac ip class(Owner|Member|Public) rulenum]
-
-      UString command(100U);
-
-      command.snprintf("/bin/sh %.*s request %.*s %s Member %u", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), UIPAddress::pcStrAddress, rulenum);
-
-      fw.set(command, (char**)0);
-      }
-
    // define method VIRTUAL of class UEventTime
 
    virtual int handlerTime();
@@ -196,6 +181,7 @@ protected:
    void             setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH);
    UModNoCatPeer* creatNewPeer(uint32_t index_AUTH);
 
+   void checkSystem();
    void setPeerListInfo();
    void checkPeersForInfo();
    bool checkAuthMessage(UModNoCatPeer* peer);
@@ -217,6 +203,9 @@ protected:
 
    static UString getIPAddress(const char* ptr, uint32_t len);
 
+   static void permit(UModNoCatPeer* peer, time_t timeout);
+   static void   deny(UModNoCatPeer* peer, bool alarm, bool disconnected);
+
    static void getTraffic();
    static void setHTTPResponse(const UString& content);
    static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
@@ -224,9 +213,7 @@ protected:
    static void checkPeerInfo(UStringRep* key, void* value);
    static void getPeerListInfo(UStringRep* key, void* value);
    static void executeCommand(UModNoCatPeer* peer, int type);
-
-   static void permit(UModNoCatPeer* peer, time_t timeout);
-   static void   deny(UModNoCatPeer* peer, bool alarm, bool disconnected);
+   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* ip, uint32_t n);
 
    static bool isPingAsyncPending()
       {

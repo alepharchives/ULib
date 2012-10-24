@@ -2,6 +2,8 @@
 Content-Type: application/jsonrequest
 -->
 <!--#code
+U_INTERNAL_DUMP("U_HTTP_CTYPE = %.*S", U_HTTP_CTYPE_TO_TRACE)
+
 if (U_HTTP_CTYPE_STRNEQ("application/jsonrequest"))
    {
    UValue json;

@@ -225,7 +225,7 @@ void UOptions::add(const UString& desc,
 
       item = U_MALLOC_N(capacity, option_item);
 
-      (void) u__memcpy(item, old_item, length * sizeof(option_item));
+      U__MEMCPY(item, old_item, length * sizeof(option_item));
 
       U_FREE_N(old_item, old_capacity, option_item);
       }
@@ -405,7 +405,7 @@ void UOptions::printHelp(vPF func)
 
       name_len = u__strlen(ptr_long_options->name);
 
-      (void) u__memcpy(ptr, ptr_long_options->name, name_len); 
+      U__MEMCPY(ptr, ptr_long_options->name, name_len); 
 
       ptr += name_len;
 
@@ -447,7 +447,7 @@ void UOptions::printHelp(vPF func)
 
          if (n)
             {
-            (void) u__memcpy(ptr, x->data(), n);
+            U__MEMCPY(ptr, x->data(), n);
 
             ptr += n;
             }
@@ -460,7 +460,7 @@ void UOptions::printHelp(vPF func)
 
             ptr += 10;
 
-            (void) u__memcpy(ptr, item[j].value->data(), n);
+            U__MEMCPY(ptr, item[j].value->data(), n);
 
             ptr += n;
 

@@ -13,6 +13,7 @@
 
 #include <ulib/command.h>
 #include <ulib/utility/escape.h>
+#include <ulib/utility/websocket.h>
 #include <ulib/net/server/server.h>
 #include <ulib/net/server/client_image.h>
 #include <ulib/net/server/plugin/mod_proxy.h>
@@ -67,7 +68,12 @@ int UProxyPlugIn::handlerInit()
 #endif
 */
 
-   U_SRV_LOG("initialization of plugin success");
+   if (UServer_Base::isLog())
+      {
+      client_http.UClient_Base::setLogShared();
+
+      ULog::log("initialization of plugin success\n");
+      }
 
 end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -88,22 +94,18 @@ int UProxyPlugIn::handlerRequest()
    // U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
    // ------------------------------------------------------------------------------
 
-   UModProxyService* service = (vservice ? UModProxyService::findService(U_HTTP_VHOST_TO_PARAM, U_HTTP_METHOD_TO_PARAM, *vservice) : 0);
+   UModProxyService* service = (vservice ? UModProxyService::findService(U_HTTP_HOST_TO_PARAM, U_HTTP_METHOD_TO_PARAM, *vservice) : 0);
 
    if (service == 0) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
    // process the HTTP request
 
+   bool async;
    int err = 0;
    bool output_to_client = false, // send output as response to client...
         output_to_server = false; // send output as request  to server...
 
-   // NB: if server no preforked (ex: nodog) process the HTTP request with fork....
-
-   bool async = (UServer_Base::preforked_num_kids == 0 &&
-                 UClientImage_Base::isPipeline()  == false);
-
-#ifdef USE_LIBSSL // check if certificate is required...
+#ifdef USE_LIBSSL // check if is required a certificate...
    if (service->isRequestCertificate() &&
        ((UServer<USSLSocket>*)UServer_Base::pthis)->askForClientCertificate() == false)
       {
@@ -113,7 +115,12 @@ int UProxyPlugIn::handlerRequest()
       }
 #endif
 
-   // check if action required
+   // NB: if server no preforked (ex: nodog) process the HTTP request with fork....
+
+   async = (UServer_Base::preforked_num_kids == 0 &&
+            UClientImage_Base::isPipeline()  == false);
+
+   // check if it is required an action...
 
    if (service->command)
       {
@@ -148,13 +155,44 @@ int UProxyPlugIn::handlerRequest()
 
    if (output_to_client == false)
       {
-      bool result;
+      // before connect to server check if server and/or port to connect has changed...
 
-      // connect to server...
+      if (client_http.setHostPort(service->getServer(), service->getPort()) &&
+          client_http.UClient_Base::isConnected())
+         {
+         client_http.UClient_Base::close();
+         }
 
-      int port       = service->getPort();
+      if (async &&
+          UServer_Base::parallelization())
+         {
+         client_http.UClient_Base::reset();
+
+         if (service->isWebSocket()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+         goto end; // skip error...
+         }
+
+      if (service->isWebSocket())
+         {
+         UWebSocket::checkForPipeline();
+
+         while (UWebSocket::handleDataFraming(UServer_Base::pClientImage->socket) == STATUS_CODE_OK &&
+                client_http.UClient_Base::sendRequest(*UClientImage_Base::wbuffer, true)            &&
+                UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http.UClient_Base::response)))
+            {
+            client_http.UClient_Base::clearData();
+
+            UClientImage_Base::rbuffer->setEmpty();
+            UClientImage_Base::wbuffer->setEmptyForce(); // NB: it is referenced by client_http.UClient_Base::request...
+            }
+
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      // send request to server and get response
+
       UString user   = service->getUser(),
-              server = service->getServer(),
               passwd = service->getPassword();
 
       if (  user.empty() == false &&
@@ -165,27 +203,11 @@ int UProxyPlugIn::handlerRequest()
 
       client_http.setFollowRedirects(service->isFollowRedirects(), true);
 
-      if (async &&
-          UServer_Base::parallelization())
-         {
-         client_http.UClient_Base::reset();
+      if (output_to_server == false)   *UClientImage_Base::wbuffer = *UClientImage_Base::request;
 
-         goto end; // skip error...
-         }
+      // connect to server and send request...
 
-      // ...but before check if server and/or port to connect has changed...
-
-      if (client_http.setHostPort(server, port) &&
-          client_http.UClient_Base::isConnected())
-         {
-         client_http.UClient_Base::close();
-         }
-
-      // send request to server and get response
-
-      if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::request;
-
-      result = client_http.sendRequest(*UClientImage_Base::wbuffer);
+      bool result = client_http.sendRequest(*UClientImage_Base::wbuffer);
 
       if (result)
          {

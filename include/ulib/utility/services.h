@@ -112,9 +112,23 @@ struct U_EXPORT UServices {
       U_RETURN(result);
       }
 
+   // ---------------------------------------------------------
    // DOS or wildcard regexpr
+   // ---------------------------------------------------------
+   // .  Wildcard: any character
+   // *  Repeat: zero or more occurrences of previous character
+   // ---------------------------------------------------------
 
-   static bool dosMatch(const UString& s, const UString& mask, int flags)
+   static bool dosMatch(const UString& s, const char* mask, uint32_t size, int flags = 0)
+      {
+      U_TRACE(0, "UServices::dosMatch(%.*S,%.*S,%u,%d)", U_STRING_TO_TRACE(s), size, mask, size, flags)
+
+      bool result = u_dosmatch(U_STRING_TO_PARAM(s), mask, size, flags);
+
+      U_RETURN(result);
+      }
+
+   static bool dosMatch(const UString& s, const UString& mask, int flags = 0)
       {
       U_TRACE(0, "UServices::dosMatch(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
 
@@ -123,9 +137,23 @@ struct U_EXPORT UServices {
       U_RETURN(result);
       }
 
+   // ------------------------------------------------------------
    // DOS or wildcard regexpr - multiple patterns separated by '|'
+   // ------------------------------------------------------------
+   // .  Wildcard: any character
+   // *  Repeat: zero or more occurrences of previous character
+   // ------------------------------------------------------------
 
-   static bool dosMatchWithOR(const UString& s, const UString& mask, int flags)
+   static bool dosMatchWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)
+      {
+      U_TRACE(0, "UServices::dosMatchWithOR(%.*S,%.*S,%u,%d)", U_STRING_TO_TRACE(s), size, mask, size, flags)
+
+      bool result = u_dosmatch_with_OR(U_STRING_TO_PARAM(s), mask, size, flags);
+
+      U_RETURN(result);
+      }
+
+   static bool dosMatchWithOR(const UString& s, const UString& mask, int flags = 0)
       {
       U_TRACE(0, "UServices::dosMatchWithOR(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
 

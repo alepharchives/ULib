@@ -881,6 +881,9 @@ public:
 
    // STACK OPERATIONS
 
+   void push(     UStringRep* rep) { UVector<UStringRep*>::push(rep); }
+   void push_back(UStringRep* rep) { UVector<UStringRep*>::push(rep); }
+
    void push(     const UString& str);
    void push_back(const UString& str) { push(str); } // add to end
 

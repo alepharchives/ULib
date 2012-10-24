@@ -892,7 +892,7 @@ void UQueryParser::evaluate(UStringRep* _word, bool positive)
 
    if (!p)
       {
-      (void) u__memcpy(u_buffer+u_buffer_len, &_word, sizeof(void*));
+      U__MEMCPY(u_buffer+u_buffer_len, &_word, sizeof(void*));
 
       u_buffer_len += sizeof(void*);
 

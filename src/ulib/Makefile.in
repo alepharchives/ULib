@@ -200,11 +200,12 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp \
 	utility/socket_ext.cpp utility/uhttp.cpp \
 	utility/data_session.cpp utility/ring_buffer.cpp \
-	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
-	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
-	net/server/client_image.cpp net/client/client_rdb.cpp \
-	net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
-	net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
+	utility/websocket.cpp lemon/expression.cpp net/ipaddress.cpp \
+	net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
+	net/server/server.cpp net/server/client_image.cpp \
+	net/client/client_rdb.cpp net/server/client_image_rdb.cpp \
+	net/server/server_rdb.cpp net/rpc/rpc.cpp \
+	net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
 	net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
 	net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp \
 	net/rpc/rpc_parser.cpp net/client/smtp.cpp net/client/ftp.cpp \
@@ -316,14 +317,14 @@ am__objects_55 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	vector.lo hash_map.lo tree.lo interrupt.lo compress.lo \
 	services.lo semaphore.lo base64.lo hexdump.lo lock.lo \
 	string_ext.lo socket_ext.lo uhttp.lo data_session.lo \
-	ring_buffer.lo expression.lo ipaddress.lo socket.lo ping.lo \
-	tcpsocket.lo server.lo client_image.lo client_rdb.lo \
-	client_image_rdb.lo server_rdb.lo rpc.lo rpc_envelope.lo \
-	rpc_fault.lo rpc_method.lo rpc_encoder.lo rpc_object.lo \
-	rpc_gen_method.lo rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo \
-	http.lo client.lo ipt_ACCOUNT.lo value.lo query_parser.lo \
-	event_time.lo timeval.lo timer.lo notifier.lo string.lo \
-	file.lo process.lo file_config.lo log.lo options.lo \
+	ring_buffer.lo websocket.lo expression.lo ipaddress.lo \
+	socket.lo ping.lo tcpsocket.lo server.lo client_image.lo \
+	client_rdb.lo client_image_rdb.lo server_rdb.lo rpc.lo \
+	rpc_envelope.lo rpc_fault.lo rpc_method.lo rpc_encoder.lo \
+	rpc_object.lo rpc_gen_method.lo rpc_parser.lo smtp.lo ftp.lo \
+	pop3.lo imap.lo http.lo client.lo ipt_ACCOUNT.lo value.lo \
+	query_parser.lo event_time.lo timeval.lo timer.lo notifier.lo \
+	string.lo file.lo process.lo file_config.lo log.lo options.lo \
 	application.lo cache.lo date.lo url.lo tokenizer.lo command.lo \
 	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
 	$(am__objects_26) $(am__objects_27) $(am__objects_28) \
@@ -603,11 +604,12 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp \
 	utility/socket_ext.cpp utility/uhttp.cpp \
 	utility/data_session.cpp utility/ring_buffer.cpp \
-	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
-	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
-	net/server/client_image.cpp net/client/client_rdb.cpp \
-	net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
-	net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
+	utility/websocket.cpp lemon/expression.cpp net/ipaddress.cpp \
+	net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
+	net/server/server.cpp net/server/client_image.cpp \
+	net/client/client_rdb.cpp net/server/client_image_rdb.cpp \
+	net/server/server_rdb.cpp net/rpc/rpc.cpp \
+	net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
 	net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
 	net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp \
 	net/rpc/rpc_parser.cpp net/client/smtp.cpp net/client/ftp.cpp \
@@ -870,6 +872,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/utility.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/value.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/vector.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/websocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml2txt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/xml_parser.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/zip.Plo@am__quote@
@@ -1343,6 +1346,13 @@ ring_buffer.lo: utility/ring_buffer.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utility/ring_buffer.cpp' object='ring_buffer.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o ring_buffer.lo `test -f 'utility/ring_buffer.cpp' || echo '$(srcdir)/'`utility/ring_buffer.cpp
+
+websocket.lo: utility/websocket.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT websocket.lo -MD -MP -MF $(DEPDIR)/websocket.Tpo -c -o websocket.lo `test -f 'utility/websocket.cpp' || echo '$(srcdir)/'`utility/websocket.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/websocket.Tpo $(DEPDIR)/websocket.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utility/websocket.cpp' object='websocket.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o websocket.lo `test -f 'utility/websocket.cpp' || echo '$(srcdir)/'`utility/websocket.cpp
 
 expression.lo: lemon/expression.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT expression.lo -MD -MP -MF $(DEPDIR)/expression.Tpo -c -o expression.lo `test -f 'lemon/expression.cpp' || echo '$(srcdir)/'`lemon/expression.cpp

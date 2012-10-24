@@ -106,6 +106,8 @@
 #  define U_RETURN_POINTER(ptr,type)   return ((type*)utr.trace_return_type((void*)(ptr)))
 #  define U_RETURN_SUB_STRING(substr)  U_RETURN_STRING(substr)
 
+#  define U__MEMCPY(a,b,n) (void) U_SYSCALL(u__memcpy, "%p,%p,%u,%S", (void* restrict)(a), (b), (n), __PRETTY_FUNCTION__)
+
 // A mechanism that allow all objects to be registered with a central in-memory "database"
 // that can dump the state of all live objects
 
@@ -198,6 +200,8 @@ if (envp) \
 #  define U_SYSCALL_VOID(name,format,args...)   ::name(args)
 #  define U_SYSCALL_NO_PARAM(name)              ::name()
 #  define U_SYSCALL_VOID_NO_PARAM(name)         ::name()
+
+#  define U__MEMCPY(a,b,n) (void) memcpy((a),(b),(n))
 
 #  define U_OBJECT_TO_TRACE(object)
 

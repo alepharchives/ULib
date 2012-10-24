@@ -214,10 +214,15 @@ void u_init_ulib_username(void)
 
    pw = getpwuid(getuid());
 
-   if (pw) u_user_name_len = u__strlen(pw->pw_name);
+   if (pw == 0) u__memcpy(u_user_name, "root", (u_user_name_len = 4), __PRETTY_FUNCTION__);
+   else
+      {
+      u_user_name_len = u__strlen(pw->pw_name);
 
-   if (u_user_name_len) (void) u__memcpy(u_user_name, pw->pw_name,  u_user_name_len);
-   else                 (void) u__memcpy(u_user_name,      "root", (u_user_name_len = 4));
+      U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
+
+      u__memcpy(u_user_name, pw->pw_name, u_user_name_len, __PRETTY_FUNCTION__);
+      }
 }
 
 void u_init_ulib_hostname(void)
@@ -1455,7 +1460,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                len = sizeof(U_RESET_STR) - (n == RESET);
 
-               (void) u__memcpy(bp, tab_color[n], len);
+               u__memcpy(bp, tab_color[n], len, __PRETTY_FUNCTION__);
 
                bp  += len;
                ret += len;
@@ -1469,7 +1474,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ERROR(u_hostname_len, "HOSTNAME NULL at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
-            (void) u__memcpy(bp, u_hostname, u_hostname_len);
+            u__memcpy(bp, u_hostname, u_hostname_len, __PRETTY_FUNCTION__);
 
             bp  += u_hostname_len;
             ret += u_hostname_len;
@@ -1481,7 +1486,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ERROR(u_cwd_len, "CURRENT WORKING DIRECTORY NULL at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
-            (void) u__memcpy(bp, u_cwd, u_cwd_len);
+            u__memcpy(bp, u_cwd, u_cwd_len, __PRETTY_FUNCTION__);
 
             bp  += u_cwd_len;
             ret += u_cwd_len;
@@ -1491,7 +1496,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'N': /* print program name */
             {
-            (void) u__memcpy(bp, u_progname, u_progname_len);
+            u__memcpy(bp, u_progname, u_progname_len, __PRETTY_FUNCTION__);
 
             bp  += u_progname_len;
             ret += u_progname_len;
@@ -1501,7 +1506,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'P': /* print process pid */
             {
-            (void) u__memcpy(bp, u_pid_str, u_pid_str_len);
+            u__memcpy(bp, u_pid_str, u_pid_str_len, __PRETTY_FUNCTION__);
 
             bp  += u_pid_str_len;
             ret += u_pid_str_len;
@@ -1527,7 +1532,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                len = u__strlen(ccp);
 
-               (void) u__memcpy(bp, ccp, len);
+               u__memcpy(bp, ccp, len, __PRETTY_FUNCTION__);
 
                bp  += len;
                ret += len;
@@ -1547,7 +1552,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                ccp = getSysError_w32(&len);
 
-               (void) u__memcpy(bp, ccp, len);
+               u__memcpy(bp, ccp, len, __PRETTY_FUNCTION__);
 
                bp  += len;
                ret += len;
@@ -1563,7 +1568,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             ccp = u_getSysError(&len);
 
-            (void) u__memcpy(bp, ccp, len);
+            u__memcpy(bp, ccp, len, __PRETTY_FUNCTION__);
 
             bp  += len;
             ret += len;
@@ -1575,7 +1580,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             {
             U_INTERNAL_ERROR(u_user_name_len, "USER NAME NULL at u__vsnprintf() - CHECK THE PARAMETERS", 0);
 
-            (void) u__memcpy(bp, u_user_name, u_user_name_len);
+            u__memcpy(bp, u_user_name, u_user_name_len, __PRETTY_FUNCTION__);
 
             bp  += u_user_name_len;
             ret += u_user_name_len;
@@ -1590,7 +1595,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getSysSignal(n, &len);
 
-            (void) u__memcpy(bp, str, len);
+            u__memcpy(bp, str, len, __PRETTY_FUNCTION__);
 
             bp  += len;
             ret += len;
@@ -1605,7 +1610,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             n   = VA_ARG(int);
             str = u_getExitStatus(n, &len);
 
-            (void) u__memcpy(bp, str, len);
+            u__memcpy(bp, str, len, __PRETTY_FUNCTION__);
 
             bp  += len;
             ret += len;
@@ -1668,7 +1673,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                       width == 11 ? (ptr += 17+1,      26) :
                                     (ptr += 17+1+26+1, 29));
 
-               (void) u__memcpy(bp, ptr, len);
+               u__memcpy(bp, ptr, len, __PRETTY_FUNCTION__);
 
                /*
                U_INTERNAL_ERROR(u_isBinary((const unsigned char*)bp, len) == false,
@@ -1705,7 +1710,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                   len1 = u__strlen(tmp);
 
-                  (void) u__memcpy(bp+len, tmp, len1);
+                  u__memcpy(bp+len, tmp, len1, __PRETTY_FUNCTION__);
 
                   len += len1;
                   }
@@ -1721,7 +1726,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                len1 = u__strlen(tmp);
 
-               (void) u__memcpy(bp+len, tmp, len1);
+               u__memcpy(bp+len, tmp, len1, __PRETTY_FUNCTION__);
 
                len += len1;
                }

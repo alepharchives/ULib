@@ -28,6 +28,8 @@ public:
    // COSTRUTTORI
 
     UFileConfig();
+    UFileConfig(const UString& _data, bool _preprocessing);
+
    ~UFileConfig()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UFileConfig)
@@ -113,8 +115,8 @@ public:
 
    bool processData();
 
-   UString getData() const                { return  data; }
-   void    setData(const UString& _data)  { data = _data; }
+   UString getData() const                                    { return  data; }
+   void    setData(const UString& _data, bool _preprocessing) { data = _data; preprocessing = _preprocessing; }
 
    // This implementation of a Configuration reads properties
    // from a legacy Windows initialization (.ini) file.
@@ -158,8 +160,11 @@ protected:
    const char* _end;
    const char* _start;
    uint32_t _size;
+   bool preprocessing;
 
 private:
+   void init() U_NO_EXPORT;
+
    UFileConfig(const UFileConfig&) : UFile()  {}
    UFileConfig& operator=(const UFileConfig&) { return *this; }
 };

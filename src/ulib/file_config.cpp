@@ -43,18 +43,37 @@ void UFileConfig::str_allocate()
    U_NEW_ULIB_OBJECT(str_string, U_STRING_FROM_STRINGREP_STORAGE(1));
 }
 
-UFileConfig::UFileConfig()
+U_NO_EXPORT void UFileConfig::init()
 {
-   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "")
-
-   _size  = 0;
-   _start = _end = data.data();
+   U_TRACE(0, "UFileConfig::init()")
 
    UFile::map      = (char*)MAP_FAILED;
    UFile::st_size  = 0;
    UFile::map_size = 0;
 
+   _start = data.data();
+
+   reset();
+
    if (str_FILE == 0) str_allocate();
+}
+
+UFileConfig::UFileConfig()
+{
+   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "")
+
+   init();
+
+   preprocessing = false;
+}
+
+UFileConfig::UFileConfig(const UString& _data, bool _preprocessing) : data(_data)
+{
+   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "%.*S,%b", U_STRING_TO_TRACE(_data), _preprocessing)
+
+   init();
+
+   preprocessing = _preprocessing;
 }
 
 bool UFileConfig::processData()
@@ -68,7 +87,8 @@ bool UFileConfig::processData()
    // manage if we need preprocessing...
 
 #if defined(HAVE_CPP) || defined(HAVE_MCPP)
-   if (u_dosmatch(U_STRING_TO_PARAM(data), U_CONSTANT_TO_PARAM("*#*include *\n*"), 0))
+   if (preprocessing ||
+       UServices::dosMatch(data, U_CONSTANT_TO_PARAM("*#include *\n*"), 0))
       {
       static int fd_stderr = UServices::getDevNull("/tmp/cpp.err");
 
@@ -263,7 +283,7 @@ bool UFileConfig::loadTable(UHashMap<UString>& tbl)
          _start += pos;
          _size  -= pos;
 
-         U_RETURN(true);
+         if (tbl.empty() == false) U_RETURN(true);
          }
       }
 
@@ -600,6 +620,7 @@ const char* UFileConfig::dump(bool _reset) const
                   << "_end                      " << (void*)_end   << '\n'
                   << "_size                     " << _size         << '\n'
                   << "_start                    " << (void*)_start << '\n'
+                  << "preprocessing             " << preprocessing << '\n'
                   << "data  (UString            " << (void*)&data  << ")\n"
                   << "table (UHashMap<UString>  " << (void*)&table << ')';
 

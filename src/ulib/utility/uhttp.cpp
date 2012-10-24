@@ -25,6 +25,7 @@
 #include <ulib/utility/base64.h>
 #include <ulib/base/coder/url.h>
 #include <ulib/utility/services.h>
+#include <ulib/utility/websocket.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/socket_ext.h>
 
@@ -102,8 +103,10 @@ const char* UHTTP::ptrK;
 const char* UHTTP::ptrU;
 const char* UHTTP::ptrP;
 const char* UHTTP::ptrX;
+const char* UHTTP::ptrS;
 
 uint32_t                          UHTTP::upload_progress_index;
+UStringRep*                       UHTTP::usp_page_key;
 UDataSession*                     UHTTP::data_session;
 UDataSession*                     UHTTP::data_storage;
 UMimeMultipart*                   UHTTP::formMulti;
@@ -125,16 +128,11 @@ UHTTP::UV8JavaScript*             UHTTP::v8_javascript;
 const UString* UHTTP::str_origin;
 const UString* UHTTP::str_frm_body;
 const UString* UHTTP::str_indexhtml;
-const UString* UHTTP::str_websocket;
 const UString* UHTTP::str_ctype_tsa;
 const UString* UHTTP::str_frm_header;
 const UString* UHTTP::str_ctype_html;
 const UString* UHTTP::str_ctype_soap;
 const UString* UHTTP::str_ulib_header;
-const UString* UHTTP::str_frm_websocket;
-const UString* UHTTP::str_websocket_key1;
-const UString* UHTTP::str_websocket_key2;
-const UString* UHTTP::str_websocket_prot;
 const UString* UHTTP::str_strict_transport_security;
 
 void UHTTP::str_allocate()
@@ -148,11 +146,6 @@ void UHTTP::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_frm_header,0)
    U_INTERNAL_ASSERT_EQUALS(str_frm_body,0)
    U_INTERNAL_ASSERT_EQUALS(str_origin,0)
-   U_INTERNAL_ASSERT_EQUALS(str_websocket,0)
-   U_INTERNAL_ASSERT_EQUALS(str_websocket_key1,0)
-   U_INTERNAL_ASSERT_EQUALS(str_websocket_key2,0)
-   U_INTERNAL_ASSERT_EQUALS(str_websocket_prot,0)
-   U_INTERNAL_ASSERT_EQUALS(str_frm_websocket,0)
    U_INTERNAL_ASSERT_EQUALS(str_ulib_header,0)
    U_INTERNAL_ASSERT_EQUALS(str_strict_transport_security,0)
 
@@ -175,35 +168,19 @@ void UHTTP::str_allocate()
                                "<address>ULib Server</address>\r\n"
                                "</body></html>\r\n") },
    { U_STRINGREP_FROM_CONSTANT("Origin") },
-   { U_STRINGREP_FROM_CONSTANT("Upgrade: WebSocket") },
-   { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key1") },
-   { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key2") },
-   { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Protocol") },
-   { U_STRINGREP_FROM_CONSTANT("HTTP/1.1 101 Web Socket Protocol Handshake\r\n"
-                               "Upgrade: WebSocket\r\n"
-                               "Connection: Upgrade\r\n"
-                               "WebSocket-Origin: %.*s\r\n"
-                               "WebSocket-Location: ws://%.*s%.*s\r\n"
-                               "%.*s"
-                               "\r\n") },
    { U_STRINGREP_FROM_CONSTANT("X-Powered-By: ULib/" ULIB_VERSION "\r\n") },
    { U_STRINGREP_FROM_CONSTANT("Strict-Transport-Security: max-age=31536000; includeSubDomains\r\n") }
    };
 
-   U_NEW_ULIB_OBJECT(str_indexhtml,                   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_ctype_tsa,                   U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_ctype_html,                  U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_ctype_soap,                  U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_frm_header,                  U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_frm_body,                    U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_origin,                      U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_websocket,                   U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_websocket_key1,              U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_websocket_key2,              U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_websocket_prot,              U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_frm_websocket,               U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_ulib_header,                 U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_strict_transport_security,   U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_indexhtml,                 U_STRING_FROM_STRINGREP_STORAGE(0));
+   U_NEW_ULIB_OBJECT(str_ctype_tsa,                 U_STRING_FROM_STRINGREP_STORAGE(1));
+   U_NEW_ULIB_OBJECT(str_ctype_html,                U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_ctype_soap,                U_STRING_FROM_STRINGREP_STORAGE(3));
+   U_NEW_ULIB_OBJECT(str_frm_header,                U_STRING_FROM_STRINGREP_STORAGE(4));
+   U_NEW_ULIB_OBJECT(str_frm_body,                  U_STRING_FROM_STRINGREP_STORAGE(5));
+   U_NEW_ULIB_OBJECT(str_origin,                    U_STRING_FROM_STRINGREP_STORAGE(6));
+   U_NEW_ULIB_OBJECT(str_ulib_header,               U_STRING_FROM_STRINGREP_STORAGE(7));
+   U_NEW_ULIB_OBJECT(str_strict_transport_security, U_STRING_FROM_STRINGREP_STORAGE(8));
 }
 
 // HTML Pagination
@@ -640,7 +617,8 @@ void UHTTP::ctor()
 {
    U_TRACE(1, "UHTTP::ctor()")
 
-   str_allocate();
+               str_allocate();
+   UWebSocket::str_allocate();
 
    if (        Url::str_ftp  == 0)         Url::str_allocate();
    if (UMimeHeader::str_name == 0) UMimeHeader::str_allocate();
@@ -683,17 +661,18 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_POINTER(USocket::str_content_length)
    U_INTERNAL_ASSERT_POINTER(USocket::str_if_modified_since)
 
-   ptrH = USocket::str_host->c_pointer(1);              // "Host"
-   ptrR = USocket::str_range->c_pointer(1);             // "Range"
-   ptrA = USocket::str_accept->c_pointer(1);            // "Accept"
-   ptrK = USocket::str_cookie->c_pointer(1);            // "Cookie"
-   ptrF = USocket::str_referer->c_pointer(1);           // "Referer"
-   ptrP = USocket::str_X_Real_IP->c_pointer(1);         // "X-Real-IP"
-   ptrU = USocket::str_user_agent->c_pointer(1);        // "User-Agent"
-   ptrC = USocket::str_connection->c_pointer(1);        // "Connection"
-   ptrT = USocket::str_content_type->c_pointer(1);      // "Content-"
-   ptrX = USocket::str_X_Forwarded_For->c_pointer(1);   // "X-Forwarded-For"
-   ptrI = USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
+   ptrH =    USocket::str_host->c_pointer(1);              // "Host"
+   ptrR =    USocket::str_range->c_pointer(1);             // "Range"
+   ptrA =    USocket::str_accept->c_pointer(1);            // "Accept"
+   ptrK =    USocket::str_cookie->c_pointer(1);            // "Cookie"
+   ptrF =    USocket::str_referer->c_pointer(1);           // "Referer"
+   ptrP =    USocket::str_X_Real_IP->c_pointer(1);         // "X-Real-IP"
+   ptrU =    USocket::str_user_agent->c_pointer(1);        // "User-Agent"
+   ptrC =    USocket::str_connection->c_pointer(1);        // "Connection"
+   ptrT =    USocket::str_content_type->c_pointer(1);      // "Content-"
+   ptrS = UWebSocket::str_websocket_key->c_pointer(1);     // "Sec-WebSocket-Key"
+   ptrX =    USocket::str_X_Forwarded_For->c_pointer(1);   // "X-Forwarded-For"
+   ptrI =    USocket::str_if_modified_since->c_pointer(1); // "If-Modified-Since"
 
 #ifdef USE_LIBMAGIC
    (void) UMagic::init();
@@ -1981,7 +1960,7 @@ bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 
             while (*inp++ != '\n') {} // discard the rest of the line
 
-            (void) u__memcpy(out, inp, chunkSize);
+            U__MEMCPY(out, inp, chunkSize);
 
             inp += chunkSize + u_line_terminator_len;
             out += chunkSize;
@@ -2048,6 +2027,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    // "Accept-Encoding: ..."
    // "Accept-Language: ..."
    // "If-Modified-Since: ..."
+   // "Sec-WebSocket-Key: ..."
    // --------------------------------
 
    U_INTERNAL_ASSERT_DIFFERS(ptrH, 0)
@@ -2061,6 +2041,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    U_INTERNAL_ASSERT_DIFFERS(ptrU, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrP, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrX, 0)
+   U_INTERNAL_ASSERT_DIFFERS(ptrS, 0)
    U_ASSERT_EQUALS(request.empty(), false)
    U_INTERNAL_ASSERT_MAJOR(u_http_info.szHeader,0)
 
@@ -2075,11 +2056,11 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
       0,   0,   0,   0,   0,   0,   0,   0, // '8',    '9',    ':',    ';',    '<',    '=',    '>',    '?',
       0, 'A',   0, 'C',   0,   0,   0,   0, // '@',    'A',    'B',    'C',    'D',    'E',    'F',    'G',
     'H', 'I',   0,   0,   0,   0,   0,   0, // 'H',    'I',    'J',    'K',    'L',    'M',    'N',    'O',
-      0,   0, 'R',   0,   0, 'U',   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
+      0,   0, 'R', 'S',   0, 'U',   0,   0, // 'P',    'Q',    'R',    'S',    'T',    'U',    'V',    'W',
     'X',   0,   0,   0,   0,   0,   0,   0, // 'X',    'Y',    'Z',    '[',    '\\',   ']',    '^',    '_',
       0, 'A',   0, 'C',   0,   0,   0,   0, // '`',    'a',    'b',    'c',    'd',    'e',    'f',    'g',
     'H', 'I',   0,   0,   0,   0,   0,   0, // 'h',    'i',    'j',    'k',    'l',    'm',    'n',    'o',
-      0,   0, 'R',   0,   0, 'U',   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
+      0,   0, 'R', 'S',   0, 'U',   0,   0, // 'p',    'q',    'r',    's',    't',    'u',    'v',    'w',
     'X',   0,   0,   0,   0,   0,   0,   0  // 'x',    'y',    'z',    '{',    '|',    '}',    '~',    '\177'
    };
 
@@ -2126,13 +2107,13 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
               (ctable2[(int)p[(n =  4)]] || // "Host:"
                ctable2[(int)p[(n =  5)]] || // "Range|Cookie:"
                ctable2[(int)p[(n =  6)]] || // "Accept:"
-               ctable2[(int)p[(n =  7)]] || // "Referer:"
+               ctable2[(int)p[(n =  7)]] || // "Referer|Upgrade:"
                ctable2[(int)p[(n =  9)]] || // "X-Real-IP:"
                ctable2[(int)p[(n = 10)]] || // "Connection|User-Agent:"
                ctable2[(int)p[(n = 12)]] || // "Content-Type:"
                ctable2[(int)p[(n = 14)]] || // "Content-Length:"
                ctable2[(int)p[(n = 15)]] || // "Accept-Encoding/Language|X-Forwarded-For:"
-               ctable2[(int)p[(n = 17)]]))  // "If-Modified-Since:"
+               ctable2[(int)p[(n = 17)]]))  // "If-Modified-Since|Sec-WebSocket-Key:"
          {
          pos1 += n;
 
@@ -2207,16 +2188,6 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                      U_http_upgrade = '1';
 
                      U_INTERNAL_DUMP("U_http_upgrade = %C", U_http_upgrade)
-
-                     // web socket
-
-                     if (UStringExt::getValueFromName(request, u_http_info.startHeader, end, *str_websocket_key1, false))
-                        {
-                        U_ASSERT_POINTER(UStringExt::getValueFromName(request, u_http_info.startHeader, end, *str_websocket_key2, false))
-                        U_ASSERT_DIFFERS(request.find(*str_websocket,u_http_info.startHeader,end), U_NOT_FOUND)
-
-                        u_http_info.clength = 8;
-                        }
                      }
                   }
                else if (memcmp(ptrK, p, 5) == 0) // 5 -> sizeof("ookie")
@@ -2347,7 +2318,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                         {
                         static char buffer[32];
 
-                        (void) u__memcpy(buffer, u_http_info.ip_client, n);
+                        U__MEMCPY(buffer, u_http_info.ip_client, n);
 
                         buffer[n] = '\0';
 
@@ -2364,7 +2335,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
             case 'U':
                {
-               if (u__toupper(p[4]) == 'A'       &&
+               if (u__toupper(p[4]) == 'A'      &&
                    memcmp(ptrU,   p,   4) == 0  && // 4 -> sizeof("ser-")
                    memcmp(ptrU+5, p+5, 4) == 0)    // 4 -> sizeof(     "gent")
                   {
@@ -2373,13 +2344,30 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
                   U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
                   }
+               else if (U_STRNEQ(p, "pgrade"))
+                  {
+                  U_http_upgrade = '1';
+
+                  U_INTERNAL_DUMP("U_http_upgrade = %C", U_http_upgrade)
+
+                  p = ptr + pos1;
+
+                  U_INTERNAL_DUMP("Upgrade: = %.*S", pos2 - pos1 - 1, p)
+
+                  if (U_STRNCASECMP(p, "websocket") == 0)
+                     {
+                     U_http_websocket = '1';
+
+                     U_INTERNAL_DUMP("U_http_websocket = %C", U_http_websocket)
+                     }
+                  }
                }
             break;
 
-            case 'I':
+            case 'I': // If-Modified-Since
                {
-               if (u__toupper(p[2])  == 'M'        &&
-                   u__toupper(p[11]) == 'S'        &&
+               if (u__toupper(p[2])  == 'M'       &&
+                   u__toupper(p[11]) == 'S'       &&
                    memcmp(ptrI,    p,    2) == 0  && // 2 -> sizeof("f-")
                    memcmp(ptrI+3,  p+3,  8) == 0  && // 8 -> sizeof(   "odified-")
                    memcmp(ptrI+12, p+12, 4) == 0)    // 4 -> sizeof(            "ince")
@@ -2419,9 +2407,26 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
                   }
                }
             break;
+
+            case 'S': // Sec-WebSocket-Key
+               {
+               if (u__toupper(p[3])  == 'W'      &&
+                   u__toupper(p[6])  == 'S'      &&
+                   u__toupper(p[13]) == 'K'      &&
+                   memcmp(ptrS,    p,    3) == 0 && // 3 -> sizeof("ec-")
+                   memcmp(ptrS+4,  p+4,  2) == 0 && // 2 -> sizeof(     "eb")
+                   memcmp(ptrS+7,  p+7,  6) == 0 && // 6 -> sizeof(        "ocket-")
+                   memcmp(ptrS+14, p+14, 2) == 0)   // 2 -> sizeof(               "ey")
+                  {
+                  u_http_info.websocket     = ptr + (ptrdiff_t)pos1;
+                  u_http_info.websocket_len = pos2 - pos1 - char_r;
+
+                  U_INTERNAL_DUMP("Sec-WebSocket-Key: = %.*S", U_HTTP_WEBSOCKET_TO_TRACE)
+                  }
+               }
+            break;
             }
          }
-
 next:
       pos2 = pos1;
 
@@ -3680,6 +3685,7 @@ UString UHTTP::getFormValue(const char* name, uint32_t len, uint32_t start, uint
 {
    U_TRACE(0, "UHTTP::getFormValue(%.*S,%u,%u,%u)", len, name, len, start, end)
 
+   U_INTERNAL_ASSERT(start <= end)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
    UString buffer;
@@ -3694,6 +3700,7 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32
 {
    U_TRACE(0, "UHTTP::getFormValue(%.*S,%.*S,%u,%u,%u,%u)", U_STRING_TO_TRACE(buffer), len, name, len, start, pos, end)
 
+   U_INTERNAL_ASSERT(start <= end)
    U_INTERNAL_ASSERT_POINTER(form_name_value)
 
    if (pos >= end) buffer.clear();
@@ -3755,7 +3762,7 @@ uint32_t UHTTP::processHTTPForm()
    if (formMulti->parse() == false) U_RETURN(0);
    }
 
-   // create temporary directory with files upload...
+   // create temporary directory with files uploaded...
 
    {
    tmpdir->snprintf("%s/formXXXXXX", u_tmpdir);
@@ -3802,7 +3809,12 @@ uint32_t UHTTP::processHTTPForm()
 
 get_name_value:
 
-   if (qcontent->empty() == false) len = UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
+   if (qcontent->empty() == false)
+      {
+      len = UStringExt::getNameValueFromData(*qcontent, *form_name_value, U_CONSTANT_TO_PARAM("&"));
+
+      U_ASSERT_EQUALS(len, form_name_value->size())
+      }
 
    U_RETURN(len);
 }
@@ -5038,7 +5050,7 @@ void UHTTP::callInitForAllUSP(UStringRep* key, void* value)
       // -3 -> call it as service
       // ------------------------------
 
-      if (usp_page->alias == false) (void) usp_page->runDynamicPage((void*)0);
+      if (usp_page->alias == false) (void) usp_page->runDynamicPage(0);
       }
 }
 
@@ -5083,10 +5095,10 @@ U_NO_EXPORT void UHTTP::checkIfAlias(UStringRep* key, void* value)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
+      U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
+
       U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
       U_INTERNAL_ASSERT_POINTER(usp_page_to_check->runDynamicPage)
-
-      U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
       if (usp_page->runDynamicPage == usp_page_to_check->runDynamicPage)
          {
@@ -5111,6 +5123,49 @@ U_NO_EXPORT bool UHTTP::isAlias(UServletPage* _usp_page_to_check)
    cache_file->callForAllEntry(checkIfAlias);
 
    U_RETURN(_usp_page_to_check->alias);
+}
+
+U_NO_EXPORT void UHTTP::checkIfUSP(UStringRep* key, void* value)
+{
+   U_TRACE(0+256, "UHTTP::checkIfUSP(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
+
+   U_INTERNAL_ASSERT_POINTER(value)
+
+   UFileCacheData* cptr = (UFileCacheData*)value;
+
+   if (cptr->mime_index == U_usp)
+      {
+      UServletPage* usp_page = (UServletPage*)cptr->ptr;
+
+      U_INTERNAL_DUMP("usp_page->alias = %b usp_page->runDynamicPage = %p", usp_page->alias, usp_page->runDynamicPage)
+
+      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
+
+      if (usp_page->alias == false &&
+          u_endsWith(U_STRING_TO_PARAM(*key), U_STRING_TO_PARAM(*usp_page_key)))
+         {
+         usp_page_to_check = usp_page;
+
+         cache_file->stopCallForAllEntry();
+
+         U_SRV_LOG("getUSP(%.*S) has found the USP service (URI): %.*s", U_STRING_TO_TRACE(*usp_page_key), U_STRING_TO_TRACE(*key));
+         }
+      }
+}
+
+UHTTP::UServletPage* UHTTP::getUSP(const UString& key)
+{
+   U_TRACE(0, "UHTTP::getUSP(%.*S)", U_STRING_TO_TRACE(key))
+
+   U_ASSERT_DIFFERS(key.empty(), true)
+   U_INTERNAL_ASSERT_POINTER(cache_file)
+
+   usp_page_key      = key.rep;
+   usp_page_to_check = 0;
+
+   cache_file->callForAllEntry(checkIfUSP);
+
+   U_RETURN_POINTER(usp_page_to_check, UHTTP::UServletPage);
 }
 
 U_NO_EXPORT void UHTTP::manageDataForCache()
@@ -5538,7 +5593,7 @@ U_NO_EXPORT void UHTTP::checkPath()
       file->setPath(*pathname);
 
       if (isFileInCache()   == false &&
-          U_http_upgrade    == 0     && // web-socket
+          U_http_websocket  == 0     && // NOT websocket...
           isGenCGIRequest() == false && // FCGI or SCGI request...
           isSOAPRequest()   == false && // SOAP request... (uri /soap)
           isTSARequest()    == false && // TSA  request... (uri /tsa)
@@ -6047,9 +6102,10 @@ check:
 #  endif
       }
 
-   U_INTERNAL_DUMP("isHTTPRequestNotFound() = %b", isHTTPRequestNotFound())
+   U_DUMP("isHTTPRequestNotFound() = %b U_http_upgrade = %C U_http_websocket = %C", isHTTPRequestNotFound(), U_http_upgrade, U_http_websocket)
 
-   if (isHTTPRequestNotFound() == false) // 4
+   if (isHTTPRequestNotFound() == false || // 4
+       U_http_upgrade)
       {
 next4:
       // check if the uri use HTTP Strict Transport Security to force client to use secure connections only
@@ -6069,7 +6125,8 @@ next4:
          UString uri = getRequestURI(true), ip_server = UServer_Base::getIPAddress();
 
          setHTTPRedirectResponse(2, *str_strict_transport_security, (const char*)redirect_url,
-                                 u__snprintf(redirect_url, sizeof(redirect_url), "https:/%.*s%.*s", U_STRING_TO_TRACE(ip_server), U_STRING_TO_TRACE(uri)));
+                                    u__snprintf(redirect_url, sizeof(redirect_url), "%s:/%.*s%.*s",
+                                       U_http_websocket ? "wss" : "https", U_STRING_TO_TRACE(ip_server), U_STRING_TO_TRACE(uri)));
 
          U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
 
@@ -6105,6 +6162,20 @@ next4:
           checkUriProtected() == false)
          {
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      if (U_http_upgrade)
+         {
+         if (U_http_websocket)
+            {
+                 if (u_http_info.websocket_len == 0) U_http_websocket = 0;
+            else if (UWebSocket::sendAccept()  == false)
+               {
+               setHTTPBadRequest();
+
+               U_RETURN(U_PLUGIN_HANDLER_ERROR);
+               }
+            }
          }
       }
 
@@ -7426,19 +7497,7 @@ U_NO_EXPORT bool UHTTP::openFile()
       {
       U_INTERNAL_ASSERT_POINTER(file_data)
 
-      // NB: check for empty document...
-
-      if (file_data->size == 0)
-         {
-         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(UString::getStringNull(), false);
-
-         U_RETURN(false);
-         }
-
-      result = (file_data->fd != -1);
-
-      if (result) file->fd = file_data->fd;
-      else
+      if (file_data->fd == -1)
          {
          // NB: '.htpasswd' and '.htdigest' are forbidden...
 
@@ -7447,6 +7506,32 @@ U_NO_EXPORT bool UHTTP::openFile()
                    file->open());
 
          if (result) file_data->fd = file->fd;
+         }
+      else
+         {
+         result   = true;
+         file->fd = file_data->fd;
+         }
+
+      if (result)
+         {
+         if (file->modified())
+            {
+            file_data->mode  = file->st_mode;
+            file_data->size  = file->st_size;
+            file_data->mtime = file->st_mtime;
+
+            U_INTERNAL_DUMP("file_data->fd = %d st_mode = %d st_size = %I st_mtime = %ld", file_data->fd, file->st_mode, file->st_size, file->st_mtime)
+            }
+
+         if (file_data->size == 0) // NB: check for empty document...
+            {
+            file->close();
+
+            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(UString::getStringNull(), false);
+
+            U_RETURN(false);
+            }
          }
       }
    else
@@ -7802,7 +7887,7 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
                {
                U_INTERNAL_DUMP("query(%u) = %.*S", u_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
 
-               (void) u__memcpy(ptr->uuid, u_http_info.query + (u_http_info.query_len == 32 ? 0 : uuid_key_size), 32);
+               U__MEMCPY(ptr->uuid, u_http_info.query + (u_http_info.query_len == 32 ? 0 : uuid_key_size), 32);
 
                U_INTERNAL_DUMP("uuid = %.32S", ptr->uuid)
                }

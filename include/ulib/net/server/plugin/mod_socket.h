@@ -21,21 +21,13 @@ class UCommand;
 class U_EXPORT UWebSocketPlugIn : public UServerPlugIn {
 public:
 
-   static const UString* str_USE_SIZE_PREAMBLE;
+   static const UString* str_MAX_MESSAGE_SIZE;
 
    static void str_allocate();
 
    // COSTRUTTORI
 
-   UWebSocketPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "")
-
-      command = 0;
-
-      if (str_USE_SIZE_PREAMBLE == 0) str_allocate();
-      }
-
+            UWebSocketPlugIn();
    virtual ~UWebSocketPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -43,7 +35,7 @@ public:
    // Server-wide hooks
 
    virtual int handlerConfig(UFileConfig& cfg);
-   virtual int handlerInit();
+   virtual int handlerRun();
 
    // Connection-wide hooks
 
@@ -56,14 +48,10 @@ public:
 #endif
 
 protected:
-   UCommand* command;
-
-   static bool bUseSizePreamble;
+   static iPFpv on_message;
+   static UCommand* command;
 
    static RETSIGTYPE handlerForSigTERM(int signo);
-
-   static bool handleDataFraming(USocket* csocket);
-   static void getPart(const char* key, unsigned char* part);
 
 private:
    UWebSocketPlugIn(const UWebSocketPlugIn&) : UServerPlugIn() {}

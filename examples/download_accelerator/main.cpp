@@ -76,7 +76,7 @@ static struct timeval now;
    "=====>..."       - progress bar             - the rest
 */
 
-#define APPEND_LITERAL(s) (void) u__memcpy(p, s, sizeof(s) - 1); p += sizeof(s) - 1;
+#define APPEND_LITERAL(s) U__MEMCPY(p, s, sizeof(s) - 1); p += sizeof(s) - 1;
 
 class ProgressBar : public UEventTime {
 public:
@@ -411,7 +411,7 @@ public:
       U_INTERNAL_ASSERT(up->check  == 0)
       U_INTERNAL_ASSERT(up->source == htons(ident))
 
-      (void) u__memcpy(&ip->ip_dst, host->ip.get_in_addr(), host->ip.getInAddrLength()); /* remote address */
+      U__MEMCPY(&ip->ip_dst, host->ip.get_in_addr(), host->ip.getInAddrLength()); /* remote address */
 
       outpacket.tv  = host->send_time;
       outpacket.seq = host->seq;

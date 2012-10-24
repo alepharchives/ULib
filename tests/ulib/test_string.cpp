@@ -1505,27 +1505,84 @@ U_EXPORT main (int argc, char* argv[])
 
    U_INTERNAL_DUMP("u__ct_tab['\\r'] = %d %B", u__ct_tab['\r'], u__ct_tab['\r'])
    U_INTERNAL_DUMP("u__ct_tab['\\n'] = %d %B", u__ct_tab['\n'], u__ct_tab['\n'])
+   U_INTERNAL_DUMP("u__ct_tab['\\t'] = %d %B", u__ct_tab['\t'], u__ct_tab['\t'])
+   U_INTERNAL_DUMP("u__ct_tab['\\f'] = %d %B", u__ct_tab['\f'], u__ct_tab['\f'])
 
    U_INTERNAL_DUMP("u__islterm('\\r') = %b", u__islterm('\r'))
    U_INTERNAL_DUMP("u__islterm('\\n') = %b", u__islterm('\n'))
+   U_INTERNAL_DUMP("u__isspace('\\t') = %b", u__isspace('\t'))
+   U_INTERNAL_DUMP("u__isspace('\\f') = %b", u__isspace('\f'))
 
    U_INTERNAL_DUMP("u__ct_tab[0xC3] = %d %B", u__ct_tab[0xC3], u__ct_tab[0xC3]) // ü
-   U_INTERNAL_DUMP("u__istext( 0xC3) = %b", u__istext(0xC3))
+   U_INTERNAL_DUMP("u__istext(0xC3) = %b", u__istext(0xC3))
 
    U_INTERNAL_DUMP("u__ct_tab[0xBC] = %d %B", u__ct_tab[0xBC], u__ct_tab[0xBC]) // @
-   U_INTERNAL_DUMP("u__istext( 0xBC) = %b", u__istext(0xBC))
+   U_INTERNAL_DUMP("u__istext(0xBC) = %b", u__istext(0xBC))
 
-   U_INTERNAL_DUMP("u__ct_tab['\377'] = %d %B", u_cttab('\377'), u_cttab('\377'))
+   U_INTERNAL_DUMP("u__ct_tab[ '\377'] = %d %B", u_cttab('\377'), u_cttab('\377'))
    U_INTERNAL_DUMP("u__isdigit('\377') = %b", u__isdigit('\377'))
 
-   int n = (argc > 1 ? atoi(argv[1]) : 1);
+   const char* str;
+   uint32_t str_len;
 
-#ifdef TEST_SPLIT
-   test_split();
-#endif
+   // NB: in UTF-8 the character ü is encoded as two bytes C3 (hex) and BC (hex)
 
-   int i;
+   str     = "The string \xC3\xBC@foo-bar"; // "The string ü@foo-bar"
+   str_len = strlen(str);
+
+   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
+   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == true )
+   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == false )
+ 
+   UString z = UString::fromUTF8((const unsigned char*)str, str_len);
+
+   U_INTERNAL_ASSERT( z.isText()   == false )
+   U_INTERNAL_ASSERT( z.isUTF8()   == false )
+   U_INTERNAL_ASSERT( z.isUTF16()  == false )
+   U_INTERNAL_ASSERT( z.isBinary() == true )
+
+   U_INTERNAL_ASSERT( UString::toUTF8((const unsigned char*)z.data(), z.size()) == str )
+
+   str     = "binary: \xC3\xBC\x88\x01\x0B";
+   str_len = strlen(str);
+
+   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
+   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == false )
+   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == true )
+
+   z = UString::fromUTF8((const unsigned char*)str, str_len);
+
+   U_INTERNAL_ASSERT( z.isUTF8()   == false )
+   U_INTERNAL_ASSERT( z.isUTF16()  == false )
+   U_INTERNAL_ASSERT( z.isText()   == false )
+   U_INTERNAL_ASSERT( z.isBinary() == true )
+
    UCrono crono;
+   UVector<UString> vec;
+   UString x = U_STRING_FROM_CONSTANT("172.31.1.0/24 172.31.2.0/24  172.31.3.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t"
+                                      "172.31.4.0/24 172.31.5.0/24  172.31.6.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t172.31.7.0/24");
+
+   int i, n = vec.split(x);
+
+   U_INTERNAL_ASSERT_EQUALS(n, 7)
+
+   U_ASSERT( vec[6] == "172.31.7.0/24" )
+
+   vec.clear();
+
+   n = vec.split(U_CONSTANT_TO_PARAM("172.31.1.0/24 172.31.2.0/24  172.31.3.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t"
+                                     "172.31.4.0/24 172.31.5.0/24  172.31.6.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t172.31.7.0/24"));
+
+   U_INTERNAL_ASSERT_EQUALS(n, 7)
+
+   U_ASSERT( vec[6] == "172.31.7.0/24" )
+
+   vec.clear();
+
+   n = (argc > 1 ? atoi(argv[1]) : 1);
+
    crono.start();
 
    for (i = 0; i < n; ++i)
@@ -1589,7 +1646,7 @@ U_EXPORT main (int argc, char* argv[])
 #endif
       }
 
-   UString x = U_STRING_FROM_CONSTANT("/mnt/mirror/home/stefano/spool/cross");
+   x = U_STRING_FROM_CONSTANT("/mnt/mirror/home/stefano/spool/cross");
 
    UString y = UStringExt::basename(x);
 
@@ -1636,7 +1693,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( y == "Hellllo" )
 
-   UString z = y;
+   z = y;
 
    y = UStringExt::substitute(y, U_CONSTANT_TO_PARAM("l"), U_CONSTANT_TO_PARAM("################################"));
 
@@ -1779,40 +1836,6 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo") == z )
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo\r\n\r\n").isEndHeader(5) )
-
-   // NB: in UTF-8 the character ü is encoded as two bytes C3 (hex) and BC (hex)
-
-   const char* str  = "binary: \xC3\xBC\x08\x01\x0B";
-   uint32_t str_len = strlen(str);
-
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
-   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == true )
-
-   z = UString::fromUTF8((const unsigned char*)str, str_len);
-
-   U_INTERNAL_ASSERT( z.isUTF8()   == false )
-   U_INTERNAL_ASSERT( z.isUTF16()  == false )
-   U_INTERNAL_ASSERT( z.isText()   == false )
-   U_INTERNAL_ASSERT( z.isBinary() == true )
-
-   str     = "The string \xC3\xBC@foo-bar"; // "The string ü@foo-bar"
-   str_len = strlen(str);
-
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == true )
-   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
-   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == false )
-
-   z = UString::fromUTF8((const unsigned char*)str, str_len);
-
-   U_INTERNAL_ASSERT( z.isText()   == false )
-   U_INTERNAL_ASSERT( z.isUTF8()   == false )
-   U_INTERNAL_ASSERT( z.isUTF16()  == false )
-   U_INTERNAL_ASSERT( z.isBinary() == true )
-
-   U_INTERNAL_ASSERT( UString::toUTF8((const unsigned char*)z.data(), z.size()) == str )
 
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("           \n\t\r").isWhiteSpace() )
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("gXWUj7VekBdkycg3Z9kXuglV9plUl2cs4XkNLSDhe5VHRgE03e63VypMChCWDGI=").isBase64() )

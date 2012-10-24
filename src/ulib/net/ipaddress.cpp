@@ -98,7 +98,7 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
       iAddressType   = AF_INET6;
       iAddressLength = sizeof(in6_addr);
 
-      (void) u__memcpy(pcAddress.p, address, iAddressLength);
+      U__MEMCPY(pcAddress.p, address, iAddressLength);
       }
    else
 #endif
@@ -125,7 +125,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       {
       U_INTERNAL_ASSERT_EQUALS(iAddressLength, sizeof(in6_addr))
 
-      (void) u__memcpy(pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
+      U__MEMCPY(pcAddress.p, cOtherAddr.pcAddress.p, sizeof(in6_addr));
       }
    else
 #endif
@@ -190,7 +190,7 @@ void UIPAddress::setAddress(const char* pcNewAddress, int iNewAddressLength)
 
    iAddressLength = iNewAddressLength;
 
-   (void) u__memcpy(pcAddress.p, pcNewAddress, iAddressLength);
+   U__MEMCPY(pcAddress.p, pcNewAddress, iAddressLength);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -476,7 +476,7 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 
             (void)    memset(pcAddress.p,                0, 10);
             (void)    memset(pcAddress.p + 10,        0xff,  2);
-            (void) u__memcpy(pcAddress.p + 12, pcAddress.p,  4);
+            U__MEMCPY(pcAddress.p + 12, pcAddress.p,  4);
             }
          break;
          }
@@ -617,7 +617,7 @@ uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow)
    U_TRACE(0, "UIPAllow::parseMask(%.*S,%p)", U_STRING_TO_TRACE(vspec), &vipallow)
 
    UIPAllow* elem;
-   UVector<UString> vec(vspec, ", ");
+   UVector<UString> vec(vspec, ", \t");
    uint32_t result, n = vipallow.size();
 
    for (uint32_t i = 0, vlen = vec.size(); i < vlen; ++i)

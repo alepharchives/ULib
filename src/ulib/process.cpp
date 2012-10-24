@@ -311,7 +311,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
          {
          index = len;
 
-         (void) u__memcpy(w32_cmd, pathname, len);
+         U__MEMCPY(w32_cmd, pathname, len);
          }
 
       for (int i = 1; argv[i]; ++i)
@@ -328,7 +328,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
             if (flag) w32_cmd[index++] = '"';
 
-            (void) u__memcpy(w32_cmd+index, argv[i], len);
+            U__MEMCPY(w32_cmd+index, argv[i], len);
 
             index += len;
 
@@ -357,7 +357,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
             {
             U_INTERNAL_ASSERT_MINOR(index+len+1,32000)
 
-            (void) u__memcpy(w32_envp+index, envp[i], len);
+            U__MEMCPY(w32_envp+index, envp[i], len);
 
             index += len;
 
@@ -543,7 +543,7 @@ char* UProcess::exitInfo(int _status)
 #  endif
    else if (WIFCONTINUED(_status))
       {
-      (void) u__memcpy(buffer, "SIGCONT", (n = U_CONSTANT_SIZE("SIGCONT")));
+      U__MEMCPY(buffer, "SIGCONT", (n = U_CONSTANT_SIZE("SIGCONT")));
       }
 
    buffer[n] = '\0';

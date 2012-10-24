@@ -413,11 +413,11 @@ U_EXPORT ostream& operator<<(ostream& os, UMimeHeader& h)
 {
    U_TRACE(0+256, "UMimeHeader::operator<<(%p,%p)", &os, &h)
 
-   UStringRep* key;
-   UStringRep* value;
-
    if (h.table.first())
       {
+      UStringRep* key;
+      UStringRep* value;
+
       do {
          key   = h.table.key();
          value = h.table.elem();

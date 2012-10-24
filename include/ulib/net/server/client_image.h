@@ -50,7 +50,7 @@ public:
 
    USocket* socket;
    UString* logbuf;
-   time_t last_response;
+   time_t last_event;
 
    static UString* body;
    static UString* rbuffer;

@@ -116,8 +116,8 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
 
    allocDestinatari(n);
 
-   (void) memcpy(vdestinatari_domini,      vdestdomini, n);
-   (void) memcpy(vdestinatari_certificati, vdestcert,   n);
+   U__MEMCPY(vdestinatari_domini,      vdestdomini, n);
+   U__MEMCPY(vdestinatari_certificati, vdestcert,   n);
 
    n = vec.size() + 1;
 

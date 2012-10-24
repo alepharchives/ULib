@@ -126,9 +126,10 @@ typedef struct uhttpinfo {
    const char* user_agent;
    const char* content_type;
    const char* accept_language;
+   const char* websocket;
    time_t      if_modified_since;
    uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength, method_len, uri_len, query_len, host_len, host_vlen,
-               range_len, accept_len, cookie_len, referer_len, ip_client_len, user_agent_len, content_type_len, accept_language_len;
+               range_len, accept_len, cookie_len, referer_len, ip_client_len, user_agent_len, content_type_len, accept_language_len, websocket_len;
          char  flag[12];
 } uhttpinfo;
 
@@ -142,8 +143,8 @@ typedef struct uhttpinfo {
 #define U_http_no_cache             u_http_info.flag[7]
 #define U_http_is_navigation        u_http_info.flag[8]
 #define U_http_chunked              u_http_info.flag[9]
-#define U_http_unused1              u_http_info.flag[10]
-#define U_http_unused2              u_http_info.flag[11]
+#define U_http_websocket            u_http_info.flag[10]
+#define U_http_unused               u_http_info.flag[11]
 
 enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6', HTTP_COPY = '7' };
 
@@ -175,6 +176,9 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 
 #define U_HTTP_REFERER_TO_PARAM         u_http_info.referer, u_http_info.referer_len
 #define U_HTTP_REFERER_TO_TRACE         u_http_info.referer_len, u_http_info.referer
+
+#define U_HTTP_WEBSOCKET_TO_PARAM       u_http_info.websocket, u_http_info.websocket_len
+#define U_HTTP_WEBSOCKET_TO_TRACE       u_http_info.websocket_len, u_http_info.websocket
 
 #define U_HTTP_IP_CLIENT_TO_PARAM       u_http_info.ip_client, u_http_info.ip_client_len
 #define U_HTTP_IP_CLIENT_TO_TRACE       u_http_info.ip_client_len, u_http_info.ip_client

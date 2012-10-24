@@ -1,7 +1,1 @@
-HTTP/1.1 304 Not Modified
-Server: ULib
-Date: Thu, 09 Aug 2012 12:24:33 GMT
-Cache-Control: no-cache
-Connection: Keep-Alive
-Content-Length: 0
-
+GET /unifi?switch_url=

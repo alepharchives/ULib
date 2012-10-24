@@ -345,7 +345,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
 
    char* p = buffer.data();
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", p, token, token_len);
+   U__MEMCPY(p, token, token_len);
 
    uint32_t buffer_len = token_len + u__vsnprintf(p+token_len, buffer.capacity(), format, argp);
 
@@ -703,7 +703,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    uusockaddr addr;
 
-   (void) u__memcpy(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
+   U__MEMCPY(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
 
    U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family, AF_INET)
 
@@ -885,10 +885,10 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
 
                switch (rtAttr->rta_type)
                   {
-                  case RTA_OIF:     (void) if_indextoname(*(unsigned*)RTA_DATA(rtAttr), ifName);          break;
-                  case RTA_GATEWAY: (void) u__memcpy(&gateWay, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
-                  case RTA_PREFSRC: (void) u__memcpy(&srcAddr, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
-                  case RTA_DST:     (void) u__memcpy(&dstAddr, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
+                  case RTA_OIF:     (void) if_indextoname(*(unsigned*)RTA_DATA(rtAttr), ifName);   break;
+                  case RTA_GATEWAY: U__MEMCPY(&gateWay, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
+                  case RTA_PREFSRC: U__MEMCPY(&srcAddr, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
+                  case RTA_DST:     U__MEMCPY(&dstAddr, RTA_DATA(rtAttr), sizeof(struct in_addr)); break;
                   }
                }
 

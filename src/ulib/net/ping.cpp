@@ -561,7 +561,7 @@ void UPing::initArpPing(const char* device)
 
    if (he.l.sll_halen == 0) U_ERROR("Interface '%s' is not ARPable (no ll address)", device);
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sHaddr, he.l.sll_addr, 6); // source hardware address
+   U__MEMCPY(arp.sHaddr, he.l.sll_addr, 6); // source hardware address
 
    (void) U_SYSCALL(memset, "%p,%C,%u", he.l.sll_addr, 0xff, 6);
 #endif
@@ -586,7 +586,7 @@ void UPing::initArpPing(const char* device)
       U_ERROR("ioctl(SIOCGIFADDR) failed for interface %S", device);
       }
 
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); // source IP address
+   U__MEMCPY(arp.sInaddr, ifr.ifr_addr.sa_data + sizeof(short), 4); // source IP address
 
    // struct arphdr {
    //  unsigned short int ar_hrd; // Format of hardware address
@@ -609,16 +609,16 @@ void UPing::initArpPing(const char* device)
       U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
       }
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest,                     0xff, 6); // MAC DA
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.h_source, ifr.ifr_hwaddr.sa_data, 6); // MAC SA
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); // source hardware address
+   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest, 0xff, 6);                     // MAC DA
+                              U__MEMCPY(arp.h_source, ifr.ifr_hwaddr.sa_data, 6); // MAC SA
+                              U__MEMCPY(arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); // source hardware address
 #endif
 
 // --------------------------------------------------------------------------------------------
 // Target address - TODO...
 // --------------------------------------------------------------------------------------------
-//                                      arp.tHaddr is zero-filled                 // target hardware address
-// (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.tInaddr,      addr.get_in_addr(), 4); // target IP address
+//           arp.tHaddr is zero-filled            // target hardware address
+// U__MEMCPY(arp.tInaddr, addr.get_in_addr(), 4); // target IP address
 // --------------------------------------------------------------------------------------------
 
    U_DUMP("SOURCE = %s (%02x:%02x:%02x:%02x:%02x:%02x)",
@@ -652,8 +652,8 @@ retry:
    // -----------------------------------------------------------------------------------------------------------------------
    // Target address
    // -----------------------------------------------------------------------------------------------------------------------
-   //                                   arp.tHaddr is zero-filled            // target hardware address
-   (void) U_SYSCALL(memcpy, "%p,%p,%u", arp.tInaddr, addr.get_in_addr(), 4); // target IP address
+   //        arp.tHaddr is zero-filled            // target hardware address
+   U__MEMCPY(arp.tInaddr, addr.get_in_addr(), 4); // target IP address
    // -----------------------------------------------------------------------------------------------------------------------
 
 #ifdef U_ARP_WITH_BROADCAST

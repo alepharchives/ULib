@@ -78,13 +78,35 @@ public:
 
    // check if string s1 start with string s2
 
-   static bool startsWith(const UString& s1, const UString& s2) __pure;
-   static bool startsWith(const UString& s1, const char* s2, uint32_t n2) { return u_startsWith(U_STRING_TO_PARAM(s1), s2, n2); }
+   static bool startsWith(const UString& s1, const UString& s2)
+      {
+      U_TRACE(0, "UStringExt::startsWith(%.*S,%.*S)", U_STRING_TO_TRACE(s1), U_STRING_TO_TRACE(s2))
+
+      return u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2));
+      }
+
+   static bool startsWith(const UString& s1, const char* s2, uint32_t n2)
+      {
+      U_TRACE(0, "UStringExt::startsWith(%.*S,%.*S,%u)", U_STRING_TO_TRACE(s1), n2, s2, n2)
+
+      return u_startsWith(U_STRING_TO_PARAM(s1), s2, n2);
+      }
 
    // check if string s1 terminate with string s2
 
-   static bool endsWith(const UString& s1, const UString& s2) __pure;
-   static bool endsWith(const UString& s1, const char* s2, uint32_t n2) { return u_endsWith(U_STRING_TO_PARAM(s1), s2, n2); }
+   static bool endsWith(const UString& s1, const UString& s2)
+      {
+      U_TRACE(0, "UStringExt::endsWith(%.*S,%.*S)", U_STRING_TO_TRACE(s1), U_STRING_TO_TRACE(s2))
+
+      return u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2));
+      }
+
+   static bool endsWith(const UString& s1, const char* s2, uint32_t n2)
+      {
+      U_TRACE(0, "UStringExt::endsWith(%.*S,%.*S,%u)", U_STRING_TO_TRACE(s1), n2, s2, n2)
+
+      return u_endsWith(U_STRING_TO_PARAM(s1), s2, n2);
+      }
 
    // SUBSTITUTE: sostituzione di tutte le occorrenze di 'a' con 'b'
 
@@ -106,6 +128,12 @@ public:
 
    static UString substitute(const UString& s, const UString& a, const UString& b)
       { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
+
+   // ERASE
+
+   static UString erase(const UString& s, char a)                     { return substitute(U_STRING_TO_PARAM(s), &a, 1,                0, 0); } 
+   static UString erase(const UString& s, const UString& a)           { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), 0, 0); }
+   static UString erase(const UString& s, const char* a, uint32_t n1) { return substitute(U_STRING_TO_PARAM(s), a, n1,                0, 0); }
 
    // dos2unix '\n' convertor
 
@@ -249,14 +277,21 @@ public:
 
    // Sort two version numbers, comparing equivalently seperated strings of digits numerically
    // ----------------------------------------------------------------------------------------
-   // Returns a positive number if (a > b)
-   // Returns a negative number if (a < b)
+   // Returns a positive number if (a  > b)
+   // Returns a negative number if (a  < b)
    // Returns zero              if (a == b)
    // ----------------------------------------------------------------------------------------
    static int compareversion(const char* a, uint32_t n1, const char* b, uint32_t n2) __pure;
 
    static int compareversion(const UString& s, const UString& a) __pure;
    static int compareversion(const UString& s, const char* a, uint32_t n) __pure { return compareversion(U_STRING_TO_PARAM(s), a, n); }
+
+   static int qscompver(const void* p, const void* q)
+      {
+      U_TRACE(0, "UStringExt::qscompver(%p,%p)", p, q)
+
+      return compareversion(U_STRING_TO_PARAM(**(UStringRep**)p), U_STRING_TO_PARAM(**(UStringRep**)q));
+      }
 
    // Verifies that the passed string is actually an e-mail address
 

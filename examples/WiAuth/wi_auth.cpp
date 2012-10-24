@@ -22,6 +22,8 @@
    static UString* dir_root;
    static UString* mac_auth;
    static UString* hostname;
+   static UString* padding1;
+   static UString* padding2;
    static UString* cert_auth;
    static UString* ip_server;
    static UString* login_url;
@@ -107,8 +109,7 @@
       U_MEMORY_ALLOCATOR
       U_MEMORY_DEALLOCATOR
    
-      UString value, _label, group_account;
-      UVector<UString> mac_white_list;
+      UString value, _label, mac_mask, group_account;
       bool noconsume;
    
       // COSTRUTTORE
@@ -131,6 +132,7 @@
    
                  value.clear();
                 _label.clear();
+              mac_mask.clear();
          group_account.clear();
          }
    
@@ -140,15 +142,11 @@
    
          U_ASSERT_EQUALS(_label.empty(), false)
    
-         UString mac_list = mac_white_list.join(" ");
-   
-         if (mac_list.empty()) mac_list = *empty_list;
-   
-         value.snprintf(" %u %.*s \"%.*s\" %.*s",
+         value.snprintf(" %u %.*s \"%.*s\" \"%.*s\"",
                         noconsume,
                         U_STRING_TO_TRACE(_label),
                         U_STRING_TO_TRACE(group_account),
-                        U_STRING_TO_TRACE(mac_list));
+                        U_STRING_TO_TRACE(mac_mask));
    
          U_RETURN_STRING(value);
          }
@@ -163,23 +161,23 @@
          _label            =  _vec[_index+1];
    
          UString _account  =  _vec[_index+2],
-                 _mac_list =  _vec[_index+3];
+                 _mac_mask =  _vec[_index+3];
    
-                                     group_account.clear();
-         if (_account != *empty_str) group_account = _account;
+              mac_mask.clear();
+         group_account.clear();
    
-                                              mac_white_list.clear();
-         if (_mac_list != *empty_list) (void) mac_white_list.split(U_STRING_TO_PARAM(_mac_list));
+         if (_account  != *empty_str) group_account = _account;
+         if (_mac_mask != *empty_str) mac_mask      = _mac_mask;
          }
    
    #ifdef DEBUG
       const char* dump(bool breset) const
          {
-         *UObjectIO::os << "noconsume                        " << noconsume              << '\n'
-                        << "value          (UString          " << (void*)&value          << ")\n"
-                        << "_label         (UString          " << (void*)&_label         << ")\n"
-                        << "group_account  (UString          " << (void*)&group_account  << ")\n"
-                        << "mac_white_list (UVector<UString> " << (void*)&mac_white_list << ')';
+         *UObjectIO::os << "noconsume              " << noconsume             << '\n'
+                        << "value         (UString " << (void*)&value         << ")\n"
+                        << "_label        (UString " << (void*)&_label        << ")\n"
+                        << "mac_mask      (UString " << (void*)&mac_mask      << ")\n"
+                        << "group_account (UString " << (void*)&group_account << ')';
    
          if (breset)
             {
@@ -196,38 +194,12 @@
       WiAuthAccessPoint& operator=(const WiAuthAccessPoint&) { return *this; }
    };
    
-   static bool db_store(URDB* db, int op, const UString& key, const UString& new_record, const UString& old_record)
+   static bool db_store(URDB* db, int op, const UString& key, const UString& new_record, const UString& old_record, const UString& padding)
    {
-      U_TRACE(5, "::db_store(%p,%d,%.*S,%.*S)", db, op, U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(new_record), U_STRING_TO_TRACE(old_record))
+      U_TRACE(5, "::db_store(%p,%d,%.*S,%.*S)", db, op, U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(new_record),
+                                                        U_STRING_TO_TRACE(old_record), U_STRING_TO_TRACE(padding))
    
-      U_INTERNAL_DUMP("new_record.size() = %u old_record.size() = %u", new_record.size(), old_record.size())
-   
-      UString x = new_record;
-   
-      if (op == RDB_REPLACE)
-         {
-         if (new_record.size() <= old_record.size())
-            {
-            uint32_t n = new_record.size();
-            char* _ptr = old_record.data();
-   
-            (void) u__memcpy(_ptr, new_record.data(), n);
-   
-            (void) memset(_ptr + n, ' ', old_record.size() - n);
-   
-            U_INTERNAL_DUMP("_ptr = %.40s", _ptr)
-   
-            U_RETURN(false);
-            }
-         }
-      else
-         {
-         U_INTERNAL_ASSERT_EQUALS(op, RDB_INSERT)
-   
-         x += U_STRING_FROM_CONSTANT("                                    "); // NB: padding with 36 char space...
-         }
-   
-      int result = db->store(key, x, op);
+      int result = db->store(key, new_record, old_record, padding, op);
    
       if (result)
          {
@@ -235,12 +207,6 @@
    
          U_RETURN(false);
          }
-   
-      UString value = (*db)[key];
-   
-      U_ASSERT_EQUALS(value, x)
-   
-      U_INTERNAL_DUMP("value = %.*s", U_STRING_TO_TRACE(value))
    
       U_RETURN(true);
    }
@@ -259,6 +225,32 @@
       UVector<UString> access_point;
       int port;
       bool down;
+   
+   /*
+   interface Coordinates {
+     readonly attribute double latitude;
+     readonly attribute double longitude;
+     readonly attribute double? altitude;
+     readonly attribute double accuracy;
+     readonly attribute double? altitudeAccuracy;
+     readonly attribute double? heading;
+     readonly attribute double? speed;
+   
+   The latitude and longitude attributes are geographic coordinates specified in decimal degrees.
+   
+   The altitude attribute denotes the height of the position, specified in meters above the [WGS84] ellipsoid. If the implementation cannot provide altitude information, the value of this attribute must be null.
+   
+   The accuracy attribute denotes the accuracy level of the latitude and longitude coordinates. It is specified in meters and must be supported by all implementations. The value of the accuracy attribute must be a non-negative real number.
+   
+   The altitudeAccuracy attribute is specified in meters. If the implementation cannot provide altitude information, the value of this attribute must be null. Otherwise, the value of the altitudeAccuracy attribute must be a non-negative real number.
+   
+   The accuracy and altitudeAccuracy values returned by an implementation should correspond to a 95% confidence level.
+   
+   The heading attribute denotes the direction of travel of the hosting device and is specified in degrees, where 0° ≤ heading < 360°, counting clockwise relative to the true north. If the implementation cannot provide heading information, the value of this attribute must be null. If the hosting device is stationary (i.e. the value of the speed attribute is 0), then the value of the heading attribute must be NaN.
+   
+   The speed attribute denotes the magnitude of the horizontal component of the hosting device's current velocity and is specified in meters per second. If the implementation cannot provide speed information, the value of this attribute must be null. Otherwise, the value of the speed attribute must be a non-negative real number.
+   };
+   */
    
       // COSTRUTTORE
    
@@ -337,12 +329,10 @@
          {
          U_TRACE(5, "WiAuthNodog::checkMAC()")
    
-         if (ap_rec->mac_white_list.empty() == false)
+         if (ap_rec->mac_mask.empty() == false &&
+             UServices::dosMatchWithOR(*mac, ap_rec->mac_mask, FNM_IGNORECASE))
             {
-            for (uint32_t i = 0, n = ap_rec->mac_white_list.size(); i < n; ++i)
-               {
-               if (mac->equalnocase(ap_rec->mac_white_list[i])) U_RETURN(false);
-               }
+            U_RETURN(false);
             }
    
          U_RETURN(true);
@@ -456,6 +446,8 @@
             }
          */
    
+         down = bdown;
+   
          setLastInfo();
          }
    
@@ -469,6 +461,8 @@
    
          if (value.empty() == false)
             {
+            U_INTERNAL_ASSERT(u__isspace(value.c_char(1)))
+   
             fromString();
    
             U_RETURN(true);
@@ -477,9 +471,9 @@
          U_RETURN(false);
          }
    
-      bool setRecord(int _port, uint32_t* pindex = 0, bool bdown = false, bool bnoconsume = false, bool bgroup_account = false, UString* mac_white_list = 0)
+      bool setRecord(uint32_t* pindex, int _port = 5280, bool bdown = false, bool bnoconsume = false, bool bgroup_account = false, UString* mac_mask = 0)
          {
-         U_TRACE(5, "WiAuthNodog::setRecord(%d,%p,%b,%b,%b,%p)", _port, pindex, bdown, bnoconsume, bgroup_account, mac_white_list)
+         U_TRACE(5, "WiAuthNodog::setRecord(%p,%d,%b,%b,%b,%p)", pindex, _port, bdown, bnoconsume, bgroup_account, mac_mask)
    
          int op      = RDB_REPLACE;
          bool add_ap = false;
@@ -497,6 +491,7 @@
    
             access_point.clear();
    
+            if (   label->empty()) *label    = U_STRING_FROM_CONSTANT("ap");
             if (hostname->empty()) *hostname = U_STRING_FROM_CONSTANT("empty");
             }
          else
@@ -528,16 +523,24 @@
             if (lindex != U_NOT_FOUND)
                {
                if (pindex) *pindex = lindex;
+               else
+                  {
+                  // edit_ap
    
-               access_point.replace(lindex, bnoconsume ? U_STRING_FROM_CONSTANT("1")
-                                                       : U_STRING_FROM_CONSTANT("0"));
+                  access_point.replace(lindex, bnoconsume ? U_STRING_FROM_CONSTANT("1")
+                                                          : U_STRING_FROM_CONSTANT("0"));
    
-               access_point.replace(lindex+2, bgroup_account ? *account        : *empty_str);
-               access_point.replace(lindex+3, mac_white_list ? *mac_white_list : *empty_list);
+                  access_point.replace(lindex+2, bgroup_account ? *account  : *empty_str);
+                  access_point.replace(lindex+3, mac_mask       ? *mac_mask : *empty_str);
+                  }
                }
             }
          else
             {
+            // add ap
+   
+            U_ASSERT_EQUALS(label->empty(), false)
+   
             ++num_ap;
    
             if (pindex) *pindex = access_point.size();
@@ -545,14 +548,22 @@
             access_point.push_back(bnoconsume ? U_STRING_FROM_CONSTANT("1")
                                               : U_STRING_FROM_CONSTANT("0"));
    
-            U_ASSERT_EQUALS(label->empty(), false)
-   
             access_point.push_back(*label);
-            access_point.push_back(bgroup_account ? *account        : *empty_str);
-            access_point.push_back(mac_white_list ? *mac_white_list : *empty_list);
+   
+            access_point.push_back(bgroup_account ? *account  : *empty_str);
+            access_point.push_back(mac_mask       ? *mac_mask : *empty_str);
             }
    
-         if (db_store(db_ap, op, *address, toString(), value)) U_RETURN(true);
+         if (db_store(db_ap, op, *address, toString(), value, *padding1))
+            {
+            if (op == RDB_INSERT) value = (*db_ap)[*address];
+   
+            if ( pindex == 0 ||
+                *pindex != U_NOT_FOUND)
+               {
+               U_RETURN(true);
+               }
+            }
    
          U_RETURN(false);
          }
@@ -712,20 +723,22 @@
             {
          // if (connected == false) addConnection();
    
+            connected = true;
+   
             _ptr += 10;
    
             U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
    
             (void) u__snprintf(++_ptr, 10, "%10ld", u_now->tv_sec); // login_time
             }
-         /*
          else
             {
-            if (connected) delConnection();
+         // if (connected) delConnection();
+   
+            connected = false;
             }
    
          U_INTERNAL_DUMP("num_user = %u connected = %u", num_user, users_connected)
-         */
          }
    
       void resetCounter()
@@ -945,7 +958,12 @@
          value      = (*db_user)[*uid];
          user_exist = (value.empty() == false);
    
-         if (user_exist) fromString();
+         if (user_exist)
+            {
+            U_INTERNAL_ASSERT(u__isdigit(value.c_char(0)))
+   
+            fromString();
+            }
          }
    
       UString getLabelAP()
@@ -963,9 +981,17 @@
    
          UString x(100U), _label = getLabelAP();
    
-         x.snprintf("%.*s@%.*s:%.*s", U_STRING_TO_TRACE(_label), U_STRING_TO_TRACE(nodog), U_STRING_TO_TRACE(nodog_rec->_hostname));
+         x.snprintf("%.*s@%.*s:%u/%.*s", U_STRING_TO_TRACE(_label), U_STRING_TO_TRACE(nodog), nodog_rec->port, U_STRING_TO_TRACE(nodog_rec->_hostname));
    
          U_RETURN_STRING(x);
+         }
+   
+      void setChunkValue()
+         {
+         U_TRACE(5, "WiAuthUser::setChunkValue()")
+   
+            _time_chunk->snprintf("%ld",     time_available -    time_done);
+         _traffic_chunk->snprintf("%llu", traffic_available - traffic_done);
          }
    
       void getCounter()
@@ -991,7 +1017,7 @@
          U_ASSERT_EQUALS( uid->empty(), false)
          U_ASSERT_EQUALS(nodog.empty(), false)
    
-         UString x = (connected ? *address : nodog);
+         UString x = (connected ? nodog : *address);
    
          U_ASSERT_EQUALS(x.empty(), false)
    
@@ -1023,11 +1049,7 @@
    
          U_ASSERT_EQUALS(uid->empty(), false)
    
-         if (nodog_rec->setRecord(5280, &index_access_point) == false &&
-             index_access_point == U_NOT_FOUND)
-            {
-            U_RETURN(false);
-            }
+         if (nodog_rec->setRecord(&index_access_point) == false) U_RETURN(false);
    
          nodog = *address;
    
@@ -1057,7 +1079,8 @@
    
          bool bflat;
    
-         if (*account == ap_rec->group_account)
+         if (ap_rec->group_account.empty() == false &&
+             UServices::dosMatchWithOR(*account, ap_rec->group_account))
             {
             bflat        = true;
             consume      = false;
@@ -1093,9 +1116,19 @@
                }
             }
    
-         user_exist = db_store(db_user, op, *uid, toString(), value);
+         if (db_store(db_user, op, *uid, toString(), value, *padding2))
+            {
+            if (op == RDB_INSERT)
+               {
+               user_exist = true;
    
-         U_RETURN(user_exist);
+               value = (*db_user)[*uid];
+               }
+   
+            U_RETURN(true);
+            }
+   
+         U_RETURN(false);
          }
    
    #ifdef DEBUG
@@ -1159,24 +1192,24 @@
       if (user_rec->connected) ++users_connected;
    }
    
-   static void callForAllAP(vPFprpr function)
+   static void callForAllAP(vPFprpr function, UVector<UString>* pvec)
    {
-      U_TRACE(5, "::callForAllAP(%p)", function)
+      U_TRACE(5, "::callForAllAP(%p,%p)", function, pvec)
    
       _num_ap = 0;
    
-      db_ap->callForAllEntry(function);
+      db_ap->callForAllEntry(function, pvec);
    
       num_ap = _num_ap;
    }
    
-   static void callForAllAPSorted(vPFprpr function)
+   static void callForAllAPSorted(vPFprpr function, UVector<UString>* pvec)
    {
-      U_TRACE(5, "::callForAllAPSorted(%p)", function)
+      U_TRACE(5, "::callForAllAPSorted(%p)", function, pvec)
    
       _num_ap = 0;
    
-      db_ap->callForAllEntrySorted(function);
+      db_ap->callForAllEntrySorted(function, pvec, UStringExt::qscompver);
    
       num_ap = _num_ap;
    }
@@ -1224,7 +1257,7 @@
    
       if (UServer_Base::bssl == false)
          {
-         callForAllAP(countAP);
+         callForAllAP(countAP, 0);
    
          U_SRV_LOG("db initialization of wi-auth access point WiAuthAccessPoint.cdb %s: num_ap %u", result ? "success" : "FAILED", num_ap);
    
@@ -1266,11 +1299,13 @@
       gateway            = U_NEW(UString);
       account            = U_NEW(UString(100U));
       hostname           = U_NEW(UString);
+      padding1           = U_NEW(UString(12, ' '));
+      padding2           = U_NEW(UString(36, ' '));
       mac_auth           = U_NEW(U_STRING_FROM_CONSTANT("MAC_AUTH"));
       ip_server          = U_NEW(UString(UServer_Base::getIPAddress()));
       empty_str          = U_NEW(U_STRING_FROM_CONSTANT("\"\""));
       cert_auth          = U_NEW(U_STRING_FROM_CONSTANT("CERT_AUTH"));
-      nodog_conf         = U_NEW(UString(UFile::contentOf("ap/nodog.conf")));
+      nodog_conf         = U_NEW(UString(UFile::contentOf("ap/nodog.conf.template")));
       empty_list         = U_NEW(U_STRING_FROM_CONSTANT("()"));
       policy_flat        = U_NEW(U_STRING_FROM_CONSTANT("FLAT"));
       request_uri        = U_NEW(UString);
@@ -1394,20 +1429,6 @@
    
       if (db_ap)
          {
-         if (UServer_Base::bssl == false)
-            {
-            UFile::writeToTmpl("/tmp/WiAuthAccessPoint.end", db_ap->print());
-   
-            (void) db_ap->closeReorganize();
-   
-            UFile::writeToTmpl("/tmp/WiAuthUser.end", db_user->print());
-   
-            (void) db_user->closeReorganize();
-   
-            (void) UFile::_unlink("/tmp/WiAuthUser.init");
-            (void) UFile::_unlink("/tmp/WiAuthAccessPoint.init");
-            }
-   
    #  ifdef DEBUG
          delete ip;
          delete ap;
@@ -1425,6 +1446,8 @@
          delete gateway;
          delete dir_root;
          delete hostname;
+         delete padding1;
+         delete padding2;
          delete mac_auth;
          delete ip_server;
          delete empty_str;
@@ -1443,6 +1466,7 @@
          delete allowed_web_hosts;
          delete wiauth_card_basedn;
          delete wiauth_user_basedn;
+         delete historical_log_dir;
          delete message_page_template;
          delete status_nodog_template;
          delete status_network_template;
@@ -1479,15 +1503,36 @@
    
          delete vec;
          delete table;
-         delete client;
-   
          delete cache;
-         delete db_ap;
-         delete db_user;
+         delete client;
    
          delete ap_rec;
          delete user_rec;
          delete nodog_rec;
+   #  endif
+   
+         if (UServer_Base::bssl)
+            {
+            (void) db_ap->close();
+            (void) db_user->close();
+            }
+         else
+            {
+            UFile::writeToTmpl("/tmp/WiAuthAccessPoint.end", db_ap->print());
+   
+            (void) db_ap->closeReorganize();
+   
+            UFile::writeToTmpl("/tmp/WiAuthUser.end", db_user->print());
+   
+            (void) db_user->closeReorganize();
+   
+            (void) UFile::_unlink("/tmp/WiAuthUser.init");
+            (void) UFile::_unlink("/tmp/WiAuthAccessPoint.init");
+            }
+   
+   #  ifdef DEBUG
+         delete db_ap;
+         delete db_user;
    #  endif
          }
    }
@@ -1745,7 +1790,7 @@
                user_rec->getCounter();
    
                ptr1 = "green";
-               ptr2 = "SI";
+               ptr2 = "yes";
                ptr3 =    _time_chunk->data();
                ptr4 = _traffic_chunk->data();
                }
@@ -1754,7 +1799,7 @@
                user_rec->getConsumed();
    
                ptr1 = "orange";
-               ptr2 = "NO";
+               ptr2 = "no";
                ptr3 =    _time_consumed->data();
                ptr4 = _traffic_consumed->data();
                }
@@ -1790,18 +1835,18 @@
       if (ap_rec->noconsume)
          {
          ptr3 = "orange";
-         ptr4 = "NO";
+         ptr4 = "no";
          }
       else
          {
          ptr3 = "green";
-         ptr4 = "SI";
+         ptr4 = "yes";
          }
    
       const char* ptr  = ap_rec->_label.data();
       uint32_t    size = ap_rec->_label.size();
    
-      UString riga(U_CAPACITY), vec1 = ap_rec->mac_white_list.join(" ");
+      UString riga(U_CAPACITY);
    
       riga.snprintf(status_nodog_template->data(),
                     size, ptr,
@@ -1809,9 +1854,9 @@
                     U_STRING_TO_TRACE(*address),
                     U_STRING_TO_TRACE(nodog_rec->_hostname),
                     ptr1, ptr2,
-                    ptr3, ptr4,
                     nodog_rec->last_info + u_now_adjust,
-                    U_STRING_TO_TRACE(vec1),
+                    ptr3, ptr4,
+                    U_STRING_TO_TRACE(ap_rec->mac_mask),
                     U_STRING_TO_TRACE(ap_rec->group_account),
                     VIRTUAL_HOST, size, ptr, U_STRING_TO_TRACE(nodog_rec->_hostname), U_STRING_TO_TRACE(*address), nodog_rec->port);
    
@@ -1836,7 +1881,7 @@
       else
          {
          ptr1 = "green";
-         ptr2 = "SI";
+         ptr2 = "yes";
          }
    
       nodog_rec->callForAllAccessPoint(writeStatusAccessPoint);
@@ -1869,6 +1914,8 @@
             }
          }
    
+      client->reset(); // NB: url is referenced by UClient::url...
+   
       U_RETURN_STRING(result);
    }
    
@@ -1900,19 +1947,7 @@
    
       countAP(key, data);
    
-      time_t time_diff = u_now->tv_sec - nodog_rec->last_info;
-   
-      if (time_diff > (16L * 60L))
-         {
-         UString url(U_CAPACITY);
-   
-         (void) address->assign(U_STRING_TO_PARAM(*key));
-   
-         url.snprintf("http://%.*s:%u/check", U_STRING_TO_TRACE(*address), nodog_rec->port);
-   
-         vec->push_back(*address);
-         vec->push_back(url);
-         }
+      if ((u_now->tv_sec - nodog_rec->last_info) > (16L * 60L)) UCDB::addEntryToVector();
    }
    
    static bool setAccessPointAddress()
@@ -2023,11 +2058,7 @@
       // $3 -> pid (0 => start)
    
       int ap_port = 5280;
-      UString _hostname, _address;
-      uint32_t pos, end = UHTTP::processHTTPForm();
-   
-      UHTTP::getFormValue(_hostname, U_CONSTANT_TO_PARAM("ap"),     0, 1, end);
-      UHTTP::getFormValue(_address,  U_CONSTANT_TO_PARAM("public"), 0, 3, end);
+      uint32_t index_access_point, end = UHTTP::processHTTPForm();
    
             ap->clear();
          label->clear();
@@ -2035,41 +2066,60 @@
        account->clear();
       hostname->clear();
    
-      if (_address.empty() == false)
+      if (end)
          {
-         pos = _address.find(':');
+         uint32_t pos;
+         UString _hostname, _address;
    
-         if (pos == U_NOT_FOUND) *address = _address;
-         else
+         UHTTP::getFormValue(_hostname, U_CONSTANT_TO_PARAM("ap"),     0, 1, end);
+         UHTTP::getFormValue(_address,  U_CONSTANT_TO_PARAM("public"), 0, 3, end);
+   
+         if (_hostname.empty() == false)
             {
-            *address = _address.substr(0U, pos).copy();
-            ap_port  = _address.substr(pos+1).strtol();
+            pos = _hostname.find('@');
+   
+            if (pos == U_NOT_FOUND) *hostname = _hostname;
+            else
+               {
+               *label    = _hostname.substr(0U, pos).copy();
+               *hostname = _hostname.substr(pos + 1).copy();
+               }
+   
+            // NB: bad case generated by MAIN_BASH...
+   
+            if (u_isIPv4Addr(U_STRING_TO_PARAM(*hostname)))
+               {
+               *address = *hostname;
+                           hostname->clear();
+   
+               goto next;
+               }
+   
+            if (u_isHostName(U_STRING_TO_PARAM(*hostname)) == false)
+               {
+               U_LOGGER("*** AP HOSTNAME(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*hostname));
+   
+               U_RETURN(false);
+               }
             }
    
-         if (u_isIPv4Addr(U_STRING_TO_PARAM(*address)) == false)
+         if (_address.empty() == false)
             {
-            U_LOGGER("*** ADDRESS AP(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*address));
+            pos = _address.find(':');
    
-            U_RETURN(false);
-            }
-         }
+            if (pos == U_NOT_FOUND) *address = _address;
+            else
+               {
+               *address = _address.substr(0U, pos).copy();
+               ap_port  = _address.substr(pos+1).strtol();
+               }
    
-      if (_hostname.empty() == false)
-         {
-         pos = _hostname.find('@');
+            if (u_isIPv4Addr(U_STRING_TO_PARAM(*address)) == false)
+               {
+               U_LOGGER("*** ADDRESS AP(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*address));
    
-         if (pos == U_NOT_FOUND) *hostname = _hostname;
-         else
-            {
-            *label    = _hostname.substr(0U, pos).copy();
-            *hostname = _hostname.substr(pos + 1).copy();
-            }
-   
-         if (u_isHostName(U_STRING_TO_PARAM(*hostname)) == false)
-            {
-            U_LOGGER("*** AP HOSTNAME(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*hostname));
-   
-            U_RETURN(false);
+               U_RETURN(false);
+               }
             }
          }
    
@@ -2083,7 +2133,8 @@
          U_RETURN(false);
          }
    
-      if (nodog_rec->setRecord(ap_port)) U_RETURN(true);
+      next:
+      if (nodog_rec->setRecord(&index_access_point, ap_port)) U_RETURN(true);
    
       U_RETURN(false);
    }
@@ -2186,19 +2237,18 @@
       UString signed_data = UDES3::signData("ip=%.*s&mac=%.*s", U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac)),
                    result = sendRequestToNodog("logout?%.*s", U_STRING_TO_TRACE(signed_data));
    
-   #ifdef DEBUG
-      if (result.empty() == false &&
-          U_IS_HTTP_ERROR(client->responseCode()) == false)
+      if (result.empty()) U_RETURN(false);
+   
+      if (U_IS_HTTP_ERROR(client->responseCode()) == false &&
+          U_STRING_FIND(result, 0, "DENY") == U_NOT_FOUND)
          {
-         U_ASSERT_DIFFERS(U_STRING_FIND(result, 0, "DENY"), U_NOT_FOUND)
+         U_LOGGER("*** user status NOT DENY: AP(%.*s) CLIENT(%.*s) IP(%.*s) MAC(%.*s) ***",
+                     U_STRING_TO_TRACE(nodog_rec->_hostname),  U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac));
          }
-   #endif
    
       // NB: we must have serviced a info request from nodog by another process istance (PREFORK_CHILD > 2)...
    
       U_ASSERT_EQUALS(uid->empty(), false)
-   
-      if (checkIfUserConnected()) U_RETURN(false);
    
       U_RETURN(true);
    }
@@ -2273,6 +2323,13 @@
          }
    
       if (askNodogToLogoutUser() == false) goto error;
+   
+      if (checkIfUserConnected())
+         {
+         user_rec->setConnected(false);
+   
+         goto error;
+         }
    
       if (UHTTP::isHttpGET())
          {
@@ -2397,16 +2454,12 @@
          }
       else
          {
-         UString vec1;
-   
-         if (ap_rec->mac_white_list.empty() == false) vec1 = ap_rec->mac_white_list.join(" ");
-   
          USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("edit_ap.tmpl")),
                                            "Firenze WiFi", 0, 0,
                                            U_STRING_TO_TRACE(ap_rec->_label),       "readonly",
                                            U_STRING_TO_TRACE(*address),             "readonly",
                                            U_STRING_TO_TRACE(nodog_rec->_hostname), "readonly",
-                                           U_STRING_TO_TRACE(vec1),
+                                           U_STRING_TO_TRACE(ap_rec->mac_mask),
                                            U_STRING_TO_TRACE(ap_rec->group_account),
                                            nodog_rec->down   ? "" : "checked",
                                            ap_rec->noconsume ? "" : "checked");
@@ -2420,12 +2473,12 @@
       // $1 -> ap (without localization => '@')
       // $2 -> public address to contact the access point
    
-   #ifndef U_MANAGED_BY_MAIN_BASH
       if (setAccessPoint(false))
          {
          U_LOGGER("*** ON AP(%.*s:%.*s) THE FIREWALL IS NOT ALIGNED ***", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname));
          }
    
+   #ifndef U_MANAGED_BY_MAIN_BASH
       USSIPlugIn::setAlternativeResponse(UString::getStringNull());
    #endif
    }
@@ -2437,21 +2490,84 @@
       // $1 -> ap (without localization => '@')
       // $2 -> key
    
-      UString key, body, pathname(U_CAPACITY);
+      UString body;
+      uint32_t end = UHTTP::processHTTPForm();
    
-      UHTTP::getFormValue(key, U_CONSTANT_TO_PARAM("key"), 0, 3, UHTTP::processHTTPForm());
-   
-      pathname.snprintf("%w/ap/%.*s/nodog.conf", U_STRING_TO_TRACE(key));
-   
-      body = UFile::contentOf(pathname);
-   
-      if (body.empty())
+      if (end)
          {
-         UFileConfig cfg;
+         UString key;
    
-         body = UStringExt::substitute(*nodog_conf, U_CONSTANT_TO_PARAM("x.x.x.x"), U_STRING_TO_PARAM(*client_address));
+         UHTTP::getFormValue(key, U_CONSTANT_TO_PARAM("key"), 0, 3, end);
    
-         if (cfg.setData(body), cfg.processData()) body = cfg.getData();
+         if (key.empty() == false)
+            {
+            UString pathname(U_CAPACITY);
+   
+            pathname.snprintf("%w/ap/%.*s/nodog.conf", U_STRING_TO_TRACE(key));
+   
+            body = UFile::contentOf(pathname);
+   
+            if (body.empty())
+               {
+               body = *nodog_conf;
+   
+               *ip = (u_isIPv4Addr(U_STRING_TO_PARAM(key)) ? key : *client_address);
+   
+               U_ASSERT(vec->empty())
+   
+               vec->split(*ip, '.');
+   
+               key = (*vec)[3]; // 10.8.0.54
+   
+               vec->clear();
+   
+               pathname.snprintf("%w/ap/%.*s/nodog.conf.local", U_STRING_TO_TRACE(*ip));
+   
+               UString local = UFile::contentOf(pathname);
+   
+               uint32_t    len = U_CONSTANT_SIZE("???");
+               const char* lan =                 "???";
+   
+               UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, end);
+   
+               if (ap->empty() == false)
+                  {
+                  if (UStringExt::endsWith(*ap, U_CONSTANT_TO_PARAM("_picoM2")) ||
+                      UStringExt::endsWith(*ap, U_CONSTANT_TO_PARAM("_locoM2")))
+                     {
+                     lan =                 "wlan0";
+                     len = U_CONSTANT_SIZE("wlan0");
+                     }
+                  else if (UStringExt::endsWith(*ap, U_CONSTANT_TO_PARAM("_rspro")))
+                     {
+                     if (UStringExt::startsWith(*ap, U_CONSTANT_TO_PARAM("wimo")))
+                        {
+                        lan =                 "br-lan";
+                        len = U_CONSTANT_SIZE("br-lan");
+                        }
+                     else
+                        {
+                        lan =                 "eth1";
+                        len = U_CONSTANT_SIZE("eth1");
+                        }
+                     }
+                  else if (UStringExt::endsWith(*ap, U_CONSTANT_TO_PARAM("_x86")))
+                     {
+                     lan =                 "eth1";
+                     len = U_CONSTANT_SIZE("eth1");
+                     }
+                  }
+   
+               body = UStringExt::substitute(body, U_CONSTANT_TO_PARAM("<LAN>"),                                              lan, len);
+               body = UStringExt::substitute(body, U_CONSTANT_TO_PARAM("<DDD>"),                                              U_STRING_TO_PARAM(key));
+               body = UStringExt::substitute(body, U_CONSTANT_TO_PARAM("#include \"ap/<AAA.BBB.CCC.DDD>/nodog.conf.local\""), U_STRING_TO_PARAM(local));
+               body = UStringExt::substitute(body, U_CONSTANT_TO_PARAM("<AAA.BBB.CCC.DDD>"),                                  U_STRING_TO_PARAM(*ip));
+   
+               UFileConfig cfg(body, true);
+   
+               if (cfg.processData()) body = cfg.getData();
+               }
+            }
          }
    
       USSIPlugIn::setAlternativeResponse(body);
@@ -2462,7 +2578,6 @@
       U_TRACE(5, "::GET_get_users_info()")
    
       if (*client_address != *ip_server) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
-   #ifndef U_MANAGED_BY_MAIN_BASH
       else
          {
          // $1 -> ap (without localization => '@')
@@ -2485,11 +2600,21 @@
             {
             U_ASSERT(vec->empty())
    
-            callForAllAP(checkAccessPoint);
+            callForAllAP(checkAccessPoint, vec);
+   
+            UString url(U_CAPACITY);
    
             for (int32_t i = 0, n = vec->size(); i < n; i += 2)
                {
-               if (nodog_rec->setValue((*vec)[i])) (void) sendRequestToNodog((*vec)[i+1]);
+               *address = (*vec)[i];
+   
+               nodog_rec->value._assign(vec->UVector<UStringRep*>::at(i+1));
+   
+               nodog_rec->fromString();
+   
+               url.snprintf("http://%.*s:%u/check", U_STRING_TO_TRACE(*address), nodog_rec->port);
+   
+               (void) sendRequestToNodog(url);
                }
    
             vec->clear();
@@ -2497,7 +2622,6 @@
    
          USSIPlugIn::setAlternativeResponse(UString::getStringNull());
          }
-   #endif
    }
    
    static void GET_info()
@@ -2527,10 +2651,10 @@
    
          end = i+16;
    
-         UHTTP::getFormValue(*mac,     U_CONSTANT_TO_PARAM("Mac"),     i, i+1, end);
-         UHTTP::getFormValue(*ip,      U_CONSTANT_TO_PARAM("ip"),      i, i+3, end);
-         UHTTP::getFormValue(*ap,      U_CONSTANT_TO_PARAM("ap"),      i, i+7, end);
-         UHTTP::getFormValue(*uid,     U_CONSTANT_TO_PARAM("User"),    i, i+9, end);
+         UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("Mac"),  i, i+1, end);
+         UHTTP::getFormValue(*ip,  U_CONSTANT_TO_PARAM("ip"),   i, i+3, end);
+         UHTTP::getFormValue(*ap,  U_CONSTANT_TO_PARAM("ap"),   i, i+7, end);
+         UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("User"), i, i+9, end);
    
          if (setAccessPointAddress()       == false ||
              checkIfUserConnected()        == false ||
@@ -2685,13 +2809,16 @@
       UString redirect, timeout;
       uint32_t end = UHTTP::processHTTPForm();
    
-      UHTTP::getFormValue(*mac,     U_CONSTANT_TO_PARAM("mac"),      0,  1, end);
-      UHTTP::getFormValue(*ip,      U_CONSTANT_TO_PARAM("ip"),       0,  3, end);
-      UHTTP::getFormValue(redirect, U_CONSTANT_TO_PARAM("redirect"), 0,  5, end);
-      UHTTP::getFormValue(*gateway, U_CONSTANT_TO_PARAM("gateway"),  0,  7, end);
-      UHTTP::getFormValue(timeout,  U_CONSTANT_TO_PARAM("timeout"),  0,  9, end);
-      UHTTP::getFormValue(*token,   U_CONSTANT_TO_PARAM("token"),    0, 11, end);
-      UHTTP::getFormValue(*ap,      U_CONSTANT_TO_PARAM("ap"),       0, 13, end);
+      if (end)
+         {
+         UHTTP::getFormValue(*mac,     U_CONSTANT_TO_PARAM("mac"),      0,  1, end);
+         UHTTP::getFormValue(*ip,      U_CONSTANT_TO_PARAM("ip"),       0,  3, end);
+         UHTTP::getFormValue(redirect, U_CONSTANT_TO_PARAM("redirect"), 0,  5, end);
+         UHTTP::getFormValue(*gateway, U_CONSTANT_TO_PARAM("gateway"),  0,  7, end);
+         UHTTP::getFormValue(timeout,  U_CONSTANT_TO_PARAM("timeout"),  0,  9, end);
+         UHTTP::getFormValue(*token,   U_CONSTANT_TO_PARAM("token"),    0, 11, end);
+         UHTTP::getFormValue(*ap,      U_CONSTANT_TO_PARAM("ap"),       0, 13, end);
+         }
    
       USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login_request.tmpl")),
                                         "Firenze WiFi", 0, 0,
@@ -2753,6 +2880,13 @@
    
          if (askNodogToLogoutUser() == false) goto error;
    
+         if (checkIfUserConnected())
+            {
+            user_rec->setConnected(false);
+   
+            goto error;
+            }
+   
          U_INTERNAL_ASSERT_EQUALS(user_rec->connected, false)
          }
    
@@ -2775,9 +2909,11 @@
             }
          }
    
-      writeToLOG(auth_domain->c_str()); // NB: in this func we call getCounter() for chunk setting...
+      writeToLOG(auth_domain->c_str());
    
       // redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
+   
+      user_rec->setChunkValue();
    
       UString signed_data = UDES3::signData("\n"
          "Action Permit\n"
@@ -2885,9 +3021,10 @@
    
       // NB: send as response the message of waiting to redirect to google site...
    
-      UString _buffer(100U);
       ptr1 = uid->c_str();
-      ptr2 = redirect_default->data();
+      ptr2 = redirect_default->c_str();
+   
+      UString _buffer(300U);
    
       _buffer.snprintf("onload=\"doOnLoad('postlogin?uid=%s','%s')\"", ptr1, ptr2); 
    
@@ -2971,7 +3108,6 @@
       // $2 -> public address to contact the access point
       // $3 -> pid (0 => start)
    
-   #ifndef U_MANAGED_BY_MAIN_BASH
       if (setAccessPoint(true))
          {
          UString pid(100U);
@@ -2983,6 +3119,7 @@
          callForAllUsers(quitUserConnected);
          }
    
+   #ifndef U_MANAGED_BY_MAIN_BASH
       UString body = *allowed_web_hosts;
    
       USSIPlugIn::setAlternativeResponse(body);
@@ -3032,18 +3169,18 @@
       // $1 -> ap (with localization => '@')
       // $2 -> public address to contact the access point
    
-   #ifndef U_MANAGED_BY_MAIN_BASH
-      if (virtual_name->equal(U_HTTP_VHOST_TO_PARAM) &&
-          setAccessPoint(true))
+      if (virtual_name->equal(U_HTTP_VHOST_TO_PARAM) == false) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+      else
          {
-         UString result = sendRequestToNodog("status?label=%.*s", U_STRING_TO_TRACE(*label));
+         UString result;
+   
+         if (setAccessPoint(true)) result = sendRequestToNodog("status?label=%.*s", U_STRING_TO_TRACE(*label));
    
          if (result.empty() == false) USSIPlugIn::setAlternativeResponse(result);
          else                         USSIPlugIn::setMessagePage(*message_page_template, "Servizio non disponibile",
                                                                                          "Servizio non disponibile (access point non contattabile). "
                                                                                          "Riprovare piu' tardi");
          }
-   #endif
    }
    
    static void GET_status_network()
@@ -3087,7 +3224,6 @@
       U_TRACE(5, "::GET_status_nodog()")
    
       if (*client_address != *ip_server) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
-   #ifndef U_MANAGED_BY_MAIN_BASH
       else
          {
          // $1 -> outfile
@@ -3103,7 +3239,7 @@
    
          output->setBuffer(U_CAPACITY);
    
-         callForAllAPSorted(setStatusNodog);
+         callForAllAPSorted(setStatusNodog, 0);
    
          _buffer.snprintf(_template.data(), num_ap, VIRTUAL_HOST);
    
@@ -3113,7 +3249,6 @@
    
          USSIPlugIn::setAlternativeResponse(UString::getStringNull());
          }
-   #endif
    }
    
    static void GET_unifi()
@@ -3145,106 +3280,110 @@
          // $1 -> uid
          // $2 -> outfile
    
-         UString outfile;
          uint32_t end = UHTTP::processHTTPForm();
    
-         UHTTP::getFormValue(*uid,    U_CONSTANT_TO_PARAM("uid"),     0, 1, end);
-         UHTTP::getFormValue(outfile, U_CONSTANT_TO_PARAM("outfile"), 0, 3, end);
-   
-         if (askToLDAP(0, "utente non registrato", "utente non registrato",
-                       "ldapsearch -LLL -b %.*s %.*s waLogin=%.*s",
-                       U_STRING_TO_TRACE(*wiauth_card_basedn),
-                       U_STRING_TO_TRACE(*ldap_card_param),
-                       U_STRING_TO_TRACE(*uid)) == false)
+         if (end)
             {
-            return;
+            UString outfile;
+   
+            UHTTP::getFormValue(*uid,    U_CONSTANT_TO_PARAM("uid"),     0, 1, end);
+            UHTTP::getFormValue(outfile, U_CONSTANT_TO_PARAM("outfile"), 0, 3, end);
+   
+            if (askToLDAP(0, "utente non registrato", "utente non registrato",
+                          "ldapsearch -LLL -b %.*s %.*s waLogin=%.*s",
+                          U_STRING_TO_TRACE(*wiauth_card_basedn),
+                          U_STRING_TO_TRACE(*ldap_card_param),
+                          U_STRING_TO_TRACE(*uid)) == false)
+               {
+               return;
+               }
+   
+            UString WA_POLICY   = (*table)["waPolicy"],   // waPolicy: DAILY
+                    WA_USEDBY   = (*table)["waUsedBy"],   // waUsedBy: 3343793489
+                    WA_REVOKED  = (*table)["waRevoked"],  // waRevoked: FALSE
+                    WA_VALIDITY = (*table)["waValidity"], // waValidity: 0
+                    WA_PASSWORD = (*table)["waPassword"], // waPassword: {MD5}M7Bt9PlxMhHxcVd2HCVGcg==
+                    WA_NOTAFTER = (*table)["waNotAfter"]; // waNotAfter: 20371231235959Z
+   
+            table->clear();
+   
+            const char* ptr;
+            UString not_after(100U);
+   
+            if (WA_NOTAFTER.empty()) (void) not_after.assign(U_CONSTANT_TO_PARAM("Non disponibile"));
+            else
+               {
+               ptr = WA_NOTAFTER.data();
+   
+               not_after.snprintf("%.2s/%.2s/%.4s - %.2s:%.2s", ptr+6, ptr+4, ptr, ptr+8, ptr+10);
+               }
+   
+            const char* ptr5;
+            const char* ptr6;
+            const char* ptr7;
+   
+            if (WA_USEDBY.empty())
+               {
+               ptr1 = "red";
+               ptr2 = "NO";
+               }
+            else
+               {
+               ptr1 = "green";
+               ptr2 = "yes";
+               }
+   
+            UString _buffer(U_CAPACITY), user,
+                    _template = cache->getContent(U_CONSTANT_TO_PARAM("view_user.tmpl"));
+   
+            U_INTERNAL_ASSERT(_template.isNullTerminated())
+   
+            time_t last_modified;
+            bool connected = checkIfUserConnected();
+   
+            user = getUserName(); // NB: must be after checkIfUserConnected()...
+   
+            if (user_exist)
+               {
+               last_modified = user_rec->last_modified + u_now_adjust;
+   
+               ptr = user.c_str();
+   
+               user_rec->getCounter();
+   
+               ptr3 =    _time_chunk->data();
+               ptr4 = _traffic_chunk->data();
+   
+               user_rec->getConsumed();
+   
+               ptr5 =    _time_consumed->data();
+               ptr6 = _traffic_consumed->data();
+               ptr7 = (connected ? "yes" : "no");
+               }
+            else
+               {
+               last_modified = 0;
+   
+               ptr  = ptr7 = "";
+               ptr3 = ptr4 = ptr5 = ptr6 = "Non disponibile";
+               }
+   
+            _buffer.snprintf(_template.data(),
+                            ptr, uid->c_str(),
+                            ptr3, ptr4,
+                            WA_PASSWORD.c_str(),
+                            not_after.data(),
+                            WA_VALIDITY.c_str(),
+                            WA_REVOKED.c_str(),
+                            WA_POLICY.c_str(),
+                            ptr1, ptr2,
+                            UStringExt::substr_count(file_RECOVERY->_getContent(), *uid),
+                            ptr7, ptr5, ptr6, last_modified);
+   
+            (void) UFile::writeTo(outfile, _buffer);
+   
+            USSIPlugIn::setAlternativeResponse(UString::getStringNull());
             }
-   
-         UString WA_POLICY   = (*table)["waPolicy"],   // waPolicy: DAILY
-                 WA_USEDBY   = (*table)["waUsedBy"],   // waUsedBy: 3343793489
-                 WA_REVOKED  = (*table)["waRevoked"],  // waRevoked: FALSE
-                 WA_VALIDITY = (*table)["waValidity"], // waValidity: 0
-                 WA_PASSWORD = (*table)["waPassword"], // waPassword: {MD5}M7Bt9PlxMhHxcVd2HCVGcg==
-                 WA_NOTAFTER = (*table)["waNotAfter"]; // waNotAfter: 20371231235959Z
-   
-         table->clear();
-   
-         const char* ptr;
-         UString not_after(100U);
-   
-         if (WA_NOTAFTER.empty()) (void) not_after.assign(U_CONSTANT_TO_PARAM("Non disponibile"));
-         else
-            {
-            ptr = WA_NOTAFTER.data();
-   
-            not_after.snprintf("%.2s/%.2s/%.4s - %.2s:%.2s", ptr+6, ptr+4, ptr, ptr+8, ptr+10);
-            }
-   
-         const char* ptr5;
-         const char* ptr6;
-         const char* ptr7;
-   
-         if (WA_USEDBY.empty())
-            {
-            ptr1 = "red";
-            ptr2 = "NO";
-            }
-         else
-            {
-            ptr1 = "green";
-            ptr2 = "SI";
-            }
-   
-         UString _buffer(U_CAPACITY), user,
-                 _template = cache->getContent(U_CONSTANT_TO_PARAM("view_user.tmpl"));
-   
-         U_INTERNAL_ASSERT(_template.isNullTerminated())
-   
-         time_t last_modified;
-         bool connected = checkIfUserConnected();
-   
-         user = getUserName(); // NB: must be after checkIfUserConnected()...
-   
-         if (user_exist)
-            {
-            last_modified = user_rec->last_modified + u_now_adjust;
-   
-            ptr = user.c_str();
-   
-            user_rec->getCounter();
-   
-            ptr3 =    _time_chunk->data();
-            ptr4 = _traffic_chunk->data();
-   
-            user_rec->getConsumed();
-   
-            ptr5 =    _time_consumed->data();
-            ptr6 = _traffic_consumed->data();
-            ptr7 = (connected ? "SI" : "NO");
-            }
-         else
-            {
-            last_modified = 0;
-   
-            ptr  = ptr7 = "";
-            ptr3 = ptr4 = ptr5 = ptr6 = "Non disponibile";
-            }
-   
-         _buffer.snprintf(_template.data(),
-                         ptr, uid->c_str(),
-                         ptr3, ptr4,
-                         WA_PASSWORD.c_str(),
-                         not_after.data(),
-                         WA_VALIDITY.c_str(),
-                         WA_REVOKED.c_str(),
-                         WA_POLICY.c_str(),
-                         ptr1, ptr2,
-                         UStringExt::substr_count(file_RECOVERY->_getContent(), *uid),
-                         ptr7, ptr5, ptr6, last_modified);
-   
-         (void) UFile::writeTo(outfile, _buffer);
-   
-         USSIPlugIn::setAlternativeResponse(UString::getStringNull());
          }
    #endif
    }
@@ -3256,19 +3395,26 @@
       // $1 -> ap (with localization => '@')
       // $2 -> public address to contact the access point
    
-   #ifndef U_MANAGED_BY_MAIN_BASH
-      if (virtual_name->equal(U_HTTP_VHOST_TO_PARAM) &&
-          setAccessPoint(true))
+      if (virtual_name->equal(U_HTTP_VHOST_TO_PARAM) == false) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+      else
          {
-         UString dest(U_CAPACITY);
+         if (setAccessPoint(true))
+            {
+            UString dest(U_CAPACITY);
    
-         dest.snprintf("%.*s/client/%s:%u.srv", U_STRING_TO_TRACE(*dir_root), client_address->data(), UHTTP::getUserAgent());
+            dest.snprintf("%.*s/client/%s:%u.srv", U_STRING_TO_TRACE(*dir_root), client_address->data(), UHTTP::getUserAgent());
    
-         (void) UFile::writeTo(dest, *address);
+            (void) UFile::writeTo(dest, *address);
    
-         USSIPlugIn::setAlternativeRedirect("http://" VIRTUAL_HOST "/cgi-bin/webif/status-basic.sh?cat=Status", 0);
+            USSIPlugIn::setAlternativeRedirect("http://" VIRTUAL_HOST "/cgi-bin/webif/status-basic.sh?cat=Status", 0);
+            }
+         else
+            {
+            USSIPlugIn::setMessagePage(*message_page_template, "Servizio non disponibile",
+                                                               "Servizio non disponibile (access point non contattabile). "
+                                                               "Riprovare piu' tardi");
+            }
          }
-   #endif
    }
    
    static const struct UHTTP::service_info GET_table[] = {
@@ -3309,50 +3455,50 @@
       // $1 -> ap_label
       // $2 -> ap_address
       // $3 -> ap_hostname
-      // $4 -> ap_mac_white_list
+      // $4 -> ap_mac_mask
       // $5 -> ap_group_account
       // $6 -> ap_up
       // $7 -> ap_consume
       // $8 -> submit
    
-      int ap_port = 5280;
-      UString up, consume, mac_white_list;
       uint32_t end = UHTTP::processHTTPForm();
    
-      UHTTP::getFormValue(*label,         U_CONSTANT_TO_PARAM("ap_label"),          0, 1, end);
-      UHTTP::getFormValue(*address,       U_CONSTANT_TO_PARAM("ap_address"),        0, 3, end);
-      UHTTP::getFormValue(*hostname,      U_CONSTANT_TO_PARAM("ap_hostname"),       0, 5, end);
-      UHTTP::getFormValue(mac_white_list, U_CONSTANT_TO_PARAM("ap_mac_white_list"), 0, 7, end);
-      UHTTP::getFormValue(*account,       U_CONSTANT_TO_PARAM("ap_group_account"),  0, 9, end);
-   
-      UHTTP::getFormValue(up,             U_CONSTANT_TO_PARAM("ap_up"));
-      UHTTP::getFormValue(consume,        U_CONSTANT_TO_PARAM("ap_consume"));
-   
-      U_INTERNAL_DUMP("address = %.*S hostname = %.*S label = %.*S", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), U_STRING_TO_TRACE(*label))
-   
-      if (u_isIPv4Addr(U_STRING_TO_PARAM(*address)) == false)
+      if (end)
          {
-         U_LOGGER("*** ADDRESS AP(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*address));
+         int ap_port = 5280;
+         UString up, consume, _mac_mask;
    
-         u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+         UHTTP::getFormValue(*label,    U_CONSTANT_TO_PARAM("ap_label"),         0, 1, end);
+         UHTTP::getFormValue(*address,  U_CONSTANT_TO_PARAM("ap_address"),       0, 3, end);
+         UHTTP::getFormValue(*hostname, U_CONSTANT_TO_PARAM("ap_hostname"),      0, 5, end);
+         UHTTP::getFormValue(_mac_mask, U_CONSTANT_TO_PARAM("ap_mac_mask"),      0, 7, end);
+         UHTTP::getFormValue(*account,  U_CONSTANT_TO_PARAM("ap_group_account"), 0, 9, end);
    
-         return;
+         UHTTP::getFormValue(up,        U_CONSTANT_TO_PARAM("ap_up"));
+         UHTTP::getFormValue(consume,   U_CONSTANT_TO_PARAM("ap_consume"));
+   
+         U_INTERNAL_DUMP("address = %.*S hostname = %.*S label = %.*S", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), U_STRING_TO_TRACE(*label))
+   
+         if (u_isIPv4Addr(U_STRING_TO_PARAM(*address)) == false)
+            {
+            U_LOGGER("*** ADDRESS AP(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*address));
+   
+            u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+   
+            return;
+            }
+   
+         if (u_isHostName(U_STRING_TO_PARAM(*hostname)) == false)
+            {
+            U_LOGGER("*** AP HOSTNAME(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*hostname));
+   
+            u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+   
+            return;
+            }
+   
+         (void) nodog_rec->setRecord(0, ap_port, up.empty(), consume.empty(), account->empty() == false, (_mac_mask.empty() ? 0 : &_mac_mask));
          }
-   
-      if (u_isHostName(U_STRING_TO_PARAM(*hostname)) == false)
-         {
-         U_LOGGER("*** AP HOSTNAME(%.*s) NOT VALID ***", U_STRING_TO_TRACE(*hostname));
-   
-         u_http_info.nResponseCode = HTTP_BAD_REQUEST;
-   
-         return;
-         }
-   
-      (void) nodog_rec->setRecord(ap_port, 0,
-                                    up.empty(),
-                               consume.empty(),
-                              account->empty() == false,
-                              (mac_white_list.empty() ? 0 : &mac_white_list));
    
       USSIPlugIn::setAlternativeRedirect("https://%.*s/admin_status_nodog", U_STRING_TO_TRACE(*ip_server));
    }
@@ -3578,29 +3724,32 @@
       // $9  -> password_conferma
       // $10 -> submit
    
-      UHTTP::processHTTPForm();
+      uint32_t end = UHTTP::processHTTPForm();
    
-      UString nome, cognome, luogo_di_nascita, data_di_nascita, email,
-              cellulare_prefisso, telefono_cellulare, password, password_conferma;
-   
-      UHTTP::getFormValue(nome,                 1);
-      UHTTP::getFormValue(cognome,              3);
-      UHTTP::getFormValue(luogo_di_nascita,     5);
-      UHTTP::getFormValue(data_di_nascita,      7);
-      UHTTP::getFormValue(email,                9);
-      UHTTP::getFormValue(cellulare_prefisso,  11);
-      UHTTP::getFormValue(telefono_cellulare,  13);
-      UHTTP::getFormValue(password,            15);
-      UHTTP::getFormValue(password_conferma,   17);
-   
-      if (password != password_conferma) USSIPlugIn::setMessagePage(*message_page_template, "Conferma Password errata", "Conferma Password errata");
-      else
+      if (end)
          {
-         ....
+         UString nome, cognome, luogo_di_nascita, data_di_nascita, email,
+                 cellulare_prefisso, telefono_cellulare, password, password_conferma;
    
-         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("post_registrazione.tmpl")),
-                                           "Registrazione effettuata", 0, 0,
-                                           caller_id->data(), password.c_str(), "polling_attivazione", caller_id->data(), password.c_str());
+         UHTTP::getFormValue(nome,                 1);
+         UHTTP::getFormValue(cognome,              3);
+         UHTTP::getFormValue(luogo_di_nascita,     5);
+         UHTTP::getFormValue(data_di_nascita,      7);
+         UHTTP::getFormValue(email,                9);
+         UHTTP::getFormValue(cellulare_prefisso,  11);
+         UHTTP::getFormValue(telefono_cellulare,  13);
+         UHTTP::getFormValue(password,            15);
+         UHTTP::getFormValue(password_conferma,   17);
+   
+         if (password != password_conferma) USSIPlugIn::setMessagePage(*message_page_template, "Conferma Password errata", "Conferma Password errata");
+         else
+            {
+            ....
+   
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("post_registrazione.tmpl")),
+                                              "Registrazione effettuata", 0, 0,
+                                              caller_id->data(), password.c_str(), "polling_attivazione", caller_id->data(), password.c_str());
+            }
          }
       ---------------------------------------------------------------------------------------------------------------
       */
@@ -3614,21 +3763,21 @@
    
       if (UHTTP::processHTTPForm())
          {
-         UString source(100U);
+         UString tmpfile(100U);
    
-         UHTTP::getFormValue(source, 1);
+         UHTTP::getFormValue(tmpfile, 1);
    
-         if (source.empty() == false)
+         if (tmpfile.empty() == false)
             {
-            UString content = UFile::contentOf(source);
+            UString content = UFile::contentOf(tmpfile);
    
-            U_INTERNAL_ASSERT(source.isNullTerminated())
+            U_INTERNAL_ASSERT(tmpfile.isNullTerminated())
    
-            (void) UFile::_unlink(source.data());
+            (void) UFile::_unlink(tmpfile.data());
    
             if (content.size() > (2 * 1024))
                {
-               UString dest(U_CAPACITY), basename = UStringExt::basename(source);
+               UString dest(U_CAPACITY), basename = UStringExt::basename(tmpfile);
    
                dest.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(*historical_log_dir), U_STRING_TO_TRACE(basename));
    

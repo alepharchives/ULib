@@ -261,7 +261,7 @@ void UHttpClient_Base::reset()
      body.clear();
    method.clear();
 
-   UClient_Base::request.clear();
+   UClient_Base::reset();
 }
 
 //=======================================================================================
@@ -801,11 +801,15 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 {
    U_TRACE(0, "UHttpClient_Base::upload(%.*S,%.*S)", U_STRING_TO_TRACE(_url), U_FILE_TO_TRACE(file))
 
+   UString content = file.getContent();
+
+   if (content.empty()) U_RETURN(false);
+
+   UString pbody(content.size() + 800U);
+
 #ifdef USE_LIBMAGIC
    if (UMagic::magic == 0) (void) UMagic::init();
 #endif
-
-   UString content = file.getContent(), pbody(content.size() + 300U);
 
    pbody.snprintf(U_HTTP_UPLOAD_REQUEST_BODY,
                      U_FILE_TO_TRACE(file),

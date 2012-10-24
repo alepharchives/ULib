@@ -300,7 +300,7 @@ private:
           inline void execute(bool flag_stdin, bool flag_stdout, bool flag_stderr) U_NO_EXPORT;
 
    static        bool wait() U_NO_EXPORT;
-   static        bool postCommand(UString* input, UString* output) U_NO_EXPORT;
+   static        bool postCommand(UString* input, UString* output) U_NO_EXPORT; // NB: (void*)-1 is a special value...
    static        void setStdInOutErr(int fd_stdin, bool flag_stdin, bool flag_stdout, int fd_stderr) U_NO_EXPORT;
 
    UCommand(const UCommand&)            {}

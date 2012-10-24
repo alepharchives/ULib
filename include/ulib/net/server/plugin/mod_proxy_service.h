@@ -32,6 +32,7 @@ public:
    static const UString* str_FOLLOW_REDIRECTS;
    static const UString* str_CLIENT_CERTIFICATE;
    static const UString* str_REMOTE_ADDRESS_IP;
+   static const UString* str_WEBSOCKET;
 
    static void str_allocate();
 
@@ -60,6 +61,7 @@ public:
    UString getServer() const;
    UString getPassword() const       { return password; }
 
+   bool isWebSocket() const          { return websocket; }
    bool isReplaceResponse() const    { return (vreplace_response.empty() == false); }
    bool isFollowRedirects() const    { return follow_redirects; }
    bool isResponseForClient() const  { return response_client; }
@@ -94,7 +96,7 @@ protected:
    UString host_mask, server, user, password, method_mask;
    UPCRE uri_mask;
    int port;
-   bool request_cert, follow_redirects, response_client;
+   bool request_cert, follow_redirects, response_client, websocket;
 
 private:
    UModProxyService(const UModProxyService&)            {}

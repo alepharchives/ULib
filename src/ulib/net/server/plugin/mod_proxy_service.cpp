@@ -32,6 +32,7 @@
 const UString* UModProxyService::str_FOLLOW_REDIRECTS;
 const UString* UModProxyService::str_CLIENT_CERTIFICATE;
 const UString* UModProxyService::str_REMOTE_ADDRESS_IP;
+const UString* UModProxyService::str_WEBSOCKET;
 
 void UModProxyService::str_allocate()
 {
@@ -44,12 +45,14 @@ void UModProxyService::str_allocate()
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("FOLLOW_REDIRECTS") },
       { U_STRINGREP_FROM_CONSTANT("CLIENT_CERTIFICATE") },
-      { U_STRINGREP_FROM_CONSTANT("REMOTE_ADDRESS_IP") }
+      { U_STRINGREP_FROM_CONSTANT("REMOTE_ADDRESS_IP") },
+      { U_STRINGREP_FROM_CONSTANT("WEBSOCKET") }
    };
 
    U_NEW_ULIB_OBJECT(str_FOLLOW_REDIRECTS,   U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_CLIENT_CERTIFICATE, U_STRING_FROM_STRINGREP_STORAGE(1));
    U_NEW_ULIB_OBJECT(str_REMOTE_ADDRESS_IP,  U_STRING_FROM_STRINGREP_STORAGE(2));
+   U_NEW_ULIB_OBJECT(str_WEBSOCKET,          U_STRING_FROM_STRINGREP_STORAGE(3));
 }
 
 UModProxyService::UModProxyService()
@@ -82,6 +85,7 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
    // METHOD_NAME          mask type of what type of HTTP method is considered (GET|POST)
    // CLIENT_CERTIFICATE   yes if client must comunicate a certificate in the SSL connection
    // REMOTE_ADDRESS_IP    list of comma separated client address for IP-based control (IPADDR[/MASK]) for routing-like policy
+   // WEBSOCKET            yes if the proxy act as a Reverse Proxy Web Sockets
    //
    // COMMAND              command to execute
    // ENVIRONMENT          environment for command to execute
@@ -117,6 +121,7 @@ void UModProxyService::loadConfig(UFileConfig& cfg, UVector<UModProxyService*>& 
          service->password         = cfg[*UServer_Base::str_PASSWORD];
 
          service->port             = cfg.readLong(*UServer_Base::str_PORT, 80);
+         service->websocket        = cfg.readBoolean(*str_WEBSOCKET);
          service->request_cert     = cfg.readBoolean(*str_CLIENT_CERTIFICATE);
          service->response_client  = cfg.readBoolean(*UServer_Base::str_RESPONSE_TYPE);
          service->follow_redirects = cfg.readBoolean(*str_FOLLOW_REDIRECTS);
@@ -161,7 +166,9 @@ UModProxyService::findService(const char* host, uint32_t host_len, const char* m
       {
       elem = vservice[i];
 
-      U_INTERNAL_DUMP("method_mask = %.*S uri_mask = %.*S", U_STRING_TO_TRACE(elem->method_mask), U_STRING_TO_TRACE(elem->uri_mask.getMask()))
+      U_INTERNAL_DUMP("host_mask = %.*S method_mask = %.*S uri_mask = %.*S", U_STRING_TO_TRACE(elem->host_mask),
+                                                                             U_STRING_TO_TRACE(elem->method_mask),
+                                                                             U_STRING_TO_TRACE(elem->uri_mask.getMask()))
 
       if ((elem->vremote_address == 0    || UServer_Base::pClientImage->isAllowed(*(elem->vremote_address)))                 &&
           (elem->host_mask.empty()       || u_dosmatch_with_OR(host,     host_len, U_STRING_TO_PARAM(elem->host_mask),   0)) &&
@@ -270,6 +277,7 @@ void UModProxyService::setMsgError(int err, UVector<UString>& vmsg_error)
 const char* UModProxyService::dump(bool reset) const
 {
    *UObjectIO::os << "port                                 " << port                       << '\n'
+                  << "websocket                            " << websocket                  << '\n'
                   << "request_cert                         " << request_cert               << '\n'
                   << "response_client                      " << response_client            << '\n'
                   << "follow_redirects                     " << follow_redirects           << '\n'

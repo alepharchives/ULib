@@ -63,7 +63,7 @@ bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_l
          U_RETURN(false);
          }
 
-      (void) u__memcpy(u_buffer, ptr, u_buffer_len);
+      U__MEMCPY(u_buffer, ptr, u_buffer_len);
       }
 
    u_buffer[u_buffer_len] = '\0';

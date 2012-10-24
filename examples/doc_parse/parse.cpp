@@ -206,7 +206,7 @@ public:
 
       (void) u_strcpy(old_prefix, prefix);
 
-      (void) u__memcpy(old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
+      U__MEMCPY(old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
       }
 
    static void printHTMLElement()

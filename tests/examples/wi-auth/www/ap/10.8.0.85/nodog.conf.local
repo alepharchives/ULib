@@ -1,0 +1,5 @@
+### scuolaSantaMaria-r29587_picoM2
+
+### 81.31.155.6 => http://www.ic-pirandello.it
+
+#define ALLOWED_WEB_HOST_DEF AllowedWebHosts=81.31.155.6

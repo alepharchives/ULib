@@ -840,8 +840,8 @@ void UPosting::setDocID(int32_t op)
       {
       int result = 0;
 
-      if (op == 0) result = ((URDB*)cdb_names)->store( *str_cur_doc_id, *filename); // add
-      if (op == 2) result = ((URDB*)cdb_names)->remove(*str_cur_doc_id);            // del
+      if (op == 0) result = ((URDB*)cdb_names)->store( *str_cur_doc_id, *filename, RDB_INSERT); // add
+      if (op == 2) result = ((URDB*)cdb_names)->remove(*str_cur_doc_id);                        // del
 
       if (result != 0)
          {
@@ -1047,7 +1047,7 @@ inline UString UPosting::extractDocID()
          U_INTERNAL_DUMP("size_entry = %u",   size_entry)
          U_INTERNAL_DUMP("cur_doc_id = %llu", cur_doc_id)
 
-         (void) u__memcpy((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
+         U__MEMCPY((void*)sptr, &cur_doc_id, sizeof(cur_doc_id));
 
           ptr += size_entry;
          sptr += sizeof(uint64_t);

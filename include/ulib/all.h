@@ -34,6 +34,7 @@
 #include <ulib/utility/hexdump.h>
 #include <ulib/utility/compress.h>
 #include <ulib/utility/interrupt.h>
+#include <ulib/utility/websocket.h>
 #include <ulib/utility/xml_escape.h>
 #include <ulib/utility/quoted_printable.h>
 

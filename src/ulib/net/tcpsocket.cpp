@@ -45,12 +45,17 @@ void UTCPSocket::closesocket()
          }
 #  endif
 
-      /* The shutdown() tells the receiver the server is done sending data. No
+      /* To obtain a clean closure sockets, one would call shutdown() with SHUT_WR
+       * on the socket, call recv() until obtaining a return value of 0 indicating
+       * that the peer has also performed an orderly shutdown, and finally call
+       * close() on the socket.
+       *
+       * The shutdown() tells the receiver the server is done sending data. No
        * more data is going to be send. More importantly, it doesn't close the
        * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
        */
 
-      if (USocket::shutdown())
+      if (USocket::shutdown(SHUT_WR))
          {
          uint32_t count = 0;
          char _buf[8 * 1024];

@@ -503,7 +503,7 @@ public:
 
    bool modified()
       {
-      U_TRACE(1, "UFile::modified()")
+      U_TRACE(0, "UFile::modified()")
 
       time_t mtime = st_mtime;
 

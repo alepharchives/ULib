@@ -76,6 +76,7 @@
 #include "utility/compress.cpp"
 #include "utility/services.cpp"
 #include "utility/semaphore.cpp"
+#include "utility/websocket.cpp"
 #include "utility/string_ext.cpp"
 #include "utility/socket_ext.cpp"
 #include "utility/ring_buffer.cpp"

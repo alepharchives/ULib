@@ -358,7 +358,6 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
 static int add_to_zip(int fd, const char* file)
 {
    DIR* dir = 0;
-   zipentry* ze;
    struct stat statbuf;
    int stat_return, result = 0;
 
@@ -379,6 +378,7 @@ static int add_to_zip(int fd, const char* file)
       {
       int nlen;
       char* t_ptr;
+      zipentry* ze;
       char* fullname;
       struct dirent* de;
       unsigned d_namlen;
@@ -1110,7 +1110,7 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
          ze.crc = crc32(ze.crc, 0, 0);                   /* initialize the crc */
          ze.crc = crc32(ze.crc, (Bytef*)pbf.next, csize);
 
-         (void) u__memcpy(contents[n], pbf.next, csize);
+         u__memcpy(contents[n], pbf.next, csize, __PRETTY_FUNCTION__);
 
          consume(csize);
          }

@@ -141,7 +141,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
       char* _ptr = (char*)r->str;
 
-      if (ptr && length) (void) u__memcpy((void*)_ptr, ptr, length);
+      if (ptr && length) U__MEMCPY((void*)_ptr, ptr, length);
 
       _ptr[length] = '\0';
       }
@@ -172,7 +172,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
       r->set(length, capacity, map);
 
-      if (ptr) (void) u__memcpy((void*)map, ptr, length);
+      if (ptr) U__MEMCPY((void*)map, ptr, length);
       }
 
    U_INTERNAL_ASSERT(r->invariant())
@@ -301,10 +301,7 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       U_INTERNAL_ASSERT_MAJOR(n,0)
       U_INTERNAL_ASSERT_DIFFERS(ptr,s)
 
-      U_INTERNAL_DUMP("src+n = %p (must be <=) dst = %p", s+n, ptr)
-      U_INTERNAL_DUMP("dst+n = %p (must be <=) src = %p", ptr+n, s)
-
-      (void) u__memcpy(ptr, s, n);
+      U__MEMCPY(ptr, s, n);
 
       ptr[(rep->_length = n)] = '\0';
       }
@@ -402,7 +399,7 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
 
-   (void) u__memcpy(s, str + pos, n);
+   U__MEMCPY(s, str + pos, n);
 
    U_RETURN(n);
 }
@@ -801,8 +798,8 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
       UStringRep* r = UStringRep::create(n, __capacity, 0);
 
-      if (pos)       (void) u__memcpy((void*)r->str,            str, pos);
-      if (how_much)  (void) u__memcpy((char*)r->str + pos + n2, src, how_much);
+      if (pos)      U__MEMCPY((void*)r->str,            str, pos);
+      if (how_much) U__MEMCPY((char*)r->str + pos + n2, src, how_much);
 
       _set(r);
 
@@ -825,7 +822,7 @@ UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
 
    char* ptr = __replace(pos, n1, n2);
 
-   if (ptr && n2) (void) u__memcpy(ptr, s, n2);
+   if (ptr && n2) U__MEMCPY(ptr, s, n2);
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -900,7 +897,7 @@ UString& UString::append(const char* s, uint32_t n)
       {
       char* ptr = __append(n);
 
-      (void) u__memcpy(ptr, s, n);
+      U__MEMCPY(ptr, s, n);
       }
 
    U_INTERNAL_ASSERT(invariant())

@@ -72,6 +72,7 @@ virtual void preallocate() { vClientImage = new client_class[UNotifier::max_conn
 class UHTTP;
 class UCommand;
 class USSIPlugIn;
+class UWebSocket;
 class UTimeThread;
 class UFileConfig;
 class UHttpPlugIn;
@@ -434,17 +435,17 @@ protected:
               cgi_timeout,    // the time-out value in seconds for output cgi process
               verify_mode;    // mode of verification ssl connection
 
-   static time_t expire;
    static UString* host;
    static UProcess* proc;
    static USocket* socket;
+   static int sfd, bclose;
    static UEventTime* ptime;
    static UServer_Base* pthis;
    static UString* senvironment;
    static uint32_t start, count;
    static UVector<UIPAllow*>* vallow_IP;
-   static int sfd, bclose, watch_counter;
    static UVector<UIPAllow*>* vallow_IP_prv;
+   static time_t expire, threshold_for_timeout, last_timeout;
    static bool flag_loop, flag_use_tcp_optimization, monitoring_process,
                accept_edge_triggered, set_realtime_priority, enable_rfc1918_filter, public_address;
 
@@ -492,10 +493,13 @@ protected:
 
    static const char* getNumConnection();
 
-   static void runWatch();
    static void runAsUser(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
    static void handlerCloseConnection(UClientImage_Base* ptr);
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+   static void updateSharedCacheTime();
+#endif
 
    // define method VIRTUAL of class UEventFd
 
@@ -526,6 +530,7 @@ protected:
 private:
    friend class UHTTP;
    friend class USSIPlugIn;
+   friend class UWebSocket;
    friend class UTimeThread;
    friend class UHttpPlugIn;
    friend class USCGIPlugIn;

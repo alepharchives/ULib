@@ -214,7 +214,7 @@ void ULog::write(const struct iovec* iov, int n)
             LOG_ptr = LOG_page = pthis->UFile::map;
             }
 
-         (void) u__memcpy(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
+         U__MEMCPY(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
                           LOG_ptr +=                iov[i].iov_len;
 
          U_INTERNAL_DUMP("memcpy() -> %.*S", iov[i].iov_len, LOG_ptr - iov[i].iov_len)
@@ -413,7 +413,7 @@ void ULog::backup()
       UString name = pthis->UFile::getName();
       uint32_t len = u__strlen(dir_log_gz), sz = name.size();
 
-      (void) U_SYSCALL(u__memcpy, "%p,%p,%u", path, dir_log_gz, len);
+      U__MEMCPY(path, dir_log_gz, len);
 
        path  += len;
       *path++ = '/';
@@ -422,8 +422,8 @@ void ULog::backup()
 
       U_INTERNAL_ASSERT_MINOR(len, (int32_t)MAX_FILENAME_LEN)
 
-      (void) U_SYSCALL(u__memcpy, "%p,%p,%u", path, name.data(), sz);
-      (void) U_SYSCALL(u__memcpy, "%p,%p,%u", path+sz,   suffix, len_suffix);
+      U__MEMCPY(path, name.data(), sz);
+      U__MEMCPY(path+sz,   suffix, len_suffix);
 
       buffer_path[len] = '\0';
 

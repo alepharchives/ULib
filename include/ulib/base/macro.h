@@ -127,8 +127,7 @@
 #define U_CONSTANT_TO_PARAM(str) str,U_CONSTANT_SIZE(str)
 #define U_CONSTANT_TO_TRACE(str)     U_CONSTANT_SIZE(str),str
 
-#define U_MEMCPY(a,b) (void) memcpy((char* restrict)(a),b,U_CONSTANT_SIZE(b))
-
+#define U_MEMCPY(a,b)     (void) memcpy((char* restrict)(a),b,U_CONSTANT_SIZE(b))
 #define U_MEMCMP(a,b)            memcmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 #define U_STRNCMP(a,b)          strncmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))
 #define U_STRNCASECMP(a,b)  strncasecmp((const char* restrict)(a),b,U_CONSTANT_SIZE(b))

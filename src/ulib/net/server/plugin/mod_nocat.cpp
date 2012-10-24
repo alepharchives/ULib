@@ -455,91 +455,7 @@ int UNoCatPlugIn::handlerTime()
       // NB: check if there is now a http request processing...
 
       if (u_http_info.method) flag_check_peers_for_info = true;
-      else
-         {
-         (void) gettimeofday(u_now, 0);
-
-         // check firewall status
-
-         fw.setArgument(3, "openlist");
-
-         (void) fw.execute(0, &output, -1, fd_stderr);
-
-         UString msg(300U);
-         UVector<UString> openlist(output);
-
-         U_INTERNAL_DUMP("openlist.size() = %u total_connections = %u peers->size() = %u", openlist.size(), total_connections, peers->size())
-
-         if (openlist.size() != total_connections)
-            {
-            // send msg to portal
-
-            msg.snprintf("/error_ap?ap=%.*s&public=%.*s:%u", U_STRING_TO_TRACE(hostname), U_STRING_TO_TRACE(ip), UServer_Base::port);
-
-            (void) sendMsgToPortal(uclient, msg);
-
-            U_SRV_LOG("*** FIREWALL NOT ALIGNED: %.*S ***", U_STRING_TO_TRACE(output));
-            }
-
-         // check if there are log file to upload
-
-         UFile file;
-         uint32_t i, n;
-         const char* ptr;
-         UVector<UString> vec;
-         UString dir(ULog::dir_log_gz), log_file, log_file_basename, log_file_renamed(U_CAPACITY);
-
-         for (i = 0, n = UFile::listContentOf(vec, &dir, U_CONSTANT_TO_PARAM("*.gz")); i < n; ++i)
-            {
-            log_file = vec[i];
-
-            file.setPath(log_file);
-
-            if (((void)file.stat(), file.getSize()) < (2 * 1024)) goto remove;
-
-            log_file_basename = UStringExt::basename(log_file);
-
-            log_file_renamed.snprintf("%s/%.*s_%.*s", ULog::dir_log_gz, U_STRING_TO_TRACE(hostname), U_STRING_TO_TRACE(log_file_basename));
-
-            (void) file._rename((ptr = log_file_renamed.data()));
-
-            (void) msg.assign("/uploader");
-
-            uploader.setFileArgument(ptr);
-
-            if (sendMsgToPortal(uploader, 0, msg, 0))
-               {
-remove:
-               (void) file._unlink();
-               }
-            }
-
-         checkPeersForInfo();
-
-         // NB: check for pending arping...
-
-         if (isPingAsyncPending()) UEventTime::setSecond(U_TIME_FOR_ARPING_ASYNC_COMPLETION - 2);
-         else
-            {
-            Url* info_url;
-
-            for (i = 0, n = vinfo_url.size(); i < n; ++i)
-               {
-               info_url = pthis->vinfo_url[i];
-
-               U_INTERNAL_DUMP("index_AUTH = %u info_url = %p", i, info_url)
-
-               if (info_url->isQuery())
-                  {
-                  (void) sendMsgToPortal(uclient, i, info_url->getPathAndQuery());
-
-                  *info_url = *(pthis->vauth_url[i]);
-                  }
-               }
-
-            UEventTime::setSecond(check_expire);
-            }
-         }
+      else                    checkSystem();
       }
 
    // return value:
@@ -823,7 +739,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
       {
       time_t timeout = args[*str_Timeout].strtol();
 
-      if (timeout < 1800) timeout *= 60; // NB: time in minutes...
+      if (timeout == 0) timeout = 3600 * 2; // default value (2h)...
 
       permit(peer, timeout);
       }
@@ -870,7 +786,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer)
 
    peer->traffic_available = args[*str_Traffic].strtoll();
 
-   if (peer->traffic_available < (1024ULL * 1024ULL)) peer->traffic_available *= (1024ULL * 1024ULL); // NB: traffic in MB...
+   if (peer->traffic_available == 0) peer->traffic_available = 300 * (1024ULL * 1024ULL); // default value (300M)...
 
    U_INTERNAL_DUMP("traffic_available = %llu", peer->traffic_available)
 
@@ -901,6 +817,19 @@ UModNoCatPeer::UModNoCatPeer() : token(100U), gateway(100U)
    status            = PEER_DENY;
    traffic_done      = ctraffic = 0;
    traffic_available = 4UL * 1024UL * 1024UL * 1024UL; // 4G
+}
+
+void UNoCatPlugIn::setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* ip, uint32_t n)
+{
+   U_TRACE(0, "UNoCatPlugIn::setFireWallCommand(%p,%.*S)", &cmd, U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), ip, n)
+
+   // NB: request(arp|permit|deny|clear|reset|initialize) mac ip class(Owner|Member|Public) rulenum]
+
+   UString command(100U);
+
+   command.snprintf("/bin/sh %.*s request %.*s %s Member %u", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), ip, n);
+
+   cmd.set(command, (char**)0);
 }
 
 void UNoCatPlugIn::setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH)
@@ -962,7 +891,9 @@ void UNoCatPlugIn::setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH)
 
    U_INTERNAL_DUMP("peer->rulenum = %u peer->index_AUTH = %u", peer->rulenum, peer->index_AUTH)
 
-   peer->setCommand(fw_cmd);
+   // NB: request(arp|permit|deny|clear|reset|initialize) mac ip class(Owner|Member|Public) rulenum]
+
+   setFireWallCommand(peer->fw, fw_cmd, peer->mac, peer->UIPAddress::pcStrAddress, peer->rulenum);
 
    peers->insertAfterFind(peer->ip, peer);
 }
@@ -1180,6 +1111,114 @@ __pure UModNoCatPeer* UNoCatPlugIn::getPeer(uint32_t n)
    U_RETURN_POINTER(0, UModNoCatPeer);
 }
 
+void UNoCatPlugIn::checkSystem()
+{
+   U_TRACE(0, "UNoCatPlugIn::checkSystem()")
+
+   (void) gettimeofday(u_now, 0);
+
+   // check firewall status
+
+   fw.setArgument(3, "openlist");
+
+   (void) fw.execute(0, &output, -1, fd_stderr);
+
+   UString _ip, msg(300U);
+   UVector<UString> openlist(output);
+   uint32_t i, n = openlist.size();
+
+   U_INTERNAL_DUMP("openlist.size() = %u total_connections = %u peers->size() = %u", n, total_connections, peers->size())
+
+   if (n != total_connections)
+      {
+      UModNoCatPeer* peer;
+
+      for (i = 0; i < n; ++i)
+         {
+         _ip  = openlist[i];
+         peer = (*peers)[_ip];
+
+         if (peer)
+            {
+            U_ASSERT_EQUALS(_ip, peer->UIPAddress::pcStrAddress)
+
+            U_SRV_LOG("I try to remove peer: IP %s MAC %.*s", peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac));
+
+            executeCommand(peer, UModNoCatPeer::PEER_DENY);
+            }
+         }
+
+      // send msg to portal
+
+      msg.snprintf("/error_ap?ap=%.*s@%.*s&public=%.*s:%u",
+                     U_STRING_TO_TRACE(label), U_STRING_TO_TRACE(hostname), U_STRING_TO_TRACE(ip), UServer_Base::port);
+
+      (void) sendMsgToPortal(uclient, msg);
+
+      U_SRV_LOG("*** FIREWALL NOT ALIGNED: %.*S ***", U_STRING_TO_TRACE(output));
+      }
+
+   // check if there are log file to upload
+
+   UFile file;
+   const char* ptr;
+   UVector<UString> vec;
+   UString dir(ULog::dir_log_gz), log_file, log_file_basename, log_file_name(U_CAPACITY), log_file_renamed(U_CAPACITY);
+
+   for (i = 0, n = UFile::listContentOf(vec, &dir, U_CONSTANT_TO_PARAM("*.gz")); i < n; ++i)
+      {
+      log_file = vec[i];
+
+      file.setPath(log_file);
+
+      if (((void)file.stat(), file.getSize()) < (2 * 1024)) goto remove;
+
+      log_file_basename = UStringExt::basename(log_file);
+
+      log_file_name.snprintf("%.*s_%.*s", U_STRING_TO_TRACE(hostname), U_STRING_TO_TRACE(log_file_basename));
+
+      log_file_renamed.snprintf("%s/%.*s", ULog::dir_log_gz, U_STRING_TO_TRACE(log_file_name));
+
+      (void) file._rename((ptr = log_file_renamed.data()));
+
+      uploader.setFileArgument(ptr);
+
+      msg.snprintf("/uploader", 0);
+
+      if (sendMsgToPortal(uploader, 0, msg, &output)) // NB: we ask for output so that we wait for response before file delete...
+         {
+   remove:
+         (void) file._unlink();
+         }
+      }
+
+   checkPeersForInfo();
+
+   // NB: check for pending arping...
+
+   if (isPingAsyncPending()) UEventTime::setSecond(U_TIME_FOR_ARPING_ASYNC_COMPLETION - 2);
+   else
+      {
+      Url* info_url;
+
+      for (i = 0, n = vinfo_url.size(); i < n; ++i)
+         {
+         info_url = pthis->vinfo_url[i];
+
+         U_INTERNAL_DUMP("index_AUTH = %u info_url = %p", i, info_url)
+
+         if (info_url->isQuery())
+            {
+            (void) sendMsgToPortal(uclient, i, info_url->getPathAndQuery());
+
+            *info_url = *(pthis->vauth_url[i]);
+            }
+         }
+
+      UEventTime::setSecond(check_expire);
+      }
+}
+
 void UNoCatPlugIn::checkPeersForInfo()
 {
    U_TRACE(0, "UNoCatPlugIn::checkPeersForInfo()")
@@ -1193,7 +1232,6 @@ void UNoCatPlugIn::checkPeersForInfo()
    // NB: check for pending arping...
 
    uint32_t i;
-   UModNoCatPeer* peer;
 
    flag_check_peers_for_info = true;
 
@@ -1238,6 +1276,8 @@ result:
    if (paddrmask)
       {
       U_INTERNAL_ASSERT_MAJOR(nfds,0)
+
+      UModNoCatPeer* peer;
 
       for (i = 0; i < nfds; ++i)
          {
@@ -1910,7 +1950,7 @@ int UNoCatPlugIn::handlerRequest()
             {
             // NB: request from AUTH to check and notify logout e/o disconnected users and info...
 
-            checkPeersForInfo();
+            if (flag_check_peers_for_info == false) checkSystem();
 
             notifyAuthOfUsersInfo(index_AUTH);
 
@@ -2055,7 +2095,7 @@ int UNoCatPlugIn::handlerRequest()
           * it was decided to give it one.
           */
 
-         U_SRV_LOG("detected strange initial WiFi request from peer: IP %S", UServer_Base::getClientAddress());
+         U_SRV_LOG("detected strange initial WiFi request (iPhone) from peer: IP %S", UServer_Base::getClientAddress());
 
          setHTTPResponse(*str_IPHONE_SUCCESS);
 

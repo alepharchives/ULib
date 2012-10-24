@@ -381,7 +381,7 @@ U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
 
          if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
 
-         (void) u__memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len);
+         u__memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len, __PRETTY_FUNCTION__);
 
          file_ptr += iov[i].iov_len;
          }
@@ -496,7 +496,7 @@ U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
          {
          if ((lbuf + liov[i].iov_len) > lend) return false;
 
-         (void) u__memcpy(lbuf, liov[i].iov_base, liov[i].iov_len);
+         u__memcpy(lbuf, liov[i].iov_base, liov[i].iov_len, __PRETTY_FUNCTION__);
 
          lbuf += liov[i].iov_len;
          }

@@ -111,10 +111,10 @@ public:
 
    // Ricerche
 
-   void setKey(     UStringRep* _key)        {  key.dptr = (void*) _key->data(); key.dsize =  _key->size(); }
-   void setKey( const UString&  _key)        {  key.dptr = (void*) _key.data();  key.dsize =  _key.size(); }
-   void setData(const UString& _data)        { data.dptr = (void*)_data.data(); data.dsize = _data.size(); }
-   void setData(void* dptr, uint32_t dsize)  { data.dptr = dptr;                data.dsize = dsize; }
+   void setKey(     UStringRep* _key)       {  key.dptr = (void*) _key->data(); key.dsize =  _key->size(); }
+   void setKey( const UString&  _key)       {  key.dptr = (void*) _key.data();  key.dsize =  _key.size(); }
+   void setData(const UString& _data)       { data.dptr = (void*)_data.data(); data.dsize = _data.size(); }
+   void setData(void* dptr, uint32_t dsize) { data.dptr = dptr;                data.dsize = dsize; }
 
    bool find(const UString& _key)
       {
@@ -182,16 +182,17 @@ public:
 
    // Call function for all entry
 
-   static UCDB* getCDB()          { return internal.ptr_cdb; }
-          void  setCDB()          { internal.ptr_cdb = this; }
-   static void  setCDB(UCDB* ptr) { internal.ptr_cdb = ptr; }
+          void setCDB()                         { internal.ptr_cdb = this; }
+   static void setCDB(UCDB* ptr)                { internal.ptr_cdb = ptr; }
+   static void setVector(UVector<UString>* ptr) { internal.ptr_vector = ptr; }
 
    static vPFprpr getFunctionToCall()          { return internal.function_to_call; }
-   static void    setFunctionToCall(vPFprpr f) { internal.function_to_call = f; }
+   static void    setFunctionToCall(vPFprpr f) {        internal.function_to_call = f; }
 
    void callForAllEntry(vPFprpr function, UString* pattern = 0)
       { internal.ptr_cdb = this; internal.function_to_call = function; _callForAllEntry(pattern); }
 
+   static void addEntryToVector()    { internal.add_entry_to_vector     = true; }
    static void stopCallForAllEntry() { internal.stop_call_for_all_entry = true; }
 
    static char* getPtrPattern() { return internal.ptr_pattern; }
@@ -262,7 +263,8 @@ protected:
       UCDB* ptr_cdb;
       char* ptr_pattern;
       vPFprpr function_to_call;
-      bool stop_call_for_all_entry;
+      UVector<UString>* ptr_vector;
+      bool stop_call_for_all_entry, add_entry_to_vector;
    } cdb_internal;
 
    static UString* pbuffer;

@@ -206,12 +206,12 @@ int UStreamPlugIn::handlerRequest()
 
    if (U_HTTP_URI_EQUAL(uri_path))
       {
-      USocket* csocket = UServer_Base::pClientImage->socket;
-
       u_http_info.nResponseCode  = HTTP_OK;
       U_http_is_connection_close = U_YES;
 
       UHTTP::setHTTPResponse(&content_type, 0);
+
+      USocket* csocket = UServer_Base::pClientImage->socket;
 
       csocket->setTcpCork(1U);
 
@@ -234,7 +234,7 @@ int UStreamPlugIn::handlerRequest()
 
             while (UServer_Base::flag_loop)
                {
-               if (rbuf->isEmpty(readd) == false &&
+               if ( rbuf->isEmpty(readd) == false &&
                    (rbuf->readAndWriteToFd(readd, csocket->iSockDesc) <= 0 && errno != EAGAIN)) break;
 
                to_sleep.nanosleep();

@@ -124,9 +124,9 @@ UClientImage_Base::UClientImage_Base()
 {
    U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
-   socket        = 0;
-   logbuf        = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
-   last_response = 0;
+   socket     = 0;
+   logbuf     = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
+   last_event = 0;
 
    start = count = 0;
    state = sfd = bclose = 0;
@@ -381,6 +381,15 @@ bool UClientImage_Base::newConnection()
 
          U_RETURN(false);
          }
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      if (u_pthread_time)
+         {
+         last_event = u_now->tv_sec;
+
+         U_INTERNAL_DUMP("last_event = %#3D", last_event)
+         }
+#  endif
       }
 
    U_RETURN(true);
@@ -682,9 +691,9 @@ end:
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
    if (u_pthread_time)
       {
-      last_response = u_now->tv_sec;
+      last_event = u_now->tv_sec;
 
-      U_INTERNAL_DUMP("last_response = %ld", last_response)
+      U_INTERNAL_DUMP("last_event = %#3D", last_event)
       }
 #endif
 
@@ -780,6 +789,12 @@ void UClientImage_Base::handlerDelete()
 
       U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
 
+      if (UServer_Base::isLog() &&
+          UNotifier::num_connection == UNotifier::min_connection)
+         {
+         ULog::log("waiting for connection\n");
+         }
+
       if (isPendingWrite())
          {
          // NB: pending sendfile...
@@ -833,7 +848,7 @@ const char* UClientImage_Base::dump(bool _reset) const
                   << "bIPv6                              " << bIPv6              << '\n'
                   << "bclose                             " << bclose             << '\n'
                   << "write_off                          " << write_off          << '\n'
-                  << "last_response                      " << last_response      << '\n'
+                  << "last_event                         " << last_event         << '\n'
                   << "socket          (USocket           " << (void*)socket      << ")\n"
                   << "body            (UString           " << (void*)body        << ")\n"
                   << "logbuf          (UString           " << (void*)logbuf      << ")\n"

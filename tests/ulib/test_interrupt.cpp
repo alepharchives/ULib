@@ -1,5 +1,6 @@
 // test_interrupt.cpp
 
+#include <ulib/base/utility.h>
 #include <ulib/utility/interrupt.h>
 
 #ifdef __MINGW32__
@@ -44,6 +45,10 @@ U_EXPORT main (int argc, char* argv[])
    */
 
 // putenv("EXEC_ON_EXIT=/utility/stack_extend.pl");
+
+   char Buffer[] = "is this a violation?";
+
+   U__MEMCPY(&Buffer[5], &Buffer[10], 10U); /*Possible Violation*/
 
    U_WARNING("%s", "test for SIGSEGV from user");
 

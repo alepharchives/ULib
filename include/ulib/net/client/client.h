@@ -33,6 +33,7 @@ class ULog;
 class UFileConfig;
 class UFCGIPlugIn;
 class USCGIPlugIn;
+class UProxyPlugIn;
 class UHttpClient_Base;
 
 class U_EXPORT UClient_Base {
@@ -73,6 +74,11 @@ public:
       {
       U_TRACE(0, "UClient_Base::reset()")
 
+#  ifdef DEBUG
+      uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri is substr of url)
+#  endif
+
+          url.clear();
       request.clear();
       }
 
@@ -182,9 +188,10 @@ protected:
    bool bIPv6;
 
    static ULog* log;
-   static bool log_shared_with_server;
+   static bool  log_shared_with_server;
 
-   bool setUrl(const UString& url);
+   static void setLogShared();
+          bool setUrl(const UString& url);
 
    // COSTRUTTORI
 
@@ -198,6 +205,7 @@ private:
 
    friend class UFCGIPlugIn;
    friend class USCGIPlugIn;
+   friend class UProxyPlugIn;
    friend class UHttpClient_Base;
 };
 

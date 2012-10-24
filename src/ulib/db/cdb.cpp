@@ -248,10 +248,12 @@ void UCDB::makeAdd(const datum& _key, const datum& _data) // entry presenti nell
    ++ptr_hr;
    char* ptr = (char*)ptr_hr;
 
-   (void) u__memcpy(ptr, _key.dptr, _key.dsize);
+   U__MEMCPY(ptr, _key.dptr, _key.dsize);
+
    ptr += _key.dsize;
 
-   (void) u__memcpy(ptr, _data.dptr, _data.dsize);
+   U__MEMCPY(ptr, _data.dptr, _data.dsize);
+
    ptr += _data.dsize;
 
    internal.ptr_cdb->hr = (UCDB::cdb_record_header*)ptr;
@@ -276,7 +278,7 @@ void UCDB::makeAdd(char* src) // entry NON presenti nella cache...
 
    uint32_t sz = sizeof(UCDB::cdb_record_header) + u_get_unaligned(s_hr->klen) + u_get_unaligned(s_hr->dlen);
 
-   (void) u__memcpy((char*)d_hr, (char*)s_hr, sz);
+   U__MEMCPY((char*)d_hr, (char*)s_hr, sz);
 
    U_INTERNAL_DUMP("hr(%p) = { %u, %u }", d_hr, u_get_unaligned(d_hr->klen), u_get_unaligned(d_hr->dlen))
 
@@ -595,8 +597,20 @@ void UCDB::call(const char*  key_ptr, uint32_t  key_size,
 
    internal.function_to_call(skey, sdata);
 
-    skey->release();
-   sdata->release();
+   if (internal.add_entry_to_vector)
+      {
+      U_INTERNAL_ASSERT_POINTER(internal.ptr_vector)
+
+      internal.ptr_vector->push_back(skey);
+      internal.ptr_vector->push_back(sdata);
+
+      internal.add_entry_to_vector = false;
+      }
+   else
+      {
+       skey->release();
+      sdata->release();
+      }
 }
 
 void UCDB::call(char* src)
@@ -871,13 +885,13 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
 
                   ptr += sizeof(UCDB::cdb_record_header);
 
-                  (void) u__memcpy(ptr, _key->data(), klen);
+                  U__MEMCPY(ptr, _key->data(), klen);
 
                   U_INTERNAL_DUMP("key = %.*S", klen, ptr)
 
                   ptr += klen;
 
-                  (void) u__memcpy(ptr, value->data(), dlen);
+                  U__MEMCPY(ptr, value->data(), dlen);
 
                   U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
 

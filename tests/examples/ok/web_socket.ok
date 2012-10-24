@@ -1,8 +1,5 @@
-HTTP/1.1 101 Web Socket Protocol Handshake
-Upgrade: WebSocket
+HTTP/1.1 101 Switching Protocols
+Upgrade: websocket
 Connection: Upgrade
-WebSocket-Origin: http://example.com
-WebSocket-Location: ws://example.com/demo
-Sec-WebSocket-Protocol: sample
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
 
-n`9eBk9z$R8pOtVb

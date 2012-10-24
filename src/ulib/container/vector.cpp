@@ -50,8 +50,8 @@ void UVector<void*>::insert(uint32_t pos, void* elem) // add elem before pos
 
       allocate(_capacity * 2);
 
-      (void) u__memcpy(vec,           old_vec,                  pos  * sizeof(void*));
-      (void) u__memcpy(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
+      U__MEMCPY(vec,           old_vec,                  pos  * sizeof(void*));
+      U__MEMCPY(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }
@@ -84,8 +84,8 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, void* elem) // add n copy 
 
       allocate(new_length * 2);
 
-      (void) u__memcpy(vec,           old_vec,                  pos  * sizeof(void*));
-      (void) u__memcpy(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));
+      U__MEMCPY(vec,           old_vec,                  pos  * sizeof(void*));
+      U__MEMCPY(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }
@@ -113,7 +113,7 @@ void UVector<void*>::reserve(uint32_t n)
 
       allocate(n);
 
-      if (_length) (void) u__memcpy(vec, old_vec, _length * sizeof(void*));
+      if (_length) U__MEMCPY(vec, old_vec, _length * sizeof(void*));
 
       U_FREE_VECTOR(old_vec, old_capacity, void);
       }
@@ -178,7 +178,9 @@ __pure uint32_t UVector<UString>::findRange(const char* s, uint32_t n, uint32_t 
    U_TRACE(0, "UVector<UString>::findRange(%.*S,%u,%u,%u)", n, s, n, start, _end)
 
    U_CHECK_MEMORY
+
    U_INTERNAL_ASSERT(_end <= _length)
+   U_INTERNAL_ASSERT_MINOR(start, _end)
 
    UStringRep* r;
 
@@ -408,7 +410,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
       {
       sz = (rep = (UStringRep*)vec[i])->size();
 
-      if (sz) (void) u__memcpy(ptr, rep->data(), sz);
+      if (sz) U__MEMCPY(ptr, rep->data(), sz);
 
       if (++i >= _length) break;
 
@@ -416,7 +418,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
       if (tlen)
          {
-         (void) u__memcpy(ptr, t, tlen);
+         U__MEMCPY(ptr, t, tlen);
 
          ptr += tlen;
          }
@@ -460,6 +462,8 @@ uint32_t UVector<UString>::split(const UString& str, const char* delim)
          len = s++ - p;
          r   = str.rep->substr(p, len);
 
+         U_INTERNAL_DUMP("r = %.*S", U_STRING_TO_TRACE(*r))
+
          UVector<void*>::push(r);
          }
       }
@@ -500,6 +504,8 @@ uint32_t UVector<UString>::split(const char* s, uint32_t len, const char* delim)
          {
          len = s++ - p;
          r   = UStringRep::create(len, len, p);
+
+         U_INTERNAL_DUMP("r = %.*S", U_STRING_TO_TRACE(*r))
 
          UVector<void*>::push(r);
          }

@@ -66,6 +66,17 @@ const char*      u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 struct uhttpinfo u_http_info;
 struct uhttpinfo u_http_info_save;
 
+bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
+{
+   U_INTERNAL_TRACE("u_is_overlap(%p,%p,%ld)", dst, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+
+        if (src < dst) return !((src + n - 1) < dst);
+   else if (dst < src) return !((dst + n - 1) < src);
+   else                return true; /* They start at same place. Since we know neither of them has zero length, they must overlap. */
+}
+
 #ifdef DEBUG
 uint32_t u_ptr2int(void* ptr)
 {
@@ -95,34 +106,11 @@ char* u_strcpy(char* restrict dest, const char* restrict src)
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
    U_INTERNAL_ASSERT_POINTER(dest)
-   U_INTERNAL_ASSERT(dest < src || dest > (src+n)) /* Overlapping Memory */
+   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n),false)
 
    (void) strcpy(dest, src);
 
    return dest;
-}
-
-void* u__memcpy(void* restrict dst, const void* restrict src, size_t n)
-{
-   U_INTERNAL_TRACE("u__memcpy(%p,%p,%ld)", dst, src, n)
-
-   U_INTERNAL_ASSERT_MAJOR(n,0)
-   U_INTERNAL_ASSERT_POINTER(src)
-   U_INTERNAL_ASSERT_POINTER(dst)
-
-   /* not overlapping memory
-    *
-    * non_overlap(p, s, q, t) : (p + s ≤ q) ∨ (q + t ≤ p)
-    *
-    * non overlap(p, s, q, t) denotes that the memory ranges p, ... , p + s − 1 and q, ... , q + t − 1 do not overlap.
-    */
-
-   U_INTERNAL_ASSERT(((((char*)src)+n) <= (char*)dst) ||
-                     ((((char*)dst)+n) <= (char*)src))
-
-   (void) memcpy(dst, src, n);
-
-   return dst;
 }
 
 char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
@@ -132,11 +120,34 @@ char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
    U_INTERNAL_ASSERT_POINTER(dest)
-   U_INTERNAL_ASSERT(dest < src || dest > (src+n)) /* Overlapping Memory */
+   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n),false)
 
    (void) strncpy(dest, src, n);
 
    return dest;
+}
+
+void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const char* called_by_function)
+{
+   U_INTERNAL_TRACE("u__memcpy(%p,%p,%ld,%s)", dst, src, n, called_by_function)
+
+   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dst)
+   U_INTERNAL_ASSERT_POINTER(called_by_function)
+
+   if (u_is_overlap((const char* restrict)dst, (const char* restrict)src, n))
+      {
+      U_WARNING("*** Source and Destination OVERLAP in memcpy *** - %s", called_by_function);
+
+      (void) memmove(dst, src, n);
+
+      return 0;
+      }
+
+   (void) memcpy(dst, src, n);
+
+   return dst;
 }
 #endif
 
@@ -1224,7 +1235,12 @@ uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char*
    return n;
 }
 
-/* Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT */
+/* Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT
+
+.  Wildcard: any character
+*  Repeat: zero or more occurrences of previous character
+
+*/
 
 __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
@@ -1907,8 +1923,8 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 
    if (u_endsWith(program, len, U_CONSTANT_TO_PARAM(".exe")) == false)
       {
-      (void) u__memcpy(program_w32, program, len);
-      (void) u__memcpy(program_w32+len, ".exe", sizeof(".exe"));
+      u__memcpy(program_w32, program, len, __PRETTY_FUNCTION__);
+      u__memcpy(program_w32+len, ".exe", sizeof(".exe"), __PRETTY_FUNCTION__);
 
       program = program_w32;
 
@@ -2350,7 +2366,7 @@ static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d
        d_type != DT_LNK &&
        d_type != DT_UNKNOWN) return;
 
-   (void) u__memcpy(u_buffer + u_buffer_len, d_name, d_namlen);
+   u__memcpy(u_buffer + u_buffer_len, d_name, d_namlen, __PRETTY_FUNCTION__);
 
    u_buffer_len += d_namlen;
 
@@ -2418,7 +2434,7 @@ static void u_ftw_readdir(DIR* restrict dirp)
             ds->d_ino  = dp->d_ino;
             ds->d_type = U_DT_TYPE;
 
-            (void) u__memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
+            u__memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen), __PRETTY_FUNCTION__);
 
             u_dir.pfree += d_namlen;
             u_dir.nfree -= d_namlen;
@@ -2503,7 +2519,7 @@ int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict passwor
 {
    U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
 
-   (void) u__memcpy(buf, (char* restrict)password, size);
+   u__memcpy(buf, (char* restrict)password, size, __PRETTY_FUNCTION__);
 
    buf[size-1] = '\0';
 
@@ -2858,21 +2874,42 @@ const unsigned char u_uri_encoded_char[256] = {
 /************************************************************************
  * From rfc2044: encoding of the Unicode values on UTF-8:               *
  *                                                                      *
- * UCS-4 range (hex.)           UTF-8 octet sequence (binary)           *
+ * UCS-4 range (hex.)    UTF-8 octet sequence (binary)                  *
  * 0000 0000-0000 007F   0xxxxxxx                                       *
  * 0000 0080-0000 07FF   110xxxxx 10xxxxxx                              *
  * 0000 0800-0000 FFFF   1110xxxx 10xxxxxx 10xxxxxx                     *
  ************************************************************************/
 
+const unsigned char u_validate_utf8[] = {
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 00..1f
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 20..3f
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 40..5f
+   0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, // 60..7f
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9,9, // 80..9f
+   7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7,7, // a0..bf
+   8,8,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, // c0..df
+   0xa,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x3,0x4,0x3,0x3, // e0..ef
+   0xb,0x6,0x6,0x6,0x5,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8,0x8, // f0..ff
+   0x0,0x1,0x2,0x3,0x5,0x8,0x7,0x1,0x1,0x1,0x4,0x6,0x1,0x1,0x1,0x1, // s0..s0
+   1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,1, // s1..s2
+   1,2,1,1,1,1,1,2,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1, // s3..s4
+   1,2,1,1,1,1,1,1,1,2,1,1,1,1,1,1,1,1,1,1,1,1,1,3,1,3,1,1,1,1,1,1, // s5..s6
+   1,3,1,1,1,1,1,3,1,3,1,1,1,1,1,1,1,3,1,1,1,1,1,1,1,1,1,1,1,1,1,1, // s7..s8
+};
+
 __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 {
    unsigned char c;
+   uint32_t type, code, state = 0;
+   const unsigned char* restrict end = buf + len;
+   /*
    bool result = false;
    uint32_t j, following;
-   const unsigned char* restrict end = buf + len;
+   */
 
    U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(len,128), buf, len)
 
+   U_INTERNAL_ASSERT_MAJOR(len,0)
    U_INTERNAL_ASSERT_POINTER(buf)
 
    while (buf < end)
@@ -2881,33 +2918,46 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
        * UTF is a string of 1, 2, 3 or 4 bytes. The valid strings
        * are as follows (in "bit format"):
        *
-       *    0xxxxxxx                                      valid 1-byte
-       *    110xxxxx 10xxxxxx                             valid 2-byte
-       *    1110xxxx 10xxxxxx 10xxxxxx                    valid 3-byte
-       *    11110xxx 10xxxxxx 10xxxxxx 10xxxxxx           valid 4-byte
+       *    0xxxxxxx                             valid 1-byte
+       *    110xxxxx 10xxxxxx                    valid 2-byte
+       *    1110xxxx 10xxxxxx 10xxxxxx           valid 3-byte
+       *    11110xxx 10xxxxxx 10xxxxxx 10xxxxxx  valid 4-byte
        *    ........
        */
 
       c = *buf++;
 
-      if ((c & 0x80) == 0) /* 0xxxxxxx is plain ASCII */
+      // Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
+      // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
+
+      type = u_validate_utf8[c];
+      code = (state != 0 ? (c & 0x3fu)    | (code << 6)
+                         : (0xff >> type) & (uint32_t)(c));
+
+      state = u_validate_utf8[256 + state * 16 + type];
+
+      U_INTERNAL_PRINT("c = %u type = %u code = %u state = %u", c, type, code, state)
+
+      if (state == 1) return false;
+
+      /*
+      if ((c & 0x80) == 0) // 0xxxxxxx is plain ASCII
          {
-         /*
-         * Even if the whole file is valid UTF-8 sequences,
-         * still reject it if it uses weird control characters.
-         */
+         // Even if the whole file is valid UTF-8 sequences,
+         // still reject it if it uses weird control characters.
+
          if ((u_cttab(c) & 0x0200) == 0) return false;
          }
-      else if ((c & 0x40) == 0) return false; /* 10xxxxxx never 1st byte */
+      else if ((c & 0x40) == 0) return false; // 10xxxxxx never 1st byte
       else
          {
-         /* 11xxxxxx begins UTF-8 */
+         // 11xxxxxx begins UTF-8
 
-         if      ((c & 0x20) == 0) following = 1; /* 110xxxxx */
-         else if ((c & 0x10) == 0) following = 2; /* 1110xxxx */
-         else if ((c & 0x08) == 0) following = 3; /* 11110xxx */
-         else if ((c & 0x04) == 0) following = 4; /* 111110xx */
-         else if ((c & 0x02) == 0) following = 5; /* 1111110x */
+         if      ((c & 0x20) == 0) following = 1; // 110xxxxx
+         else if ((c & 0x10) == 0) following = 2; // 1110xxxx
+         else if ((c & 0x08) == 0) following = 3; // 11110xxx
+         else if ((c & 0x04) == 0) following = 4; // 111110xx
+         else if ((c & 0x02) == 0) following = 5; // 1111110x
          else                      return false;
 
          for (j = 0; j < following; j++)
@@ -2925,9 +2975,12 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 
          result = true;
          }
+
+      return result;
+      */
       }
 
-   return result;
+   return (state == 0);
 }
 
 __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
@@ -2958,125 +3011,129 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 }
 
 /* Table for character type identification
- * Shorter definitions to make the data more compact
  */
 
-#define C 0x0001 /* Control character */
-#define D 0x0002 /* Digit */
-#define L 0x0004 /* Lowercase */
-#define P 0x0008 /* Punctuation */
-#define S 0x0010 /* Space */
-#define U 0x0020 /* Uppercase */
-#define X 0x0040 /* Hexadecimal */
-#define B 0x0080 /* Blank (a space or a tab) */
-#define R 0x0100 /* carriage return or new line (a \r or \n) */
-#define T 0x0200 /* character       appears in plain ASCII text */
-#define F 0x0400 /* character never appears in plain ASCII text */
-#define O 0x0800 /* character minus    '-' (45 0x2D) */
-#define N 0x1000 /* character point    '.' (46 0x2E) */
-#define M 0x2000 /* character underbar '_' (95 0x5F) */
+#define __S 0x0001 /* character space    ' ' (32 0x20) */
+#define __M 0x0002 /* character underbar '_' (95 0x5F) */
+#define __N 0x0004 /* character point    '.' (46 0x2E) */
+#define __O 0x0008 /* character minus    '-' (45 0x2D) */
+#define __B 0x0010 /* Blank (a space or a tab) */
+#define __R 0x0020 /* carriage return or new line (a \r or \n) */
+#define __W 0x0040 /* WhiteSpace */
+#define __C 0x0080 /* Control character */
+#define __D 0x0100 /* Digit */
+#define __L 0x0200 /* Lowercase */
+#define __I 0x0400 /* Punctuation */
+#define __U 0x0800 /* Uppercase */
+#define __F 0x1000 /* character never appears in plain ASCII text */
+#define __T 0x2000 /* character       appears in plain ASCII text */
+#define __X 0x4000 /* Hexadecimal */
 
-#define CS   (C | S)
-#define CT   (C | T)
-#define CF   (C | F)
-#define DT   (D | T)
-#define UT   (U | T)
-#define LU   (L | U)
-#define LX   (L | X)
-#define LT   (L | T)
-#define UX   (U | X)
-#define SB   (S | B)
-#define SF   (S | F)
-#define PF   (P | F)
-#define PT   (P | T)
-#define PTO  (P | T | O)
-#define PTN  (P | T | N)
-#define PTM  (P | T | M)
-#define LXT  (L | X | T)
-#define UXT  (U | X | T)
-#define SBT  (S | B | T)
-#define CST  (C | S | T)
-#define CSB  (C | S | B)
-#define CSF  (C | S | F)
-#define CSR  (C | S | R)
-#define CSBT (C | S | B | T)
-#define CSRT (C | S | R | T)
+#define CW   (__C | __W)
+#define CT   (__C | __T)
+#define CF   (__C | __F)
+#define DT   (__D | __T)
+#define UT   (__U | __T)
+#define LU   (__L | __U)
+#define LX   (__L | __X)
+#define LT   (__L | __T)
+#define UX   (__U | __X)
+#define WB   (__W | __B)
+#define WF   (__W | __F)
+#define IF   (__I | __F)
+#define IT   (__I | __T)
+#define ITO  (__I | __T | __O)
+#define ITN  (__I | __T | __N)
+#define ITM  (__I | __T | __M)
+#define LXT  (__L | __X | __T)
+#define UXT  (__U | __X | __T)
+#define WBT  (__W | __B | __T)
+#define CWT  (__C | __W | __T)
+#define CWB  (__C | __W | __B)
+#define CWF  (__C | __W | __F)
+#define CWR  (__C | __W | __R)
+#define CWBT (__C | __W | __B | __T)
+#define CWRT (__C | __W | __R | __T)
+#define SWBT (__S | __W | __B | __T)
 
 const unsigned short u__ct_tab[256] = {
    /*                                BEL  BS    HT    LF        FF    CR       */
-   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CSBT, CSRT, CSF, CST, CSRT, CF,  CF, /* 0x0X */
+   CF,  CF,  CF,  CF,  CF,  CF,  CF,  CT, CT, CWBT, CWRT, CWF, CWT, CWRT, CF,  CF, /* 0x0X */
    /*                                                     ESC                  */
    CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF, CF,   CF,   CF,  CT,  CF,  CF,  CF,  CF, /* 0x1X */
 
-   SBT, PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,  PT,   PT,  PT,  PT,  PTO, PTN, PT, /* 0x2X */
-   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   PT,  PT,  PT,  PT,  PT,  PT, /* 0x3X */
-   PT,  UXT, UXT, UXT, UXT, UXT, UXT, UT,  UT,  UT,   UT,  UT,  UT,  UT,  UT,  UT, /* 0x4X */
-   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  PT,  PT,  PT,  PT,  PTM,/* 0x5X */
-   PT, LXT, LXT, LXT, LXT, LXT, LXT,  LT,  LT,  LT,   LT,  LT,  LT,  LT,  LT,  LT, /* 0x6X */
-   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  PT,  PT,  PT,  PT,  CF, /* 0x7X */
+ SWBT,  IT,  IT,  IT,  IT,  IT,  IT,  IT,  IT,  IT,   IT,  IT,  IT,  ITO, ITN, IT, /* 0x2X */
+   DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,  DT,   IT,  IT,  IT,  IT,  IT,  IT, /* 0x3X */
+   IT, UXT, UXT, UXT, UXT, UXT, UXT,  UT,  UT,  UT,   UT,  UT,  UT,  UT,  UT,  UT, /* 0x4X */
+   UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,  UT,   UT,  IT,  IT,  IT,  IT, ITM, /* 0x5X */
+   IT, LXT, LXT, LXT, LXT, LXT, LXT,  LT,  LT,  LT,   LT,  LT,  LT,  LT,  LT,  LT, /* 0x6X */
+   LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,  LT,   LT,  IT,  IT,  IT,  IT,  CF, /* 0x7X */
 
    CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,   CF,  CF,  CF,  CF,  CF,  CF, /* 0x8X */
    CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,  CF,   CF,  CF,  CF,  CF,  CF,  CF, /* 0x9X */
-   SF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,   PF,  PF,  PF,  PF,  PF,  PF, /* 0xaX */
-   PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,  PF,   PF,  PF,  PF,  PF,  PF,  PF, /* 0xbX */
-    F,   F,   F,   F,   F,   F,   F,   F,   F,   F,    F,   F,   F,   F,   F,   F, /* 0xcX */
-    F,   F,   F,   F,   F,   F,   F,  PF,   F,   F,    F,   F,   F,   F,   F,   F, /* 0xdX */
-    F,   F,   F,   F,   F,   F,   F,   F,   F,   F,    F,   F,   F,   F,   F,   F, /* 0xeX */
-    F,   F,   F,   F,   F,   F,   F,  PF,   F,   F,    F,   F,   F,   F,   F,   F  /* 0xfX */
+   WF,  IF,  IF,  IF,  IF,  IF,  IF,  IF,  IF,  IF,   IF,  IF,  IF,  IF,  IF,  IF, /* 0xaX */
+   IF,  IF,  IF,  IF,  IF,  IF,  IF,  IF,  IF,  IF,   IF,  IF,  IF,  IF,  IF,  IF, /* 0xbX */
+  __F, __F, __F, __F, __F, __F, __F, __F, __F, __F,  __F, __F, __F, __F, __F, __F, /* 0xcX */
+  __F, __F, __F, __F, __F, __F, __F,  IF, __F, __F,  __F, __F, __F, __F, __F, __F, /* 0xdX */
+  __F, __F, __F, __F, __F, __F, __F, __F, __F, __F,  __F, __F, __F, __F, __F, __F, /* 0xeX */
+  __F, __F, __F, __F, __F, __F, __F,  IF, __F, __F,  __F, __F, __F, __F, __F, __F  /* 0xfX */
 
    /* ISO-1 character set
 
-   C,  C,  C,  C,  C, CT,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C,
-   C,  C,  C,  C,  C,  C,  C,  C,  C,    C,   C,   C,   C,  C,   C,  C,
-   S,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P,
-   P,  P,  P,  P,  P,  P,  P,  P,  P,    P,   P,   P,   P,  P,   P,  P,
-   U,  U,  U,  U,  U,  U,  U,  U,  U,    U,   U,   U,   U,  U,   U,  U,
-   U,  U,  U,  U,  U,  U,  U,  P,  U,    U,   U,   U,   U,  U,   U, LU,
-   L,  L,  L,  L,  L,  L,  L,  L,  L,    L,   L,   L,   L,  L,   L,  L,
-   L,  L,  L,  L,  L,  L,  L,  P,  L,    L,   L,   L,   L,  L,   L,  L 
+   C,  C,  C,  C,  C, CT,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
+   C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
+   W,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,
+   I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,  I,
+   U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,  U,
+   U,  U,  U,  U,  U,  U,  U,  I,  U,  U,  U,  U,  U,  U,  U, LU,
+   L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,  L,
+   L,  L,  L,  L,  L,  L,  L,  I,  L,  L,  L,  L,  L,  L,  L,  L 
    */
 };
 
-#undef C
-#undef D
-#undef L
-#undef P
-#undef S
-#undef U
-#undef X
-#undef B
-#undef R
-#undef T
-#undef F
-#undef O
-#undef N
-#undef M
+#undef __S
+#undef __M
+#undef __N
+#undef __O
+#undef __B
+#undef __R
+#undef __W
+#undef __C
+#undef __D
+#undef __L
+#undef __I
+#undef __U
+#undef __X
+#undef __T
+#undef __F
 
-#undef CS
+#undef CW
 #undef CT
 #undef CF
-#undef LU
-#undef LX
-#undef UX
-#undef SB
-#undef SF
 #undef DT
 #undef UT
+
+#undef LU
+#undef LX
 #undef LT
-#undef PF
-#undef PT
-#undef PTO
-#undef PTN
-#undef PTM
-#undef CSB
-#undef CSR
+#undef UX
+#undef WB
+#undef WF
+#undef IF
+#undef IT
+#undef ITO
+#undef ITN
+#undef ITM
 #undef LXT
 #undef UXT
-#undef SBT
-#undef CST
-#undef CSF
-#undef CSBT
-#undef CSRT
+#undef WBT
+#undef CWT
+#undef CWB
+#undef CWF
+#undef CWR
+#undef CWBT
+#undef CWRT
+#undef SWBT
 
 /* Table for converting to lower-case */
 

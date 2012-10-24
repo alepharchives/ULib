@@ -56,16 +56,11 @@ public:
    static const UString* str_origin;
    static const UString* str_frm_body;
    static const UString* str_indexhtml;
-   static const UString* str_websocket;
    static const UString* str_ctype_tsa;
    static const UString* str_frm_header;
    static const UString* str_ctype_html;
    static const UString* str_ctype_soap;
    static const UString* str_ulib_header;
-   static const UString* str_frm_websocket;
-   static const UString* str_websocket_key1;
-   static const UString* str_websocket_key2;
-   static const UString* str_websocket_prot;
    static const UString* str_strict_transport_security;
 
    static void str_allocate();
@@ -81,6 +76,7 @@ public:
    static const char* ptrI; // "If-Modified-Since"
    static const char* ptrP; // "X-Real-IP"
    static const char* ptrX; // "X-Forwarded-For"
+   static const char* ptrS; // "Sec-WebSocket-Key"
 
    // COSTRUTTORE e DISTRUTTORE
 
@@ -700,7 +696,10 @@ public:
    UServletPage& operator=(const UServletPage&)   { return *this; }
    };
 
+   static UStringRep*   usp_page_key;
    static UServletPage* usp_page_to_check;
+
+   static UServletPage* getUSP(const UString& key);
 
    static void callEndForAllUSP( UStringRep* key, void* value);
    static void callInitForAllUSP(UStringRep* key, void* value);
@@ -1020,6 +1019,7 @@ private:
    static bool isAlias(UServletPage* usp_page) U_NO_EXPORT;
    static bool isHTTPRequestTooLarge(UString& buffer) U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
+   static void checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static void checkIfAlias(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;

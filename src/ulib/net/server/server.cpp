@@ -82,7 +82,6 @@ int                               UServer_Base::bclose;
 int                               UServer_Base::iBackLog = SOMAXCONN;
 int                               UServer_Base::timeoutMS = -1;
 int                               UServer_Base::cgi_timeout;
-int                               UServer_Base::watch_counter;
 int                               UServer_Base::verify_mode;
 int                               UServer_Base::preforked_num_kids;
 bool                              UServer_Base::bssl;
@@ -99,6 +98,8 @@ bool                              UServer_Base::flag_use_tcp_optimization;
 ULog*                             UServer_Base::log;
 pid_t                             UServer_Base::pid;
 time_t                            UServer_Base::expire;
+time_t                            UServer_Base::last_timeout;
+time_t                            UServer_Base::threshold_for_timeout;
 uint32_t                          UServer_Base::start;
 uint32_t                          UServer_Base::count;
 uint32_t                          UServer_Base::shared_data_add;
@@ -166,6 +167,8 @@ const UString* UServer_Base::str_ENABLE_RFC1918_FILTER;
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #  include "ulib/thread.h"
 
+static const char* name_function;
+
 class UTimeThread : public UThread {
 public:
 
@@ -175,15 +178,56 @@ public:
       {
       U_TRACE(0, "UTimeThread::run()")
 
-      struct timespec ts = { 1L, 0L };
+#  ifdef DEBUG
+      long delta;
+      bool check = false;
+      UTimeVal before, after;
+#  endif
 
-      UServer_Base::watch_counter = 1;
+      int watch_counter  = 1;
+      struct timespec ts = { 1L, 0L };
 
       while (UServer_Base::flag_loop)
          {
-         UServer_Base::runWatch();
-
          (void) nanosleep(&ts, 0);
+
+         U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
+
+         if (--watch_counter) u_now->tv_sec += 1L;
+         else
+            {
+#        ifdef DEBUG
+            if (check)
+               {
+               u_now->tv_sec += 1L;
+
+               before.set(*u_now);
+               }
+#        endif
+
+            watch_counter = 30;
+
+            (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+#        ifdef DEBUG
+            if (check == false) check = true;
+            else
+               {
+               after.set(*u_now);
+
+               after -= before;
+               delta  = after.getMilliSecond();
+
+               if (delta >=  1000 ||
+                   delta <= -1000)
+                  {
+                  U_SRV_LOG("runWatch(%d) delta time exceed 1 sec: %d", watch_counter, delta);
+                  }
+               }
+#        endif
+            }
+
+         UServer_Base::updateSharedCacheTime();
          }
       }
 };
@@ -200,6 +244,34 @@ public:
       while (UServer_Base::flag_loop) (void) UNotifier::waitForEvent(UServer_Base::ptime);
       }
 };
+
+void UServer_Base::updateSharedCacheTime()
+{
+   U_TRACE(0, "UServer_Base::updateSharedCacheTime()")
+
+   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+   U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+
+   /*
+   u_now = &(ptr_shared_data->_timeval);
+
+   struct timeval _timeval;
+   char data_1[17]; // 18/06/12 18:45:56
+   char  null1[1];  // 123456789012345678901234567890
+   char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+   char  null2[1];  // 123456789012345678901234567890
+   char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+   char  null3[1];  // 123456789012345678901234567890
+   */
+
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval))
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17+1)
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+17+1+26+1)
+
+   if (isLog())      (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
+   if (isOtherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
+                     (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
+}
 #endif
 
 #ifndef __MINGW32__
@@ -489,7 +561,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
    // PORT               port number             for the listening socket
    // SOCKET_NAME        file name               for the listening socket
    // IP_ADDRESS         ip address of host for the interface connected to the Internet (autodetected if not specified)
-   // ALLOWED_IP         list of comma separated client         address for IP-based access control (IPADDR[/MASK])
+   // ALLOWED_IP         list of comma separated client address for IP-based access control (IPADDR[/MASK])
    //
    // ENABLE_RFC1918_FILTER reject request from private IP to public server address
    // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
@@ -1169,12 +1241,15 @@ void UServer_Base::init()
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (u_pthread_time)
          {
-         u_now         = U_NOW;
-         watch_counter = 1;
+         u_now = U_NOW;
 
-         runWatch();
+         (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+         updateSharedCacheTime();
 
          ((UTimeThread*)u_pthread_time)->start();
+
+         if (timeoutMS != -1) threshold_for_timeout = 1;
          }
 #  endif
       }
@@ -1228,7 +1303,7 @@ void UServer_Base::init()
 
       if (addr) csocket->cLocalAddress.set(*addr);
 
-      ptr->last_response = u_now->tv_sec;
+      ptr->last_event = u_now->tv_sec;
       }
 
 #ifdef DEBUG
@@ -1318,43 +1393,6 @@ void UServer_Base::reopenLog()
       }
 }
 
-void UServer_Base::runWatch()
-{
-   U_TRACE(0, "UServer_Base::runWatch()")
-
-   U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
-
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   if (--watch_counter) u_now->tv_sec += 1L;
-   else
-      {
-      watch_counter = 30;
-
-      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-      }
-
-   /*
-   u_now = &(ptr_shared_data->_timeval);
-
-   struct timeval _timeval;
-   char data_1[17]; // 18/06/12 18:45:56
-   char  null1[1];  // 123456789012345678901234567890
-   char data_2[26]; // 04/Jun/2012:18:18:37 +0200
-   char  null2[1];  // 123456789012345678901234567890
-   char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-   char  null3[1];  // 123456789012345678901234567890
-   */
-
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval))
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17+1)
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+17+1+26+1)
-
-   if (isLog())      (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
-   if (isOtherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
-                     (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
-#endif
-}
-
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 {
    U_TRACE(0, "[SIGHUP] UServer_Base::handlerForSigHUP(%d)", signo)
@@ -1430,7 +1468,6 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    uint32_t counter = 0;
    UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
-   time_t threshold_for_timeout;
 
 start:
    ptr = pindex;
@@ -1440,29 +1477,30 @@ start:
    U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (ptr - vClientImage), ptr->sfd)
    U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd  = %d",    (ptr - vClientImage), ptr->UEventFd::fd)
    U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (ptr - vClientImage), ptr->socket->flags, ptr->socket->flags)
-   U_INTERNAL_DUMP("vClientImage[%d].last_response = %ld",   (ptr - vClientImage), ptr->last_response)
+   U_INTERNAL_DUMP("vClientImage[%d].last_event    = %#3D",  (ptr - vClientImage), ptr->last_event)
 
    if (ptr->UEventFd::fd)
       {
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      if (u_pthread_time &&
-          timeoutMS != -1)
+      if (threshold_for_timeout)
          {
          // check for idle connection
 
-         threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000));
+         threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
 
          U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
          U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
 
-         if (ptr->last_response <= threshold_for_timeout)
+         if (ptr->last_event <= threshold_for_timeout)
             {
+            name_function = "handlerTimeoutConnection";
+
             if (handlerTimeoutConnection(ptr)) UNotifier::erase(ptr);
 
             goto next;
             }
          }
-#     endif
+#  endif
 back:
       if (++pindex >= eClientImage)
          {
@@ -1676,7 +1714,7 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
       {
       U_INTERNAL_DUMP("UEventFd::fd = %d logbuf = %.*S", ptr->UEventFd::fd, U_STRING_TO_TRACE(*(ptr->logbuf)))
 
-      U_INTERNAL_ASSERT_MAJOR(ptr->UEventFd::fd,0)
+      U_INTERNAL_ASSERT_MAJOR(ptr->UEventFd::fd, 0)
       U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
 
       U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
@@ -1707,27 +1745,23 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    if (cimg != pthis &&
        cimg != handler_inotify)
       {
-      ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
-
-      U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
-
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(DEBUG)
-      if (u_pthread_time)
+      if (threshold_for_timeout)
          {
-         time_t threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
+      // U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
+         U_INTERNAL_ASSERT_POINTER(u_pthread_time)
 
-         U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
-         U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
-
-         if (((UClientImage_Base*)cimg)->last_response > threshold_for_timeout)
+         if (((UClientImage_Base*)cimg)->last_event > threshold_for_timeout)
             {
-            U_SRV_LOG_WITH_ADDR("client have last_response (#3D) > threshold_for_timeout (#3D)",
-                 ((UClientImage_Base*)cimg)->last_response,        threshold_for_timeout);
-
-            U_INTERNAL_ASSERT(false)
+            U_SRV_LOG_WITH_ADDR("%s: client have last_event (%#3D) > threshold_for_timeout (%#3D)", name_function,
+                     ((UClientImage_Base*)cimg)->last_event,         threshold_for_timeout);
             }
          }
 #  endif
+
+      ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
+
+      U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
 
       U_RETURN(true);
       }
@@ -1746,6 +1780,25 @@ int UServer_Base::UTimeoutConnection::handlerTime()
    if (UNotifier::num_connection > UNotifier::min_connection)
       {
       // there are idle connection... (timeout)
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(DEBUG)
+      if (threshold_for_timeout)
+         {
+         threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
+
+         U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
+         U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
+
+         if (last_timeout > threshold_for_timeout)
+            {
+            U_SRV_LOG_WITH_ADDR("handlerTime: server have last_timeout (%#3D) > threshold_for_timeout (%#3D)",
+                                                          last_timeout,         threshold_for_timeout);
+            }
+
+         last_timeout  = u_now->tv_sec;
+         name_function = "handlerTime";
+         }
+#  endif
 
       UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
       }

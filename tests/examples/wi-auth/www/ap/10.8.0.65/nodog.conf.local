@@ -1,0 +1,7 @@
+### wimoCascine-r29587_rspro
+
+#define INTERNAL_DEVICE_DEF	  'InternalDevice=br-lan br-wds'
+
+#define LOCAL_NETWORK_DEF		  'LocalNetwork=172.16.65.0/24 172.17.65.0/24'
+
+#define LOCAL_NETWORK_LABEL_DEF  LOCAL_NETWORK_LABEL "ap 01"

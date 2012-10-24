@@ -77,7 +77,7 @@ public:
                {
                UString key(argv[optind]), value(argv[++optind]);
 
-               UApplication::exit_value = x.store(key, value);
+               UApplication::exit_value = x.store(key, value, RDB_INSERT);
                }
             break;
 
@@ -92,7 +92,7 @@ public:
             break;
             }
 
-         x.closeReorganize();
+         x.close();
          }
       }
 

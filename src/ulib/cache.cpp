@@ -255,8 +255,8 @@ void UCache::add(const UString& _key, const UString& _data, uint32_t _ttl)
 
    char* ptr = add(key, keylen, datalen, _ttl);
 
-   (void) u__memcpy(ptr,           key,  keylen);
-   (void) u__memcpy(ptr + keylen, data, datalen);
+   U__MEMCPY(ptr,           key,  keylen);
+   U__MEMCPY(ptr + keylen, data, datalen);
 }
 
 void UCache::addContent(const UString& _key, const UString& content, uint32_t _ttl)
@@ -273,8 +273,8 @@ void UCache::addContent(const UString& _key, const UString& content, uint32_t _t
 
    char* ptr = add(key, keylen, datalen, _ttl);
 
-   (void) u__memcpy(ptr,           key,  keylen);
-   (void) u__memcpy(ptr + keylen, data, datalen);
+   U__MEMCPY(ptr,           key,  keylen);
+   U__MEMCPY(ptr + keylen, data, datalen);
 }
 
 UString UCache::get(const char* key, uint32_t keylen)
@@ -419,7 +419,7 @@ U_EXPORT istream& operator>>(istream& is, UCache& cache)
 
       ptr = cache.add(key, keylen, datalen, 0);
 
-      (void) u__memcpy(ptr, key, keylen);
+      U__MEMCPY(ptr, key, keylen);
 
       is.get(); // skip '-'
       is.get(); // skip '>'

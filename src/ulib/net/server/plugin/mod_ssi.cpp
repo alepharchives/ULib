@@ -126,7 +126,7 @@ void USSIPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("none") },
       { U_STRINGREP_FROM_CONSTANT("url") },
       { U_STRINGREP_FROM_CONSTANT("entity") },
-      { U_STRINGREP_FROM_CONSTANT("servlet") },
+      { U_STRINGREP_FROM_CONSTANT("servlet") }
    };
 
    U_NEW_ULIB_OBJECT(str_expr,                   U_STRING_FROM_STRINGREP_STORAGE(0));

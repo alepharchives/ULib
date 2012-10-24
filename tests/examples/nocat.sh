@@ -28,6 +28,7 @@ DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
  start_prg_background userver_tcp -c nocat.cfg
+#start_prg_background userver_tcp -c nodog.conf.portal
 #start_prg_background userver_tcp -c nocat/etc/nodog.conf
 
 #$SLEEP

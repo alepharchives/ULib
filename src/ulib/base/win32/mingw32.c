@@ -1319,7 +1319,7 @@ ssize_t writev(int fd, const struct iovec* iov, int count)
       {
       if (iov[i].iov_len)
          {
-         (void) u__memcpy(ptr, iov[i].iov_base, iov[i].iov_len);
+         u__memcpy(ptr, iov[i].iov_base, iov[i].iov_len, __PRETTY_FUNCTION__);
 
          ptr += iov[i].iov_len;
          }

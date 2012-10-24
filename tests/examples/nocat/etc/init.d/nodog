@@ -2,7 +2,13 @@
 #
 # lg's changelog:
 #
-#	2009/10/28: _pgrep(), _pkill()
+#	2012/10/08: stop(): SIGTERM first, SIGKILL otherwise
+#
+#	2012/10/05: stop file, to stop waiting
+#	2012/10/05: _pgrep() skip me update
+#
+#	2012/10/04: wait for public ip and use it as key, if undefined
+#	2012/10/04: strip()
 #
 
 START=90
@@ -13,66 +19,96 @@ STOP=39
 #export USIMERR="error.sim"
  export DIR_LOG_GZ=/tmp
 
-descr='nodog the excellent'
+descr='nodog the brilliant'
 cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
 #cmdline='strace -t -f -s 100 /usr/sbin/userver_tcp -c /etc/nodog.conf'
-errfile=/tmp/nodog.err
-pidfile=/tmp/nodog.pid
-log_file=/tmp/nodog.log
-conf_file=/etc/nodog.conf
-conf_file_portal=/etc/nodog.conf.portal
-ip_address=/tmp/IP_ADDRESS
+pid_file=/tmp/nodog.pid
+out_file=/tmp/nodog.out
+err_file=/tmp/nodog.err
+stop_file=/tmp/nodog.stop
 
-_pgrep() {
-	test "$1" || return
-	local pids=`ps | grep "$1" | grep -v grep | awk '{ print $1 }'`
-# echo $0 [$$] `date`: _pgrep\(\): "`ps`"  >> /root/nodog.log
-	test "$pids" && echo $pids ; }
+public_iface=tun0
+portal_file=/etc/nodog.portal
+key_file=/etc/nodog.key
+conf_file_portal=/tmp/nodog.conf.portal
 
-_pkill() {
-	local pids=`_pgrep "$2"`
-# echo $0 [$$] `date`: _pkill\(\): pids=$pids  >> /root/nodog.log
-	test "$pids" && kill -$1 $pids ; }
 
-start() {
-	{
-	_pgrep "$cmdline" > /dev/null && {
-		echo "$descr is ALREADY running." ; return ; }
+## you should't need to put your beloved hands below
+#
 
-	echo "starting $descr"
+_pgrep() { local pids=`{ ps -efw || ps -w ; } 2> /dev/null | awk '
+	### skip me ###
+	NR == 1 { pid=($1 == "PID" ? 1 : 2) ; next }
+	match($0, "### skip me ###") { next }
+	match($0, "'"$*"'") { print $pid }'` ; test "$pids" && echo $pids ; }
 
-	rm -f /tmp/*.err $ip_address
-	until test `date '+%Y'` -gt 1970 ; do sleep 1 ; done
-	# get config from AUTH
-	/usr/sbin/uclient -c /etc/uclient.conf "http://wifi-aaa.comune.fi.it/get_config?ap=`uname -n`&key=`/usr/bin/tr -d '\n' < /etc/nodog.conf.key`" >$conf_file_portal
-	until test -s $conf_file_portal ; do sleep 1 ; done
-	$cmdline 2>> $errfile &
-	sleep 2
-	} &
-}
+log() { logger -st nodog -- $* ; }
+strip() { echo -n "`$* 2> /dev/null`" ; }
+
+start() { {
+	local pids=`_pgrep "$cmdline"` ; test "$pids" && {
+		log "$descr is ALREADY running ($pids)." ; return ; }
+	
+	log starting
+	
+	rm -f $stop_file
+
+	## let's wait for date
+	#
+	until test `date '+%Y'` -gt 1970
+		do test -f $stop_file && return
+		log 'waiting for date' ; sleep 3 ; done
+	
+	## let's wait for public ip ...
+	#
+	local public_ip ; until public_ip=`ifconfig $public_iface 2> /dev/null |
+		awk '/inet addr:/ { sub("inet addr:", "") ; print $1 }'` &&
+		test $public_ip
+			do test -f $stop_file && return
+			log "waiting for public ip ($public_iface)" ; sleep 3 ; done
+	
+	## ... and use it as key, if undefined
+	#
+	test ! -f $key_file -o "`strip cat $key_file`" = undefined &&
+		echo $public_ip > $key_file
+	
+	## get conf file from auth portal ...
+	#
+	/usr/sbin/uclient -c /etc/uclient.conf \
+		"http://`strip cat $portal_file`/get_config?ap=`strip uname -n`&key=`strip cat $key_file`" > \
+			$conf_file_portal
+
+	## ... and wait our beloved conf file
+	#
+	until test -s $conf_file_portal
+		do test -f $stop_file && return
+		log 'waiting for our beloved conf file' ; sleep 3 ; done
+	
+	$cmdline >> $out_file 2>> $err_file &
+	
+	sleep 3 ; pids=`_pgrep "$cmdline"` ; test "$pids" &&
+		log "started ($pids)." ||
+		log 'seems not to run ...'
+} & }
 
 stop() {
-# echo $0 [$$] `date`: stopping >> /root/nodog.log
-	_pgrep "$cmdline" > /dev/null &&
-		echo "stopping $descr" || {
-		echo "$descr is NOT running." ; return ; }
+	## are we still waiting ???
+	#
+	date > $stop_file
+	
+	local pids=`_pgrep "$cmdline"` ; test "$pids" || {
+		log "$descr is NOT running." ; return 1 ; }
+		
+	log "stopping ($pids)"
 
-# echo $0 [$$] `date`: signaling >> /root/nodog.log
-# _pkill 0     "$cmdline" # check
-# _pkill  USR1 "$cmdline" # backup log
-#   kill -USR1 `cat $pidfile` # backup log
-# echo $0 [$$] `date`: after signaling, `ls /tmp/*.gz` >> /root/nodog.log
-# sleep 2
-# echo $0 [$$] `date`: after sleep, `ls /tmp/*.gz` >> /root/nodog.log
-# echo $0 [$$] `date`: uploading >> /root/nodog.log
-# /usr/lib/nodog/bin/upload-logs.sh # send log
-# echo $0 [$$] `date`: killing >> /root/nodog.log
+	kill -TERM $pids   ### SIGTERM first, ...
 
-	_pkill TERM "$cmdline"
+	sleep 3 ; pids=`_pgrep "$cmdline"` ; test "$pids" && {
+		log "$descr is STILL running ($pids), sending SIGKILL"
+		kill -KILL $pids ; }   ### ... SIGKILL otherwise
+
+	log 'done.'
 }
 
 restart() {
-	stop
-	sleep 2
-	start
-}
+	stop ; sleep 3 ; start ; }

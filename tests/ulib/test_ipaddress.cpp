@@ -91,7 +91,7 @@ U_EXPORT main (int argc, char* argv[])
 
    if (esito)
       {
-      (void) u__memcpy(address, x.get_in_addr(), x.getInAddrLength());
+      U__MEMCPY(address, x.get_in_addr(), x.getInAddrLength());
 
       x.setAddress(address);
 

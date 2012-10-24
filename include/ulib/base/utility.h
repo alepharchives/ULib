@@ -103,19 +103,21 @@ U_EXPORT uint32_t    u_memory_dump(char* restrict bp, unsigned char* restrict cp
 U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
 #endif
 
+U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
+
 #ifdef DEBUG
 U_EXPORT uint32_t u_ptr2int(void* ptr);
 /* NB: u_strlen() and u_memcpy conflit with /usr/include/unicode/urename.h */
 U_EXPORT size_t   u__strlen(const char* restrict s);
 U_EXPORT char*    u_strcpy( char* restrict dest, const char* restrict src);
-U_EXPORT void*    u__memcpy(void* restrict dest, const void* restrict src, size_t n);
+U_EXPORT void*    u__memcpy(void* restrict dest, const void* restrict src, size_t n, const char* function);
 U_EXPORT char*    u_strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
-#  define u_ptr2int(x)          ((long)x)
-#  define u__strlen(s)          strlen((s))
-#  define u_strcpy(dest,src)    strcpy( (dest),(src))
-#  define u__memcpy(dest,src,n) memcpy( (dest),(src),(n))
-#  define u_strncpy(dest,src,n) strncpy((dest),(src),(n))
+#  define u_ptr2int(x)               ((long)x)
+#  define u__strlen(s)                      strlen((s))
+#  define u_strcpy(dest,src)                strcpy( (dest),(src))
+#  define u__memcpy(dest,src,n,func) (void) memcpy( (dest),(src),(n))
+#  define u_strncpy(dest,src,n)             strncpy((dest),(src),(n))
 #endif
 
 static inline int u_equal(const void* restrict s1, const void* restrict s2, uint32_t n, bool ignore_case) /* Equal with ignore case */
@@ -348,28 +350,29 @@ static inline unsigned      u_cttab(   unsigned char c) { return u__ct_tab[c]; }
 static inline unsigned char u__tolower(unsigned char c) { return u__ct_tol[c]; }
 static inline unsigned char u__toupper(unsigned char c) { return u__ct_tou[c]; }
 
-static inline bool u__iscntrl(unsigned char c)  { return ((u_cttab(c) & 0x0001) != 0); } /* __C Control character */
-static inline bool u__isdigit(unsigned char c)  { return ((u_cttab(c) & 0x0002) != 0); } /* __D Digit */
-static inline bool u__islower(unsigned char c)  { return ((u_cttab(c) & 0x0004) != 0); } /* __L Lowercase */
-static inline bool u__ispunct(unsigned char c)  { return ((u_cttab(c) & 0x0008) != 0); } /* __P Punctuation */
-static inline bool u__isspace(unsigned char c)  { return ((u_cttab(c) & 0x0010) != 0); } /* __S Space */
-static inline bool u__isupper(unsigned char c)  { return ((u_cttab(c) & 0x0020) != 0); } /* __U Uppercase */
-                                                                     /* 0x0040              __X Hexadecimal */
-static inline bool u__isblank(unsigned char c)  { return ((u_cttab(c) & 0x0080) != 0); } /* __B Blank (a space or a tab) */
-static inline bool u__islterm(unsigned char c)  { return ((u_cttab(c) & 0x0100) != 0); } /* __R carriage return or new line (a \r or \n) */
-                                                                     /* 0x0200              __T character       appears in plain ASCII text */
-static inline bool u__istext( unsigned char c)  { return ((u_cttab(c) & 0x0400) == 0); } /* __F character never appears in plain ASCII text */
-                                                                     /* 0x0800              __O character minus    '-' (45 0x2D) */
-                                                                     /* 0x1000              __N character point    '.' (46 0x2E) */
-                                                                     /* 0x2000              __M character underbar '_' (95 0x5F) */
+                                                                     /* 0x0001              __S character space    ' ' (32 0x20) */
+                                                                     /* 0x0002              __M character underbar '_' (95 0x5F) */
+                                                                     /* 0x0004              __N character point    '.' (46 0x2E) */
+                                                                     /* 0x0008              __O character minus    '-' (45 0x2D) */
+static inline bool u__isblank(unsigned char c)  { return ((u_cttab(c) & 0x0010) != 0); } /* __B Blank (a space or a tab) */
+static inline bool u__islterm(unsigned char c)  { return ((u_cttab(c) & 0x0020) != 0); } /* __R carriage return or new line (a \r or \n) */
+static inline bool u__isspace(unsigned char c)  { return ((u_cttab(c) & 0x0040) != 0); } /* __W WhiteSpace */
+static inline bool u__iscntrl(unsigned char c)  { return ((u_cttab(c) & 0x0080) != 0); } /* __C Control character */
+static inline bool u__isdigit(unsigned char c)  { return ((u_cttab(c) & 0x0100) != 0); } /* __D Digit */
+static inline bool u__islower(unsigned char c)  { return ((u_cttab(c) & 0x0200) != 0); } /* __L Lowercase */
+static inline bool u__ispunct(unsigned char c)  { return ((u_cttab(c) & 0x0400) != 0); } /* __I Punctuation */
+static inline bool u__isupper(unsigned char c)  { return ((u_cttab(c) & 0x0800) != 0); } /* __U Uppercase */
+static inline bool u__istext( unsigned char c)  { return ((u_cttab(c) & 0x1000) == 0); } /* __F character never appears in plain ASCII text */
+                                                                     /* 0x2000              __T character       appears in plain ASCII text */
+                                                                     /* 0x4000              __X Hexadecimal */
 
-static inline bool u__isalpha( unsigned char c) { return ((u_cttab(c) & 0x0024) != 0); } /* (__L | __U)                          */
-static inline bool u__isxdigit(unsigned char c) { return ((u_cttab(c) & 0x0042) != 0); } /* (__D | __X)                          */
-static inline bool u__isalnum( unsigned char c) { return ((u_cttab(c) & 0x0026) != 0); } /* (__D | __L | __U)                    */
-static inline bool u__isname(  unsigned char c) { return ((u_cttab(c) & 0x2026) != 0); } /* (__D | __L | __U | __M)              */
-static inline bool u__ishname( unsigned char c) { return ((u_cttab(c) & 0x3826) != 0); } /* (__D | __L | __U | __M  | __N | __O) */
-static inline bool u__isgraph( unsigned char c) { return ((u_cttab(c) & 0x002E) != 0); } /* (__D | __L | __P | __U)              */
-static inline bool u__isprint( unsigned char c) { return ((u_cttab(c) & 0x003E) != 0); } /* (__D | __L | __P | __S | __U)        */
+static inline bool u__isxdigit(unsigned char c) { return ((u_cttab(c) & 0x4100) != 0); } /* (__X | __D)                          */
+static inline bool u__isalpha( unsigned char c) { return ((u_cttab(c) & 0x0A00) != 0); } /* (__L | __U)                          */
+static inline bool u__isalnum( unsigned char c) { return ((u_cttab(c) & 0x0B00) != 0); } /* (__L | __U | __D)                    */
+static inline bool u__isgraph( unsigned char c) { return ((u_cttab(c) & 0x0F00) != 0); } /* (__L | __U | __D | __I)              */
+static inline bool u__isprint( unsigned char c) { return ((u_cttab(c) & 0x0F01) != 0); } /* (__L | __U | __D | __I | __S)        */
+static inline bool u__isname(  unsigned char c) { return ((u_cttab(c) & 0x0B02) != 0); } /* (__L | __U | __D | __M)              */
+static inline bool u__ishname( unsigned char c) { return ((u_cttab(c) & 0x0B0E) != 0); } /* (__L | __U | __D | __M | __N | __O)  */
 
 static inline bool     u__isoctal( unsigned char c) { return ('0' <= c && c <= '7'); }
 static inline bool     u__isbase64(unsigned char c) { return (u__isalnum(c) || (c == '+') || (c == '/') || (c == '=')); }
@@ -389,6 +392,8 @@ enum TextType {
    U_TYPE_TEXT_UTF16BE,
    U_TYPE_BINARY_DATA
 };
+
+extern U_EXPORT const unsigned char u_validate_utf8[];
 
 U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;

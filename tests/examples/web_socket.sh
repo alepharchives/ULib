@@ -15,7 +15,7 @@ rm -f web_socket.log \
 DIR_CMD="../../examples/userver"
 
 #STRACE=$TRUSS
-start_prg_background userver_tcp -c web_socket.cfg
+start_prg_background userver_tcp -c web_socket_sh.cfg
 
 #$SLEEP
 #kill_prg userver_tcp TERM

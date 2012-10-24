@@ -41,8 +41,8 @@ void u_des_init(void)
    if (password) des_string_to_key(password, &key);
    else          des_set_odd_parity(&key);
 
-   (void) u__memcpy(&inp_ivec, &key, sizeof(inp_ivec));
-   (void) u__memcpy(&out_ivec, &key, sizeof(out_ivec));
+   u__memcpy(&inp_ivec, &key, sizeof(inp_ivec), __PRETTY_FUNCTION__);
+   u__memcpy(&out_ivec, &key, sizeof(out_ivec), __PRETTY_FUNCTION__);
 
    (void) des_set_key(&inp_ivec, inp1_sched);
    (void) des_set_key(&inp_ivec, inp2_sched);

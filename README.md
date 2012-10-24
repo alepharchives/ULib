@@ -75,7 +75,7 @@ The current version offers the following features :
        * `mod_http` : core features, static file handler and dynamic page (ULib Servlet Page).
        * `mod_ssi` : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set, direct include and #exec servlet (C/ULib Servlet Page).
        * `mod_nocat` : [captive portal](http://nocat.net/) implementation.
-       * `mod_proxy` : multi-features reverse proxy support.
+       * `mod_proxy` : multi-features reverse proxy with websocket support.
        * `mod_tsa` : server side [Time Stamp](http://www.opentsa.org) support.
        * `mod_soap` : generic [SOAP](http://java.sun.com/developer/technicalArticles/xml/webservices) server services support.
        * `mod_fcgi` : third-party applications support thru [FastCGI](http://www.fastcgi.com/drupal) interface.
@@ -88,7 +88,7 @@ The current version offers the following features :
        * [HTTP Session Hijacking](http://cleverlogic.net/articles/kochure) mitigation.
        * [Algorithmic Complexity Attacks](http://lwn.net/Articles/474365/) prevention by randomizing hash seed.
        * [DNS rebinding](http://en.wikipedia.org/wiki/DNS_rebinding) prevention by RFC1918 filtering and Host header validation.
-       * support for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
+       * selective uri support (DOS regex) for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
    * Immune to [Slow Read DoS attack](http://code.google.com/p/slowhttptest/)
    * [High SSL server quality score](https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa.comune.fi.it)
 

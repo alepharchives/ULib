@@ -43,6 +43,7 @@ class URDBClientImage;
 
 #  define RDB_sync      ((URDB::cache_struct*)journal.map)->sync
 #  define RDB_nrecord   ((URDB::cache_struct*)journal.map)->nrecord
+#  define RDB_reference ((URDB::cache_struct*)journal.map)->reference
 #  define RDB_hashtab  (((URDB::cache_struct*)journal.map)->hashtab)
 
 #  define RDB_ptr      (journal.map+sizeof(URDB::cache_struct))
@@ -126,9 +127,10 @@ public:
 #  define RDB_INSERT  0 // Insertion of new entries only
 #  define RDB_REPLACE 1 // Allow replacing existing entries
 
-   int store(                                           int flag);
-   int store(   UStringRep* _key, const UString& _data, int flag = RDB_REPLACE);
-   int store(const UString& _key, const UString& _data, int flag = RDB_INSERT);
+   int store(                                                                                             int flag);
+   int store(   UStringRep* _key, const UString& _data,                                                   int flag);
+   int store(const UString& _key, const UString& _data,                                                   int flag);
+   int store(const UString& _key, const UString& new_rec, const UString& old_rec, const UString& padding, int flag);
 
    // ---------------------------------------------------------------------
    // Mark a key/value as deleted
@@ -212,8 +214,8 @@ public:
 
    void getKeys(UVector<UString>& vec);
 
-   void callForAllEntry(      vPFprpr function);
-   void callForAllEntrySorted(vPFprpr function);
+   void callForAllEntry(      vPFprpr function, UVector<UString>* vec = 0);
+   void callForAllEntrySorted(vPFprpr function, UVector<UString>* vec = 0, qcompare compare_obj = 0);
 
    // PRINT
 
@@ -259,8 +261,9 @@ protected:
 
    typedef struct rdb_cache_struct {
       uint32_t off;                        // RDB_off
-      uint32_t nrecord;                    // RDB_nrecord
       uint32_t sync;                       // RDB_sync
+      uint32_t nrecord;                    // RDB_nrecord
+      uint32_t reference;                  // RDB_reference
       uint32_t hashtab[CACHE_HASHTAB_LEN]; // RDB_hashtab
       // -----> data storage...            // RDB_ptr
    } cache_struct;

@@ -132,6 +132,18 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
    U_RETURN(false);
 }
 
+void UClient_Base::setLogShared()
+{
+   U_TRACE(0, "UClient_Base::setLogShared()")
+
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::log)
+
+   log                    = UServer_Base::log;
+   log_shared_with_server = true;
+
+   log->startup();
+}
+
 void UClient_Base::loadConfigParam(UFileConfig& cfg)
 {
    U_TRACE(0, "UClient_Base::loadConfigParam(%p)", &cfg)
@@ -169,7 +181,6 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
    key_file  = cfg[*UServer_Base::str_KEY_FILE];
    password  = cfg[*UServer_Base::str_PASSWORD];
    cert_file = cfg[*UServer_Base::str_CERT_FILE];
-
    log_file  = cfg[*UServer_Base::str_LOG_FILE];
 
    if (log_file.empty() == false)
@@ -179,10 +190,7 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
          {
          U_ASSERT_EQUALS(log_file, UServer_Base::pthis->log_file)
 
-         log                    = UServer_Base::log;
-         log_shared_with_server = true;
-
-         log->startup();
+         setLogShared();
          }
       }
 
@@ -285,7 +293,7 @@ bool UClient_Base::setUrl(const UString& location)
 
          U_INTERNAL_DUMP("segment = %.*S", len, src)
 
-         (void) u__memcpy(dest, src, len);
+         U__MEMCPY(dest, src, len);
 
          src   = p + 1;
          dest += len;
@@ -293,7 +301,7 @@ bool UClient_Base::setUrl(const UString& location)
 
       len = location.size();
 
-      (void) u__memcpy(dest, location.data(), len);
+      U__MEMCPY(dest, location.data(), len);
 
       u_http_info.uri     = _buffer;
       u_http_info.uri_len = dest - ptr + len;

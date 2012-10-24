@@ -1,13 +1,20 @@
-GET /css/masterprv.css HTTP/1.1
-Connection: Keep-Alive
+GET /images/btn_signin.png HTTP/1.1
 Host: wifi-aaa.comune.fi.it
-Accept: text/css,*/*;q=0.1
-Accept-Charset: iso-8859-1,utf-8;q=0.7,*;q=0.7
-Accept-Encoding: gzip, deflate, x-gzip, identity; q=0.9
-Accept-Language: it;q=1.0,en;q=0.5,fr;q=0.5,de;q=0.5,pt;q=0.5,es;q=0.5
-Referer: http://wifi-aaa.comune.fi.it/login?mac=04%3Aa8%3A2a%3Ab8%3A01%3A5c&ip=172.16.3.163&redirect=http%3A%2F%2Fd.facebook.com%2Fapperror&gateway=10.8.0.3%3A5280&timeout=0&token=30343a61383a32613a62383a30313a35632631333336343936343738261935a63737da174f557105da4714ca57&ap=ap@Calza-r29587_rspro
-User-Agent: Mozilla/5.0 (Symbian/3; Series60/5.3 NokiaN8-00; Profile/MIDP-2.1 Configuration/CLDC-1.1 ) AppleWebKit/533.4 (KHTML, like Gecko) NokiaBrowser/7.4.2.6 Mobile Safari/533.4 3gpp-gba
-X-Nokia-MusicShop-Bearer: WLAN
-X-Nokia-MusicShop-Version: 14.1139.31
-x-wap-profile: "http://nds1.nds.nokia.com/uaprof/NN8-00r300-3G.xml"
+Accept-Encoding: gzip
+Accept-Language: it-IT, en-US
+x-wap-profile: http://wap.sonyericsson.com/UAprof/X10iR201.xml
+Accept-Charset: utf-8, iso-8859-1, utf-16, *;q=0.7
+Referer: http://wifi-aaa.comune.fi.it/login?mac=6c%3A23%3Ab9%3A8f%3Abc%3Aa5&ip=172.16.18.124&redirect=http%3A%2F%2Fm.facebook.com%2Fhome.php&gateway=172.16.18.254%3A5280&timeout=0&token=3091911094&ap=ap@10.8.0.18
+User-Agent: Mozilla/5.0 (Linux; U; Android 2.1-update1; it-it; X10i Build/2.0.A.0.504) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17 [FBAN/FB4A;FBAV/1.9.5;FBDM/{density=1.5,width=480,height=854};FBLC/it_IT;FB_FW/2;FBCR/3 ITA;FBPN/com.facebook.katana;FBDV/X10i;FBSV/2.1-update1;]
+Accept: text/xml, text/html, application/xhtml+xml, image/png, text/plain, */*;q=0.8
+Cache-Control: no-cache
+Pragma: no-cache
+
+GET /images/btn_login.png HTTP/1.1
+Host: wifi-aaa.comune.fi.it
+Accept-Encoding: gzip
+Accept-Language: it-IT, en-US
+x-wap-profile: http://wap.sonyericsson.com/UAprof/X10iR201.xml
+Accept-Charset: utf-8, iso-8859-1, utf-16, *;q=0.7
+Referer: http://wifi-aaa.comune.fi.it/login?mac=6c%3A23%3Ab9%3A8f%3Abc%3Aa5&ip=172.16.18.124&redirect=http%3A%2F%2Fm.facebook.com%2Fhome.php&gate
 

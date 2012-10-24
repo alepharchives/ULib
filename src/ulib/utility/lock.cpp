@@ -45,9 +45,16 @@ void ULock::lock(timeout_t timeout)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_DUMP("locked = %b", locked)
+   U_INTERNAL_DUMP("locked = %d", locked)
 
-   if (locked == false) locked = (sem ? sem->wait(timeout) : true);
+   if (++locked == 1)
+      {
+      if (sem &&
+          sem->wait(timeout) == false)
+          {
+          locked = 0;
+          }
+      }
 }
 
 void ULock::unlock()
@@ -56,13 +63,11 @@ void ULock::unlock()
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_DUMP("locked = %b", locked)
+   U_INTERNAL_DUMP("locked = %d", locked)
 
-   if (locked)
+   if (--locked == 0)
       {
       if (sem) sem->unlock();
-
-      locked = false;
       }
 }
 

@@ -278,7 +278,7 @@ int USSHSocket::recv(void* pBuffer, int iBufferLen)
 
    int iBytesRead = U_SYSCALL(channel_read_buffer, "%p,%p,%d,%d", channel, buffer, iBufferLen, 0);
 
-   if (iBytesRead > 0) u__memcpy(pBuffer, buffer_get(buffer), iBytesRead);
+   if (iBytesRead > 0) U__MEMCPY(pBuffer, buffer_get(buffer), iBytesRead);
 
 #ifdef DEBUG
         if (iBytesRead > 0) U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))

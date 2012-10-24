@@ -44,7 +44,7 @@ UString UStringExt::BIOtoString(BIO* bio)
       {
       UString result(len);
 
-      (void) u__memcpy(result.data(), buffer, len);
+      U__MEMCPY(result.data(), buffer, len);
 
       result.size_adjust(len);
 
@@ -130,7 +130,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
          if (len)
             {
-            (void) u__memcpy(x.rep->end(), s + start, len);
+            U__MEMCPY(x.rep->end(), s + start, len);
 
             x.rep->_length += len;
             }
@@ -177,14 +177,17 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       if (len)
          {
-         (void) u__memcpy(x.rep->end(), s + start, len);
+         U__MEMCPY(x.rep->end(), s + start, len);
 
          x.rep->_length += len;
          }
 
-      (void) u__memcpy(x.rep->end(), b, n2);
+      if (n2)
+         {
+         U__MEMCPY(x.rep->end(), b, n2);
 
-      x.rep->_length += n2;
+         x.rep->_length += n2;
+         }
 
       start = _end + n1;
       }
@@ -274,7 +277,7 @@ UString UStringExt::expandPath(const char* s, uint32_t n, const UString* environ
 
          U_INTERNAL_ASSERT_MINOR(_end, sizeof(buffer))
 
-         (void) u__memcpy(buffer, s + 1, _end - 1);
+         U__MEMCPY(buffer, s + 1, _end - 1);
 
          buffer[_end-1] = '\0';
 
@@ -403,7 +406,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
             }
          }
 
-      (void) u__memcpy(str + sz, p, len);
+      U__MEMCPY(str + sz, p, len);
 
       sz += len;
 
@@ -482,11 +485,11 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
 
       new_ptr = result.c_pointer(new_size);
 
-      if (len) (void) u__memcpy(new_ptr, s, len);
+      if (len) U__MEMCPY(new_ptr, s, len);
 
       if (var_size)
          {
-         (void) u__memcpy(new_ptr + len, var_ptr, var_size);
+         U__MEMCPY(new_ptr + len, var_ptr, var_size);
 
          new_size += var_size;
          }
@@ -603,7 +606,7 @@ next:
 
       U_INTERNAL_ASSERT_MINOR(n, sizeof(buffer))
 
-      (void) u__memcpy(buffer, s,  n);
+      U__MEMCPY(buffer, s,  n);
 
       buffer[n] = '\0';
 
@@ -621,7 +624,7 @@ UString UStringExt::getPidProcess()
 
    UString value(32U);
 
-   (void) u__memcpy(value.data(), u_pid_str, u_pid_str_len);
+   U__MEMCPY(value.data(), u_pid_str, u_pid_str_len);
 
    value.size_adjust(u_pid_str_len);
 
@@ -700,7 +703,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          {
          sz = p - s;
 
-         (void) u__memcpy(str, s, sz);
+         U__MEMCPY(str, s, sz);
 
          s    = p + 1;
          str += sz;
@@ -714,7 +717,7 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
          {
          sz = _end - s;
 
-         (void) u__memcpy(str, s, sz);
+         U__MEMCPY(str, s, sz);
 
          sz1 += sz;
 
@@ -751,7 +754,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          {
          sz = p - s;
 
-         (void) u__memcpy(str, s, sz);
+         U__MEMCPY(str, s, sz);
 
          s    = p + 1;
          str += sz;
@@ -762,7 +765,7 @@ UString UStringExt::removeEscape(const char* s, uint32_t n)
          {
          sz = _end - s;
 
-         (void) u__memcpy(str, s, sz);
+         U__MEMCPY(str, s, sz);
 
          sz1 += sz;
 
@@ -798,7 +801,7 @@ UString UStringExt::trim(const char* s, uint32_t n)
 
       n += 1 - i;
 
-      (void) u__memcpy(result.data(), s+i, n);
+      U__MEMCPY(result.data(), s+i, n);
 
       result.size_adjust(n);
       }
@@ -830,7 +833,7 @@ UString UStringExt::trimPunctuation(const char* s, uint32_t n)
 
       n += 1 - i;
 
-      (void) u__memcpy(result.data(), s+i, n);
+      U__MEMCPY(result.data(), s+i, n);
 
       result.size_adjust(n);
       }
@@ -873,7 +876,7 @@ UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 
       sz1 = (s - p);
 
-      (void) u__memcpy(str + sz, p, sz1); // result.append(p, sz1);
+      U__MEMCPY(str + sz, p, sz1); // result.append(p, sz1);
 
       sz += sz1;
 
@@ -921,7 +924,7 @@ UString UStringExt::removeWhiteSpace(const char* s, uint32_t n)
 
       sz1 = (s - p);
 
-      (void) u__memcpy(str + sz, p, sz1); // result.append(p, sz1);
+      U__MEMCPY(str + sz, p, sz1); // result.append(p, sz1);
 
       sz += sz1;
       }
@@ -967,7 +970,7 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
 
       sz1 = (s - p);
 
-      (void) u__memcpy(str + sz, p, sz1); // result.append(p, sz1);
+      U__MEMCPY(str + sz, p, sz1); // result.append(p, sz1);
 
       sz += sz1;
 
@@ -1195,7 +1198,7 @@ UString UStringExt::compress(const UString& s)
 
    // copy original size
 
-   (void) u__memcpy(ptr, &sz, sizeof(uint32_t));
+   U__MEMCPY(ptr, &sz, sizeof(uint32_t));
 
    ptr += sizeof(uint32_t);
 
@@ -1527,7 +1530,7 @@ void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffe
 
    char* ptr = buffer.c_pointer(start);
 
-   (void) u__memcpy(ptr, token, U_TOKEN_NM);
+   U__MEMCPY(ptr, token, U_TOKEN_NM);
 
    u_int2hex(ptr + U_TOKEN_NM, value);
 
@@ -1675,7 +1678,7 @@ void UStringExt::minifyCssJs(UString& x)
 
          sz1 = (s - start);
 
-         (void) u__memcpy(str + sz, start, sz1);  // result.append(start, sz1);
+         U__MEMCPY(str + sz, start, sz1);  // result.append(start, sz1);
 
          sz += sz1;
          }
@@ -1705,8 +1708,3 @@ void UStringExt::minifyCssJs(UString& x)
 end:
    U_FREE_STR(str, capacity);
 }
-
-// inlining failed in call to ...: call is unlikely and code size would grow
-
-__pure bool UStringExt::startsWith(const UString& s1, const UString& s2) { return u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }
-__pure bool UStringExt::endsWith(  const UString& s1, const UString& s2) { return u_endsWith(  U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2)); }

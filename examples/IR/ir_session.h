@@ -67,7 +67,7 @@ public:
       QUERY    =                       (*(IRDataSession*)&data_session).QUERY;
       FOR_PAGE =                       (*(IRDataSession*)&data_session).FOR_PAGE;
 
-      (void) u__memcpy(timebuf, (*(IRDataSession*)&data_session).timebuf, sizeof(timebuf));
+      U__MEMCPY(timebuf, (*(IRDataSession*)&data_session).timebuf, sizeof(timebuf));
       }
 
    virtual UDataSession* toDataSession()
@@ -82,7 +82,7 @@ public:
       (*(IRDataSession*)ptr).QUERY    = QUERY;
       (*(IRDataSession*)ptr).FOR_PAGE = FOR_PAGE;
 
-      (void) u__memcpy((*(IRDataSession*)ptr).timebuf, timebuf, sizeof(timebuf));
+      U__MEMCPY((*(IRDataSession*)ptr).timebuf, timebuf, sizeof(timebuf));
 
       U_RETURN_POINTER(ptr,UDataSession);
       }
