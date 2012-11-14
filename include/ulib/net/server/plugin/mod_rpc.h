@@ -23,14 +23,7 @@ public:
 
    // COSTRUTTORI
 
-   URpcPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "")
-
-      rpc_parser = 0;
-      is_rpc_msg = false;
-      }
-
+            URpcPlugIn();
    virtual ~URpcPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -52,8 +45,8 @@ public:
 #endif
 
 protected:
-   URPCParser* rpc_parser;
-   bool is_rpc_msg;
+   static bool is_rpc_msg;
+   static URPCParser* rpc_parser;
 
 private:
    URpcPlugIn(const URpcPlugIn&) : UServerPlugIn() {}

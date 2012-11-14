@@ -12,6 +12,7 @@
 #include <ulib/options.h>
 #include <ulib/process.h>
 #include <ulib/notifier.h>
+#include <ulib/net/ping.h>
 #include <ulib/file_config.h>
 #include <ulib/application.h>
 #include <ulib/ui/dialog.h>

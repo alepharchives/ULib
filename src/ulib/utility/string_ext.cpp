@@ -1182,15 +1182,15 @@ __pure bool UStringExt::isEmailAddress(const UString& s)
    U_RETURN(false);
 }
 
-UString UStringExt::compress(const UString& s)
+UString UStringExt::compress(const char* s, uint32_t sz)
 {
-   U_TRACE(1, "UStringExt::compress(%.*S)", U_STRING_TO_TRACE(s))
+   U_TRACE(0, "UStringExt::compress(%.*S,%u)", sz, s, sz)
 
-   uint32_t sz = s.size();
    UString r(U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::space(sz));
-   char* ptr = r.data();
 
    // copy magic byte
+
+   char* ptr = r.data();
 
    (void) U_MEMCPY(ptr, U_LZOP_COMPRESS);
 
@@ -1198,13 +1198,17 @@ UString UStringExt::compress(const UString& s)
 
    // copy original size
 
-   U__MEMCPY(ptr, &sz, sizeof(uint32_t));
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+   uint32_t size_original = sz;
+#else
+   uint32_t size_original = u_invert_uint32(*(uint32_t*)&sz);
+#endif
 
-   ptr += sizeof(uint32_t);
+   U__MEMCPY(ptr, &size_original, sizeof(uint32_t));
 
    // compress with lzo
 
-   r.rep->_length = U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::compress(s.rep->str, sz, ptr);
+   r.rep->_length = U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::compress(s, sz, ptr + sizeof(uint32_t));
 
    U_INTERNAL_ASSERT(r.invariant())
    U_INTERNAL_ASSERT(UStringExt::isCompress(r))
@@ -1212,9 +1216,9 @@ UString UStringExt::compress(const UString& s)
    U_RETURN_STRING(r);
 }
 
-UString UStringExt::decompress(const UString& s)
+UString UStringExt::decompress(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::decompress(%.*S)", U_STRING_TO_TRACE(s))
+   U_TRACE(0, "UStringExt::decompress(%.*S,%u)", n, s, n)
 
    // check magic byte
 
@@ -1222,16 +1226,21 @@ UString UStringExt::decompress(const UString& s)
 
    // read original size
 
-   char* ptr   = s.rep->data() + U_CONSTANT_SIZE(U_LZOP_COMPRESS);
-   uint32_t sz = *((uint32_t*)ptr);
+   const char* ptr = (char*)s + U_CONSTANT_SIZE(U_LZOP_COMPRESS);
 
-   UString r(sz + 32);
-
-   ptr += sizeof(uint32_t);
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+   uint32_t sz =                 *(uint32_t*)ptr;
+#else
+   uint32_t sz = u_invert_uint32(*(uint32_t*)ptr);
+#endif
 
    // decompress with lzo
 
-   r.rep->_length = UCompress::decompress(ptr, s.size() - U_CONSTANT_SIZE(U_LZOP_COMPRESS) - sizeof(uint32_t), r.rep->data());
+   U_INTERNAL_DUMP("sz = %u", sz)
+
+   UString r(sz + 32);
+
+   r.rep->_length = UCompress::decompress(ptr + sizeof(uint32_t), n - U_CONSTANT_SIZE(U_LZOP_COMPRESS) - sizeof(uint32_t), r.rep->data());
 
    U_INTERNAL_ASSERT(r.invariant())
 

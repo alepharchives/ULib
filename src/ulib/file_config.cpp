@@ -119,7 +119,7 @@ bool UFileConfig::processData()
 
          bool esito = cmd.execute(&data, &output, -1, fd_stderr);
 
-         UServer_Base::logCommandMsgError(cmd.getCommand());
+         UServer_Base::logCommandMsgError(cmd.getCommand(), true);
          
          if (esito == false) U_RETURN(false);
 

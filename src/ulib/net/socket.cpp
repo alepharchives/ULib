@@ -267,14 +267,11 @@ void USocket::checkErrno()
 
 bool USocket::checkTime(long time_limit, long& timeout)
 {
-   U_TRACE(0, "USocket::checkTime(%ld,%ld)", time_limit, timeout)
+   U_TRACE(1, "USocket::checkTime(%ld,%ld)", time_limit, timeout)
 
    U_INTERNAL_ASSERT_RANGE(1,time_limit,8L*60L) // 8 minuts
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   if (u_pthread_time == 0)
-#endif
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
 
    if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 

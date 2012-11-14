@@ -140,8 +140,6 @@ void UClient_Base::setLogShared()
 
    log                    = UServer_Base::log;
    log_shared_with_server = true;
-
-   log->startup();
 }
 
 void UClient_Base::loadConfigParam(UFileConfig& cfg)
@@ -191,6 +189,8 @@ void UClient_Base::loadConfigParam(UFileConfig& cfg)
          U_ASSERT_EQUALS(log_file, UServer_Base::pthis->log_file)
 
          setLogShared();
+
+         log->startup();
          }
       }
 
@@ -431,6 +431,8 @@ send:
 
          if (bread_response) logResponse(response);
          }
+
+      reset();
 
       U_RETURN(true);
       }

@@ -30,20 +30,19 @@ void UCompress::init()
 {
    U_TRACE(0, "UCompress::init()")
 
-   if (flag_init == false)
-      {
-#  ifdef DEBUG
-      int r = lzo_init();
+   U_INTERNAL_ASSERT_EQUALS(flag_init, false)
 
-      U_INTERNAL_ASSERT_EQUALS(r,LZO_E_OK)
-#  else
-      (void) lzo_init();
-#  endif
+#ifdef DEBUG
+   int r = lzo_init();
 
-   // if (r != LZO_E_OK) U_ERROR("lzo_init() failed");
+   U_INTERNAL_ASSERT_EQUALS(r,LZO_E_OK)
+#else
+   (void) lzo_init();
+#endif
 
-      flag_init = true;
-      }
+// if (r != LZO_E_OK) U_ERROR("lzo_init() failed");
+
+   flag_init = true;
 }
 
 uint32_t UCompress::compress(const char* src, uint32_t src_len, char* dst)
@@ -52,7 +51,7 @@ uint32_t UCompress::compress(const char* src, uint32_t src_len, char* dst)
 
    // Step 1: initialize the LZO library
 
-   init();
+   if (flag_init == false) init();
 
    U_INTERNAL_ASSERT(flag_init)
 
@@ -80,7 +79,7 @@ uint32_t UCompress::decompress(const char* src, uint32_t src_len, char* dst)
 
    // Step 1: initialize the LZO library
 
-   init();
+   if (flag_init == false) init();
 
    U_INTERNAL_ASSERT(flag_init)
 

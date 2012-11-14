@@ -23,13 +23,7 @@ public:
 
    // COSTRUTTORI
 
-   USoapPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
-
-      soap_parser = 0;
-      }
-
+            USoapPlugIn();
    virtual ~USoapPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -50,7 +44,7 @@ public:
 #endif
 
 protected:
-   USOAPParser* soap_parser;
+   static USOAPParser* soap_parser;
 
 private:
    USoapPlugIn(const USoapPlugIn&) : UServerPlugIn() {}

@@ -66,6 +66,68 @@ networkMatchIface() {
 	return $match
 }
 
+loadKernelModules() {
+
+	for module in $1; do
+		lsmod | grep $module >/dev/null 2>&1
+		if [ $? -ne 0 ]; then
+			insmod $module 2>/dev/null
+		fi
+	done
+}
+
+clearQoS() {
+
+	# 1 => Ip
+	# 2 => Netmask
+
+	for ifaceq in $IQdevice; do
+		tc -p filter show dev ${ifaceq} | awk -v "i=$1/$2" '
+		/^ /{ t=t $0; next }
+		{ if(t && index(t,i) && match(t," pref [0-9]+ ")){ print substr(t,RSTART+6,RLENGTH-7) }; t=$0 }
+		END { if(t && index(t,i) && match(t," pref [0-9]+ ")){ print substr(t,RSTART+6,RLENGTH-7) } }
+		' | while read UserClass; do
+			if [ -n "${UserClass}" ]; then
+				if [ ${UploadRate} -gt 0 ]; then
+					tc filter del dev ${ifaceq} parent 1: pref ${UserClass} protocol ip u32 match ip src $1/$2 classid 1:${UserClass}0
+					echo "${UserClass}:1:1:1:1:1" | awk \
+						-v device="${ifaceq}" \
+						-v linespeed="${UploadRate}" \
+						-f firewall/tcrules.awk \
+					| sed 's/ add / del /g' | sed 'x;1!H;$!d;x' | while read CMD; do $CMD; done
+				fi
+				for ifacein in $InternalDevice; do
+					tc filter del dev $ifacein parent 1: pref ${UserClass} protocol ip u32 match ip dst $1/$2 classid 1:${UserClass}0
+					echo "${UserClass}:1:1:1:1:1" | awk \
+						-v device="$ifacein" \
+						-v linespeed="${DownloadRate}" \
+						-f firewall/tcrules.awk \
+					| sed 's/ add / del /g' | sed 'x;1!H;$!d;x' | while read CMD; do $CMD; done
+				done
+			fi
+		done
+	done
+}
+
+checkDeviceUpload() {
+
+	if [ -z "$IMQdevice" ]; then
+		IMQdisabled=1
+	else
+		IMQdisabled=0
+		IQdevice=$IMQdevice
+	fi
+	if [ -z "$IFBdevice" ]; then
+		IFBdisabled=1
+	else
+		IFBdisabled=0
+		IQdevice=$IFBdevice
+	fi
+	if [ -z "$IQdevice" ]; then
+		IQdevice=$ExternalDevice
+	fi
+}
+
 #-----------------------------------
 # START FUNCTION
 #-----------------------------------
@@ -84,12 +146,7 @@ initialize_fw() {
 	echo "1" > /proc/sys/net/ipv4/conf/all/rp_filter
 
 	# Load all the kernel modules we need
-	for module in ipt_TOS xt_mac ipt_ACCOUNT; do
-		lsmod | grep $module >/dev/null 2>&1
-		if [ $? -ne 0 ]; then
-			insmod $module 2>/dev/null
-		fi
-	done
+	loadKernelModules "ipt_TOS xt_mac ipt_ACCOUNT"
 
 	clear_fw
 
@@ -254,6 +311,13 @@ initialize_fw() {
 			# ...and disable access to the rest
 			$ports -p tcp -i $iface -m mark --mark 3 -j DROP
 			$ports -p udp -i $iface -m mark --mark 3 -j DROP
+
+			# supporto anti DoS sul captive portal
+			if [ $DosPrevention -gt 0 ]; then
+				$local -p tcp -i $iface --dport $GatewayPort -m state --state NEW -m recent --set	 --name NoCat
+				$local -p tcp -i $iface --dport $GatewayPort -m state --state NEW -m recent --update --name NoCat \
+												--seconds $DosTimeInterval --hitcount `expr $DosAllowTries + 1` -j DROP
+			fi
 		done
 
 	elif [ "$ExcludePorts" ]; then
@@ -269,7 +333,7 @@ initialize_fw() {
 	# Disable access on the external to GatewayPort from anything but the AuthServiceIP
 	for src in $AuthServiceIP; do
 		for ifaceout in $ExternalDevice; do
-			$fwd -i $ifaceout -s ! $src -p tcp --dport $GatewayPort -j DROP
+			$fwd -i $ifaceout ! -s $src -p tcp --dport $GatewayPort -j DROP
 		done
 	done
 
@@ -283,7 +347,6 @@ initialize_fw() {
 	fi
 
 	# Account traffic
-
 	$IPTABLES -t mangle -N AccountIn 2>/dev/null
 	$IPTABLES -t mangle -F AccountIn
 	$IPTABLES -t mangle -N AccountOu 2>/dev/null
@@ -307,8 +370,69 @@ initialize_fw() {
 	for net in $LocalNetwork; do
 		$IPTABLES -t mangle -A AccountIn -s "$net" -j RETURN
 		$IPTABLES -t mangle -A AccountOu -d "$net" -j RETURN
-	 	$IPTABLES -t mangle -A AccountIn -j ACCOUNT --addr "$net" --tname "$net"
-	 	$IPTABLES -t mangle -A AccountOu -j ACCOUNT --addr "$net" --tname "$net"
+		$IPTABLES -t mangle -A AccountIn -j ACCOUNT --addr "$net" --tname "$net"
+		$IPTABLES -t mangle -A AccountOu -j ACCOUNT --addr "$net" --tname "$net"
+	done
+	# --------------------------------------------------------------------------
+
+	# Bandwidth limits
+	# --------------------------------------------------------------------------
+	[ $EnableBandwidthLimits -gt 0 ] || return
+
+	if [ $IMQdisabled -eq 0 ]; then
+		extra_modules=ipt_IMQ
+	fi
+	if [ $IFBdisabled -eq 0 ]; then
+		extra_modules="ifb em_u32 act_connmark act_mirred sch_ingress"
+	fi
+
+	loadKernelModules "xt_CONNMARK xt_CLASSIFY sch_red sch_sfq sch_hfsc cls_basic cls_fw cls_u32 $extra_modules"
+
+	if [ ${UploadRate} -gt 0 ]; then
+		for ifaceq in ${IQdevice}; do
+			[ $IMQdisabled -eq 0 -o $IFBdisabled -eq 0 ] && ifconfig ${ifaceq} up txqueuelen 5
+			tc qdisc del dev ${ifaceq} root
+			tc qdisc add dev ${ifaceq} root handle 1: hfsc default 10
+			tc class add dev ${ifaceq} parent 1:  classid 1:1  hfsc sc rate ${UploadRate}kbit ul rate ${UploadRate}kbit
+			echo "${ReservedClass}:${ReservedPriority}:${ReservedAverageRate}:${ReservedPacketSize}:${ReservedDelay}:${ReservedRatio}" | awk \
+				-v device="${ifaceq}" \
+				-v linespeed="${UploadRate}" \
+				-f firewall/tcrules.awk \
+			| while read CMD; do $CMD; done
+			tc filter del dev ${ifaceq} parent 1: protocol ip pref 1 fw
+		done
+	fi
+
+	for ifacein in $InternalDevice; do
+		if [ ${UploadRate} -gt 0 ]; then
+			if [ $IMQdisabled -eq 0 ]; then
+				for ifaceq in ${IQdevice}; do
+					$IPTABLES -t mangle -D PREROUTING   -i $ifacein -j IMQ --todev ${ifaceq:3:1}
+					$IPTABLES -t mangle -I PREROUTING 1 -i $ifacein -j IMQ --todev ${ifaceq:3:1}
+				done
+			fi
+		fi
+		ifconfig $ifacein up txqueuelen 5
+		tc qdisc del dev $ifacein root
+		tc qdisc add dev $ifacein root handle 1: hfsc default 10
+		tc class add dev $ifacein parent 1: classid 1:1 hfsc sc rate ${DownloadRate}kbit ul rate ${DownloadRate}kbit
+		echo "${ReservedClass}:${ReservedPriority}:${ReservedAverageRate}:${ReservedPacketSize}:${ReservedDelay}:${ReservedRatio}" | awk \
+			-v device="$ifacein" \
+			-v linespeed="${DownloadRate}" \
+			-f firewall/tcrules.awk \
+		| while read CMD; do $CMD; done
+		tc filter del dev $ifacein parent 1: protocol ip pref 1 fw
+		if [ ${UploadRate} -gt 0 ]; then
+			if [ $IFBdisabled -eq 0 ]; then
+				tc qdisc add dev $ifacein handle ffff: ingress
+				for ifaceq in ${IQdevice}; do
+					tc filter add dev $ifacein parent ffff: protocol ip prio 1 u32 \
+						match u32 0 0 flowid 1:1 \
+						action connmark \
+						action mirred egress redirect dev ${ifaceq}
+				done
+			fi
+		fi
 	done
 	# --------------------------------------------------------------------------
 }
@@ -335,15 +459,185 @@ access_fw() {
 		exit 1
 	fi
 
+	local action=""
+
+	if [ "$cmd" = "-A" ]; then
+		action="permit"
+	else
+		action="deny"
+	fi
+
+	# Bandwidth limits
+	# --------------------------------------------------------------------------
+	Ip=""
+	Netmask=""
+	UserUploadRatio=0
+	UserDownloadRatio=0
+
+	if [ $EnableBandwidthLimits -gt 0 ]; then
+
+		Ip=`echo $ip | sed 's!/.*!!'`
+		Netmask=`echo $ip | sed 's!^.*/!!'`
+
+		if [ "$Ip" = "$Netmask" ]; then
+			Netmask=32
+		fi
+
+		checkDeviceUpload
+
+		if [ "$action" = "permit" ]; then
+			if [ $6 -ne 0 ]; then
+				UserDownloadRate = $6
+			fi
+			if [ $7 -ne 0 ]; then
+				UserUploadRate = $7
+			fi
+
+			UserUploadRatio=$((   $UserUploadRate	 * 100 / ${UploadRate} ))
+			UserDownloadRatio=$(( $UserDownloadRate * 100 / ${DownloadRate} ))
+
+			if [ $UserUploadRatio -gt 100 ]; then
+				UserUploadRatio=100
+			fi
+			if [ $UserDownloadRatio -gt 100 ]; then
+				UserDownloadRatio=100
+			fi
+		fi
+	fi
+
+	if [ "$action" = "permit" ]; then
+		tFOUND=0
+		tDIRTY=0
+		tFOUNDMARK=""
+
+		for ifacein in $InternalDevice; do
+			$IPTABLES -t mangle -n -L NoCat | \
+			awk -v i=$ip '/[ \t]MAC /{if($4==i){print tolower($7) " " $10};next } {if($4==i){print "00:00:00:00:00:00 " $8 }}' | \
+			while read tMAC tMARK;
+			do
+				if [ "$tMAC"   == "00:00:00:00:00:00" ]; then
+					if [ "$mac" == "00:00:00:00:00:00" ]; then
+						tFOUND=1
+						tFOUNDMARK=$tMARK
+					else
+						tDIRTY=1
+						$IPTABLES -t mangle -D NoCat -i $ifacein -s $ip                           -j MARK --set-mark $tMARK
+					fi
+				else
+					if [ "$tMAC" == "$mac" ]; then
+						tFOUND=1
+						tFOUNDMARK=$tMARK
+					else
+						tDIRTY=1
+						$IPTABLES -t mangle -D NoCat -i $ifacein -s $ip -m mac --mac-source $tMAC -j MARK --set-mark $tMARK
+					fi
+				fi
+			done
+		done
+
+		[ $tDIRTY -eq 0 -a $tFOUND -eq 1 ] && return
+
+		if [ $tFOUND -eq 1 ]; then
+			if [ "$mac" == "00:00:00:00:00:00" ]; then
+				for ifacein in $InternalDevice; do
+					$IPTABLES -t mangle -D NoCat -i $ifacein -s $ip                          -j MARK --set-mark $tFOUNDMARK
+				done
+			else
+				for ifacein in $InternalDevice; do
+					$IPTABLES -t mangle -D NoCat -i $ifacein -s $ip -m mac --mac-source $mac -j MARK --set-mark $tFOUNDMARK
+				done
+			fi
+		fi
+
+		$IPTABLES -t filter -D NoCat_Inbound -d $ip -j ACCEPT
+
+		if [ $EnableBandwidthLimits -gt 0 ]; then
+			clearQoS $Ip $Netmask
+		fi
+	fi
+
 	# Mark outbound traffic from this node.
 	if [ "$mac" == "00:00:00:00:00:00" ]; then
-		$IPTABLES -t mangle $cmd NoCat -s $ip -j MARK --set-mark $mark
+		for ifacein in $InternalDevice; do
+			$IPTABLES -t mangle $cmd NoCat -i $ifacein -s $ip									-j MARK --set-mark $mark
+		done
 	else
-		$IPTABLES -t mangle $cmd NoCat -m mac --mac-source $mac -s $ip -j MARK --set-mark $mark
+		for ifacein in $InternalDevice; do
+			$IPTABLES -t mangle $cmd NoCat -i $ifacein -s $ip -m mac --mac-source $mac -j MARK --set-mark $mark
+		done
 	fi
 
 	# Mark inbound traffic to this node.
 	$IPTABLES -t filter $cmd NoCat_Inbound -d $ip -j ACCEPT
+
+	if [ $EnableBandwidthLimits -gt 0 ]; then
+		if [ "$action" = "deny" ]; then
+			clearQoS $Ip $Netmask
+		else
+			for ifacein in $InternalDevice; do
+				UserClass=`tc filter show dev $ifacein | awk \
+				-v base=11 \
+				'BEGIN{
+					n=0
+				} 
+				/ flowid /{
+					sub("^1:","",$NF)
+					sub("0$","",$NF)
+					a[n++]=$NF+0
+				}
+				END{
+					isort(a,j)
+					i=0
+					if(a[i]>base){
+						p = base
+					} else {
+						while(a[i]+1>=a[i+1]&&i<n-1){
+							i++
+						}
+						p=a[i]+1
+						if(p<base){ p=base }
+					}
+					print p
+				}
+				function isort(A,n,i,j,hold){
+					for(i=2;i<=n;i++){
+						j=i
+						hold=A[j]
+						while(A[j-1]>hold){
+							j--
+							A[j+1]=A[j]
+						}
+						A[j]=hold
+					}
+				}'`
+				break
+			done
+
+			if [ ${UserUploadRatio} -gt 0 ]; then
+				for ifaceq in ${IQdevice}; do
+					echo "${UserClass}:${UserPriority}:${UserAverageRate}:${UserPacketSize}:${UserDelay}:${UserUploadRatio}" | awk \
+						-v device="${ifaceq}" \
+						-v linespeed="${UploadRate}" \
+						-f firewall/tcrules.awk \
+					| while read CMD; do $CMD; done
+					tc filter del dev ${ifaceq} parent 1: protocol ip pref ${UserClass} fw
+					tc filter add dev ${ifaceq} parent 1: pref ${UserClass} protocol ip u32 match ip src $Ip/$Netmask classid 1:${UserClass}0
+				done
+			fi
+
+			if [ ${UserDownloadRatio} -gt 0 ]; then
+				for ifacein in $InternalDevice; do
+					echo "${UserClass}:${UserPriority}:${UserAverageRate}:${UserPacketSize}:${UserDelay}:${UserDownloadRatio}" | awk \
+						-v device="$ifacein" \
+						-v linespeed="${DownloadRate}" \
+						-f firewall/tcrules.awk \
+					| while read CMD; do $CMD; done
+					tc filter del dev $ifacein parent 1: protocol ip pref ${UserClass} fw
+					tc filter add dev $ifacein parent 1: pref ${UserClass} protocol ip u32 match ip dst $Ip/$Netmask classid 1:${UserClass}0
+				done
+			fi
+		fi
+	fi
 }
 
 clear_fw() {
@@ -355,6 +649,25 @@ clear_fw() {
 	$IPTABLES -t nat -X
 	$IPTABLES -t mangle -X
 	$IPTABLES -t filter -X
+
+	[ $EnableBandwidthLimits -gt 0 ] || return
+
+	if [ -f /etc/init.d/qos ]; then
+		/etc/init.d/qos enabled && /etc/init.d/qos stop
+	fi
+
+	checkDeviceUpload
+
+	if [ ${UploadRate} -gt 0 ]; then
+		tc qdisc del dev ${IQdevice} root
+	fi
+	for ifacein in $InternalDevice; do
+		tc qdisc del dev $ifacein root
+	done
+
+	if [ -f /etc/init.d/qos ]; then
+		/etc/init.d/qos enabled && /etc/init.d/qos start
+	fi
 }
 
 reset_fw() {
@@ -390,7 +703,7 @@ open_fw() {
 
 list_open_fw() {
 
-	echo `$IPTABLES -L -nt mangle | grep 'MARK set 0x2'| cut -d' ' -f12`
+	echo `$IPTABLES -L -nt mangle | grep 'MARK set 0x2'| cut -d' ' -f12 | sort -u`
 }
 
 check_arp() {
@@ -416,16 +729,17 @@ do_cmd() {
 
 		  fwd="$IPTABLES -t filter -A NoCat"
 		ports="$IPTABLES -t filter -A NoCat_Ports"
+		local="$IPTABLES -t filter -A NoCat_LocalPorts"
 		  nat="$IPTABLES -t nat    -A NoCat_NAT"
 	redirect="$IPTABLES -t nat    -A NoCat_Capture"
 	  mangle="$IPTABLES -t mangle -A NoCat"
 
 	case "$1" in
 		arp)			shift;	  check_arp		  "$@" ;; #				   (IP)
-		deny)			shift;     access_fw "-D" "$@" ;; # (CMD) (MAC) (IP) [Class]
+		deny)			shift;     access_fw "-D" "$@" ;; # (CMD) (MAC) (IP) (Class) (rulenum)
 		clear)      shift;      clear_fw		  "$@" ;;
 		reset)      shift;      reset_fw		  "$@" ;;
-		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) [Class]
+		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (rulenum) (UserDownloadRate) (UserUploadRate)
 
 		openlist)			  list_open_fw				 ;;
 		initialize) shift; initialize_fw		  "$1" ;;
@@ -436,13 +750,19 @@ do_cmd() {
 #-----------------------------------
 
 export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHosts ExternalDevice \
-		 InternalDevice LocalNetwork GatewayPort AuthServiceIP MembersOnly MaxSegmentSize IPTABLES
+		 InternalDevice LocalNetwork GatewayPort AuthServiceIP MembersOnly MaxSegmentSize IPTABLES \
+		 EnableBandwidthLimits IMQdevice IFBdevice UserDelay UserPriority UserUploadRate UserPacketSize \
+		 UserAverageRate UserDownloadRate UploadRate DownloadRate ReservedRatio ReservedClass ReservedDelay \
+		 ReservedPriority ReservedAverageRate ReservedPacketSize DosPrevention DosAllowTries DosTimeInterval \
+		 IMQdisabled IFBdisabled IQdevice
 
-# load eventuale script configuration
-
-if [ -n "$FW_CONF" -a -s "$FW_CONF" ]; then
-	. $FW_CONF
-fi
+# ------------------------------------------------------------
+# load eventuale script configuration (NON piace a Ghivizzani)
+# ------------------------------------------------------------
+# if [ -n "$FW_CONF" -a -s "$FW_CONF" ]; then
+#   . $FW_CONF
+# fi
+# ------------------------------------------------------------
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # RouteOnly       Required only if you DO NOT want your gateway to act as a NAT. Give this only if you're running a strictly routed
@@ -485,8 +805,51 @@ MembersOnly=${MembersOnly:-1}
 GatewayPort=${GatewayPort:-5280}
 MaxSegmentSize=${MaxSegmentSize:-0}
 
-export DosAllowTries=${DosAllowTries:-5}
-export DosTimeInterval=${DosTimeInterval:-60}
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# Gestione dei limiti sulla banda per gli utenti
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+# IMQdevice					IMQ device per la gestione del bitrate in upload
+# IFBdevice					IFB device per la gestione del bitrate in upload
+# UploadRate				Upload bit rate per le interfacce interne (in Kbits)
+# DownloadRate				Download bit rate per le interfacce interne (in Kbits)
+# UserDelay					delay accettabile per il traffico utente (default 100, in millisecondi)
+# UserPriority				priorita' del traffico degli utenti (default 5)
+# UserUploadRate			Bit rate in upload di default per gli utenti (in Kbits)
+# UserPacketSize			dimensione massima del pacchetto sull'interfaccia (default 1500, in bytes)
+# UserAverageRate			rate medio per il traffico (default 10)
+# UserDownloadRate		Bit rate in download di default per gli utenti (in Kbits)
+# ReservedRatio			percentuale di banda riservata
+# ReservedClass			classId da utilizzare per il qos (default 1)
+# ReservedDelay			delay accettabile per il traffico riservato (default 200, in millisecondi)
+# ReservedPriority		priorita' per il traffico riservato (default 1, bassa priorita')
+# ReservedPacketSize		dimensione massima del pacchetto sull'interfaccia (default 1500, in bytes)
+# ReservedAverageRate	rate medio per il traffico riservato atto al dimensionamento dei parametri di coda (default 1)
+# EnableBandwidthLimits	abilita la gestione dei limiti sulla banda per gli utenti
+#
+# DosPrevention			abilita il supporto anti DoS sul captive portal (da impostare ad 1 per attivare il supporto)
+# DosAllowTries			numero massimo di connessioni consentite nella finestra temporale
+# DosTimeInterval			finestra temporale in cui osservare il numero di connessioni per IP
+# ---------------------------------------------------------------------------------------------------------------------------------------------------
+IFBdevice=${IFBdevice:-ifb0}
+UploadRate=${UploadRate:-10240}
+DownloadRate=${DownloadRate:-10240}
+UserDelay=${UserDelay:-100}
+UserPriority=${UserPriority:-5}
+UserUploadRate=${UserUploadRate:-1024}
+UserPacketSize=${UserPacketSize:-1500}
+UserAverageRate=${UserAverageRate:-10}
+UserDownloadRate=${UserDownloadRate:-10240}
+ReservedRatio=${ReservedRatio:-10}
+ReservedClass=${ReservedClass:-1}
+ReservedDelay=${ReservedDelay:-200}
+ReservedPriority=${ReservedPriority:-1}
+ReservedPacketSize=${ReservedPacketSize:-1500}
+ReservedAverageRate=${ReservedAverageRate:-1}
+EnableBandwidthLimits=${EnableBandwidthLimits:-0}
+
+DosPrevention=${DosPrevention:-0}
+DosAllowTries=${DosAllowTries:-5}
+DosTimeInterval=${DosTimeInterval:-60}
 
 # (
 # echo "ENVIRONMENT:"

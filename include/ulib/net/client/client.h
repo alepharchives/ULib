@@ -109,6 +109,17 @@ public:
       U_RETURN(result);
       }
 
+   // LOG 
+
+   static void setLogShared();
+
+   static bool isLogSharedWithServer()
+      {
+      U_TRACE(0, "UClient_Base::isLogSharedWithServer()")
+
+      U_RETURN(log_shared_with_server);
+      }
+
    int         getPort() const         { return port; }
    UString     getServer() const       { return server; }
    UString     getBuffer() const       { return buffer; }
@@ -163,7 +174,7 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const;
+   const char* dump(bool _reset) const;
 #endif
 
 protected:
@@ -190,8 +201,7 @@ protected:
    static ULog* log;
    static bool  log_shared_with_server;
 
-   static void setLogShared();
-          bool setUrl(const UString& url);
+   bool setUrl(const UString& url);
 
    // COSTRUTTORI
 

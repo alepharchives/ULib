@@ -467,3 +467,11 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
       break; }
 
 #endif
+
+/* Optimization if it is enough a resolution of one second */
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#  define U_gettimeofday { if (u_pthread_time == 0) (void) gettimeofday(u_now, 0); }
+#else
+#  define U_gettimeofday                            (void) gettimeofday(u_now, 0);
+#endif

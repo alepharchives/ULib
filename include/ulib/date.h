@@ -223,13 +223,11 @@ public:
 
    static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %H:%M:%S GMT", struct tm* tm = 0);
 
-   void setCurrentDate()
+   void setCurrentDate() // UNIX system time - SecsSince1Jan1970UTC
       {
       U_TRACE(0, "UTimeDate::setCurrentDate()")
 
-      // UNIX system time - SecsSince1Jan1970UTC
-
-      u_gettimeofday();
+      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
 
       fromTime(u_now->tv_sec);
       }

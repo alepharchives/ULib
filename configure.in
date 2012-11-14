@@ -667,6 +667,8 @@ AC_CHECK_MEMBER(struct dirent.d_reclen,AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[define 
 [ #include <dirent.h> ])
 AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define if you have d_namlen in struct dirent]),,
 [ #include <dirent.h> ])
+AC_CHECK_MEMBER(struct tm.tm_gmtoff,AC_DEFINE(TM_HAVE_TM_GMTOFF,1,[define if you have tm_gmtoff in struct tm]),,
+[ #include <time.h> ])
 
 TWOCAN_CONF_MSG(Checking for types, and defing if needed)
 

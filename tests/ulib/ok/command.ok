@@ -43,6 +43,6 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( result == false )
    U_ASSERT( result3.empty() )
 
-   UCommand::setMsgError(cmd.getCommand());
+   UCommand::setMsgError(cmd.getCommand(), false);
    UCommand::printMsgError();
 }

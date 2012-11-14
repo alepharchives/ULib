@@ -374,7 +374,7 @@ public:
       {
       U_TRACE(0, "UCertificate::checkValidity()")
 
-      u_gettimeofday();
+      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
 
       bool result = checkValidity(u_now->tv_sec);
 

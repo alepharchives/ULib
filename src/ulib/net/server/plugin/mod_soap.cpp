@@ -22,6 +22,13 @@
 U_CREAT_FUNC(mod_soap, USoapPlugIn)
 #endif
 
+USOAPParser* USoapPlugIn::soap_parser;
+
+USoapPlugIn::USoapPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
+}
+
 USoapPlugIn::~USoapPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USoapPlugIn)

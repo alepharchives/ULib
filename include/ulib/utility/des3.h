@@ -21,6 +21,7 @@
 struct U_EXPORT UDES3 {
 
    static UString signData(const char* fmt, ...);
+   static UString getSignedData(const char* ptr, uint32_t len);
 
    static void setPassword(const char* passwd)
       {

@@ -149,7 +149,7 @@ int UWebSocketPlugIn::handlerRequest()
 
          if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
             {
-            UServer_Base::logCommandMsgError(command->getCommand());
+            UServer_Base::logCommandMsgError(command->getCommand(), true);
 
             UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UWebSocketPlugIn::handlerForSigTERM); // sync signal
             }

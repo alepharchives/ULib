@@ -53,10 +53,16 @@ public:
 
    // LZO method
 
-   static UString   compress(const UString& s);
-   static UString decompress(const UString& s);
+   static bool isCompress(const char* s)       { return U_STRNEQ(s, U_LZOP_COMPRESS); }
+   static bool isCompress(const UString& s)    { return isCompress(s.data()); }
 
-   static bool isCompress(const UString& s) { return U_STRNEQ(s.data(), U_LZOP_COMPRESS); }
+   static UString   compress(const char* s, uint32_t n);
+   static UString decompress(const char* s, uint32_t n);
+
+   static UString   compress(const UString& s) { return   compress(U_STRING_TO_PARAM(s)); }
+   static UString decompress(const UString& s) { return decompress(U_STRING_TO_PARAM(s)); }
+
+   // GZIP method
 
    static UString deflate(const UString& s, bool bheader);         // .gz   compress
    static UString gunzip( const UString& s, uint32_t sz_orig = 0); // .gz uncompress

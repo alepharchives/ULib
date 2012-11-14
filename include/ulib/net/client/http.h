@@ -130,7 +130,7 @@ public:
    // DEBUG
 
 #ifdef DEBUG
-   const char* dump(bool reset) const;
+   const char* dump(bool _reset) const;
 #endif
 
 protected:

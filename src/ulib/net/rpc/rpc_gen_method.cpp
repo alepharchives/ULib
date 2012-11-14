@@ -80,7 +80,7 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
    if (result == false)
       {
-      UCommand::setMsgError(command->getCommand());
+      (void) UCommand::setMsgError(command->getCommand(), false);
 
       URPCObject::dispatcher->setFailed();
 

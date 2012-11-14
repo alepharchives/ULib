@@ -24,11 +24,7 @@ public:
 
    // COSTRUTTORI
 
-   UProxyPlugIn() : client_http((UFileConfig*)0)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "")
-      }
-
+            UProxyPlugIn();
    virtual ~UProxyPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -49,13 +45,13 @@ public:
 #endif
 
 protected:
-   UVector<UString> vmsg_error;
-   UHttpClient<UTCPSocket> client_http;
-   UVector<UModProxyService*>* vservice;
+   static UVector<UString>* vmsg_error;
+   static UHttpClient<UTCPSocket>* client_http;
+   static UVector<UModProxyService*>* vservice;
 
 private:
-   UProxyPlugIn(const UProxyPlugIn&) : UServerPlugIn(), client_http((UFileConfig*)0) {}
-   UProxyPlugIn& operator=(const UProxyPlugIn&)                                      { return *this; }
+   UProxyPlugIn(const UProxyPlugIn&) : UServerPlugIn() {}
+   UProxyPlugIn& operator=(const UProxyPlugIn&)        { return *this; }
 };
 
 #endif

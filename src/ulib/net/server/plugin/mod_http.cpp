@@ -183,6 +183,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UHTTP::min_size_for_sendfile           = cfg.readLong(*str_MIN_SIZE_FOR_SENDFILE);
       UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(*str_ENABLE_CACHING_BY_PROXY_SERVERS);
 
+      U_INTERNAL_DUMP("UHTTP::limit_request_body = %u", UHTTP::limit_request_body)
+
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cookie_option,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_protected_mask,0)
@@ -321,6 +323,8 @@ int UHttpPlugIn::handlerRun()
 
    // NB: now we have shared data allocated by UServer...
 
+   if (UServer_Base::isLog()) UServer_Base::mod_name->snprintf("[usp_init] ", 0);
+
    UHTTP::cache_file->callForAllEntry(UHTTP::callInitForAllUSP);
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
@@ -331,6 +335,8 @@ int UHttpPlugIn::handlerStop()
    U_TRACE(0, "UHttpPlugIn::handlerStop()")
 
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
+
+   if (UServer_Base::isLog()) UServer_Base::mod_name->snprintf("[usp_end] ", 0);
 
    UHTTP::cache_file->callForAllEntry(UHTTP::callEndForAllUSP);
 
@@ -367,7 +373,12 @@ int UHttpPlugIn::handlerREAD()
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 #endif
 
-   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
+      {
+      if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
+
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
 
    result = UHTTP::checkHTTPRequest();
 

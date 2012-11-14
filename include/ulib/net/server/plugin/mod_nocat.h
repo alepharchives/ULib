@@ -32,7 +32,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   enum Status { PEER_DENY, PEER_ACCEPT };
+   enum Status { PEER_DENY, PEER_PERMIT };
 
    // COSTRUTTORI
 
@@ -56,7 +56,7 @@ protected:
    uint64_t traffic_done, traffic_available;
    UString ip, mac, token, user, ifname, label, gateway;
    UCommand fw;
-   time_t connected, expire, logout, ctime;
+   time_t connected, expire, logout, ctime, time_no_traffic;
    uint32_t ctraffic, rulenum, index_AUTH, index_device, index_network;
    int status;
    bool allowed;
@@ -115,6 +115,9 @@ public:
    static const UString* str_without_label;
    static const UString* str_allowed_members_default;
 
+   static const UString* str_UserDownloadRate;
+   static const UString* str_UserUploadRate;
+
    static void str_allocate();
 
    enum CheckType {
@@ -152,65 +155,89 @@ public:
 #endif
 
 protected:
-   UCommand fw, uclient, uploader;
-   UVector<Url*> vauth_url, vinfo_url;
-   UVector<UIPAllow*> vLocalNetworkMask;
-   UVector<UString> vInternalDevice, vLocalNetwork, vLocalNetworkLabel, vLocalNetworkGateway, vauth, vauth_ip, vLoginValidate;
-   UString input, output, location, fw_cmd, decrypt_key, mode, host, hostname, ip, extdev, intdev, localnet, auth_login, fw_env, allowed_members, label;
+   static UString* ip;
+   static UString* mode;
+   static UString* host;
+   static UString* input;
+   static UString* label;
+   static UString* fw_cmd;
+   static UString* extdev;
+   static UString* intdev;
+   static UString* hostname;
+   static UString* localnet;
+   static UString* location;
+   static UString* auth_login;
+   static UString* decrypt_key;
+   static UString* allowed_members;
+   static UCommand* fw;
+   static UCommand* uclient;
+   static UCommand* uploader;
+   static UVector<Url*>* vauth_url;
+   static UVector<Url*>* vinfo_url;
+   static UVector<UString>* vauth;
+   static UVector<UString>* vauth_ip;
+   static UVector<UString>* vLoginValidate;
+   static UVector<UString>* vInternalDevice;
+   static UVector<UString>* vLocalNetwork;
+   static UVector<UString>* vLocalNetworkLabel;
+   static UVector<UString>* vLocalNetworkGateway;
+   static UVector<UIPAllow*>* vLocalNetworkMask;
 
    static vPF unatexit;
    static UPing** sockp;
+   static UString* fw_env;
    static fd_set addrmask;
    static fd_set* paddrmask;
    static UIptAccount* ipt;
-   static UNoCatPlugIn* pthis;
+   static bool flag_check_system;
    static UString* status_content;
    static int fd_stderr, check_type;
+   static UVector<UString>* openlist;
    static UVector<UIPAddress*>** vaddr;
    static const UString* label_to_match;
-   static bool flag_check_peers_for_info;
    static UHashMap<UModNoCatPeer*>* peers;
-   static time_t last_request, last_request_check, check_expire;
    static uint32_t total_connections, login_timeout, nfds, num_radio;
+   static time_t last_request_firewall, last_request_check, check_expire, next_event_time;
 
    // VARIE
 
-   uint32_t getIndexAUTH(const char* ip_address) __pure;
+   static uint32_t getIndexAUTH(const char* ip_address) __pure;
 
-   void           checkOldPeer(UModNoCatPeer* peer);
-   void             setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH);
-   UModNoCatPeer* creatNewPeer(uint32_t index_AUTH);
+   static void           checkOldPeer(UModNoCatPeer* peer);
+   static UModNoCatPeer* creatNewPeer(uint32_t index_AUTH);
+   static void             setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH);
 
-   void checkSystem();
-   void setPeerListInfo();
-   void checkPeersForInfo();
-   bool checkAuthMessage(UModNoCatPeer* peer);
-   bool checkSignedData(const char* ptr, uint32_t len);
-   void addPeerInfo(UModNoCatPeer* peer, time_t logout);
-   void setStatusContent(UModNoCatPeer* peer, const UString& label);
-   void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
-   bool sendMsgToPortal(UCommand& cmd, uint32_t index_AUTH, const UString& msg, UString* poutput = 0);
+   static void checkSystem();
+   static void setPeerListInfo();
+   static void checkPeersForInfo();
+   static void addPeerInfo(UModNoCatPeer* peer, time_t logout);
+   static bool checkAuthMessage(UModNoCatPeer* peer, const UString& msg);
+   static void setStatusContent(UModNoCatPeer* peer, const UString& label);
+   static void setRedirectLocation(UModNoCatPeer* peer, const UString& redirect, const Url& auth);
+   static bool sendMsgToPortal(UCommand& cmd, uint32_t index_AUTH, const UString& msg, UString* poutput);
 
-   void sendMsgToPortal(UCommand& cmd, const UString& msg)
+   static void sendMsgToPortal(UCommand& cmd, const UString& msg)
       {
       U_TRACE(0, "UNoCatPlugIn::sendMsgToPortal(%p,%.*S)", &cmd, U_STRING_TO_TRACE(msg))
 
-      for (uint32_t i = 0, n = pthis->vinfo_url.size(); i < n; ++i) (void) sendMsgToPortal(cmd, i, msg, 0);
+      for (uint32_t i = 0, n = vinfo_url->size(); i < n; ++i) (void) sendMsgToPortal(cmd, i, msg, 0);
       }
 
    static UModNoCatPeer* getPeer(uint32_t i) __pure;
           UModNoCatPeer* getPeerFromMAC(const UString& mac);
 
    static UString getIPAddress(const char* ptr, uint32_t len);
+   static UString getSignedData(const char* ptr, uint32_t len);
 
-   static void permit(UModNoCatPeer* peer, time_t timeout);
    static void   deny(UModNoCatPeer* peer, bool alarm, bool disconnected);
+   static void permit(UModNoCatPeer* peer, time_t timeout, uint32_t UserDownloadRate, uint32_t UserUploadRate);
 
    static void getTraffic();
    static void setHTTPResponse(const UString& content);
    static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
    static void getPeerStatus(UStringRep* key, void* value);
    static void checkPeerInfo(UStringRep* key, void* value);
+   static void checkPeerStatus(UStringRep* key, void* value);
    static void getPeerListInfo(UStringRep* key, void* value);
    static void executeCommand(UModNoCatPeer* peer, int type);
    static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* ip, uint32_t n);

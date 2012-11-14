@@ -93,6 +93,7 @@ extern U_EXPORT char     u_buffer[4096];
 extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy */
 
 /* Time services */
+extern U_EXPORT bool   u_daylight;
 extern U_EXPORT time_t u_start_time;
 extern U_EXPORT time_t u_now_adjust; /* GMT based time */
 
@@ -101,8 +102,6 @@ extern U_EXPORT struct tm u_strftime_tm;
 extern U_EXPORT void*           u_pthread_time; /* pthread clock */
 extern U_EXPORT struct timeval* u_now;
 extern U_EXPORT struct timeval  u_timeval;
-
-U_EXPORT void u_gettimeofday(void); /* calculate number of seconds between UTC to current time zone */
 
 /* Scan services */
 extern U_EXPORT uint32_t             u_line_terminator_len;
@@ -124,6 +123,7 @@ extern U_EXPORT const unsigned char   u_hex_lower[]; /* "0123456789abcdef" */
 extern U_EXPORT const char* restrict  u_tmpdir;
 
 U_EXPORT void        u_setPid(void);
+U_EXPORT void        u_setStartTime(void);
 U_EXPORT void        u_init_ulib_username(void);
 U_EXPORT void        u_init_ulib_hostname(void);
 U_EXPORT const char* u_basename(const char* restrict path) __pure;

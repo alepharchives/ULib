@@ -35,4 +35,15 @@
 
 #define U_STRING_LIMIT (((U_NOT_FOUND-sizeof(ustringrep))/sizeof(char))-4096)
 
+
+/* Optimization if it is enough a resolution of one second */
+
+#undef U_gettimeofday
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#  define U_gettimeofday { if (u_pthread_time == 0) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0); }
+#else
+#  define U_gettimeofday                            (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+#endif
+
 #endif

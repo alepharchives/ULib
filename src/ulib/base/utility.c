@@ -1237,8 +1237,8 @@ uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char*
 
 /* Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT
 
-.  Wildcard: any character
-*  Repeat: zero or more occurrences of previous character
+'?' matches any single character
+'*' matches any string, including the empty string
 
 */
 
@@ -1381,6 +1381,10 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
 
 /* Match STRING against the filename pattern MASK and multiple patterns separated by '|',
    returning true if it matches, false if not, inversion if flags contain FNM_INVERT
+
+'?' matches any single character
+'*' matches any string, including the empty string
+
 */
 
 __pure bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)

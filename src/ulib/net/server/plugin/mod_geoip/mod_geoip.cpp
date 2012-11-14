@@ -23,7 +23,18 @@ extern "C" {
 
 U_CREAT_FUNC(mod_geoip, UGeoIPPlugIn)
 
-bool UGeoIPPlugIn::bGEOIP_CITY_EDITION_REV1;
+int          UGeoIPPlugIn::netspeed;
+int          UGeoIPPlugIn::country_id;
+bool         UGeoIPPlugIn::bGEOIP_CITY_EDITION_REV1;
+char*        UGeoIPPlugIn::domain_name;
+GeoIP*       UGeoIPPlugIn::gi[NUM_DB_TYPES];
+uint32_t     UGeoIPPlugIn::ipnum;
+UString*     UGeoIPPlugIn::country_forbidden_mask;
+const char*  UGeoIPPlugIn::org;
+const char*  UGeoIPPlugIn::country_code;
+const char*  UGeoIPPlugIn::country_name;
+GeoIPRecord* UGeoIPPlugIn::gir;
+GeoIPRegion* UGeoIPPlugIn::region;
 
 const UString* UGeoIPPlugIn::str_COUNTRY_FORBIDDEN_MASK;
 
@@ -74,7 +85,8 @@ bool UGeoIPPlugIn::setCountryCode()
                   country_code = GeoIP_country_code[country_id];
                   country_name = GeoIP_country_name[country_id];
 
-                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], UServer_Base::getClientAddress(), country_code, country_name);
+                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i],
+                                          UServer_Base::getClientAddress(), country_code, country_name);
                   }
                }
             else if (GEOIP_REGION_EDITION_REV0 == i || GEOIP_REGION_EDITION_REV1 == i)
@@ -83,7 +95,8 @@ bool UGeoIPPlugIn::setCountryCode()
 
                if (region)
                   {
-                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i], UServer_Base::getClientAddress(), region->country_code, region->region);
+                  U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i],
+                                          UServer_Base::getClientAddress(), region->country_code, region->region);
 
                   U_SYSCALL_VOID(GeoIPRegion_delete, "%p", region);
                   }
@@ -122,7 +135,7 @@ bool UGeoIPPlugIn::checkCountryForbidden()
 {
    U_TRACE(0, "UGeoIPPlugIn::checkCountryForbidden()")
 
-   if (u_dosmatch_with_OR(country_code, 2, U_STRING_TO_PARAM(country_forbidden_mask), 0))
+   if (u_dosmatch_with_OR(country_code, 2, U_STRING_TO_PARAM(*country_forbidden_mask), 0))
       {
       U_SRV_LOG("COUNTRY_FORBIDDEN: request from %s denied by access list", country_name);
 
@@ -134,9 +147,20 @@ bool UGeoIPPlugIn::checkCountryForbidden()
    U_RETURN(true);
 }
 
+UGeoIPPlugIn::UGeoIPPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "")
+
+   country_forbidden_mask = U_NEW(UString);
+
+   if (str_COUNTRY_FORBIDDEN_MASK == 0) str_allocate();
+}
+
 UGeoIPPlugIn::~UGeoIPPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UGeoIPPlugIn)
+
+   delete country_forbidden_mask;
 
    for (uint32_t i = 0; i < NUM_DB_TYPES; ++i) if (gi[i]) U_SYSCALL_VOID(GeoIP_delete, "%p", gi[i]);
 }
@@ -151,7 +175,7 @@ int UGeoIPPlugIn::handlerConfig(UFileConfig& cfg)
    // COUNTRY_FORBIDDEN_MASK  mask (DOS regexp) of GEOIP country code that give forbidden access
    // ------------------------------------------------------------------------------------------
 
-   if (cfg.loadTable()) country_forbidden_mask = cfg[*str_COUNTRY_FORBIDDEN_MASK];
+   if (cfg.loadTable()) *country_forbidden_mask = cfg[*str_COUNTRY_FORBIDDEN_MASK];
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -190,16 +214,8 @@ int UGeoIPPlugIn::handlerInit()
          }
       }
 
-   if (result)
-      {
-      U_SRV_LOG("initialization of plugin success");
+   U_SRV_LOG("initialization of plugin %s", (result ? "success" : "FAILED"));
 
-      goto end;
-      }
-
-   U_SRV_LOG("initialization of plugin FAILED");
-
-end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -211,8 +227,8 @@ int UGeoIPPlugIn::handlerREAD()
 
    if (country_id || gir) UHTTP::geoip->setEmpty();
 
-   if (country_forbidden_mask.empty() == false &&
-       setCountryCode()                        &&
+   if (country_forbidden_mask->empty() == false &&
+       setCountryCode()                         &&
        checkCountryForbidden() == false)
       {
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -225,8 +241,8 @@ int UGeoIPPlugIn::handlerRequest()
 {
    U_TRACE(0, "UGeoIPPlugIn::handlerRequest()")
 
-   if (country_forbidden_mask.empty() == false &&
-       setCountryCode()                        &&
+   if (country_forbidden_mask->empty() == false &&
+       setCountryCode()                         &&
        checkCountryForbidden() == false)
       {
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -270,8 +286,8 @@ int UGeoIPPlugIn::handlerRequest()
 
 const char* UGeoIPPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "bGEOIP_CITY_EDITION_REV1        " << bGEOIP_CITY_EDITION_REV1       << '\n'
-                  << "country_forbidden_mask (UString " << (void*)&country_forbidden_mask << ')';
+   *UObjectIO::os << "bGEOIP_CITY_EDITION_REV1        " << bGEOIP_CITY_EDITION_REV1      << '\n'
+                  << "country_forbidden_mask (UString " << (void*)country_forbidden_mask << ')';
 
    if (reset)
       {

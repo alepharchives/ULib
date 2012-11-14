@@ -115,8 +115,8 @@ struct U_EXPORT UServices {
    // ---------------------------------------------------------
    // DOS or wildcard regexpr
    // ---------------------------------------------------------
-   // .  Wildcard: any character
-   // *  Repeat: zero or more occurrences of previous character
+   // '?' matches any single character
+   // '*' matches any string, including the empty string
    // ---------------------------------------------------------
 
    static bool dosMatch(const UString& s, const char* mask, uint32_t size, int flags = 0)
@@ -140,8 +140,8 @@ struct U_EXPORT UServices {
    // ------------------------------------------------------------
    // DOS or wildcard regexpr - multiple patterns separated by '|'
    // ------------------------------------------------------------
-   // .  Wildcard: any character
-   // *  Repeat: zero or more occurrences of previous character
+   // '?' matches any single character
+   // '*' matches any string, including the empty string
    // ------------------------------------------------------------
 
    static bool dosMatchWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)

@@ -26033,6 +26033,14 @@ $as_echo "#define DIRENT_HAVE_D_NAMLEN 1" >>confdefs.h
 
 fi
 
+ac_fn_cxx_check_member "$LINENO" "struct tm" "tm_gmtoff" "ac_cv_member_struct_tm_tm_gmtoff" " #include <time.h>
+"
+if test "x$ac_cv_member_struct_tm_tm_gmtoff" = xyes; then :
+
+$as_echo "#define TM_HAVE_TM_GMTOFF 1" >>confdefs.h
+
+fi
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5

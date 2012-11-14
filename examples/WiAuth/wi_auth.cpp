@@ -62,6 +62,9 @@
    static UString* _traffic_consumed;
    static UString* _traffic_available;
    
+   static UString* user_UploadRate;
+   static UString* user_DownloadRate;
+   
    static UFile* file_LOG;
    static UFile* file_WARNING;
    static UFile* file_RECOVERY;
@@ -509,23 +512,25 @@
    
                if (lindex == U_NOT_FOUND) add_ap = true;
                }
+   
+            U_INTERNAL_DUMP("lindex = %u", lindex)
             }
    
          _hostname = *hostname;
          last_info = u_now->tv_sec;
    
-         if (pindex) *pindex = U_NOT_FOUND;
-   
          if (add_ap == false)
             {
             down = bdown;
    
-            if (lindex != U_NOT_FOUND)
+            if (pindex) *pindex = lindex;
+            else
                {
-               if (pindex) *pindex = lindex;
-               else
+               // edit_ap
+   
+               if (lindex != U_NOT_FOUND)
                   {
-                  // edit_ap
+                  U_INTERNAL_ASSERT_EQUALS(pindex, 0)
    
                   access_point.replace(lindex, bnoconsume ? U_STRING_FROM_CONSTANT("1")
                                                           : U_STRING_FROM_CONSTANT("0"));
@@ -554,15 +559,13 @@
             access_point.push_back(mac_mask       ? *mac_mask : *empty_str);
             }
    
+         U_INTERNAL_DUMP("pindex = %u", (pindex ? *pindex : U_NOT_FOUND))
+   
          if (db_store(db_ap, op, *address, toString(), value, *padding1))
             {
             if (op == RDB_INSERT) value = (*db_ap)[*address];
    
-            if ( pindex == 0 ||
-                *pindex != U_NOT_FOUND)
-               {
-               U_RETURN(true);
-               }
+            U_RETURN(true);
             }
    
          U_RETURN(false);
@@ -627,7 +630,7 @@
       uint64_t traffic_done, traffic_available, traffic_consumed;
       time_t login_time, last_modified, time_done, time_available, time_consumed;
       UString value, _ip, _auth_domain, _mac, _policy, nodog, _user;
-      uint32_t index_access_point, agent;
+      uint32_t index_access_point, agent, DownloadRate, UploadRate;
       bool connected, consume;
    
       // COSTRUTTORE
@@ -640,7 +643,7 @@
          connected          = false;
          time_done          = time_available = time_consumed = login_time = last_modified = 0;
          traffic_done       = traffic_available = traffic_consumed = 0;
-         index_access_point = agent = 0;
+         index_access_point = agent = DownloadRate = UploadRate = 0;
          }
    
       ~WiAuthUser()
@@ -675,13 +678,13 @@
                     "%10ld %10ld "
                     "%8ld %15llu "
                     "%10ld %10ld %12llu %12llu "
-                    "%u %u %u "
+                    "%u %u %u %u %u "
                     "%.*s %.*s %.*s %.*s \"%.*s\"",
                     U_STRING_TO_TRACE(_ip), connected,
                     last_modified, login_time,
                     time_consumed, traffic_consumed,
                     time_done, time_available, traffic_done, traffic_available,
-                    index_access_point, consume, agent,
+                    index_access_point, consume, agent, DownloadRate, UploadRate,
                     U_STRING_TO_TRACE(_auth_domain),
                     U_STRING_TO_TRACE(_mac),
                     U_STRING_TO_TRACE(_policy),
@@ -882,15 +885,15 @@
             {
             if (_traffic == 0)
                {
-               // NB: no logout and no traffic => logout implicito
-   
-               U_LOGGER("*** INFO PARAM: UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) IMPLICIT LOGOUT ***",
+               U_LOGGER("*** INFO PARAM: UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) NO TRAFFIC (%ld secs) ***",
                         U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(_ip), U_STRING_TO_TRACE(_mac),
-                        U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address));
+                        U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address), _connected);
    
-               (void) askNodogToLogoutUser();
-   
-               return;
+               if (_connected >= 360 &&
+                   _policy != *policy_flat)
+                  {
+                  ask_logout = true;
+                  }
                }
             }
          else
@@ -924,7 +927,7 @@
             >> traffic_consumed
             >>    time_done >>    time_available
             >> traffic_done >> traffic_available
-            >> index_access_point >> consume >> agent;
+            >> index_access_point >> consume >> agent >> DownloadRate >> UploadRate;
    
          is.get(); // skip ' '
    
@@ -1049,7 +1052,11 @@
    
          U_ASSERT_EQUALS(uid->empty(), false)
    
-         if (nodog_rec->setRecord(&index_access_point) == false) U_RETURN(false);
+         if (nodog_rec->setRecord(&index_access_point) == false ||
+                                   index_access_point  == U_NOT_FOUND)
+            {
+            U_RETURN(false);
+            }
    
          nodog = *address;
    
@@ -1076,6 +1083,9 @@
          consume       = (ap_rec->noconsume == false);
          login_time    = 0;
          last_modified = u_now->tv_sec;
+   
+           UploadRate  = user_UploadRate->strtol();
+         DownloadRate  = user_DownloadRate->strtol();
    
          bool bflat;
    
@@ -1139,6 +1149,8 @@
                         << "connected             " << connected            << '\n'
                         << "time_done             " << time_done            << '\n'
                         << "login_time            " << login_time           << '\n'
+                        << "UploadRate            " << UploadRate           << '\n'
+                        << "DownloadRate          " << DownloadRate         << '\n'
                         << "time_consumed         " << time_consumed        << '\n'
                         << "traffic_done          " << traffic_done         << '\n'
                         << "last_modified         " << last_modified        << '\n'
@@ -1218,7 +1230,8 @@
    {
       U_TRACE(5, "::callForAllUsers(%p)", function)
    
-      _num_user = 0;
+      _num_user  = 0;
+      user_exist = true;
    
       db_user->callForAllEntry(function);
    
@@ -1321,6 +1334,9 @@
       _traffic_consumed  = U_NEW(UString(20U));
       _traffic_available = U_NEW(UString);
    
+      user_UploadRate    = U_NEW(UString);
+      user_DownloadRate  = U_NEW(UString);
+   
       environment        = U_NEW(UString(*USSIPlugIn::environment + "VIRTUAL_HOST=" + VIRTUAL_HOST));
    
       dir_reg            = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"),            environment)));
@@ -1411,6 +1427,12 @@
    
       client->setSaveHttpInfo(true);
    
+      if (UServer_Base::isLog() &&
+          client->UClient_Base::isLogSharedWithServer() == false)
+         {
+         client->UClient_Base::setLogShared();
+         }
+   
       file_LOG = U_NEW(UFile(U_STRING_FROM_CONSTANT("$FILE_LOG"), environment));
    
       UString dir = UStringExt::dirname(file_LOG->getPath());
@@ -1477,6 +1499,9 @@
          delete _traffic_chunk;
          delete _traffic_consumed;
          delete _traffic_available;
+   
+         delete user_UploadRate;
+         delete user_DownloadRate;
    
          if (help_url)
             {
@@ -1653,6 +1678,8 @@
             // => account
             // => max_time
             // => max_traffic
+            // => UserDownloadRate 
+            // => UserUploadRate 
             // ========================
    
             ptr1 = output->data() + U_CONSTANT_SIZE("uid=");
@@ -1673,11 +1700,13 @@
    
                (void) UStringExt::getNameValueFromData(output->substr(pos+1), name_value, U_CONSTANT_TO_PARAM("&"));
    
-               *policy              = name_value[1];  
-               *auth_domain         = name_value[3];
-               *account             = name_value[5];  
-               *_time_available     = name_value[7];
-               *_traffic_available  = name_value[9];
+               *policy              = name_value[ 1];  
+               *auth_domain         = name_value[ 3];
+               *account             = name_value[ 5]; 
+               *_time_available     = name_value[ 7];
+               *_traffic_available  = name_value[ 9];
+               *user_DownloadRate   = name_value[11];
+               *user_UploadRate     = name_value[13];
                }
             }
          }
@@ -2133,7 +2162,7 @@
          U_RETURN(false);
          }
    
-      next:
+   next:
       if (nodog_rec->setRecord(&index_access_point, ap_port)) U_RETURN(true);
    
       U_RETURN(false);
@@ -2214,7 +2243,7 @@
    
       *output = UCommand::outputCommand(cmd, 0, -1, fd_stderr);
    
-      UServer_Base::logCommandMsgError(cmd.data());
+      UServer_Base::logCommandMsgError(cmd.data(), true);
    
       if (UCommand::exit_value ||
           output->empty())
@@ -2230,27 +2259,57 @@
       U_RETURN(true);
    }
    
-   static bool askNodogToLogoutUser()
+   static bool askNodogToLogoutUser(const UString& signed_data)
    {
-      U_TRACE(5, "::askNodogToLogoutUser()")
+      U_TRACE(5, "::askNodogToLogoutUser(%.*S)", U_STRING_TO_TRACE(signed_data))
    
-      UString signed_data = UDES3::signData("ip=%.*s&mac=%.*s", U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac)),
-                   result = sendRequestToNodog("logout?%.*s", U_STRING_TO_TRACE(signed_data));
+      UString result = sendRequestToNodog("logout?%.*s", U_STRING_TO_TRACE(signed_data));
    
-      if (result.empty()) U_RETURN(false);
+      if (U_IS_HTTP_ERROR(client->responseCode())) U_RETURN(false);
    
-      if (U_IS_HTTP_ERROR(client->responseCode()) == false &&
-          U_STRING_FIND(result, 0, "DENY") == U_NOT_FOUND)
+      // --------------------------------------------------
+      // NB: we can have two possibility:
+      // --------------------------------------------------
+      // 1) response No Content       (204) => OK
+      // 2) response No Empty (status user) => must be DENY
+      // --------------------------------------------------
+   
+      if (result.empty() == false)
          {
-         U_LOGGER("*** user status NOT DENY: AP(%.*s) CLIENT(%.*s) IP(%.*s) MAC(%.*s) ***",
-                     U_STRING_TO_TRACE(nodog_rec->_hostname),  U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac));
+         if (U_STRING_FIND(result, 0, "DENY") == U_NOT_FOUND)
+            {
+            U_LOGGER("*** user status NOT DENY: AP(%.*s) CLIENT(%.*s) IP(%.*s) MAC(%.*s) ***", U_STRING_TO_TRACE(nodog_rec->_hostname),
+                           U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac));
+   
+            U_RETURN(false);
+            }
          }
    
       // NB: we must have serviced a info request from nodog by another process istance (PREFORK_CHILD > 2)...
    
       U_ASSERT_EQUALS(uid->empty(), false)
    
+      if (checkIfUserConnected())
+         {
+         user_rec->setConnected(false);
+   
+         U_RETURN(false);
+         }
+   
+      U_INTERNAL_ASSERT_EQUALS(user_rec->connected, false)
+   
       U_RETURN(true);
+   }
+   
+   static bool askNodogToLogoutUser()
+   {
+      U_TRACE(5, "::askNodogToLogoutUser()")
+   
+      UString signed_data = UDES3::signData("ip=%.*s&mac=%.*s", U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac));
+   
+      bool result = askNodogToLogoutUser(signed_data);  
+   
+      U_RETURN(result);
    }
    
    static bool checkLoginRequest(uint32_t end)
@@ -2299,11 +2358,11 @@
       U_RETURN(false);
    }
    
-   static void checkLogoutRequest()
+   static void checkLogoutRequest(bool bget)
    {
-      U_TRACE(5, "::checkLogoutRequest()")
+      U_TRACE(5, "::checkLogoutRequest(%b)", bget)
    
-      if (UHTTP::isHttpGET()) uid->clear();
+      if (bget) uid->clear();
       else
          {
          // ----------------------------
@@ -2313,41 +2372,45 @@
          UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("uid"), 0, 1, UHTTP::processHTTPForm());
          }
    
-      if (checkIfUserConnected()        == false ||
-          user_rec->setNodogReference() == false)
+      UString signed_data;
+   
+      if (checkIfUserConnected() &&
+          user_rec->setNodogReference())
          {
-   error:
+         signed_data = UDES3::signData("ip=%.*s&mac=%.*s", U_STRING_TO_TRACE(user_rec->_ip), U_STRING_TO_TRACE(user_rec->_mac));
+         }
+      else if (user_exist)
+         {
+         *address = user_rec->nodog;
+   
+         signed_data = UDES3::signData("ip=%.*s", U_STRING_TO_TRACE(*client_address));
+         }
+   
+      if (signed_data.empty() ||
+          askNodogToLogoutUser(signed_data) == false)
+         {
          USSIPlugIn::setMessagePage(*message_page_template, "Utente non connesso", "Utente non connesso");
-   
-         return;
-         }
-   
-      if (askNodogToLogoutUser() == false) goto error;
-   
-      if (checkIfUserConnected())
-         {
-         user_rec->setConnected(false);
-   
-         goto error;
-         }
-   
-      if (UHTTP::isHttpGET())
-         {
-         user_rec->getCounter();
-   
-         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("ringraziamenti.tmpl")),
-                                           "Firenze WiFi", 0, 0,
-                                           U_STRING_TO_TRACE(*uid),
-                                           _time_chunk->data(), _traffic_chunk->data());
          }
       else
          {
-         U_http_is_connection_close = U_YES;
+         if (bget)
+            {
+            user_rec->getCounter();
    
-         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_notify.tmpl")),
-                                           "Firenze WiFi", "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>",
-                                           "'onload=\"CloseItAfterSomeTime()\"'",
-                                           U_STRING_TO_TRACE(*uid));
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("ringraziamenti.tmpl")),
+                                              "Firenze WiFi", 0, 0,
+                                              U_STRING_TO_TRACE(*uid),
+                                              _time_chunk->data(), _traffic_chunk->data());
+            }
+         else
+            {
+            U_http_is_connection_close = U_YES;
+   
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_notify.tmpl")),
+                                              "Firenze WiFi", "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>",
+                                              "'onload=\"CloseItAfterSomeTime()\"'",
+                                              U_STRING_TO_TRACE(*uid));
+            }
          }
    }
    
@@ -2585,7 +2648,7 @@
    
          if (setAccessPoint(false))
             {
-            UTimeVal to_sleep(13L, 0L);
+            UTimeVal to_sleep(U_TIME_FOR_ARPING_ASYNC_COMPLETION + 2, 0L);
    loop:
             (void) sendRequestToNodog("check", 0);
    
@@ -2843,6 +2906,8 @@
       // => account
       // => max_time
       // => max_traffic
+      // => UserDownloadRate 
+      // => UserUploadRate 
       // ========================
       // $4 -> gateway
       // $5 -> timeout
@@ -2879,15 +2944,6 @@
                      U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(user_rec->nodog));
    
          if (askNodogToLogoutUser() == false) goto error;
-   
-         if (checkIfUserConnected())
-            {
-            user_rec->setConnected(false);
-   
-            goto error;
-            }
-   
-         U_INTERNAL_ASSERT_EQUALS(user_rec->connected, false)
          }
    
       if (user_rec->setRecord() == false) goto error;
@@ -2923,12 +2979,15 @@
          "Timeout %.*s\n"
          "Traffic %.*s\n"
          "Token %.*s\n"
-         "User %.*s",
+         "User %.*s\n"
+         "UserDownloadRate %.*s\n"
+         "UserUploadRate %.*s\n",
          U_HTTP_QUERY_TO_TRACE,
          U_STRING_TO_TRACE(*mac),
          U_STRING_TO_TRACE(*_time_chunk),
          U_STRING_TO_TRACE(*_traffic_chunk),
-         U_STRING_TO_TRACE(*token), U_STRING_TO_TRACE(*uid));
+         U_STRING_TO_TRACE(*token), U_STRING_TO_TRACE(*uid),
+         U_STRING_TO_TRACE(*user_DownloadRate), U_STRING_TO_TRACE(*user_UploadRate));
    
       USSIPlugIn::setAlternativeRedirect("http://%.*s/ticket?ticket=%.*s", U_STRING_TO_TRACE(*gateway), U_STRING_TO_TRACE(signed_data));
    #endif
@@ -2939,7 +2998,7 @@
       U_TRACE(5, "::GET_logout()")
    
    #ifndef U_MANAGED_BY_MAIN_BASH
-      checkLogoutRequest();
+      checkLogoutRequest(true);
    #endif
    }
    
@@ -3176,10 +3235,17 @@
    
          if (setAccessPoint(true)) result = sendRequestToNodog("status?label=%.*s", U_STRING_TO_TRACE(*label));
    
-         if (result.empty() == false) USSIPlugIn::setAlternativeResponse(result);
-         else                         USSIPlugIn::setMessagePage(*message_page_template, "Servizio non disponibile",
-                                                                                         "Servizio non disponibile (access point non contattabile). "
-                                                                                         "Riprovare piu' tardi");
+         if (result.empty() ||
+             U_IS_HTTP_ERROR(client->responseCode()))
+            {
+            USSIPlugIn::setMessagePage(*message_page_template, "Servizio non disponibile",
+                                                               "Servizio non disponibile (access point non contattabile). "
+                                                               "Riprovare piu' tardi");
+            }
+         else
+            {
+            USSIPlugIn::setAlternativeResponse(result);
+            }
          }
    }
    
@@ -3623,8 +3689,6 @@
    
          if (NOT_AFTER.empty() == false)
             {
-            u_gettimeofday();
-   
             // Check 4: Expired validity
    
             if (UTimeDate::getSecondFromTime(NOT_AFTER.data(), true, "%4u%2u%2u%2u%2u%2uZ") <= u_now->tv_sec)
@@ -3669,6 +3733,9 @@
             }
    
          *policy = (*table)["waPolicy"]; // waPolicy: DAILY
+   
+         *user_DownloadRate = U_STRING_FROM_CONSTANT("0");
+         *user_UploadRate   = U_STRING_FROM_CONSTANT("0");
          }
    
       if ( ip->empty() == false &&
@@ -3682,13 +3749,16 @@
    
       account->snprintf("%.*s:%.*s", U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(password));
    
-      UString signed_data = UDES3::signData("uid=%.*s&policy=%.*s&auth_domain=%.*s&account=%.*s&max_time=%.*s&max_traffic=%.*s",
-                                       U_STRING_TO_TRACE(*uid),
-                                       U_STRING_TO_TRACE(*policy),
-                                       U_STRING_TO_TRACE(*auth_domain),
-                                       U_STRING_TO_TRACE(*account),
-                                       U_STRING_TO_TRACE(*_time_available),
-                                       U_STRING_TO_TRACE(*_traffic_available));
+      UString signed_data = UDES3::signData("uid=%.*s&policy=%.*s&auth_domain=%.*s&account=%.*s&"
+                                            "max_time=%.*s&max_traffic=%.*s&UserDownloadRate=%.*s&UserUploadRate=%.*s",
+                                             U_STRING_TO_TRACE(*uid),
+                                             U_STRING_TO_TRACE(*policy),
+                                             U_STRING_TO_TRACE(*auth_domain),
+                                             U_STRING_TO_TRACE(*account),
+                                             U_STRING_TO_TRACE(*_time_available),
+                                             U_STRING_TO_TRACE(*_traffic_available),
+                                             U_STRING_TO_TRACE(*user_DownloadRate),
+                                             U_STRING_TO_TRACE(*user_UploadRate));
    
       // NB: in questo modo l'utente ripassa dal firewall e NoDog lo rimanda da noi (login_validate) con i dati rinnovati...
    
@@ -3701,7 +3771,7 @@
       U_TRACE(5, "::POST_logout()")
    
    #ifndef U_MANAGED_BY_MAIN_BASH
-      checkLogoutRequest();
+      checkLogoutRequest(false);
    #endif
    }
    

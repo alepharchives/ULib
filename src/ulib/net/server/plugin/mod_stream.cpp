@@ -22,7 +22,14 @@
 U_CREAT_FUNC(mod_stream, UStreamPlugIn)
 #endif
 
-pid_t UStreamPlugIn::pid = (pid_t)-1;
+pid_t                   UStreamPlugIn::pid = (pid_t)-1;
+UFile*                  UStreamPlugIn::fmetadata;
+UString*                UStreamPlugIn::uri_path;
+UString*                UStreamPlugIn::metadata;
+UString*                UStreamPlugIn::content_type;
+UCommand*               UStreamPlugIn::command;
+URingBuffer*            UStreamPlugIn::rbuf;
+URingBuffer::rbuf_data* UStreamPlugIn::ptr;
 
 const UString* UStreamPlugIn::str_URI_PATH;
 const UString* UStreamPlugIn::str_METADATA;
@@ -59,9 +66,24 @@ RETSIGTYPE UStreamPlugIn::handlerForSigTERM(int signo)
    UInterrupt::sendOurselves(SIGTERM);
 }
 
+UStreamPlugIn::UStreamPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
+
+   uri_path     = U_NEW(UString);
+   metadata     = U_NEW(UString);
+   content_type = U_NEW(UString);
+
+   if (str_URI_PATH == 0) str_allocate();
+}
+
 UStreamPlugIn::~UStreamPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UStreamPlugIn)
+
+   delete uri_path;
+   delete metadata;
+   delete content_type;
 
    if (command)
       {
@@ -92,9 +114,9 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      uri_path     = cfg[*str_URI_PATH];
-      metadata     = cfg[*str_METADATA];
-      content_type = cfg[*str_CONTENT_TYPE];
+      *uri_path     = cfg[*str_URI_PATH];
+      *metadata     = cfg[*str_METADATA];
+      *content_type = cfg[*str_CONTENT_TYPE];
 
       command = UServer_Base::loadConfigCommand(cfg);
       }
@@ -114,7 +136,7 @@ int UStreamPlugIn::handlerInit()
 
    result = command->execute(0, (UString*)-1, -1, fd_stderr);
 
-   UServer_Base::logCommandMsgError(command->getCommand());
+   UServer_Base::logCommandMsgError(command->getCommand(), true);
 
    if (result == false)
       {
@@ -126,14 +148,14 @@ int UStreamPlugIn::handlerInit()
 
    ptr = (URingBuffer::rbuf_data*) UServer_Base::getOffsetToDataShare(sizeof(URingBuffer::rbuf_data) + U_RING_BUFFER_SIZE);
 
-   if (metadata.empty() == false)
+   if (metadata->empty() == false)
       {
-      fmetadata = U_NEW(UFile(metadata));
+      fmetadata = U_NEW(UFile(*metadata));
 
       if (fmetadata->open()) fmetadata->readSize();
       }
 
-   (void) content_type.append(U_CONSTANT_TO_PARAM(U_CRLF));
+   (void) content_type->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
    U_SRV_LOG("initialization of plugin success");
 
@@ -204,12 +226,12 @@ int UStreamPlugIn::handlerRequest()
 {
    U_TRACE(0, "UStreamPlugIn::handlerRequest()")
 
-   if (U_HTTP_URI_EQUAL(uri_path))
+   if (U_HTTP_URI_EQUAL(*uri_path))
       {
       u_http_info.nResponseCode  = HTTP_OK;
       U_http_is_connection_close = U_YES;
 
-      UHTTP::setHTTPResponse(&content_type, 0);
+      UHTTP::setHTTPResponse(content_type, 0);
 
       USocket* csocket = UServer_Base::pClientImage->socket;
 
@@ -258,13 +280,13 @@ end:
 
 const char* UStreamPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "pid                       " << pid                  << '\n'
-                  << "fmetadata    (UFile       " << (void*)fmetadata     << ")\n"
-                  << "uri_path     (UString     " << (void*)&uri_path     << ")\n"
-                  << "metadata     (UString     " << (void*)&metadata     << ")\n"
-                  << "content_type (UString     " << (void*)&content_type << ")\n"
-                  << "command      (UCommand    " << (void*)command       << ")\n"
-                  << "rbuf         (URingBuffer " << (void*)rbuf          << ')';
+   *UObjectIO::os << "pid                       " << pid                 << '\n'
+                  << "fmetadata    (UFile       " << (void*)fmetadata    << ")\n"
+                  << "uri_path     (UString     " << (void*)uri_path     << ")\n"
+                  << "metadata     (UString     " << (void*)metadata     << ")\n"
+                  << "content_type (UString     " << (void*)content_type << ")\n"
+                  << "command      (UCommand    " << (void*)command      << ")\n"
+                  << "rbuf         (URingBuffer " << (void*)rbuf         << ')';
 
    if (reset)
       {

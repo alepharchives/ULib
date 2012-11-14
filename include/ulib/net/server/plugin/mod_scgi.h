@@ -29,15 +29,7 @@ public:
 
    // COSTRUTTORI
 
-   USCGIPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "")
-
-      connection = 0;
-
-      if (str_SCGI_URI_MASK == 0) str_allocate();
-      }
-
+            USCGIPlugIn();
    virtual ~USCGIPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -58,8 +50,8 @@ public:
 #endif
 
 protected:
-   UClient_Base* connection;
-   bool scgi_keep_conn;
+   static bool scgi_keep_conn;
+   static UClient_Base* connection;
 
 private:
    USCGIPlugIn(const USCGIPlugIn&) : UServerPlugIn() {}

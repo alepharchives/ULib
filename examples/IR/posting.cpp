@@ -204,7 +204,7 @@ inline bool UPosting::decompress()
 
 #ifdef U_COMPRESS_ENTRY
    if (posting->size() > (sizeof(uint32_t) * 4) &&
-       posting->isCompress())
+       UStringExt::isCompress(*posting))
       {
       posting->decompress();
 
@@ -234,7 +234,7 @@ U_NO_EXPORT void UPosting::readPosting(UStringRep* word_rep, bool flag)
       if (word_rep == 0) posting->duplicate(32); // NB: need duplicate string because we need space on string constant..
       }
 
-   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(*posting),false)
+   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()),false)
 }
 
 U_NO_EXPORT int UPosting::writePosting(int flag)
@@ -242,7 +242,7 @@ U_NO_EXPORT int UPosting::writePosting(int flag)
    U_TRACE(5, "UPosting::writePosting(%d)", flag)
 
    U_INTERNAL_ASSERT_POINTER(cdb_words)
-   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(*posting),false)
+   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()),false)
 
 #ifdef U_COMPRESS_ENTRY
    if (posting->size() > U_CAPACITY) posting->compress();

@@ -29,15 +29,7 @@ public:
 
    // COSTRUTTORI
 
-   UFCGIPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UFCGIPlugIn, "")
-
-      connection = 0;
-
-      if (str_FCGI_URI_MASK == 0) str_allocate();
-      }
-
+            UFCGIPlugIn();
    virtual ~UFCGIPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -58,8 +50,8 @@ public:
 #endif
 
 protected:
-   UClient_Base* connection;
-   bool fcgi_keep_conn;
+   static bool fcgi_keep_conn;
+   static UClient_Base* connection;
 
           void set_FCGIBeginRequest();
    static void fill_FCGIBeginRequest(u_char type, u_short content_length);

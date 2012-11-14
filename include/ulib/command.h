@@ -272,7 +272,7 @@ public:
       u_buffer_len = 0;
       }
 
-   static void setMsgError(const char* cmd);
+   static bool setMsgError(const char* cmd, bool only_if_error);
 
    // DEBUG
 

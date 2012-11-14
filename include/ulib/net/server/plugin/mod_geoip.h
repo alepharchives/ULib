@@ -29,13 +29,7 @@ public:
 
    // COSTRUTTORI
 
-   UGeoIPPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "")
-
-      if (str_COUNTRY_FORBIDDEN_MASK == 0) str_allocate();
-      }
-
+            UGeoIPPlugIn();
    virtual ~UGeoIPPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -57,21 +51,20 @@ public:
 #endif
 
 protected:
-   uint32_t ipnum;
-   const char* org;
-   GeoIPRecord* gir;
-   char* domain_name;
-   GeoIPRegion* region;
-   GeoIP* gi[NUM_DB_TYPES];
-   const char* country_code;
-   const char* country_name;
-   int netspeed, country_id;
-   UString country_forbidden_mask;
-
+   static uint32_t ipnum;
+   static const char* org;
+   static GeoIPRecord* gir;
+   static char* domain_name;
+   static GeoIPRegion* region;
+   static GeoIP* gi[NUM_DB_TYPES];
+   static const char* country_code;
+   static const char* country_name;
+   static int netspeed, country_id;
    static bool bGEOIP_CITY_EDITION_REV1;
+   static UString* country_forbidden_mask;
 
-   bool setCountryCode();
-   bool checkCountryForbidden();
+   static bool setCountryCode();
+   static bool checkCountryForbidden();
 
 private:
    UGeoIPPlugIn(const UGeoIPPlugIn&) : UServerPlugIn() {}

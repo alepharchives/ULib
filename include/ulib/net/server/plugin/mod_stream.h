@@ -30,18 +30,7 @@ public:
 
    // COSTRUTTORI
 
-   UStreamPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
-
-      ptr       = 0;
-      rbuf      = 0;
-      command   = 0;
-      fmetadata = 0;
-
-      if (str_URI_PATH == 0) str_allocate();
-      }
-
+            UStreamPlugIn();
    virtual ~UStreamPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -63,13 +52,14 @@ public:
 #endif
 
 protected:
-   UFile* fmetadata;
-   URingBuffer* rbuf;
-   UCommand* command;
-   URingBuffer::rbuf_data* ptr;
-   UString uri_path, metadata, content_type;
-
    static pid_t pid;
+   static UFile* fmetadata;
+   static URingBuffer* rbuf;
+   static UCommand* command;
+   static UString* uri_path;
+   static UString* metadata;
+   static UString* content_type;
+   static URingBuffer::rbuf_data* ptr;
 
    static RETSIGTYPE handlerForSigTERM(int signo);
 

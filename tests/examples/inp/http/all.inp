@@ -4,14 +4,6 @@ Host: localhost
 HEAD /Z/x,validate HTTP/1.1
 Host: localhost
 
-POST / HTTP/1.1
-Host: localhost
-
-POST / HTTP/1.1
-Host: localhost
-Content-Length: 7200000
-Expect: 100-continue
-
 GET /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx HTTP/1.0
 
 GET /../../../linux HTTP/1.0

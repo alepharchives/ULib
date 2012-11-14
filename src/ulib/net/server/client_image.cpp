@@ -296,9 +296,12 @@ __pure int UClientImage_Base::genericRead()
    U_INTERNAL_ASSERT_POINTER(pbuffer)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
 
-   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
-
-   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, socket->iSockDesc)
+#ifdef DEBUG
+   if (UEventFd::fd != socket->iSockDesc)
+      {
+      U_ERROR("UClientImage_Base::genericRead(): UEventFd::fd = %d socket->iSockDesc = %d", UEventFd::fd, socket->iSockDesc);
+      }
+#endif
 
    handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method: we use the pointer 'this')
 
@@ -360,13 +363,13 @@ bool UClientImage_Base::newConnection()
 
       if (ULog::prefix) tmp.snprintf(ULog::prefix);
 
-      tmp.snprintf_add("new client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
+      tmp.snprintf_add("New client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
 
       if (msg_welcome)
          {
          if (ULog::prefix) tmp.snprintf_add(ULog::prefix);
 
-         tmp.snprintf_add("sent welcome message to %.*s\n", U_STRING_TO_TRACE(*logbuf));
+         tmp.snprintf_add("Sent welcome message to %.*s\n", U_STRING_TO_TRACE(*logbuf));
 
          if (USocketExt::write(socket, *msg_welcome) == false) berror = true;
          }
@@ -382,14 +385,7 @@ bool UClientImage_Base::newConnection()
          U_RETURN(false);
          }
 
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      if (u_pthread_time)
-         {
-         last_event = u_now->tv_sec;
-
-         U_INTERNAL_DUMP("last_event = %#3D", last_event)
-         }
-#  endif
+      last_event = u_now->tv_sec;
       }
 
    U_RETURN(true);
@@ -489,6 +485,8 @@ int UClientImage_Base::handlerResponse()
          }
       }
 #endif
+
+   U_INTERNAL_ASSERT_MAJOR(UEventFd::fd,0)
 
    U_RETURN(U_NOTIFIER_DELETE);
 
@@ -639,6 +637,8 @@ next:
   
       resetPipeline();
 
+      U_INTERNAL_ASSERT_MAJOR(UEventFd::fd,0)
+
       U_RETURN(U_NOTIFIER_DELETE);
       }
    // -------------------------------------------
@@ -688,14 +688,8 @@ next:
 #ifdef U_HTTP_CACHE_REQUEST
 end:
 #endif
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   if (u_pthread_time)
-      {
-      last_event = u_now->tv_sec;
 
-      U_INTERNAL_DUMP("last_event = %#3D", last_event)
-      }
-#endif
+   last_event = u_now->tv_sec;
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -792,7 +786,7 @@ void UClientImage_Base::handlerDelete()
       if (UServer_Base::isLog() &&
           UNotifier::num_connection == UNotifier::min_connection)
          {
-         ULog::log("waiting for connection\n");
+         ULog::log("Waiting for connection\n");
          }
 
       if (isPendingWrite())

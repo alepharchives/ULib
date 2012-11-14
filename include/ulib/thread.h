@@ -63,7 +63,8 @@ public:
       (void) U_SYSCALL(pthread_mutex_unlock, "%p", &_lock);
       }
 
-   static void sleep(time_t timeoutMS);
+   static pid_t getTID();
+   static void  sleep(time_t timeoutMS);
 
    /**
     * All threads execute by deriving the run method of UThread.

@@ -277,7 +277,7 @@ UTimeDate::UTimeDate(const char* str, bool UTC)
       {
       // Complete for the user
 
-      u_gettimeofday();
+      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
       U_SYSCALL_VOID(localtime_r, "%p,%p",      &(u_now->tv_sec), &u_strftime_tm);
@@ -335,6 +335,8 @@ UString UTimeDate::strftime(const char* fmt, time_t t, bool blocale)
       {
       U_INTERNAL_DUMP("res = %s", res.data())
       U_INTERNAL_DUMP("dbg = %s", dbg)
+      U_INTERNAL_DUMP("u_now_adjust = %ld timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
+                       u_now_adjust,      timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
 
       U_INTERNAL_ASSERT_EQUALS(strcmp(res.data(),dbg),0)
       }

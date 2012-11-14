@@ -21,6 +21,13 @@
 U_CREAT_FUNC(mod_tsa, UTsaPlugIn)
 #endif
 
+UCommand* UTsaPlugIn::command;
+
+UTsaPlugIn::UTsaPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "")
+}
+
 UTsaPlugIn::~UTsaPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UTsaPlugIn)
@@ -83,7 +90,7 @@ int UTsaPlugIn::handlerRequest()
          }
       else UHTTP::setHTTPInternalError();
 
-      UServer_Base::logCommandMsgError(command->getCommand());
+      UServer_Base::logCommandMsgError(command->getCommand(), true);
 
       UHTTP::setHTTPRequestProcessed();
       }

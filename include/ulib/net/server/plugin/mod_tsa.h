@@ -23,13 +23,7 @@ public:
 
    // COSTRUTTORI
 
-   UTsaPlugIn()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "")
-
-      command = 0;
-      }
-
+            UTsaPlugIn();
    virtual ~UTsaPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
@@ -50,7 +44,7 @@ public:
 #endif
 
 protected:
-   UCommand* command;
+   static UCommand* command;
 
 private:
    UTsaPlugIn(const UTsaPlugIn&) : UServerPlugIn() {}

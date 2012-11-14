@@ -262,6 +262,7 @@ void UHttpClient_Base::reset()
    method.clear();
 
    UClient_Base::reset();
+   UClient_Base::server.clear();
 }
 
 //=======================================================================================

@@ -398,7 +398,7 @@ public:
 
    static bool addLog(UFile* _log, int flags = O_CREAT | O_WRONLY | O_APPEND);
 
-   static void      logCommandMsgError(const char* cmd);
+   static void      logCommandMsgError(const char* cmd, bool balways);
    static UCommand* loadConfigCommand(UFileConfig& cfg);
 
    // NETWORK CTX
@@ -643,7 +643,7 @@ public:
 
       if (has_cert == false)
          {
-         U_SRV_LOG_WITH_ADDR("ask for a client certificate to");
+         U_SRV_LOG_WITH_ADDR("Ask for a client certificate to");
 
          if (sslsocket->askForClientCertificate())
             {

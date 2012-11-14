@@ -26,6 +26,9 @@
 U_CREAT_FUNC(mod_scgi, USCGIPlugIn)
 #endif
 
+bool           USCGIPlugIn::scgi_keep_conn;
+UClient_Base*  USCGIPlugIn::connection;
+
 const UString* USCGIPlugIn::str_SCGI_URI_MASK;
 const UString* USCGIPlugIn::str_SCGI_KEEP_CONN;
 
@@ -43,6 +46,13 @@ void USCGIPlugIn::str_allocate()
 
    U_NEW_ULIB_OBJECT(str_SCGI_URI_MASK,  U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_SCGI_KEEP_CONN, U_STRING_FROM_STRINGREP_STORAGE(1));
+}
+
+USCGIPlugIn::USCGIPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "")
+
+   if (str_SCGI_URI_MASK == 0) str_allocate();
 }
 
 USCGIPlugIn::~USCGIPlugIn()

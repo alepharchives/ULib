@@ -199,9 +199,7 @@ public:
       U_INTERNAL_ASSERT_MINOR(pos, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-      --_length;
-
-      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
+      if (--_length) (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
       }
 
    void erase(uint32_t first, uint32_t last) // erase [first,last[
@@ -215,9 +213,11 @@ public:
       U_INTERNAL_ASSERT_MINOR(first, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + first, vec + last, (_length - last) * sizeof(void*));
+      uint32_t new_length = (_length - (last - first));
 
-      _length = (_length - (last - first));
+      if (new_length) (void) U_SYSCALL(memmove, "%p,%p,%u", vec + first, vec + last, (_length - last) * sizeof(void*));
+
+      _length = new_length;
       }
 
    void swap(uint32_t from, uint32_t to)

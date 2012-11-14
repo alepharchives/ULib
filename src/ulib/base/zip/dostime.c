@@ -1,4 +1,4 @@
-/* dostime.c - convert dos time to/from time_t.  */
+/* dostime.c - convert dos time to/from time_t */
 
 #include <ulib/base/base.h>
 #include <ulib/base/zip/dostime.h>
@@ -7,8 +7,8 @@
 
 /*
  * The specification to which this was written.  From Joe Buck.
- * The DOS format appears to have only 2 second resolution.  It is an
- * unsigned long, and ORs together
+ *
+ * The DOS format appears to have only 2 second resolution.  It is an unsigned long, and ORs together
  * 
  * (year-1980)<<25
  * month<<21  (month is tm_mon + 1, 1=Jan through 12=Dec)
@@ -17,15 +17,14 @@
  * min<<5     (min is tm_min, 0-59)
  * sec>>1     (sec is tm_sec, 0-59, that's right, we throw away the LSB)
  * 
- * DOS uses local time, so the localtime() call is used to turn the time_t
- * into a struct tm.
+ * DOS uses local time, so the localtime() call is used to turn the time_t into a struct tm.
  */
 
 time_t dos2unixtime(unsigned long dostime)
 {
    struct tm ltime;
 
-   u_gettimeofday();
+   U_gettimeofday; /* NB: optimization if it is enough a resolution of one second... */
 
    /* Call localtime to initialize timezone in TIME */
    ltime = *localtime(&(u_now->tv_sec));

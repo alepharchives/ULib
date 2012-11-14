@@ -25,15 +25,32 @@
 #endif
 */
 
+UVector<UString>*           UProxyPlugIn::vmsg_error;
+UHttpClient<UTCPSocket>*    UProxyPlugIn::client_http;
+UVector<UModProxyService*>* UProxyPlugIn::vservice;
+
 #ifdef HAVE_MODULES
 U_CREAT_FUNC(mod_proxy, UProxyPlugIn)
 #endif
+
+UProxyPlugIn::UProxyPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "")
+
+   client_http = U_NEW(UHttpClient<UTCPSocket>((UFileConfig*)0));
+}
 
 UProxyPlugIn::~UProxyPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UProxyPlugIn)
 
-   if (vservice) delete vservice;
+   delete client_http;
+
+   if (vservice)
+      {
+      delete vservice;
+      delete vmsg_error;
+      }
 }
 
 // Server-wide hooks
@@ -42,9 +59,10 @@ int UProxyPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UProxyPlugIn::handlerConfig(%p)", &cfg)
 
-   vservice = U_NEW(UVector<UModProxyService*>);
+   vservice   = U_NEW(UVector<UModProxyService*>);
+   vmsg_error = U_NEW(UVector<UString>);
 
-   UModProxyService::loadConfig(cfg, *vservice, &vmsg_error);
+   UModProxyService::loadConfig(cfg, *vservice, vmsg_error);
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
@@ -61,7 +79,7 @@ int UProxyPlugIn::handlerInit()
       goto end;
       }
 
-   if (UServer_Base::preforked_num_kids == 0) client_http.setLocalHost(UServer_Base::getHost());
+   if (UServer_Base::preforked_num_kids == 0) client_http->setLocalHost(UServer_Base::getHost());
 
 /*
 #ifdef LINUX_NETFILTER
@@ -70,9 +88,9 @@ int UProxyPlugIn::handlerInit()
 
    if (UServer_Base::isLog())
       {
-      client_http.UClient_Base::setLogShared();
+      client_http->UClient_Base::setLogShared();
 
-      ULog::log("initialization of plugin success\n");
+      U_SRV_LOG("initialization of plugin success");
       }
 
 end:
@@ -88,7 +106,7 @@ int UProxyPlugIn::handlerRequest()
    U_INTERNAL_DUMP("method = %.*S uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_HTTP_URI_TO_TRACE)
 
    // ------------------------------------------------------------------------------
-   // find the eventually proxy service for the HTTP request
+   // find the possibly proxy service for the HTTP request
    // ------------------------------------------------------------------------------
    // The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
    // U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
@@ -157,16 +175,16 @@ int UProxyPlugIn::handlerRequest()
       {
       // before connect to server check if server and/or port to connect has changed...
 
-      if (client_http.setHostPort(service->getServer(), service->getPort()) &&
-          client_http.UClient_Base::isConnected())
+      if (client_http->setHostPort(service->getServer(), service->getPort()) &&
+          client_http->UClient_Base::isConnected())
          {
-         client_http.UClient_Base::close();
+         client_http->UClient_Base::close();
          }
 
       if (async &&
           UServer_Base::parallelization())
          {
-         client_http.UClient_Base::reset();
+         client_http->UClient_Base::reset();
 
          if (service->isWebSocket()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
@@ -178,13 +196,13 @@ int UProxyPlugIn::handlerRequest()
          UWebSocket::checkForPipeline();
 
          while (UWebSocket::handleDataFraming(UServer_Base::pClientImage->socket) == STATUS_CODE_OK &&
-                client_http.UClient_Base::sendRequest(*UClientImage_Base::wbuffer, true)            &&
-                UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http.UClient_Base::response)))
+                client_http->UClient_Base::sendRequest(*UClientImage_Base::wbuffer, true)           &&
+                UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
             {
-            client_http.UClient_Base::clearData();
+            client_http->UClient_Base::clearData();
 
             UClientImage_Base::rbuffer->setEmpty();
-            UClientImage_Base::wbuffer->setEmptyForce(); // NB: it is referenced by client_http.UClient_Base::request...
+            UClientImage_Base::wbuffer->setEmpty();
             }
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -198,54 +216,57 @@ int UProxyPlugIn::handlerRequest()
       if (  user.empty() == false &&
           passwd.empty() == false)
          {
-         client_http.setRequestPasswordAuthentication(user, passwd);
+         client_http->setRequestPasswordAuthentication(user, passwd);
          }
 
-      client_http.setFollowRedirects(service->isFollowRedirects(), true);
+      client_http->setFollowRedirects(service->isFollowRedirects(), true);
 
-      if (output_to_server == false)   *UClientImage_Base::wbuffer = *UClientImage_Base::request;
+      if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::request;
 
       // connect to server and send request...
 
-      bool result = client_http.sendRequest(*UClientImage_Base::wbuffer);
+      bool result = client_http->sendRequest(*UClientImage_Base::wbuffer);
 
       if (result)
          {
-                                           *UClientImage_Base::wbuffer = client_http.getResponse();
+                                           *UClientImage_Base::wbuffer = client_http->getResponse();
          if (service->isReplaceResponse()) *UClientImage_Base::wbuffer = service->replaceResponse(*UClientImage_Base::wbuffer); 
          }
-      else if (UServer_Base::isLog())
+      else
          {
-         UString resp = client_http.getResponse();
-         uint32_t sz  = resp.size();
-
-         if (sz)
+         if (UServer_Base::isLog())
             {
-            const char* ptr = resp.data();
-            uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+            UString resp = client_http->getResponse();
+            uint32_t sz  = resp.size();
 
-            U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+            if (sz)
+               {
+               const char* ptr = resp.data();
+               uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
 
-            u_printf_string_max_length = u_findEndHeader(ptr, sz);
+               U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-            if (u_printf_string_max_length == -1) u_printf_string_max_length = sz;
+               u_printf_string_max_length = u_findEndHeader(ptr, sz);
 
-            U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
+               if (u_printf_string_max_length == -1) u_printf_string_max_length = sz;
 
-            U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
+               U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
 
-            UServer_Base::log->log("%.*sproxy-server response (%u bytes) '%.*s'\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr);
+               U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-            u_printf_string_max_length = u_printf_string_max_length_save;
+               UServer_Base::log->log("%.*sproxy-server response (%u bytes) '%.*s'\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), sz, sz, ptr);
+
+               u_printf_string_max_length = u_printf_string_max_length_save;
+               }
             }
-         }
 
-      client_http.UClient_Base::reset(); // reset reference to request...
+         client_http->UClient_Base::reset(); // reset reference to request...
+         }
       }
 
    goto end;
 
-err: UModProxyService::setMsgError(err, vmsg_error);
+err: UModProxyService::setMsgError(err, *vmsg_error);
 
 end: UHTTP::setHTTPRequestProcessed();
 
@@ -265,9 +286,9 @@ end: UHTTP::setHTTPRequestProcessed();
 
 const char* UProxyPlugIn::dump(bool reset) const
 {
-   *UObjectIO::os << "vmsg_error  (UVector<UString>           " << (void*)&vmsg_error  << ")\n"
-                  << "client_http (UHttpClient<UTCPSocket>    " << (void*)&client_http << ")\n"
-                  << "vservice    (UVector<UModProxyService*> " << (void*)vservice     << ')';
+   *UObjectIO::os << "vmsg_error  (UVector<UString>           " << (void*)vmsg_error  << ")\n"
+                  << "client_http (UHttpClient<UTCPSocket>    " << (void*)client_http << ")\n"
+                  << "vservice    (UVector<UModProxyService*> " << (void*)vservice    << ')';
 
    if (reset)
       {

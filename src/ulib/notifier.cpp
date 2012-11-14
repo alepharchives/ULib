@@ -396,6 +396,7 @@ void UNotifier::erase(UEventFd* item)
    U_TRACE(1, "UNotifier::erase(%p)", item)
 
    U_INTERNAL_ASSERT_POINTER(item)
+   U_INTERNAL_ASSERT_MAJOR(item->fd,0)
 
    handlerDelete(item);
 
@@ -548,6 +549,8 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
 #  ifdef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_EQUALS(handler_event, pevents->data.ptr)
 #  endif
+
+      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
 
       handlerDelete(handler_event);
       }

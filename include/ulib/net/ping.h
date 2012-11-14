@@ -23,6 +23,8 @@
 #  endif
 #endif
 
+#define U_TIME_FOR_ARPING_ASYNC_COMPLETION 15
+
 // PING (protocollo ICMP)
 // -------------------------------------
 // send icmp echo request and wait reply

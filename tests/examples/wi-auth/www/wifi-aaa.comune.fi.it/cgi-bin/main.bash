@@ -275,15 +275,14 @@ check_if_user_connected_to_AP_NO_CONSUME() {
 
 	if [ -s $FILE ]; then
 
-		while read AP_WITH_NO_CONSUME
-		do
-			if [ "$AP_WITH_NO_CONSUME" = "$1" ]; then
+		AP_WITH_NO_CONSUME=`egrep "$1" $FILE 2>/dev/null`
 
-				unset CONSUME_ON
+		if [ -n "$AP_WITH_NO_CONSUME" ]; then
 
-				return
-			fi
-		done < $FILE
+			unset CONSUME_ON
+
+			return
+		fi
 	fi
 
 	CONSUME_ON=true
@@ -747,6 +746,7 @@ info_notified_from_nodog() {
 	local	TRAFFIC=0
 	local	TIMEOUT=0
 	local ASK_LOGOUT=0
+	local LOGOUT_IMPLICITO=0
 
 	# $1 -> mac
 	# $2 -> ip
@@ -793,29 +793,32 @@ info_notified_from_nodog() {
 
 		if [ $8 -eq 0 -a $6 -le 0 ]; then # no traffic and no logout => logout implicito
 
-			ASK_LOGOUT=1
+			if [ $LOGOUT_IMPLICITO -eq 1 ]; then
 
-			ask_nodog_to_logout_user $IP $MAC
+				ASK_LOGOUT=1
 
-			if [ -n "$GET_USER_INFO_INTERVAL" ]; then
-				# --------------------------------------------------------------------
-				# WE CHECK FOR THE TIME REMAIN FOR CONNECTION (SECS) SAVED ON FILE
-				# --------------------------------------------------------------------
-				if [ -s $FILE_CNT.timeout ]; then
+				ask_nodog_to_logout_user $IP $MAC
 
-					read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
+				if [ -n "$GET_USER_INFO_INTERVAL" ]; then
+					# --------------------------------------------------------------------
+					# WE CHECK FOR THE TIME REMAIN FOR CONNECTION (SECS) SAVED ON FILE
+					# --------------------------------------------------------------------
+					if [ -s $FILE_CNT.timeout ]; then
 
-					if [ "$CONSUME_ON" = "true" ]; then
-						let "TIMEOUT = TIMEOUT + $GET_USER_INFO_INTERVAL"
+						read TIMEOUT < $FILE_CNT.timeout 2>/dev/null
 
-						if [ $TIMEOUT -gt $MAX_TIME ]; then
-							let "TIMEOUT = TIMEOUT - $GET_USER_INFO_INTERVAL"
+						if [ "$CONSUME_ON" = "true" ]; then
+							let "TIMEOUT = TIMEOUT + $GET_USER_INFO_INTERVAL"
+
+							if [ $TIMEOUT -gt $MAX_TIME ]; then
+								let "TIMEOUT = TIMEOUT - $GET_USER_INFO_INTERVAL"
+							fi
 						fi
+						# ---------------------------------------------------------
+						# we save the time remain for connection (secs) on file
+						# ---------------------------------------------------------
+						write_FILE $TIMEOUT $FILE_CNT.timeout
 					fi
-					# ---------------------------------------------------------
-					# we save the time remain for connection (secs) on file
-					# ---------------------------------------------------------
-					write_FILE $TIMEOUT $FILE_CNT.timeout
 				fi
 			fi
 		else
@@ -944,7 +947,7 @@ ask_nodog_to_check_for_users_info() {
 
 		if [ "$HTTP_STATUS" = "204" ]; then # 204 - HTTP_NO_CONTENT
 
-			sleep 13
+			sleep 17
 
 			ask_nodog_to_check_for_users_info
 		fi
@@ -2074,7 +2077,6 @@ status_network() {
 											"$LOGIN_TIME" $POLICY \
 											"$REMAINING_TIME_MIN" "$REMAINING_TRAFFIC_MB" \
 											$COLOR $CONSUME \
-											"http://$VIRTUAL_NAME/webif_ap?ap=$AP&public=$GATEWAY"  $GATEWAY \
 											"http://$VIRTUAL_NAME/status_ap?ap=$AP&public=$GATEWAY" $AP \
 											2>/dev/null`
 

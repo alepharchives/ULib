@@ -262,8 +262,8 @@ public:
    static UString* cbuffer;
    static UStringRep* pkey;
    static UString* pathname;
-   static UString* ssi_alias;
    static UString* request_uri;
+   static UString* global_alias;
    static UVector<UString>* valias;
    static UString* uri_protected_mask;
    static UString* uri_request_cert_mask;

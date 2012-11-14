@@ -160,6 +160,9 @@ void UFCGIPlugIn::fill_FCGIBeginRequest(u_char type, u_short content_length)
 U_CREAT_FUNC(mod_fcgi, UFCGIPlugIn)
 #endif
 
+bool           UFCGIPlugIn::fcgi_keep_conn;
+UClient_Base*  UFCGIPlugIn::connection;
+
 const UString* UFCGIPlugIn::str_FCGI_URI_MASK;
 const UString* UFCGIPlugIn::str_FCGI_KEEP_CONN;
 
@@ -177,6 +180,13 @@ void UFCGIPlugIn::str_allocate()
 
    U_NEW_ULIB_OBJECT(str_FCGI_URI_MASK,  U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_FCGI_KEEP_CONN, U_STRING_FROM_STRINGREP_STORAGE(1));
+}
+
+UFCGIPlugIn::UFCGIPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, UFCGIPlugIn, "")
+
+   if (str_FCGI_URI_MASK == 0) str_allocate();
 }
 
 UFCGIPlugIn::~UFCGIPlugIn()

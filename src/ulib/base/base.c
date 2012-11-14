@@ -97,6 +97,7 @@ char     u_buffer[4096];
 uint32_t u_buffer_len; /* signal that is busy */
 
 /* Time services */
+bool   u_daylight;
 time_t u_start_time;
 time_t u_now_adjust; /* GMT based time */
 struct tm u_strftime_tm;
@@ -276,16 +277,13 @@ void u_getcwd(void) /* get current working directory */
    U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
 }
 
-void u_gettimeofday(void)
+void u_setStartTime(void)
 {
-   U_INTERNAL_TRACE("u_gettimeofday()")
+   U_INTERNAL_TRACE("u_setStartTime()")
+
+   time_t lnow;
 
    U_INTERNAL_ASSERT_POINTER(u_now)
-
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   if (u_pthread_time == 0)
-#endif
-   (void) gettimeofday(u_now, 0);
 
    /* calculate number of seconds between UTC to current time zone
     *
@@ -298,42 +296,53 @@ void u_gettimeofday(void)
     * };
     */
 
-   if (u_start_time == 0)
-      {
-      time_t lnow;
+   (void) gettimeofday(u_now, 0);
 
-      /* initialize time conversion information */
+   /* initialize time conversion information */
 
-      tzset();
+   tzset();
 
-      /* The localtime() function converts the calendar time to broken-time representation, expressed relative
-       * to the user's specified timezone. The function acts as if it called tzset(3) and sets the external
-       * variables tzname with information about the current timezone, timezone with the difference between
-       * Coordinated Universal Time (UTC) and local standard time in seconds, and daylight to a non-zero value
-       * if daylight savings time rules apply during some part of the year. The return value points to a
-       * statically allocated struct which might be overwritten by subsequent calls to any of the date and time
-       * functions. The localtime_r() function does the same, but stores the data in a user-supplied struct. It
-       * need not set tzname, timezone, and daylight
-       */
+   /* The localtime() function converts the calendar time to broken-time representation, expressed relative
+    * to the user's specified timezone. The function acts as if it called tzset(3) and sets the external
+    * variables tzname with information about the current timezone, timezone with the difference between
+    * Coordinated Universal Time (UTC) and local standard time in seconds, and daylight to a non-zero value
+    * if daylight savings time rules apply during some part of the year. The return value points to a
+    * statically allocated struct which might be overwritten by subsequent calls to any of the date and time
+    * functions. The localtime_r() function does the same, but stores the data in a user-supplied struct. It
+    * need not set tzname, timezone, and daylight
+    *
+    * This variable (daylight) has a nonzero value if Daylight Saving Time rules apply. A nonzero value does
+    * not necessarily mean that Daylight Saving Time is now in effect; it means only that Daylight Saving Time
+    * is sometimes in effect.
+    *
+    * This variable (timezone) contains the difference between UTC and the latest local standard time, in seconds
+    * west of UTC. For example, in the U.S. Eastern time zone, the value is 5*60*60. Unlike the tm_gmtoff member
+    * of the broken-down time structure, this value is not adjusted for daylight saving, and its sign is reversed.
+    * In GNU programs it is better to use tm_gmtoff, since it contains the correct offset even when it is not the latest one.
+    */
 
-      (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
+   (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
 
-      /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
-       * Time (UTC) to calendar time
-       */
+#ifdef TM_HAVE_TM_GMTOFF
+   u_daylight = (daylight && (timezone != -u_strftime_tm.tm_gmtoff));
+#endif
 
-      lnow = timegm(&u_strftime_tm);
+   /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
+    * Time (UTC) to calendar time
+    */
 
-      u_now_adjust = (lnow - u_now->tv_sec);
+   lnow = timegm(&u_strftime_tm);
 
-      U_INTERNAL_PRINT("u_now_adjust = %ld timezone = %ld daylight = %d tzname[2] = { %s, %s }", u_now_adjust, timezone, daylight, tzname[0], tzname[1])
+   u_now_adjust = (lnow - u_now->tv_sec);
 
-      U_INTERNAL_ASSERT(u_now_adjust <= ((daylight ? 3600 : 0) - timezone))
+   U_INTERNAL_PRINT("u_now_adjust = %ld timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
+                     u_now_adjust,      timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
 
-      /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
+   U_INTERNAL_ASSERT(u_now_adjust <= ((daylight ? 3600 : 0) - timezone))
 
-      if (u_now->tv_sec > 1272036378L) u_start_time = u_now->tv_sec + u_now_adjust;
-      }
+   /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
+
+   if (u_now->tv_sec > 1272036378L) u_start_time = u_now->tv_sec + u_now_adjust;
 }
 
 void u_init_ulib(char** restrict argv)
@@ -375,7 +384,7 @@ void u_init_ulib(char** restrict argv)
 
    (void) atexit(u_exit);
 
-   u_gettimeofday();
+   u_setStartTime();
 }
 
 /*
@@ -728,14 +737,13 @@ uint32_t u__strftime(char* restrict s, uint32_t maxsize, const char* restrict fo
 
          case 'Z': /* %Z Defined by ANSI C as eliciting the time zone if available */
             {
-            i = (daylight != 0);
-            n = u__strlen(tzname[i]);
+            n = u__strlen(tzname[u_daylight]);
 
             U_INTERNAL_ASSERT(count <= (maxsize-n))
 
          // if (count >= (maxsize - n)) return 0;
 
-            (void) u_strncpy(&s[count], tzname[i], n);
+            (void) u_strncpy(&s[count], tzname[u_daylight], n);
 
             count += n;
             }
@@ -1675,13 +1683,10 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                u__memcpy(bp, ptr, len, __PRETTY_FUNCTION__);
 
-               /*
                U_INTERNAL_ERROR(u_isBinary((const unsigned char*)bp, len) == false,
                                 "binary data at date time optimization:\n"
                                 "--------------------------------------\n"
-                                "%s",
-                                u_memoryDump((unsigned char*)bp, len));
-               */
+                                "%s", u_memoryDump((unsigned char*)bp, len));
 
                bp  += len;
                ret += len;
@@ -1692,9 +1697,14 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             /* flag '#' => var-argument */
 
-            t = (flags & ALT ? VA_ARG(time_t) :
-                 width == 12 ? u_now->tv_sec  :
-                               u_now->tv_sec + u_now_adjust);
+            if (flags & ALT) t = VA_ARG(time_t);
+            else
+               {
+               (void) gettimeofday(u_now, 0);
+
+               t = (width == 12 ? u_now->tv_sec :
+                                  u_now->tv_sec + u_now_adjust);
+               }
 
             len = u_strftime(bp, 36, fmtdate, t);
 
@@ -1719,8 +1729,6 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                {
                char tmp[16];
                uint32_t len1;
-
-               (void) gettimeofday(u_now, 0);
 
                (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 

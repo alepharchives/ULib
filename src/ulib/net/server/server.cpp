@@ -167,8 +167,6 @@ const UString* UServer_Base::str_ENABLE_RFC1918_FILTER;
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
 #  include "ulib/thread.h"
 
-static const char* name_function;
-
 class UTimeThread : public UThread {
 public:
 
@@ -183,6 +181,8 @@ public:
       bool check = false;
       UTimeVal before, after;
 #  endif
+
+      U_SRV_LOG("Thread watch optimization for time resolution of one second activated (pid %u)", UThread::getTID());
 
       int watch_counter  = 1;
       struct timespec ts = { 1L, 0L };
@@ -221,7 +221,7 @@ public:
                if (delta >=  1000 ||
                    delta <= -1000)
                   {
-                  U_SRV_LOG("runWatch(%d) delta time exceed 1 sec: %d", watch_counter, delta);
+                  U_SRV_LOG("Thread watch delta time exceed 1 sec: counter(%d) diff(%d)", watch_counter, delta);
                   }
                }
 #        endif
@@ -421,7 +421,7 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    pthis        = this;
 
    vlog         = U_NEW(UVector<file_LOG*>);
-   mod_name     = U_NEW(UString(U_CAPACITY));
+   mod_name     = U_NEW(UString(32U));
    senvironment = U_NEW(UString(U_CAPACITY));
 
 #ifndef __MINGW32__
@@ -443,6 +443,8 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 #if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(DEBUG)
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
 #endif
+
+   if (u_start_time == 0) u_setStartTime();
 
    if (cfg) loadConfigParam(*cfg);
 }
@@ -680,7 +682,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
       {
       if (UServices::isSetuidRoot() == false)
          {
-         U_SRV_LOG("the \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
+         U_SRV_LOG("The \"RUN_AS_USER\" directive makes sense only if the master process runs with super-user privileges, ignored");
 
          as_user.clear();
          }
@@ -732,7 +734,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
       U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S FAILED. Going down...", document_root.data());
       }
 
-   U_SRV_LOG("working directory (DOCUMENT_ROOT) changed to %S", u_cwd);
+   U_SRV_LOG("Working directory (DOCUMENT_ROOT) changed to %S", u_cwd);
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
@@ -740,7 +742,7 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 
    if (loadPlugins(plugin_dir, cfg[*str_PLUGIN], &cfg) == U_PLUGIN_HANDLER_ERROR)
       {
-      U_ERROR("plugins load FAILED. Going down...");
+      U_ERROR("Plugins load FAILED. Going down...");
       }
 
    cfg.clear();
@@ -807,7 +809,7 @@ next:
    vplugin_name->push_back(x);
         vplugin->push_back(_plugin);
 
-   if (isLog()) ULog::log("[%s] link of static plugin ok\n", name);
+   if (isLog()) ULog::log("[%s] Link of static plugin ok\n", name);
 }
 
 int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, UFileConfig* cfg)
@@ -865,7 +867,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, U
 
             if (_plugin == 0)
                {
-               U_SRV_LOG("load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
+               U_SRV_LOG("Load of plugin '%.*s' FAILED", U_STRING_TO_TRACE(name));
 
                goto end;
                }
@@ -875,7 +877,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list, U
                  vplugin->push_back(_plugin);
             vplugin_name->push_back(name);
 
-            if (isLog()) ULog::log("[%.*s] load of plugin success\n", U_STRING_TO_TRACE(name));
+            if (isLog()) ULog::log("[%.*s] Load of plugin success\n", U_STRING_TO_TRACE(name));
             }
          else
             {
@@ -988,7 +990,7 @@ void UServer_Base::init()
       {
       if (server.empty()) server = U_STRING_FROM_CONSTANT("*");
 
-      U_ERROR("run as server with local address '%.*s:%d' FAILED...", U_STRING_TO_TRACE(server), port);
+      U_ERROR("Run as server with local address '%.*s:%d' FAILED...", U_STRING_TO_TRACE(server), port);
       }
 
    UEventFd::fd = socket->iSockDesc;
@@ -1206,7 +1208,7 @@ void UServer_Base::init()
    if (vplugin &&
        pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
       {
-      U_ERROR("plugins initialization FAILED. Going down...");
+      U_ERROR("Plugins initialization FAILED. Going down...");
       }
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
@@ -1314,7 +1316,7 @@ void UServer_Base::init()
 
    // NB: in the classic model we don't need to notify for request of connection
    // (loop: accept-fork) and the forked child don't accept new client, but we need
-   // event manager for the forked child to feel the eventually timeout of request from the new client...
+   // event manager for the forked child to feel the possibly timeout of request from the new client...
 
    if (isClassic())              goto next;
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
@@ -1341,11 +1343,27 @@ void UServer_Base::init()
          ((URDB*)USSLSession::db_ssl_session)->setShared(U_LOCK_SSL_SESSION);
          }
 
+      const char* msg;
+
+#    if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+      msg = "TLS 1.2";
+#  elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
+      msg = "TLS 1.1";
+#  elif !defined(OPENSSL_NO_SSL3)
+      msg = "SSL 2.0/3.0";
+#  elif !defined(OPENSSL_NO_SSL2)
+      msg = "SSL 2.0";
+#  else
+      msg = "unknow";
+#  endif
+
+      U_SRV_LOG("SSL Server: use %s protocol", msg);
+
       goto next;
       }
 #endif
 
-#ifndef __MINGW32__
+#if defined(U_HTTP_CACHE_REQUEST) && !defined(__MINGW32__)
    UEventFd::op_mask     |= EPOLLET;
    accept_edge_triggered  = true;
 #endif
@@ -1462,11 +1480,15 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
 }
 
+static const char* name_function;
+
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
+#ifdef U_HTTP_CACHE_REQUEST
    uint32_t counter = 0;
+#endif
    UClientImage_Base* ptr; // NB: we can't use directly the variable pClientImage cause of the thread approch...
 
 start:
@@ -1481,9 +1503,12 @@ start:
 
    if (ptr->UEventFd::fd)
       {
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
       if (threshold_for_timeout)
          {
+#     ifdef U_HTTP_CACHE_REQUEST
+         if (counter) goto back; // NB: we can't check for idle connection because we are looping on accept()...
+#     endif
+
          // check for idle connection
 
          threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
@@ -1500,8 +1525,9 @@ start:
             goto next;
             }
          }
-#  endif
+#ifdef U_HTTP_CACHE_REQUEST
 back:
+#endif
       if (++pindex >= eClientImage)
          {
          U_INTERNAL_ASSERT_POINTER(vClientImage)
@@ -1531,7 +1557,7 @@ next:
 
          const char* msg_error = csocket->getMsgError(buffer, sizeof(buffer));
 
-         if (msg_error) ULog::log("accept new client failed %S\n", msg_error);
+         if (msg_error) ULog::log("Accept new client failed %S\n", msg_error);
          }
 
       U_RETURN(U_NOTIFIER_OK);
@@ -1551,7 +1577,7 @@ next:
       // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
       // immediately. A warning is logged on the server but nothing is sent to the client.
 
-      U_SRV_LOG("new client connected from %S, connection denied by Access Control List", ptr->client_address);
+      U_SRV_LOG("New client connected from %S, connection denied by Access Control List", ptr->client_address);
 
       goto error;
       }
@@ -1564,7 +1590,7 @@ next:
        (vallow_IP_prv == 0 ||
         ptr->isAllowed(*vallow_IP_prv) == false))
       {
-      U_SRV_LOG("new client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
+      U_SRV_LOG("New client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
                   ptr->client_address); 
 
       goto error;
@@ -1573,7 +1599,7 @@ next:
 #if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (csocket->iSockDesc >= FD_SETSIZE)
       {
-      U_SRV_LOG("new client connected from %S, connection denied by FD_SETSIZE (%d)", ptr->client_address, FD_SETSIZE);
+      U_SRV_LOG("New client connected from %S, connection denied by FD_SETSIZE (%d)", ptr->client_address, FD_SETSIZE);
 
       goto error;
       }
@@ -1583,7 +1609,7 @@ next:
       {
        --UNotifier::num_connection;
 
-      U_SRV_LOG("new client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
+      U_SRV_LOG("New client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
                   ptr->client_address, UNotifier::max_connection - UNotifier::min_connection);
 
       goto error;
@@ -1615,7 +1641,7 @@ next:
 
          U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
 
-         U_SRV_LOG("started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection - UNotifier::min_connection);
+         U_SRV_LOG("Started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection - UNotifier::min_connection);
 
 retry:
          pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much zombie...
@@ -1624,13 +1650,13 @@ retry:
             {
             --UNotifier::num_connection;
 
-            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children",
+            U_SRV_LOG("Child (pid %d) exited with value %d (%s), down to %u children",
                               pid, status, UProcess::exitInfo(status), UNotifier::num_connection - UNotifier::min_connection);
 
             goto retry;
             }
 
-         if (isLog()) ULog::log("waiting for connection\n");
+         if (isLog()) ULog::log("Waiting for connection\n");
 
          U_RETURN(U_NOTIFIER_OK);
          }
@@ -1641,7 +1667,7 @@ retry:
 
          // NB: in the classic model we don't need to notify for request of connection
          // (loop: accept-fork) and the forked child don't accept new client, but we need
-         // event manager for the forked child to feel the eventually timeout of request from the new client...
+         // event manager for the forked child to feel the possibly timeout of request from the new client...
 
          socket->close();
          }
@@ -1671,8 +1697,20 @@ retry:
 insert:
    UNotifier::insert(ptr);
 
+#ifndef U_HTTP_CACHE_REQUEST
+   U_RETURN(U_NOTIFIER_OK);
+#endif
+
 check:
-   if (accept_edge_triggered && ++counter < 1000) goto back;
+#ifdef U_HTTP_CACHE_REQUEST
+   if (accept_edge_triggered && ++counter < 1000) goto back; // NB: we try to manage optimally a burst of new connections...
+#else
+   if ((socket->flags & O_NONBLOCK) == 0 &&
+       UNotifier::num_connection    == UNotifier::min_connection)
+      {
+      goto next; // NB: if we don't have other connection we can go directly on accept() and possibly block on it...
+      }
+#endif
 
    U_RETURN(U_NOTIFIER_OK);
 
@@ -1717,7 +1755,8 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
       U_INTERNAL_ASSERT_MAJOR(ptr->UEventFd::fd, 0)
       U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
 
-      U_SRV_LOG("client closed connection from %.*s, %s clients still connected", U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
+      U_SRV_LOG("%s close connection from %.*s, %s clients still connected",
+                     (ptr->socket->isOpen() ? "Server" : "Client"), U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
 
       ptr->logbuf->setEmpty();
       }
@@ -1745,7 +1784,6 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    if (cimg != pthis &&
        cimg != handler_inotify)
       {
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(DEBUG)
       if (threshold_for_timeout)
          {
       // U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
@@ -1757,11 +1795,11 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
                      ((UClientImage_Base*)cimg)->last_event,         threshold_for_timeout);
             }
          }
-#  endif
 
       ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
 
-      U_SRV_LOG_WITH_ADDR("client connected didn't send any request in %u secs (timeout), close connection", getReqTimeout());
+      U_SRV_LOG_WITH_ADDR("Client connected didn't send any request in %u secs (timeout), close connection",
+                              u_now->tv_sec - ((UClientImage_Base*)cimg)->last_event);
 
       U_RETURN(true);
       }
@@ -1779,9 +1817,10 @@ int UServer_Base::UTimeoutConnection::handlerTime()
 
    if (UNotifier::num_connection > UNotifier::min_connection)
       {
+      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+
       // there are idle connection... (timeout)
 
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(DEBUG)
       if (threshold_for_timeout)
          {
          threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
@@ -1798,7 +1837,6 @@ int UServer_Base::UTimeoutConnection::handlerTime()
          last_timeout  = u_now->tv_sec;
          name_function = "handlerTime";
          }
-#  endif
 
       UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
       }
@@ -1820,7 +1858,7 @@ void UServer_Base::runAsUser(const char* user)
 #ifndef __MINGW32__
    if (u_runAsUser(user, false))
       {
-      U_SRV_LOG("server run with user %S permission", user);
+      U_SRV_LOG("Server run with user %S permission", user);
       }
    else
       {
@@ -1831,16 +1869,18 @@ void UServer_Base::runAsUser(const char* user)
 
 void UServer_Base::run()
 {
-   U_TRACE(0, "UServer_Base::run()")
+   U_TRACE(1, "UServer_Base::run()")
 
    U_INTERNAL_ASSERT_POINTER(pthis)
 
    pthis->init();
 
+   if (u_start_time == 0) u_setStartTime();
+
    if (vplugin &&
        pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED)
       {
-      U_ERROR("plugins running FAILED. Going down...");
+      U_ERROR("Plugins running FAILED. Going down...");
       }
 
    bpluginsHandlerReset   = false; // default is NOT call...
@@ -1920,12 +1960,12 @@ void UServer_Base::run()
 
                U_INTERNAL_DUMP("cpuset = %ld %B", CPUSET_BITS(&cpuset)[0], CPUSET_BITS(&cpuset)[0])
 
-               U_SRV_LOG("started new child (pid %d), up to %u children, affinity mask: %x", pid, i, CPUSET_BITS(&cpuset)[0]);
+               U_SRV_LOG("Started new child (pid %d), up to %u children, affinity mask: %x", pid, i, CPUSET_BITS(&cpuset)[0]);
 
                if (set_realtime_priority &&
                    u_switch_to_realtime_priority(pid) == false)
                   {
-                  U_WARNING("cannot set posix realtime scheduling policy");
+                  U_WARNING("Cannot set posix realtime scheduling policy");
                   }
 
                if (isPreForked() == false) pid_to_wait = pid;
@@ -1938,7 +1978,7 @@ void UServer_Base::run()
                if (vplugin &&
                    pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED)
                   {
-                  U_ERROR("plugins forking FAILED. Going down...");
+                  U_ERROR("Plugins forking FAILED. Going down...");
                   }
 
                if (user) runAsUser(user);
@@ -1961,7 +2001,7 @@ void UServer_Base::run()
                // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
                UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
 
-               if (isLog()) ULog::log("waiting for connection\n");
+               if (isLog()) ULog::log("Waiting for connection\n");
 
                while (flag_loop)
                   {
@@ -2000,14 +2040,9 @@ void UServer_Base::run()
 
             baffinity = false;
 
-#        if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-            if (u_pthread_time == 0)
-#        endif
-            (void) gettimeofday(u_now, 0);
-
             U_INTERNAL_DUMP("down to %u children", i)
 
-            U_SRV_LOG("child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), i);
+            U_SRV_LOG("Child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), i);
             }
 
          /* Another little safety brake here: since children should not exit
@@ -2024,7 +2059,7 @@ void UServer_Base::run()
       {
       if (user) runAsUser(user);
 
-      if (isLog()) ULog::log("waiting for connection\n");
+      if (isLog()) ULog::log("Waiting for connection\n");
 
       U_INTERNAL_ASSERT(preforked_num_kids <= 1)
 
@@ -2043,7 +2078,7 @@ void UServer_Base::run()
 
          // NB: in the classic model we don't need to notify for request of connection
          // (loop: accept-fork) and the forked child don't accept new client, but we need
-         // event manager for the forked child to feel the eventually timeout of request from the new client...
+         // event manager for the forked child to feel the possibly timeout of request from the new client...
 
          if (socket->isClosed() ||
              preforked_num_kids == 0)
@@ -2062,7 +2097,7 @@ void UServer_Base::run()
    if (vplugin &&
        pluginsHandlerStop() != U_PLUGIN_HANDLER_FINISHED)
       {
-      U_WARNING("plugins stop FAILED...");
+      U_WARNING("Plugins stop FAILED...");
       }
 }
 
@@ -2147,15 +2182,13 @@ UCommand* UServer_Base::loadConfigCommand(UFileConfig& cfg)
    U_RETURN_POINTER(cmd,UCommand);
 }
 
-void UServer_Base::logCommandMsgError(const char* cmd)
+void UServer_Base::logCommandMsgError(const char* cmd, bool balways)
 {
-   U_TRACE(0, "UServer_Base::logCommandMsgError(%S)", cmd)
+   U_TRACE(0, "UServer_Base::logCommandMsgError(%S,%b)", cmd, balways)
 
    if (isLog())
       {
-      UCommand::setMsgError(cmd);
-
-      ULog::log("%.*s%.*s\n", U_STRING_TO_TRACE(*mod_name), u_buffer_len, u_buffer);
+      if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log("%.*s%.*s\n", U_STRING_TO_TRACE(*mod_name), u_buffer_len, u_buffer);
 
       u_buffer_len = 0;
       }

@@ -392,9 +392,9 @@ U_NO_EXPORT bool UCommand::wait()
    U_RETURN(exit_value == 0);
 }
 
-void UCommand::setMsgError(const char* cmd)
+bool UCommand::setMsgError(const char* cmd, bool only_if_error)
 {
-   U_TRACE(0, "UCommand::setMsgError(%S)", cmd)
+   U_TRACE(0, "UCommand::setMsgError(%S,%b)", cmd, only_if_error)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
@@ -405,16 +405,24 @@ void UCommand::setMsgError(const char* cmd)
    if (isStarted() == false)
       {
       u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
+
+      U_RETURN(true);
       }
-   else if (isTimeout())
+
+   if (isTimeout())
       {
       u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S (pid %u) excedeed time (%d secs) for execution", cmd, pid, timeoutMS / 1000);
+
+      U_RETURN(true);
       }
-   else
+
+   if (only_if_error == false)
       {
       u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "command %S started (pid %u) and ended with status: %d (%d, %s)",
                                                               cmd, pid, status, exit_value, UProcess::exitInfo(status));
       }
+
+   U_RETURN(false);
 }
 
 // public method...
@@ -500,7 +508,7 @@ void UCommand::outputCommandWithDialog(const UString& cmd, char** penv, UString*
 
    tmp.execute(flag_stdin, flag_stdout, flag_stderr);
 
-   if (postCommand(0, output) == false || exit_value) setMsgError(cmd.data());
+   if (postCommand(0, output) == false || exit_value) (void) setMsgError(cmd.data(), false);
 }
 
 UString UCommand::outputCommand(const UString& cmd, char** penv, int fd_stdin, int fd_stderr)

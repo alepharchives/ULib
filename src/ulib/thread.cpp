@@ -15,6 +15,10 @@
 
 #include <time.h>
 
+#ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+#endif
+
 typedef void* (*exec_t)(void*);
 typedef void  (*cleanup_t)(void*);
 
@@ -96,6 +100,15 @@ UThread::~UThread()
    U_INTERNAL_DUMP("first = %p next = %p", first, next)
 
    if (next) delete next;
+}
+
+pid_t UThread::getTID()
+{
+   U_TRACE(0, "UThread::getTID()")
+
+   pid_t _tid = syscall(SYS_gettid);
+
+   U_RETURN(_tid);
 }
 
 __pure UThread* UThread::getThread()

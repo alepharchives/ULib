@@ -33,6 +33,17 @@
 U_CREAT_FUNC(mod_ssi, USSIPlugIn)
 #endif
 
+int      USSIPlugIn::alternative_response;
+bool     USSIPlugIn::use_size_abbrev;
+time_t   USSIPlugIn::last_modified;
+UString* USSIPlugIn::errmsg;
+UString* USSIPlugIn::timefmt;
+UString* USSIPlugIn::docname;
+UString* USSIPlugIn::body;
+UString* USSIPlugIn::header;
+UString* USSIPlugIn::environment;
+UString* USSIPlugIn::alternative_include;
+
 const UString* USSIPlugIn::str_expr;
 const UString* USSIPlugIn::str_var;
 const UString* USSIPlugIn::str_cmd;
@@ -60,12 +71,6 @@ const UString* USSIPlugIn::str_encoding_none;
 const UString* USSIPlugIn::str_encoding_url;
 const UString* USSIPlugIn::str_encoding_entity;
 const UString* USSIPlugIn::str_servlet;
-
-UString* USSIPlugIn::body;
-UString* USSIPlugIn::header;
-UString* USSIPlugIn::environment;
-UString* USSIPlugIn::alternative_include;
-int      USSIPlugIn::alternative_response;
 
 void USSIPlugIn::str_allocate()
 {
@@ -162,12 +167,20 @@ USSIPlugIn::USSIPlugIn()
 {
    U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
 
+   errmsg  = U_NEW(UString);
+   timefmt = U_NEW(UString);
+   docname = U_NEW(UString);
+
    if (str_SSI_AUTOMATIC_ALIASING == 0) str_allocate();
 }
 
 USSIPlugIn::~USSIPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USSIPlugIn)
+
+   delete errmsg;
+   delete timefmt;
+   delete docname;
 
    if (body)
       {
@@ -651,8 +664,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                name  = name_value[i];
                value = name_value[i+1];
 
-                    if (name == *str_errmsg)  (errmsg  = value).duplicate();
-               else if (name == *str_timefmt) (timefmt = value).duplicate();
+                    if (name == *str_errmsg)  (*errmsg  = value).duplicate();
+               else if (name == *str_timefmt) (*timefmt = value).duplicate();
                else if (name == *str_sizefmt) use_size_abbrev = (value == *str_abbrev);
                }
             }
@@ -691,12 +704,12 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    *                nested include files, this is not then URL for the current document.
                    */
 
-                       if (value == *str_DATE_GMT)      x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec);
-                  else if (value == *str_DATE_LOCAL)    x = UTimeDate::strftime(timefmt.data(), u_now->tv_sec, true);
-                  else if (value == *str_LAST_MODIFIED) x = UTimeDate::strftime(timefmt.data(), last_modified);
+                       if (value == *str_DATE_GMT)      x = UTimeDate::strftime(timefmt->data(), u_now->tv_sec);
+                  else if (value == *str_DATE_LOCAL)    x = UTimeDate::strftime(timefmt->data(), u_now->tv_sec, true);
+                  else if (value == *str_LAST_MODIFIED) x = UTimeDate::strftime(timefmt->data(), last_modified);
                   else if (value == *str_USER_NAME)     (void) x.assign(u_user_name, u_user_name_len);
                   else if (value == *str_DOCUMENT_URI)  (void) x.assign(U_HTTP_URI_TO_PARAM);
-                  else if (value == *str_DOCUMENT_NAME) x = docname;
+                  else if (value == *str_DOCUMENT_NAME) x = *docname;
                   else
                      {
                      x = UStringExt::expandEnvironmentVar(value, UClientImage_Base::environment);
@@ -768,9 +781,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                pathname.clear();
                }
 
-                 if (bfile == false)     (void) output.append(errmsg);
+                 if (bfile == false)     (void) output.append(*errmsg);
             else if (op    == SSI_FSIZE) (void) output.append(UStringExt::numberToString(UHTTP::file->getSize(), use_size_abbrev));
-            else                         (void) output.append(UTimeDate::strftime(timefmt.data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
+            else                         (void) output.append(UTimeDate::strftime(timefmt->data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
             }
          break;
 
@@ -812,7 +825,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   }
                }
 
-            if (include.empty()) x = errmsg;
+            if (include.empty()) x = *errmsg;
             else
                {
                x = getInclude(include, include_level);
@@ -971,13 +984,13 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
       {
       UString x = cfg[*str_SSI_AUTOMATIC_ALIASING];
 
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::ssi_alias, 0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::global_alias, 0)
 
       if (x.empty() == false)
          {
          if (x.first_char() != '/') (void) x.insert(0, '/');
 
-         UHTTP::ssi_alias = U_NEW(UString(x));
+         UHTTP::global_alias = U_NEW(UString(x));
          }
 
       x = cfg[*UServer_Base::str_ENVIRONMENT];
@@ -1042,8 +1055,8 @@ int USSIPlugIn::handlerRequest()
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
 
-      errmsg               = *str_errmsg_default;
-      timefmt              = *str_timefmt_default;
+      *errmsg              = *str_errmsg_default;
+      *timefmt             = *str_timefmt_default;
       last_modified        = UHTTP::file->st_mtime;
       use_size_abbrev      = true;
       alternative_response = 0;
@@ -1054,7 +1067,7 @@ int USSIPlugIn::handlerRequest()
 
       header->setBuffer(U_CAPACITY);
 
-      (docname = UHTTP::getDocumentName()).duplicate();
+      (*docname = UHTTP::getDocumentName()).duplicate();
 
       // read the SSI file
 
@@ -1158,10 +1171,10 @@ const char* USSIPlugIn::dump(bool reset) const
                   << "use_size_abbrev              " << use_size_abbrev             << '\n'
                   << "alternative_response         " << alternative_response        << '\n'
                   << "body                (UString " << (void*)body                 << ")\n"
-                  << "errmsg              (UString " << (void*)&errmsg              << ")\n"
+                  << "errmsg              (UString " << (void*)errmsg               << ")\n"
                   << "header              (UString " << (void*)header               << ")\n"
-                  << "timefmt             (UString " << (void*)&timefmt             << ")\n"
-                  << "docname             (UString " << (void*)&docname             << ")\n"
+                  << "timefmt             (UString " << (void*)timefmt              << ")\n"
+                  << "docname             (UString " << (void*)docname              << ")\n"
                   << "environment         (UString " << (void*)environment          << ")\n"
                   << "alternative_include (UString " << (void*)alternative_include  << ')';
 

@@ -22,6 +22,14 @@
 U_CREAT_FUNC(mod_rpc, URpcPlugIn)
 #endif
 
+bool        URpcPlugIn::is_rpc_msg;
+URPCParser* URpcPlugIn::rpc_parser;
+
+URpcPlugIn::URpcPlugIn()
+{
+   U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "")
+}
+
 URpcPlugIn::~URpcPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, URpcPlugIn)

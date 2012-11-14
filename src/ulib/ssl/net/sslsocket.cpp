@@ -105,8 +105,10 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool server, long options)
       {
       if (server)
          {
-#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+#       if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
          method = (SSL_METHOD*)TLSv1_2_server_method();
+#     elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
+         method = (SSL_METHOD*)TLSv1_1_server_method();
 #     elif !defined(OPENSSL_NO_SSL3)
          method = (SSL_METHOD*)SSLv23_server_method();
 #     elif !defined(OPENSSL_NO_SSL2)
@@ -115,8 +117,10 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool server, long options)
          }
       else
          {
-#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+#       if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
          method = (SSL_METHOD*)TLSv1_2_client_method();
+#     elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
+         method = (SSL_METHOD*)TLSv1_1_client_method();
 #     elif !defined(OPENSSL_NO_SSL3)
          method = (SSL_METHOD*)SSLv3_client_method();
 #     elif !defined(OPENSSL_NO_SSL2)
