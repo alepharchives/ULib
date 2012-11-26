@@ -937,8 +937,7 @@ dist-hook:
 		$(distdir)/tests/examples/WAGSM/log \
 		$(distdir)/tests/examples/CApath/*.*0 \
 		$(distdir)/tests/examples/TSA/log \
-		$(distdir)/tests/examples/TSA/DB/log \
-		$(distdir)/tests/examples/TSA/DB/.rnd \
+		$(distdir)/tests/examples/TSA/TSA/.rnd \
 		$(distdir)/tests/examples/TSA/response/* \
 		$(distdir)/tests/examples/www.sito1.com \
 		$(distdir)/tests/examples/CSP/DB_CA/CA* \

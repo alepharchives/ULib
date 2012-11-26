@@ -142,7 +142,7 @@ RETSIGTYPE UInterrupt::handlerInterrupt(int signo)
 
    U_MESSAGE("program interrupt - %Y", signo);
 
-   // U_EXIT(-1);
+// U_EXIT(-1);
 
    UInterrupt::sendOurselves(signo);
 }
@@ -178,7 +178,7 @@ void UInterrupt::callHandlerSignal()
 
    int i;
 
-loop:
+   loop:
    U_INTERNAL_DUMP("event_signal_pending = %d", event_signal_pending)
 
    i = event_signal_pending;
@@ -206,6 +206,9 @@ loop:
             }
          }
       }
+
+   // NB: can happen that in manage the signal the calling function produce another signal because the interval is too short (< 10ms)
+   //     in this case the parameter to the calling function is zero...
 
    if (event_signal_pending) goto loop;
 }

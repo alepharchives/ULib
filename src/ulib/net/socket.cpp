@@ -767,24 +767,16 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 
    socklen_t slDummy = cRemote.sizeOf();
 
-loop:
 #ifdef HAVE_ACCEPT4
        pcNewConnection->iSockDesc  = U_SYSCALL(accept4, "%d,%p,%p,%d", iSockDesc, (sockaddr*)cRemote, &slDummy, accept4_flags);
 // if (pcNewConnection->iSockDesc != -1 || errno != ENOSYS) goto next;
 #elif defined(__MINGW32__)
-       pcNewConnection->fh         = U_SYSCALL(accept,  "%d,%p,%p",          fh, (sockaddr*)cRemote, &slDummy);
-       pcNewConnection->iSockDesc  = _open_osfhandle((long)(pcNewConnection->fh), O_RDWR | O_BINARY);
+   pcNewConnection->fh        = U_SYSCALL(accept, "%d,%p,%p", fh, (sockaddr*)cRemote, &slDummy);
+   pcNewConnection->iSockDesc = _open_osfhandle((long)(pcNewConnection->fh), O_RDWR | O_BINARY);
 #else
-       pcNewConnection->iSockDesc  = U_SYSCALL(accept,  "%d,%p,%p",    iSockDesc, (sockaddr*)cRemote, &slDummy);
+   pcNewConnection->iSockDesc = U_SYSCALL(accept, "%d,%p,%p", iSockDesc, (sockaddr*)cRemote, &slDummy);
 #endif
 // next:
-   if (pcNewConnection->iSockDesc == -1    &&
-       errno                      == EINTR &&
-       UInterrupt::checkForEventSignalPending())
-      {
-      goto loop; // NB: we never restart accept(), in general socket server is non blocking...
-      }
-
    if (pcNewConnection->iSockDesc != -1)
       {
       pcNewConnection->iState = CONNECT;
@@ -847,6 +839,12 @@ loop:
 
       U_RETURN(true);
       }
+
+   U_INTERNAL_ASSERT_EQUALS(pcNewConnection->iSockDesc, -1)
+
+   // NB: we never restart accept(), in general socket server is NOT blocking...
+
+   if (errno == EINTR) (void) UInterrupt::checkForEventSignalPending();
 
    pcNewConnection->iState = -errno;
 

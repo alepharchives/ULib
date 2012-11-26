@@ -688,7 +688,6 @@ next:
 #ifdef U_HTTP_CACHE_REQUEST
 end:
 #endif
-
    last_event = u_now->tv_sec;
 
    U_RETURN(U_NOTIFIER_OK);

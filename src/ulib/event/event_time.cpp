@@ -79,6 +79,30 @@ __pure bool UEventTime::isOld() const
    U_RETURN(result);
 }
 
+__pure bool UEventTime::isExpired() const
+{
+   U_TRACE(0, "UEventTime::isExpired()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("this = { %ld %6ld }", ctime.tv_sec + tv_sec, ctime.tv_usec + tv_usec)
+
+   long diff  = (ctime.tv_sec  + tv_sec  - u_now->tv_sec)  * 1000L +
+               ((ctime.tv_usec + tv_usec - u_now->tv_usec) / 1000L);
+
+   U_DUMP("diff = %ld", diff)
+
+   if (diff <= 0) U_RETURN(true);
+
+   long delta = UTimeVal::getMilliSecond() / 128;
+
+   U_DUMP("delta = %ld", diff, delta)
+
+   if (diff <= delta) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 __pure bool UEventTime::operator<(const UEventTime& t) const
 {
    U_TRACE(0, "UEventTime::operator<(%O)", U_OBJECT_TO_TRACE(t))

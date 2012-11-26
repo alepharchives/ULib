@@ -958,6 +958,9 @@ typedef unsigned long long uint64;
 /* install directory */
 #undef U_PREFIXDIR
 
+/* enable server thread approach support */
+#undef U_SERVER_THREAD_APPROACH_SUPPORT
+
 /* STATIC_HANDLER_ECHO */
 #undef U_STATIC_HANDLER_ECHO
 

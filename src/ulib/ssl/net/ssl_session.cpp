@@ -48,15 +48,11 @@ void USSLSession::deleteSessionCache()
    delete db_ssl_session;
 }
 
-bool USSLSession::initSessionCache(SSL_CTX* ctx, const char* location, uint32_t sz)
+bool USSLSession::initSessionCache(SSL_CTX* ctx, const UString& pathdb, uint32_t sz)
 {
-   U_TRACE(0, "USSLSession::initSessionCache(%p,%S,%u)", ctx, location, sz)
+   U_TRACE(0, "USSLSession::initSessionCache(%p,%.*S,%u)", ctx, U_STRING_TO_TRACE(pathdb), sz)
 
    U_INTERNAL_ASSERT_EQUALS(db_ssl_session,0)
-
-   UString pathdb(U_CAPACITY);
-
-   pathdb.snprintf("%s%s", (location[0] == '/' ? "" : U_LIBEXECDIR "/"), location);
 
    db_ssl_session = U_NEW(URDB(pathdb, false));
 
@@ -102,7 +98,7 @@ bool USSLSession::initSessionCache(SSL_CTX* ctx, const char* location, uint32_t 
 
    U_INTERNAL_DUMP("timeout = %d", SSL_CTX_get_timeout(ctx))
 
-   U_SRV_LOG("db initialization of SSL session %s success", location);
+   U_SRV_LOG("db initialization of SSL session %.*s success", U_STRING_TO_TRACE(pathdb));
 
    U_RETURN(true);
 }

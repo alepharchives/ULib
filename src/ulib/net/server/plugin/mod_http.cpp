@@ -107,6 +107,15 @@ int UHttpPlugIn::handlerRead()
    U_RETURN(U_NOTIFIER_OK);
 }
 
+void UHttpPlugIn::handlerDelete()
+{
+   U_TRACE(0, "UHttpPlugIn::handlerDelete()")
+
+   U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
+
+   UEventFd::fd = 0;
+}
+
 // Server-wide hooks
 
 int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
@@ -149,7 +158,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
    UVector<UString> tmp;
 
-   if (cfg.loadVector(tmp, "ALIAS") && tmp.empty() == false)
+   if (cfg.loadVector(tmp, "ALIAS") &&
+       tmp.empty() == false)
       {
       U_INTERNAL_ASSERT_EQUALS(UHTTP::valias,0)
 
@@ -158,7 +168,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       tmp.clear();
       }
 
-   if (cfg.loadVector(tmp, "REWRITE_RULE_NF") && tmp.empty() == false)
+   if (cfg.loadVector(tmp, "REWRITE_RULE_NF") &&
+       tmp.empty() == false)
       {
       U_INTERNAL_ASSERT_EQUALS(UHTTP::vRewriteRule,0)
 
@@ -256,11 +267,14 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          // NB: we ask to notify for change of file system (inotify)
          //     in the thread approach this is very dangerous...
 
-         if (UNotifier::pthread == 0) UServer_Base::handler_inotify = this;
-         else
+         UServer_Base::handler_inotify = this;
+
+#     if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+         if (UNotifier::pthread)
             {
-            U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1");
+            U_SRV_LOG("Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1 (server thread approach)");
             }
+#     endif
          }
 #  endif
 
@@ -321,7 +335,7 @@ int UHttpPlugIn::handlerRun()
 
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
 
-   // NB: now we have shared data allocated by UServer...
+   // NB: we use this method because now we have the shared data allocated by UServer...
 
    if (UServer_Base::isLog()) UServer_Base::mod_name->snprintf("[usp_init] ", 0);
 
@@ -364,7 +378,12 @@ int UHttpPlugIn::handlerREAD()
          {
          result = UHTTP::checkHTTPRequestCache();
 
-         if (result != U_PLUGIN_HANDLER_FINISHED) U_RETURN(result);
+         if (result != U_PLUGIN_HANDLER_FINISHED)
+            {
+            if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
+
+            U_RETURN(result);
+            }
          }
 
       UHTTP::clearHTTPRequestCache();
@@ -373,24 +392,18 @@ int UHttpPlugIn::handlerREAD()
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 #endif
 
-   if (UHTTP::readHTTPRequest(UServer_Base::pClientImage->socket) == false)
-      {
-      if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
+   if (UHTTP::manageHTTPRequest() == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
+   // NB: we check if we can shortcut the http request processing (only in the context of U_PLUGIN_HANDLER_FINISHED)...
 
-   result = UHTTP::checkHTTPRequest();
+   UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off           == false &&
+                                           UHTTP::isHTTPRequestAlreadyProcessed() == false);
 
-   if (result == U_PLUGIN_HANDLER_FINISHED)
-      {
-      UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off           == false &&
-                                              UHTTP::isHTTPRequestAlreadyProcessed() == false);
+   U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
 
-      U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
+   if (UServer_Base::bpluginsHandlerRequest) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 
-      if (UServer_Base::bpluginsHandlerRequest == false) result = handlerRequest();
-      }
+   result = handlerRequest();
 
    U_RETURN(result);
 }
@@ -467,7 +480,7 @@ int UHttpPlugIn::handlerRequest()
       }
 
 end:
-   if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
+   UHTTP::endHTTPRequestProcessing();
 
    // check for "Connection: close" in headers
 

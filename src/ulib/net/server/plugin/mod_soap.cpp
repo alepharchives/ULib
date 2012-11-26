@@ -64,6 +64,13 @@ int USoapPlugIn::handlerInit()
       {
       U_SRV_LOG("initialization of plugin success");
 
+      // NB: SOAP is NOT a static page...
+
+      if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
+
+      UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/soap"));
+      UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/nostat"));
+
       goto end;
       }
 

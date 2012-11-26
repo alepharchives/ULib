@@ -208,8 +208,12 @@ uint32_t UMimeHeader::getAttributeFromKeyValue(const UString& key_value, UVector
 
          n = name_value.split(key_value.substr(pos + 1), " =;"); // NB: I can't use also '"' char...
 
-         U_INTERNAL_ASSERT( n >= 2)
-         U_INTERNAL_ASSERT((n  & 1) == 0) // pari...
+         if ((n & 1)) // NB: it is even...
+            {
+            (void) name_value.pop();
+
+            n -= 1;
+            }
          }
       }
 

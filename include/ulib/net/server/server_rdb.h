@@ -47,7 +47,7 @@ public:
 
    // Open a reliable database
 
-   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024)
+   static bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024)
       {
       U_TRACE(0, "URDBServer::open(%.*S,%u)", U_STRING_TO_TRACE(pathdb), log_size)
 
@@ -65,7 +65,7 @@ public:
 #endif
 
 protected:
-   URDB* rdb; // need pointer for object dump...
+   static URDB* rdb;
 
    // method VIRTUAL to redefine
 
@@ -84,8 +84,8 @@ protected:
       }
 
 private:
-   URDBServer(const URDBServer& s) : UServer<UTCPSocket>(0), rdb(s.rdb) {}
-   URDBServer& operator=(const URDBServer&)                             { return *this; }
+   URDBServer(const URDBServer& s) : UServer<UTCPSocket>(0) {}
+   URDBServer& operator=(const URDBServer&)                 { return *this; }
 };
 
 #endif

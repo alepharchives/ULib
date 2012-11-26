@@ -185,39 +185,39 @@ public:
    // bound to the port number, etc...
 
    static void run();
-          void init();
-          void loadConfigParam(UFileConfig& file);
+   static void init();
+   static void loadConfigParam(UFileConfig& file);
 
    // tipologia server...
 
    static bool bssl, bipc;
 
-   static int         getPort()          { return port; }
-   static int         getCgiTimeout()    { return cgi_timeout; }
-   static int         getReqTimeout()    { return (timeoutMS / 1000); }
-   static bool        isIPv6()           { return UClientImage_Base::bIPv6; }
-   static UString     getHost()          { return *host; }
+   static int     getPort()       { return port; }
+   static int     getCgiTimeout() { return cgi_timeout; }
+   static int     getReqTimeout() { return (timeoutMS / 1000); }
+   static bool    isIPv6()        { return UClientImage_Base::bIPv6; }
+   static UString getHost()       { return *host; }
 
    // The directory out of which you will serve your documents...
 
-   UString document_root;
+   static UString* document_root;
 
    static UString getDocumentRoot()
       {
       U_TRACE(0, "UServer_Base::getDocumentRoot()")
 
-      U_INTERNAL_ASSERT_POINTER(pthis)
+      U_INTERNAL_ASSERT_POINTER(document_root)
 
-      U_RETURN_STRING(pthis->document_root);
+      U_RETURN_STRING(*document_root);
       }
 
    static bool isFileInsideDocumentRoot(const UString& path)
       {
       U_TRACE(0, "UServer_Base::isFileInsideDocumentRoot(%.*S)", U_STRING_TO_TRACE(path))
 
-      U_INTERNAL_ASSERT_POINTER(pthis)
+      U_INTERNAL_ASSERT_POINTER(document_root)
 
-      bool result = (path.size() >= pthis->document_root.size());
+      bool result = (path.size() >= document_root->size());
 
       U_RETURN(result);
       }
@@ -312,9 +312,9 @@ public:
       U_RETURN_POINTER(shared_data_ptr, void);
       }
 
-   static UClientImage_Base* pindex;
-   static UClientImage_Base* vClientImage;
+   static UClientImage_Base* pClientIndex;
    static UClientImage_Base* pClientImage;
+   static UClientImage_Base* vClientImage;
    static UClientImage_Base* eClientImage;
 
    static const char* getClientAddress()
@@ -403,7 +403,7 @@ public:
 
    // NETWORK CTX
 
-   static UString getIPAddress()                              { return pthis->IP_address; }
+   static UString getIPAddress()                              { return *IP_address; }
    static UString getMacAddress(    const char* device_or_ip) { return USocketExt::getMacAddress(socket->getFd(), device_or_ip); }
    static UString getNetworkAddress(const char* device)       { return USocketExt::getNetworkAddress(socket->getFd(), device); }
    static UString getNetworkDevice( const char* exclude)      { return USocketExt::getNetworkDevice(exclude); }
@@ -415,25 +415,25 @@ public:
 #endif
 
 protected:
-   UString server,      // host name or ip address for the listening socket
-           as_user,     // change the current working directory to the user's home dir, and downgrade security to that user account
-           log_file,    // locations for file log
-           dh_file,     // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
-           cert_file,   // locations for certificate of server
-           key_file,    // locations for private key of server
-           password,    // password for private key of server
-           ca_file,     // locations of trusted CA certificates used in the verification
-           ca_path,     // locations of trusted CA certificates used in the verification
-           name_sock,   // name file for the listening socket
-           IP_address,  // IP address of this server
-           allow_IP,    // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
-           allow_IP_prv;// Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
+   static int port,              // the port number to bind to
+              iBackLog,          // max number of ready to be delivered connections to accept()
+              timeoutMS,         // the time-out value in milliseconds for client request
+              cgi_timeout,       // the time-out value in seconds for output cgi process
+              verify_mode;       // mode of verification ssl connection
 
-   static int port,           // the port number to bind to
-              iBackLog,       // max number of ready to be delivered connections to accept()
-              timeoutMS,      // the time-out value in milliseconds for client request
-              cgi_timeout,    // the time-out value in seconds for output cgi process
-              verify_mode;    // mode of verification ssl connection
+   static UString* server;       // host name or ip address for the listening socket
+   static UString* as_user;      // change the current working directory to the user's home dir, and downgrade security to that user account
+   static UString* log_file;     // locations for file log
+   static UString* dh_file;      // These are the 1024 bit DH parameters from "Assigned Number for SKIP Protocols"
+   static UString* cert_file;    // locations for certificate of server
+   static UString* key_file;     // locations for private key of server
+   static UString* password;     // password for private key of server
+   static UString* ca_file;      // locations of trusted CA certificates used in the verification
+   static UString* ca_path;      // locations of trusted CA certificates used in the verification
+   static UString* name_sock;    // name file for the listening socket
+   static UString* IP_address;   // IP address of this server
+   static UString* allow_IP;     // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
+   static UString* allow_IP_prv; // Interpret a "HOST/BITS" IP mask specification. (Ex. 192.168.1.64/28)
 
    static UString* host;
    static UProcess* proc;
@@ -488,12 +488,14 @@ protected:
    UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
    };
 
-   static UVector<UServerPlugIn*>* vplugin;
+   static uint32_t                 vplugin_size;
    static UVector<UString>*        vplugin_name;
+   static UVector<UString>*        vplugin_name_static;
+   static UVector<UServerPlugIn*>* vplugin;
 
    static const char* getNumConnection();
 
-   static void runAsUser(const char* user);
+   static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
    static void handlerCloseConnection(UClientImage_Base* ptr);
 
@@ -546,7 +548,7 @@ private:
    friend class UModProxyService;
    friend class UClientImage_Base;
 
-   static struct linger lng;
+// static struct linger lng;
 
    static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
 
@@ -571,7 +573,7 @@ public:
 
    // MANAGE ALL...
 
-   void go()
+   static void go()
       {
       U_TRACE(0, "UServer<Socket>::go()")
 
@@ -629,9 +631,9 @@ public:
 
    // SERVICES
 
-   static USSLSocket* getSocket() { return (USSLSocket*) pthis->socket; }
+   static USSLSocket* getSocket() { return (USSLSocket*)socket; }
 
-   bool askForClientCertificate()
+   static bool askForClientCertificate()
       {
       U_TRACE(0, "UServer<USSLSocket>::askForClientCertificate()")
 
@@ -658,21 +660,22 @@ public:
 
    // MANAGE ALL...
 
-   void go()
+   static void go()
       {
       U_TRACE(0, "UServer<USSLSocket>::go()")
 
       U_INTERNAL_ASSERT(getSocket()->isSSL())
-      U_INTERNAL_ASSERT(  dh_file.isNullTerminated())
-      U_INTERNAL_ASSERT(  ca_file.isNullTerminated())
-      U_INTERNAL_ASSERT(  ca_path.isNullTerminated())
-      U_INTERNAL_ASSERT( key_file.isNullTerminated())
-      U_INTERNAL_ASSERT( password.isNullTerminated())
-      U_INTERNAL_ASSERT(cert_file.isNullTerminated())
+      U_INTERNAL_ASSERT(  dh_file->isNullTerminated())
+      U_INTERNAL_ASSERT(  ca_file->isNullTerminated())
+      U_INTERNAL_ASSERT(  ca_path->isNullTerminated())
+      U_INTERNAL_ASSERT( key_file->isNullTerminated())
+      U_INTERNAL_ASSERT( password->isNullTerminated())
+      U_INTERNAL_ASSERT(cert_file->isNullTerminated())
 
       // Load our certificate
 
-      if (getSocket()->setContext(dh_file.data(), cert_file.data(), key_file.data(), password.data(), ca_file.data(),  ca_path.data(), verify_mode) == false)
+      if (getSocket()->setContext(dh_file->data(), cert_file->data(), key_file->data(),
+                                  password->data(), ca_file->data(), ca_path->data(), verify_mode) == false)
          {
          U_ERROR("SSL setContext() failed...");
          }

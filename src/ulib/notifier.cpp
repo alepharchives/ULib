@@ -15,7 +15,7 @@
 #include <ulib/net/socket.h>
 #include <ulib/utility/interrupt.h>
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
 #  include "ulib/thread.h"
 #endif
 
@@ -33,31 +33,33 @@ void UEventFd::operator()(int _fd, short event)
    if (ret == U_NOTIFIER_DELETE) UNotifier::erase(this);
 }
 #elif defined(HAVE_EPOLL_WAIT)
-int                 UNotifier::epollfd;
-struct epoll_event* UNotifier::events;
-struct epoll_event* UNotifier::pevents;
+int                              UNotifier::epollfd;
+struct epoll_event*              UNotifier::events;
+struct epoll_event*              UNotifier::pevents;
 #else
-int                 UNotifier::fd_set_max;
-int                 UNotifier::fd_read_cnt;
-int                 UNotifier::fd_write_cnt;
-fd_set              UNotifier::fd_set_read;
-fd_set              UNotifier::fd_set_write;
+int                              UNotifier::fd_set_max;
+int                              UNotifier::fd_read_cnt;
+int                              UNotifier::fd_write_cnt;
+fd_set                           UNotifier::fd_set_read;
+fd_set                           UNotifier::fd_set_write;
 #endif
 #ifdef USE_POLL
-struct pollfd       UNotifier::fds[1];
+struct pollfd                    UNotifier::fds[1];
+#endif
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+void*                            UNotifier::pthread;
 #endif
 
 int                              UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
 int                              UNotifier::min_connection;
 int                              UNotifier::num_connection;
 int                              UNotifier::max_connection;
-void*                            UNotifier::pthread;
 UEventFd**                       UNotifier::lo_map_fd;
 UGenericHashMap<int,UEventFd*>*  UNotifier::hi_map_fd; // maps a fd to a node pointer
 
-void UNotifier::init()
+void UNotifier::init(bool bacquisition)
 {
-   U_TRACE(0, "UNotifier::init()")
+   U_TRACE(0, "UNotifier::init(%b)", bacquisition)
 
 #ifdef USE_LIBEVENT
    if (u_ev_base) (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
@@ -82,7 +84,8 @@ next:
       {
       U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
-      if (num_connection)
+      if (bacquisition &&
+          num_connection)
          {
          U_INTERNAL_ASSERT_POINTER(lo_map_fd)
          U_INTERNAL_ASSERT_POINTER(hi_map_fd)
@@ -157,13 +160,13 @@ UEventFd* UNotifier::find(int fd)
 
    if (fd < max_connection) U_RETURN_POINTER(lo_map_fd[fd], UEventFd);
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (pthread) ((UThread*)pthread)->lock();
 #endif
 
    UEventFd* handler_event = (hi_map_fd->find(fd) ? hi_map_fd->elem() : 0);
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (pthread) ((UThread*)pthread)->unlock();
 #endif
 
@@ -185,13 +188,13 @@ void UNotifier::insert(UEventFd* item)
    if (fd < max_connection) lo_map_fd[fd] = item;
    else
       {
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (pthread) ((UThread*)pthread)->lock();
 #  endif
 
       hi_map_fd->insert(fd, item);
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (pthread) ((UThread*)pthread)->unlock();
 #  endif
       }
@@ -271,13 +274,13 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
    if (fd < max_connection) lo_map_fd[fd] = 0;
    else
       {
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (pthread) ((UThread*)pthread)->lock();
 #  endif
 
       (void) hi_map_fd->erase(fd);
 
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (pthread) ((UThread*)pthread)->unlock();
 #  endif
       }
@@ -557,9 +560,7 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
 }
 #endif
 
-// return false if there are no more events registered...
-
-bool UNotifier::waitForEvent(UEventTime* timeout)
+void UNotifier::waitForEvent(UEventTime* timeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
 
@@ -619,7 +620,7 @@ loop:
       U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
       /*
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (handler_event->fd == 0)
          {
          U_INTERNAL_ASSERT_POINTER(pthread)
@@ -633,11 +634,11 @@ loop:
 
       if (nfd_ready == 0)
          {
-         U_INTERNAL_DUMP("events[%d]: goto end", (pevents - events))
+         U_INTERNAL_DUMP("events[%d]: return", (pevents - events))
 
          U_INTERNAL_ASSERT_EQUALS(pevents, events)
 
-         goto end;
+         return;
          }
 
       goto loop;
@@ -665,21 +666,17 @@ loop:
 
             if (nfd_ready == 0)
                {
-               U_INTERNAL_DUMP("fd = %d: goto end", fd)
+               U_INTERNAL_DUMP("fd = %d: return", fd)
 
                if (fd_cnt > (fd_read_cnt + fd_write_cnt)) fd_set_max = getNFDS();
 
-               goto end;
+               return;
                }
             }
          }
 #  endif
       }
-end:
 #endif
-   if (empty()) U_RETURN(false); // empty queue
-
-   U_RETURN(true);
 }
 
 void UNotifier::callForAllEntryDynamic(bPFpv function)
@@ -715,9 +712,9 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
       }
 }
 
-void UNotifier::clear(bool bthread)
+void UNotifier::clear()
 {
-   U_TRACE(0, "UNotifier::clear(%b)", bthread)
+   U_TRACE(0, "UNotifier::clear()")
 
    U_INTERNAL_ASSERT_POINTER(lo_map_fd)
    U_INTERNAL_ASSERT_POINTER(hi_map_fd)
@@ -752,7 +749,9 @@ void UNotifier::clear(bool bthread)
          }
       }
 
-   if (bthread == false)
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   if (pthread == 0)
+#endif
       {
       U_FREE_VECTOR(lo_map_fd, max_connection, UEventFd);
 
@@ -764,7 +763,10 @@ void UNotifier::clear(bool bthread)
 #if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    U_INTERNAL_ASSERT_POINTER(events)
 
-   if (bthread == false) U_FREE_N(events, max_connection+1, struct epoll_event);
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   if (pthread == 0)
+#endif
+   U_FREE_N(events, max_connection+1, struct epoll_event);
 
    (void) U_SYSCALL(close, "%d", epollfd);
 #endif

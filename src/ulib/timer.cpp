@@ -114,10 +114,20 @@ inline void UTimer::callHandlerTime()
       }
 }
 
-void UTimer::setTimer()
+RETSIGTYPE UTimer::handlerAlarm(int signo)
 {
-   U_TRACE(1, "UTimer::setTimer()")
+   U_TRACE(0, "[SIGALRM] UTimer::handlerAlarm(%d)", signo)
 
+   // NB: can happen that in manage the signal setitimer() produce another signal because the interval is too short (< 10ms)... 
+
+   setTimer(true);
+}
+
+void UTimer::setTimer(bool bsignal)
+{
+   U_TRACE(1, "UTimer::setTimer(%b)", bsignal)
+
+   bool expired;
    UTimer* item;
    UTimer** ptr = &first;
 
@@ -127,7 +137,10 @@ void UTimer::setTimer()
 
    while ((item = *ptr))
       {
-      if (item->alarm->isOld())
+      expired = (bsignal ? item->alarm->isExpired()
+                         : item->alarm->isOld());
+
+      if (expired)
          {
          *ptr = item->next; // toglie il nodo scaduto dalla lista...
 
@@ -145,7 +158,7 @@ void UTimer::setTimer()
 
    timerval.it_value.tv_sec = timerval.it_value.tv_usec = 0L;
 
-set_itimer:
+set_itimer: // NB: can happen that setitimer() produce immediatly a signal because the interval is too short (< 10ms)... 
 
    U_INTERNAL_DUMP("timerval.it_value = { %ld %6ld }", timerval.it_value.tv_sec, timerval.it_value.tv_usec)
 
@@ -187,7 +200,7 @@ void UTimer::insert(UEventTime* a, bool set_timer)
 
    item->insertEntry();
 
-   if (set_timer) setTimer();
+   if (set_timer) setTimer(false);
 }
 
 void UTimer::erase(UEventTime* a, bool flag_reuse, bool set_timer)
@@ -232,7 +245,7 @@ void UTimer::erase(UEventTime* a, bool flag_reuse, bool set_timer)
          }
       }
 
-   if (set_timer) setTimer();
+   if (set_timer) setTimer(false);
 }
 
 void UTimer::clear(bool clean_alarm)

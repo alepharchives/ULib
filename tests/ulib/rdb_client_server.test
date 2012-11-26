@@ -25,7 +25,7 @@ else
 fi
 
 #STRACE=$TRUSS
-start_cmd_background "./test_rdb_server$SUFFIX $ARG1 <inp/cdb.input >>out/rdb_client.out 2>>err/rdb_server.err"
+start_cmd_background "./test_rdb_server$SUFFIX $ARG1 ../../src/ulib/net/server/plugin/.libs mod_echo <inp/cdb.input >>out/rdb_client.out 2>>err/rdb_server.err"
 start_prg 				 rdb_client
 
 if [ "$TERM" = "msys"   ] || \

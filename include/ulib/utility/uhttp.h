@@ -36,9 +36,11 @@
 #define U_MAX_UPLOAD_PROGRESS         16
 #define U_MIN_SIZE_FOR_PARTIAL_WRITE (16U * 1024U)
 
-#define U_HTTP_BODY(str)      (str).substr(u_http_info.endHeader, u_http_info.clength)
-#define U_HTTP_HEADER(str)    (str).substr(u_http_info.startHeader, u_http_info.szHeader)
-#define U_HTTP_URI_EQUAL(str) ((str).equal(U_HTTP_URI_TO_PARAM))
+#define U_HTTP_BODY(str)                    (str).substr(u_http_info.endHeader, u_http_info.clength)
+#define U_HTTP_HEADER(str)                  (str).substr(u_http_info.startHeader, u_http_info.szHeader)
+#define U_HTTP_URI_EQUAL(str)               ((str).equal(U_HTTP_URI_TO_PARAM))
+#define U_HTTP_URI_DOSMATCH(mask,len,flags) (u_dosmatch_with_OR(U_HTTP_URI_TO_PARAM, mask, len, flags))
+#define U_HTTP_URI_OR_ALIAS_STRNEQ(req,str) (U_HTTP_URI_STRNEQ(str) || (req).equal(U_CONSTANT_TO_PARAM(str)))
 
 class UFile;
 class UEventFd;
@@ -176,12 +178,12 @@ public:
       { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
 
    static bool    isHTTPRequest(const char* ptr) __pure;
-   static bool scanfHTTPHeader( const char* ptr);
+   static bool scanfHTTPHeader( const char* ptr, uint32_t size);
 
    static const char* getHTTPStatus();
    static const char* getHTTPStatusDescription(uint32_t nResponseCode);
 
-   static bool readHTTPRequest(USocket* socket);
+   static bool readHTTPRequest();
    static bool findEndHeader(             const UString& buffer);
    static bool readHTTPHeader( USocket* socket, UString& buffer);
    static bool readHTTPBody(   USocket* socket, UString* buffer, UString& body);
@@ -258,6 +260,7 @@ public:
 
    // SERVICES
 
+   static UString* uri;
    static UString* alias;
    static UString* cbuffer;
    static UStringRep* pkey;
@@ -275,7 +278,7 @@ public:
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
    static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
-   static int  checkHTTPRequest();
+   static bool manageHTTPRequest();
    static void writeApacheLikeLog();
    static bool callService(const UString& path);
    static void manageHTTPServletRequest(bool as_service);
@@ -284,10 +287,20 @@ public:
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static uint32_t getUserAgent();
+   static UString  getRequestURI();
    static UString  getDocumentName();
    static UString  getDirectoryURI();
-   static UString  getRequestURI(bool bquery);
+   static UString  getRequestURIWithQuery();
    static UString  getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
+
+   static void endHTTPRequestProcessing()
+      {
+      U_TRACE(0, "UHTTP::endHTTPRequestProcessing()")
+
+      if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
+
+      u_http_info.method = 0; // NB: this mark the end of http request processing...
+      }
 
    static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
       {
@@ -1006,10 +1019,10 @@ private:
    static bool openFile() U_NO_EXPORT;
    static void in_CREATE() U_NO_EXPORT;
    static void in_DELETE() U_NO_EXPORT;
-   static void checkPath() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static void processRewriteRule() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
+   static void checkPath(bool bnostat) U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool runDynamicPage(UString* penvironment) U_NO_EXPORT;
    static void manageBufferResize(const char* rpointer1, const char* rpointer2) U_NO_EXPORT;

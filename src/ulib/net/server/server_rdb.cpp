@@ -13,6 +13,8 @@
 
 #include <ulib/net/server/server_rdb.h>
 
+URDB* URDBServer::rdb;
+
 // DEBUG
 
 #ifdef DEBUG

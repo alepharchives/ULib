@@ -59,6 +59,7 @@ public:
 
    void setCurrentTime();
    bool isOld() const __pure;
+   bool isExpired() const __pure;
    void setTimerVal(struct timeval* it_value);
 
    time_t expire() { return (ctime.tv_sec + tv_sec); }

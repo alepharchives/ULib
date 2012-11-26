@@ -26,6 +26,9 @@ SERVER {
 	ALLOWED_IP	127.0.0.1
 ##	ALLOWED_IP	127.0.0.1,10.30.0.0/16
 
+   PLUGIN      mod_echo
+   PLUGIN_DIR  ../../src/ulib/net/server/plugin/.libs
+
   	PREFORK_CHILD 0
 }
 

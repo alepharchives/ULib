@@ -67,14 +67,14 @@ userver {
 # SOCKET_NAME			tmp/socket
 # IP_ADDRESS			10.30.1.131
 # ALLOWED_IP			127.0.0.1,10.30.0.0/16
-#
+ 
 # ENABLE_RFC1918_FILTER yes
 # ALLOWED_IP_PRIVATE    127.0.0.1,10.30.0.0/16
 
   LISTEN_BACKLOG		   1024
   SET_REALTIME_PRIORITY yes
 
-  PID_FILE       /var/run/userver.pid
+# PID_FILE       /var/run/userver.pid
 # WELCOME_MSG    "220 david.unirel.intranet ULib WEB server (Version 1.1.0) ready.\n"
 # RUN_AS_USER    apache
   DOCUMENT_ROOT  /var/www/localhost/htdocs
@@ -83,7 +83,6 @@ userver {
 # LOG_FILE_SZ    1M
 # LOG_MSG_SIZE   -1
 
-  PLUGIN                     mod_http
 # PLUGIN         "mod_tsa    mod_http"
 # PLUGIN         "mod_rpc    mod_http"
 # PLUGIN         "mod_soap   mod_http"

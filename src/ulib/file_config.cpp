@@ -117,11 +117,15 @@ bool UFileConfig::processData()
          UCommand cmd(command);
          UString output(U_CAPACITY);
 
-         bool esito = cmd.execute(&data, &output, -1, fd_stderr);
+         (void) cmd.execute(&data, &output, -1, fd_stderr);
 
          UServer_Base::logCommandMsgError(cmd.getCommand(), true);
-         
-         if (esito == false) U_RETURN(false);
+
+         // ------------------------------------------
+         // NB: sometime we have problem with comments
+         // ------------------------------------------
+         // if (esito == false) U_RETURN(false);
+         // ------------------------------------------
 
          data = output;
          }
@@ -195,7 +199,6 @@ bool UFileConfig::searchForObjectStream(const char* section, uint32_t len)
    const char* save_start = _start;
 
 retry:
-
    while (_start < _end)
       {
       _start = u_skip(_start, _end, 0, '#');
@@ -237,7 +240,7 @@ retry:
 
          _size = (_end - ++_start); // NB: we advance one char (to call u_skip() after...)
 
-         U_INTERNAL_DUMP("_size = %u", _size)
+         U_INTERNAL_DUMP("_size = %u _end = %.*S", _size, 10, _end)
          }
 
       // FOUND
@@ -282,6 +285,8 @@ bool UFileConfig::loadTable(UHashMap<UString>& tbl)
 
          _start += pos;
          _size  -= pos;
+
+         U_INTERNAL_DUMP("_size = %u _start = %.*S", _size, 10, _start)
 
          if (tbl.empty() == false) U_RETURN(true);
          }

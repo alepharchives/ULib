@@ -2005,5 +2005,14 @@ U_EXPORT main (int argc, char* argv[])
 
    printf("Time Consumed for (%d) iteration = %ld ms\n", n, crono.getTimeElapsed());
 
+/*
+   check DEAD OF SOURCE STRING WITH CHILD ALIVE...
+
+   y = U_STRING_FROM_CONSTANT("I am the source string");
+   z = y.substr(17U);
+
+   y.clear();
+*/
+
    U_RETURN(0);
 }

@@ -69,6 +69,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_CRPWS])
 
+	AC_MSG_CHECKING(if you want to enable server thread approach support)
+	AC_ARG_ENABLE(thread-approach,
+				[  --enable-thread-approach enable server thread approach support [[default=no]]])
+	if test -z "$enable_thread_approach" ; then
+		enable_thread_approach="no"
+	fi
+	if test "$enable_thread_approach" = "yes"; then
+      AC_DEFINE(U_SERVER_THREAD_APPROACH_SUPPORT, 1, [enable server thread approach support])
+	fi
+	AC_MSG_RESULT([$enable_thread_approach])
+
 	AC_MSG_CHECKING(if you want to enable use of precompiled headers)
 	AC_ARG_ENABLE(pch,
 				[  --enable-pch            enables precompiled header support (currently only gcc >= 3.4) [[default=no]]])

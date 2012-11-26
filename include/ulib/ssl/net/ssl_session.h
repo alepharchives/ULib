@@ -36,7 +36,7 @@ public:
    // SERVICES
 
    static void deleteSessionCache();
-   static bool   initSessionCache(SSL_CTX* ctx, const char* location, uint32_t sz);
+   static bool   initSessionCache(SSL_CTX* ctx, const UString& pathdb, uint32_t sz);
 
    static int                newSession(SSL* ssl, SSL_SESSION* sess);
    static void            removeSession(SSL_CTX* ctx, SSL_SESSION* sess);

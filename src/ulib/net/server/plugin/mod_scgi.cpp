@@ -124,6 +124,13 @@ int USCGIPlugIn::handlerInit()
 
          (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
 
+         // NB: SCGI is NOT a static page...
+
+         if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
+
+         UHTTP::valias->push_back(*UHTTP::scgi_uri_mask);
+         UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/nostat"));
+
          U_RETURN(U_PLUGIN_HANDLER_GO_ON);
          }
 

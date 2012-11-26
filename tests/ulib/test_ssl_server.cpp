@@ -1,5 +1,6 @@
 // test_ssl_server.cpp
 
+#include <ulib/file_config.h>
 #include <ulib/ssl/certificate.h>
 #include <ulib/net/server/server.h>
 #include <ulib/ssl/net/sslsocket.h>
@@ -80,11 +81,24 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   UFileConfig fcg;
    USSLServer s(0);
 
    // Load our certificate
 
    s.getSocket()->setContext(0, getArg(argv[1]), getArg(argv[2]), getArg(argv[3]), getArg(argv[4]), getArg(argv[5]), atoi(argv[6]));
+
+   UString plugin_dir( argv[7]);
+   UString plugin_list(argv[8]);
+
+   if (argv[9])
+      {
+      UString x(argv[9]);
+
+      (void) fcg.open(x);
+      }
+
+   s.loadPlugins(plugin_dir, plugin_list, &fcg);
 
    s.run();
 }

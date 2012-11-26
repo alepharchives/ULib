@@ -2,6 +2,13 @@
 #
 # lg's changelog:
 #
+#	2012/11/22: start() waits for process to be started
+#	2012/11/22: conffile(), pidfile()... now are errors tolerant
+#
+#	2012/11/21: reiterate portal conf get
+#	2012/11/21: try using pidfile first, _pgrep otherwise
+#	2012/11/21: _pgrep() busybox ps 52 chars max workaround
+#
 #	2012/10/08: stop(): SIGTERM first, SIGKILL otherwise
 #
 #	2012/10/05: stop file, to stop waiting
@@ -19,96 +26,116 @@ STOP=39
 #export USIMERR="error.sim"
  export DIR_LOG_GZ=/tmp
 
-descr='nodog the brilliant'
-cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
-#cmdline='strace -t -f -s 100 /usr/sbin/userver_tcp -c /etc/nodog.conf'
-pid_file=/tmp/nodog.pid
-out_file=/tmp/nodog.out
-err_file=/tmp/nodog.err
-stop_file=/tmp/nodog.stop
+descr=nodog
 
-public_iface=tun0
-portal_file=/etc/nodog.portal
-key_file=/etc/nodog.key
-conf_file_portal=/tmp/nodog.conf.portal
+stopfile=/tmp/nodog.stop
+
+cmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
+
+## automagically from cmdline
+#
+conffile() { expr "$*" : '.*-c[ 	]\([^ 	]*\)' || echo unknown ; }
+pidfile()  { awk '/^[ \t]*PID_FILE[ \t]/ { print $2 }' `conffile $*` 2> /dev/null ; }
+outfile()  { echo /tmp/`basename \`conffile $*\` .conf`.out ; }   ### .conf
+errfile()  { echo /tmp/`basename \`conffile $*\` .conf`.err ; }   ### .conf
+
+
+publiciface=tun0
+ portalfile=/etc/nodog.portal
+    keyfile=/etc/nodog.key
+
+strip() { echo -n "`$* 2> /dev/null`" ; }
+
+portalconfget() { /usr/sbin/uclient -c /etc/uclient.conf \
+	"http://`strip cat $1`/get_config?ap=`strip uname -n`&key=`strip cat $2`" \
+		2>> /tmp/uclient.err ; }
+	
+portalconffile=/tmp/nodog.conf.portal
 
 
 ## you should't need to put your beloved hands below
 #
 
-_pgrep() { local pids=`{ ps -efw || ps -w ; } 2> /dev/null | awk '
-	### skip me ###
-	NR == 1 { pid=($1 == "PID" ? 1 : 2) ; next }
-	match($0, "### skip me ###") { next }
-	match($0, "'"$*"'") { print $pid }'` ; test "$pids" && echo $pids ; }
+log() { logger -st "$descr" -- $* ; }
 
-log() { logger -st nodog -- $* ; }
-strip() { echo -n "`$* 2> /dev/null`" ; }
+running() { local pid ; pid=`cat "$1" 2> /dev/null` && kill -0 $pid 2> /dev/null && echo $pid ; }
+
+_pgrep() { local pids=`{ ps -efw || ps -w ; } 2> /dev/null | awk '         
+	### skip me ###                                                    
+	NR == 1 { pid=($1 == "PID" ? 1 : 2) ; next }                       
+	match($0, "### skip me ###") { next }                              
+	match($0, "'"${*:0:52}"'") { print $pid }'` ; test "$pids" && echo $pids ; }
+	                   #                                                        
+	                   ## busybox ps prints out 52 chars max cmdlines ...
 
 start() { {
-	local pids=`_pgrep "$cmdline"` ; test "$pids" && {
-		log "$descr is ALREADY running ($pids)." ; return ; }
-	
 	log starting
 	
-	rm -f $stop_file
+	rm -f $stopfile
 
 	## let's wait for date
 	#
-	until test `date '+%Y'` -gt 1970
-		do test -f $stop_file && return
-		log 'waiting for date' ; sleep 3 ; done
+	until test `date '+%Y'` -gt 1970 ; do
+		test -f $stopfile && return
+		log 'waiting for date ...' ; sleep 3 ; done
 	
 	## let's wait for public ip ...
 	#
-	local public_ip ; until public_ip=`ifconfig $public_iface 2> /dev/null |
-		awk '/inet addr:/ { sub("inet addr:", "") ; print $1 }'` &&
-		test $public_ip
-			do test -f $stop_file && return
-			log "waiting for public ip ($public_iface)" ; sleep 3 ; done
+	local publicip ; until publicip=`ifconfig $publiciface 2> /dev/null |
+		awk '/inet addr:/ { sub("inet addr:", "") ; print $1 }'` && test $publicip ; do
+			test -f $stopfile && return
+			log "waiting for public ip ($publiciface) ..." ; sleep 3 ; done
 	
 	## ... and use it as key, if undefined
 	#
-	test ! -f $key_file -o "`strip cat $key_file`" = undefined &&
-		echo $public_ip > $key_file
-	
-	## get conf file from auth portal ...
-	#
-	/usr/sbin/uclient -c /etc/uclient.conf \
-		"http://`strip cat $portal_file`/get_config?ap=`strip uname -n`&key=`strip cat $key_file`" > \
-			$conf_file_portal
+	test ! -f $keyfile -o "`cat $keyfile 2> /dev/null`" = undefined &&
+		echo $publicip > $keyfile
 
-	## ... and wait our beloved conf file
+
+	local pidfile=`pidfile $cmdline` pids ; pids=`running "$pidfile"` ||
+		pids=`_pgrep "$cmdline"` && {
+			log "'$cmdline' is ALREADY running ($pids)." ; return 1 ; }
+
+	## let's reiterate conf get
 	#
-	until test -s $conf_file_portal
-		do test -f $stop_file && return
-		log 'waiting for our beloved conf file' ; sleep 3 ; done
+	until { portalconfget $portalfile $keyfile > $portalconffile ; sleep 3 ; } &&
+		test -s $portalconffile ; do
+			test -f $stopfile && return
+			log "reiterating conf get (`cat $portalfile` `cat $keyfile`) ..." ; done
 	
-	$cmdline >> $out_file 2>> $err_file &
+	local outfile=`outfile $cmdline`
+	local errfile=`errfile $cmdline`
+		$cmdline >> $outfile 2>> $errfile &
 	
-	sleep 3 ; pids=`_pgrep "$cmdline"` ; test "$pids" &&
-		log "started ($pids)." ||
-		log 'seems not to run ...'
-} & }
+	## let's wait for process to be started
+	#
+	until sleep 3 && pidfile=`pidfile $cmdline` && pids=`running "$pidfile"` ; do
+		test -f $stopfile && return
+		log "still waiting for '$cmdline' to be started ..." ; done
+
+	log "'$cmdline' started ($pids)." ; } & }
 
 stop() {
-	## are we still waiting ???
-	#
-	date > $stop_file
+	log stopping
 	
-	local pids=`_pgrep "$cmdline"` ; test "$pids" || {
-		log "$descr is NOT running." ; return 1 ; }
+	## just in case start is still waiting
+	#
+	date > $stopfile
+	
+	local pidfile=`pidfile $cmdline` pids ; pids=`running "$pidfile"` ||
+		pids=`_pgrep "$cmdline"` || {
+			log "'$cmdline' is NOT running." ; return 1 ; }
 		
-	log "stopping ($pids)"
+	log "stopping '$cmdline' ($pids)"
 
-	kill -TERM $pids   ### SIGTERM first, ...
+	kill -TERM $pids   ### SIGTERM first ...
 
-	sleep 3 ; pids=`_pgrep "$cmdline"` ; test "$pids" && {
-		log "$descr is STILL running ($pids), sending SIGKILL"
-		kill -KILL $pids ; }   ### ... SIGKILL otherwise
+	sleep 3 ; pids=`running "$pidfile"` ||
+		pids=`_pgrep "$cmdline"` && {
+			log "'$cmdline' is STILL running ($pids), sending SIGKILL"
+			kill -KILL $pids ; }   ### ... SIGKILL otherwise
 
-	log 'done.'
-}
+	log "'$cmdline' stopped." ; }
 
 restart() {
 	stop ; sleep 3 ; start ; }

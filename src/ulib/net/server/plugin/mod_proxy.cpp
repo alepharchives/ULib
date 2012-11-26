@@ -160,8 +160,8 @@ int UProxyPlugIn::handlerRequest()
 
       U_ASSERT_EQUALS(UClientImage_Base::wbuffer->empty(), false)
 
-      if (                     UHTTP::isHTTPRequest(  ptr)  == false ||
-         (U_HTTP_INFO_INIT(0), UHTTP::scanfHTTPHeader(ptr)) == false)
+      if (                     UHTTP::isHTTPRequest(  ptr)                                      == false ||
+         (U_HTTP_INFO_INIT(0), UHTTP::scanfHTTPHeader(ptr, UClientImage_Base::wbuffer->size())) == false)
          {
          err = UModProxyService::INTERNAL_ERROR;
 

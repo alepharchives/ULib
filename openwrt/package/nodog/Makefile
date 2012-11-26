@@ -16,8 +16,10 @@ STAMP_CONFIGURED:=$(STAMP_CONFIGURED)_$(call confvar, CONFIG_NODOG_DEBUG)
 define Package/nodog
    TITLE:=nocat enhanced
    URL:=http://www.unirel.com/ULib
-   DEPENDS:= +libstdcpp +libopenssl +zlib $(if $(CONFIG_NODOG_UUID),+libuuid) +iptables-mod-ipopt +iptables-mod-nat +iptables-mod-nat-extra
-## DEPENDS:= +libstdcpp             +zlib $(if $(CONFIG_NODOG_UUID),+libuuid) $(if $(CONFIG_NODOG_OPENSSL),+libopenssl) $(if $(CONFIG_NODOG_CYASSL),+libcyassl)
+   DEPENDS:= +libstdcpp +libopenssl +libpcre +zlib $(if $(CONFIG_NODOG_UUID),+libuuid)
+## DEPENDS:= +libstdcpp             +libpcre +zlib $(if $(CONFIG_NODOG_UUID),+libuuid) \
+##																	$(if $(CONFIG_NODOG_OPENSSL),+libopenssl) $(if $(CONFIG_NODOG_CYASSL),+libcyassl) \
+##   																+iptables-mod-ipopt +iptables-mod-nat +iptables-mod-nat-extra
 endef
 
 define Package/nodog/Description
@@ -32,24 +34,18 @@ define Package/nodog/config
 endef
 
 define Package/nodog/conffiles
-/etc/nodog.conf
-/etc/nodog.freesite
+/etc/nodog.key
+/etc/nodog.portal
 /etc/uclient.conf
 /etc/init.d/nodog
-/usr/lib/nodog/firewall/dump.fw
-/usr/lib/nodog/firewall/access.fw
-/usr/lib/nodog/firewall/throttle.fw
-/usr/lib/nodog/firewall/initialize.fw
-/usr/lib/nodog/firewall/reset.fw
-/usr/lib/nodog/bin/upload-logs.sh
+/usr/lib/nodog/firewall/nodog.fw
+/usr/lib/nodog/firewall/tcrules.awk
 endef
 
 NODOG_OPTIONS:= --with-ssl --with-libz \
 					 --without-expat --without-magic \
 					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS --disable-gcc-optimized --disable-thread --disable-HCRS \
-					 --enable-static-module="mod_proxy mod_nocat mod_http" \
-					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
-##					 --enable-linux-netfilter
+					 --enable-static-module="mod_proxy mod_nocat mod_http" $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
 
 define Build/Configure
 	$(call Build/Configure/Default, \
@@ -70,11 +66,11 @@ define Package/nodog/install
 	mkdir -p $(PKG_INSTALL_DIR)
 	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
 	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/lib/ulib $(1)/usr/lib/nodog
-	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
 ##	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/ulib/mod_proxy* $(1)/usr/lib/ulib
+	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
 	$(CP)     $(PKG_INSTALL_DIR)/usr/bin/uclient $(PKG_INSTALL_DIR)/usr/bin/userver_tcp $(1)/usr/sbin/
-	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/* 	  $(1)/usr/lib/nodog
-	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog
+	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/* \
+				 $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog
 	$(CP) -r  $(1)/usr/lib/nodog/etc  						  $(1)/
 	$(RM) -rf $(1)/usr/lib/nodog/etc
 endef

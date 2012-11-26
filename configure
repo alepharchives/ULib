@@ -944,6 +944,7 @@ enable_HIS
 enable_HCRS
 enable_HUPS
 enable_CRPWS
+enable_thread_approach
 enable_pch
 enable_coverage
 enable_gcc_optimized
@@ -1629,6 +1630,7 @@ Optional Features:
   --enable-HCRS           enable HTTP Cache Request Support [default=yes]
   --enable-HUPS           enable HTTP Upload Progress Support [default=no]
   --enable-CRPWS          enable Client Response Partial Write Support [default=no]
+  --enable-thread-approach enable server thread approach support [default=no]
   --enable-pch            enables precompiled header support (currently only gcc >= 3.4) [default=no]
   --enable-coverage       enable coverage [default=no]
   --enable-gcc-optimized  compile with GCC optimizations flags enabled (-finline,-fstrict-aliasing,...) [default=yes]
@@ -20932,6 +20934,24 @@ $as_echo "#define U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT 1" >>confdefs.h
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_CRPWS" >&5
 $as_echo "$enable_CRPWS" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server thread approach support" >&5
+$as_echo_n "checking if you want to enable server thread approach support... " >&6; }
+	# Check whether --enable-thread-approach was given.
+if test "${enable_thread_approach+set}" = set; then :
+  enableval=$enable_thread_approach;
+fi
+
+	if test -z "$enable_thread_approach" ; then
+		enable_thread_approach="no"
+	fi
+	if test "$enable_thread_approach" = "yes"; then
+
+$as_echo "#define U_SERVER_THREAD_APPROACH_SUPPORT 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_thread_approach" >&5
+$as_echo "$enable_thread_approach" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable use of precompiled headers" >&5
 $as_echo_n "checking if you want to enable use of precompiled headers... " >&6; }

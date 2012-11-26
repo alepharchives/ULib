@@ -21,7 +21,7 @@ fi
 
 #VALGRIND=valgrind # --gen-suppressions=all
 #STRACE=$LTRUSS
-start_prg_background server ../../src/ulib/net/server/plugin/.libs '"mod_http mod_echo"' # '"mod_http mod_soap"'
+start_prg_background server ../../src/ulib/net/server/plugin/.libs '"mod_echo mod_http"' # '"mod_soap mod_http"'
 $SLEEP
 
 #$TRUSS socat -u open:inp/http/form_enctype.http tcp4-connect:127.0.0.1:80 >out/server.out 2>/tmp/trace.out

@@ -62,8 +62,8 @@ public:
       }
 
    static void stop();
-   static void setTimer();
-   static void init(bool async = true);
+   static void init(bool async);
+   static void setTimer(bool bsignal);
    static void clear(bool clean_alarm);
 
    static void insert(UEventTime* alarm,                  bool set_timer = true);
@@ -83,12 +83,7 @@ public:
 
    // manage signal
 
-   static RETSIGTYPE handlerAlarm(int signo)
-      {
-      U_TRACE(0, "[SIGALRM] UTimer::handlerAlarm(%d)", signo)
-
-      setTimer();
-      }
+   static RETSIGTYPE handlerAlarm(int signo);
 
    // STREAM
 

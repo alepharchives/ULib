@@ -2,10 +2,8 @@
 
 . ../.function
 
-rm -f /tmp/ssl_session.txt \
-      web_server_ssl?.log* uploads/* \
-      /usr/local/libexec/ulib/session.ssl* \
-      out/userver_ssl.out err/userver_ssl.err \
+rm -f ../db/session.ssl* /tmp/ssl_session.txt \
+      web_server_ssl?.log* uploads/* out/userver_ssl.out err/userver_ssl.err \
 		trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*
 
  UTRACE="0 10M 0"

@@ -160,7 +160,7 @@ UModProxyService::findService(const char* host, uint32_t host_len, const char* m
    U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 
    UModProxyService* elem;
-   UString uri = UHTTP::getRequestURI(false);
+   UString uri = UHTTP::getRequestURI();
 
    for (uint32_t i = 0, n = vservice.size(); i < n; ++i)
       {

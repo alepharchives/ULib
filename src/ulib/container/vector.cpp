@@ -680,6 +680,31 @@ UVector<UString>* UVector<UString>::duplicate(UVector<UString>* v)
    U_RETURN_POINTER(v1,UVector<UString>);
 }
 
+__pure bool UVector<UString>::operator==(const UVector<UString>& v) const
+{
+   U_TRACE(0, "UVector<UString>::operator==(%p)", &v)
+
+   U_CHECK_MEMORY
+
+   if (_length == v._length)
+      {
+      UStringRep* r1;
+      UStringRep* r2;
+
+      for (uint32_t i = 0; i < _length; ++i)
+         {
+         r1 =   UVector<UStringRep*>::at(i);
+         r2 = v.UVector<UStringRep*>::at(i);
+
+         if (r1->equal(r2) == false) U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 // THREE-WAY RADIX QUICKSORT
 // ------------------------------------------------------
 // Multikey Quicksort - Dr. Dobb's Journal, November 1998

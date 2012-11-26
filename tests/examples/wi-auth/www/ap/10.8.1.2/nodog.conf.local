@@ -1,9 +1,9 @@
-### lab5-r29587_rs
+## lab5-r29587_rs
 
 #define COMMENT #
 
-### 62.48.52.100  => http://www.obihall.it
-### 93.57.103.198 => http://www.arnopulito.it
+## 62.48.52.100  => "http://www.obihall.it"
+## 93.57.103.198 => "http://www.arnopulito.it"
 
 #define ALLOWED_WEB_HOST_DEF 'AllowedWebHosts=62.48.52.100 93.57.103.198'
 
@@ -12,3 +12,5 @@
 #define LOCAL_NETWORK_DEF 'LocalNetwork=172.16.1.0/24 172.31.1.0/24 172.31.2.0/24 172.31.3.0/24 172.31.4.0/24 172.31.5.0/24 172.31.11.0/24 192.168.253.0/24'
 
 #define LOCAL_NETWORK_LABEL_DEF LOCAL_NETWORK_LABEL "00 01 02 03 04 05 11 ruotata"
+
+#define FW_CONF_DEF EnableBandwidthLimits=1 UserUploadRate=1024

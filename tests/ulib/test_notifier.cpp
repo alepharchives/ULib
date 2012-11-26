@@ -398,7 +398,7 @@ int U_EXPORT main(int argc, char* argv[])
    handlerInput* c = U_NEW(handlerInput);
    handlerInput* d = U_NEW(handlerInput);
 
-   UNotifier::init();
+   UNotifier::init(false);
    UNotifier::insert(c);
    UNotifier::erase(c);
    UNotifier::insert(d);
@@ -427,8 +427,7 @@ int U_EXPORT main(int argc, char* argv[])
 
       (void) U_SYSCALL(write, "%d,%p,%u", fd_output, U_CONSTANT_TO_PARAM("hello, world"));
 
-      (void) UNotifier::waitForEvent(&timeout);
-
+             UNotifier::waitForEvent(&timeout);
       (void) UNotifier::waitForRead(fds[0], 500);
 
       (void) UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
@@ -450,7 +449,7 @@ int U_EXPORT main(int argc, char* argv[])
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
-   UNotifier::clear(false);
+   UNotifier::clear();
 
 #ifdef __unix__
    U_ASSERT(UNotifier::waitForRead( fd_input,  1 * 1000) <= 0)

@@ -329,7 +329,7 @@ void UStringRep::release()
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    if (parent)
 #  ifdef U_SUBSTR_INC_REF
-      parent->release(); // NB: solo la morte della substring dereferenzia la source...
+      parent->release(); // NB: solo la morte della substring de-referenzia la source...
 #  else
       {
       U_INTERNAL_DUMP("parent->child = %d", parent->child)
@@ -343,20 +343,31 @@ void UStringRep::release()
       {
       if (child)
          {
+         char buffer[4096];
+
          if (UObjectDB::fd > 0)
             {
-            char buffer[4096];
-
             parent_destroy = this;
 
             uint32_t n = UObjectDB::dumpObject(buffer, sizeof(buffer), checkIfChild);
 
             U_INTERNAL_ASSERT_MINOR(n, sizeof(buffer))
 
-            U_INTERNAL_DUMP("DEAD OF SOURCE STRING WITH CHILD ALIVE... n = %u child of this = %.*s\n\n", n, U_min(n,4000), buffer)
+            U_INTERNAL_DUMP("DEAD OF SOURCE STRING WITH CHILD ALIVE n = %u child of this = %.*s\n\n", n, U_min(n,4000), buffer)
             }
+         else
+            {
+            (void) u__snprintf(buffer, sizeof(buffer), "DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %.*S", child, _length, _length, str);
 
-         if (check_dead_of_source_string_with_child_alive) U_INTERNAL_ASSERT_MSG(false, "DEAD OF SOURCE STRING WITH CHILD ALIVE...")
+            if (check_dead_of_source_string_with_child_alive)
+               {
+               U_INTERNAL_ASSERT_MSG(false, buffer)
+               }
+            else
+               {
+               U_WARNING("%s", buffer);
+               }
+            }
          }
       }
 #  endif

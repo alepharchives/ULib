@@ -2202,7 +2202,7 @@ int UNoCatPlugIn::handlerRequest()
       Url url;
       int refresh = 0;
       UModNoCatPeer* peer = 0;
-      UString _host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY);
+      UString _host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), request_uri = UHTTP::getRequestURI();
 
       U_INTERNAL_DUMP("_host = %.*S UServer_Base::getClientAddress() = %S", U_STRING_TO_TRACE(_host), UServer_Base::getClientAddress())
 
@@ -2210,15 +2210,22 @@ int UNoCatPlugIn::handlerRequest()
 
       if (UServer_Base::isLog() == false) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-      // NB: check for request from AUTHs
+      // ----------------------------------------------
+      // NB: check for request from AUTH, which may be:
+      // ----------------------------------------------
+      // a) /users  - report list ip of peers permitted
+      // b) /check  - check system and report info
+      // c) /status - report status user
+      // d) /logout - logout specific user
+      // ----------------------------------------------
 
       uint32_t index_AUTH = vauth_ip->contains(UServer_Base::getClientAddress());
 
       if (index_AUTH != U_NOT_FOUND)
          {
-         U_SRV_LOG("request from AUTH: %.*S", U_HTTP_URI_TO_TRACE);
+         U_SRV_LOG("request from AUTH(%u): %.*S alias %.*S", index_AUTH, U_STRING_TO_TRACE(request_uri), U_HTTP_URI_TO_TRACE);
 
-         if (U_HTTP_URI_STRNEQ("/check"))
+         if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/check"))
             {
             if (flag_check_system == false) checkSystem();
 
@@ -2227,7 +2234,7 @@ int UNoCatPlugIn::handlerRequest()
             goto end;
             }
 
-         if (U_HTTP_URI_STRNEQ("/status"))
+         if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/status"))
             {
             UString _label;
 
@@ -2272,7 +2279,7 @@ int UNoCatPlugIn::handlerRequest()
             goto end;
             }
 
-         if (U_HTTP_URI_STRNEQ("/logout") &&
+         if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/logout") &&
              u_http_info.query_len)
             {
             // NB: request from AUTH to logout user (ip=192.168.301.223&mac=00:e0:4c:d4:63:f5)
@@ -2330,7 +2337,7 @@ int UNoCatPlugIn::handlerRequest()
             goto end;
             }
 
-         if (U_HTTP_URI_STRNEQ("/users"))
+         if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/users"))
             {
             // NB: request from AUTH to get list info on peers permitted
 
@@ -2374,11 +2381,20 @@ int UNoCatPlugIn::handlerRequest()
          goto end;
          }
 
+      // ---------------------------------------------------------------
+      // NB: other kind of message, which may be:
+      // ---------------------------------------------------------------
+      // a) /cpe            - specific request, force redirect via https 
+      // b) /test           - force redirect even without a firewall
+      // e) /ticket         - authorization ticket with info
+      // h) /login_validate - before authorization ticket with info
+      // ---------------------------------------------------------------
+
       index_AUTH = getIndexAUTH(UServer_Base::getClientAddress());
       url        = *((*vauth_url)[index_AUTH]);
       peer       = (*peers)[UServer_Base::getClientAddress()];
 
-      if (U_HTTP_URI_STRNEQ("/cpe"))
+      if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/cpe"))
          {
          (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
@@ -2388,14 +2404,14 @@ int UNoCatPlugIn::handlerRequest()
          goto set_redirect_to_AUTH;
          }
 
-      if (U_HTTP_URI_STRNEQ("/test"))
+      if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/test"))
          {
          (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
          goto set_redirect_to_AUTH;
          }
 
-      if (U_HTTP_URI_STRNEQ("/login_validate") &&
+      if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/login_validate") &&
           u_http_info.query_len)
          {
          // user has pushed the login button
@@ -2433,7 +2449,7 @@ int UNoCatPlugIn::handlerRequest()
          goto set_redirect_to_AUTH;
          }
 
-      if (U_HTTP_URI_STRNEQ( "/ticket") &&
+      if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/ticket") &&
           U_HTTP_QUERY_STRNEQ("ticket="))
          {
          // user with a ticket
@@ -2497,10 +2513,6 @@ redirect:
       
 end:
       UHTTP::setHTTPRequestProcessed();
-
-      // NB: maybe we have a check delayed because of http request processing...
-
-      u_http_info.method = 0;
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

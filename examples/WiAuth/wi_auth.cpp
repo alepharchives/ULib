@@ -241,17 +241,27 @@
    
    The latitude and longitude attributes are geographic coordinates specified in decimal degrees.
    
-   The altitude attribute denotes the height of the position, specified in meters above the [WGS84] ellipsoid. If the implementation cannot provide altitude information, the value of this attribute must be null.
+   The altitude attribute denotes the height of the position, specified in meters above the [WGS84] ellipsoid.
+   If the implementation cannot provide altitude information, the value of this attribute must be null.
    
-   The accuracy attribute denotes the accuracy level of the latitude and longitude coordinates. It is specified in meters and must be supported by all implementations. The value of the accuracy attribute must be a non-negative real number.
+   The accuracy attribute denotes the accuracy level of the latitude and longitude coordinates. It is specified
+   in meters and must be supported by all implementations. The value of the accuracy attribute must be a non-negative
+   real number.
    
-   The altitudeAccuracy attribute is specified in meters. If the implementation cannot provide altitude information, the value of this attribute must be null. Otherwise, the value of the altitudeAccuracy attribute must be a non-negative real number.
+   The altitudeAccuracy attribute is specified in meters. If the implementation cannot provide altitude information,
+   the value of this attribute must be null. Otherwise, the value of the altitudeAccuracy attribute must be a non-negative
+   real number.
    
    The accuracy and altitudeAccuracy values returned by an implementation should correspond to a 95% confidence level.
    
-   The heading attribute denotes the direction of travel of the hosting device and is specified in degrees, where 0° ≤ heading < 360°, counting clockwise relative to the true north. If the implementation cannot provide heading information, the value of this attribute must be null. If the hosting device is stationary (i.e. the value of the speed attribute is 0), then the value of the heading attribute must be NaN.
+   The heading attribute denotes the direction of travel of the hosting device and is specified in degrees, where 0° ≤ heading < 360°,
+   counting clockwise relative to the true north. If the implementation cannot provide heading information, the value of this attribute
+   must be null. If the hosting device is stationary (i.e. the value of the speed attribute is 0), then the value of the heading attribute
+   must be NaN.
    
-   The speed attribute denotes the magnitude of the horizontal component of the hosting device's current velocity and is specified in meters per second. If the implementation cannot provide speed information, the value of this attribute must be null. Otherwise, the value of the speed attribute must be a non-negative real number.
+   The speed attribute denotes the magnitude of the horizontal component of the hosting device's current velocity and is specified in meters
+   per second. If the implementation cannot provide speed information, the value of this attribute must be null. Otherwise, the value of the
+   speed attribute must be a non-negative real number.
    };
    */
    
@@ -1247,8 +1257,8 @@
       U_INTERNAL_ASSERT_POINTER(U_LOCK_USER1)
       U_INTERNAL_ASSERT_POINTER(U_LOCK_USER2)
    
-      UString pathdb_ap   = U_STRING_FROM_CONSTANT(U_LIBEXECDIR "/WiAuthAccessPoint.cdb"),
-              pathdb_user = U_STRING_FROM_CONSTANT(U_LIBEXECDIR "/WiAuthUser.cdb");
+      UString pathdb_ap   = U_STRING_FROM_CONSTANT("../db/WiAuthAccessPoint.cdb"),
+              pathdb_user = U_STRING_FROM_CONSTANT("../db/WiAuthUser.cdb");
    
       db_ap   = U_NEW(URDB(pathdb_ap,   false));
       db_user = U_NEW(URDB(pathdb_user, false));

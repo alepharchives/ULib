@@ -55,8 +55,8 @@ public:
 
    // SERVICES
 
-   static void init();
-   static void clear(bool bthread);
+   static void clear();
+   static void init(bool bacquisition);
    static void erase( UEventFd* handler_event);
    static void modify(UEventFd* handler_event);
    static void insert(UEventFd* handler_event);
@@ -90,9 +90,7 @@ public:
       U_RETURN(false);
       }
 
-   // return false if there are no more events registered
-
-   static bool waitForEvent(UEventTime* timeout);
+   static void waitForEvent(UEventTime* timeout);
 
    // READ - WRITE
 
@@ -111,7 +109,6 @@ public:
 
 protected:
    static int nfd_ready; // the number of file descriptors ready for the requested I/O
-   static void* pthread;
    static UEventFd** lo_map_fd;
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
@@ -131,6 +128,10 @@ protected:
 #ifdef USE_POLL
    static struct pollfd fds[1];
    static int waitForEvent(int timeoutMS = -1);
+#endif
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   static void* pthread;
 #endif
 
    static UEventFd* find(int fd);

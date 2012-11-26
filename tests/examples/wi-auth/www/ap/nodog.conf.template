@@ -1,4 +1,4 @@
-### ap/nodog.conf.template
+## ap/nodog.conf.template
 
 #define  QUOTE(x) #x
 #define XQUOTE(x) QUOTE(x)
@@ -15,10 +15,14 @@
 #ifndef ALLOWED_WEB_HOST_DEF
 #define ALLOWED_WEB_HOST_DEF
 #endif
+#ifndef FW_CONF_DEF
+#define FW_CONF_DEF
+#endif
 #define FW_ENV_VALUE 'ExternalDevice=eth0 tun0' \
 	'AuthServiceAddr=http://wifi-aaa.comune.fi.it' \
 	MasqueradeDevice=eth0 \
 	MaxSegmentSize=1 \
+	FW_CONF_DEF \
 	LOCAL_NETWORK_DEF \
 	INTERNAL_DEVICE_DEF \
 	ALLOWED_WEB_HOST_DEF
@@ -46,21 +50,15 @@ COMMENT	LOG_FILE_SZ      1M
 			CGI_TIMEOUT      60
 			PREFORK_CHILD    0
 }
-mod_proxy {
-   Service_GOOGLE_MAP {
-		METHOD_NAME GET
-		HOST        *.googleapis.com|*.googlecode.com|maps.google.com|maps.gstatic.com|csi.gstatic.com
-		SERVER      $<
-   }
-}
 mod_http {
 	ALIAS [
-		/         /test
-		/printenv /cgi-bin/printenv.sh
+    /     /nostat
+    /env  /cgi-bin/printenv.sh
+    "!/favicon.ico|/index.html|*.js|/icons/*|/images/*|/themes/*" /nostat
 	]
 	TELNET_ENABLE         yes
 	URI_PROTECTED_MASK    "/cgi-bin/*"
-	LIMIT_REQUEST_BODY    10M
+	LIMIT_REQUEST_BODY    100K
 	REQUEST_READ_TIMEOUT  5
 }
 mod_nocat {
@@ -70,4 +68,11 @@ mod_nocat {
 	CHECK_EXPIRE_INTERVAL 360
 	FW_ENV_DEF
 	LOCAL_NETWORK_LABEL_DEF
+}
+mod_proxy {
+   Service_GOOGLE_MAP {
+		METHOD_NAME GET
+		HOST        *.googleapis.com|*.googlecode.com|maps.google.com|maps.gstatic.com|csi.gstatic.com
+		SERVER      $<
+   }
 }

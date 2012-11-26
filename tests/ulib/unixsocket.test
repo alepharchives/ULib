@@ -13,7 +13,8 @@ start_msg unixsocket_client
  export UTRACE UOBJDUMP USIMERR
 
 #STRACE=$TRUSS
-start_prg_background unixsocket_server "tmp/socket"
+start_prg_background unixsocket_server "tmp/socket" ../../src/ulib/net/server/plugin/.libs mod_echo
+
 $SLEEP
  start_prg 				unixsocket_client "tmp/socket"
 $SLEEP

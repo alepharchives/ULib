@@ -30,6 +30,7 @@ template <class T> class UVector;
 
 template <> class U_EXPORT UVector<void*> {
 public:
+
    // Check for memory error
    U_MEMORY_TEST
 
@@ -881,8 +882,11 @@ public:
 
    // STACK OPERATIONS
 
-   void push(     UStringRep* rep) { UVector<UStringRep*>::push(rep); }
-   void push_back(UStringRep* rep) { UVector<UStringRep*>::push(rep); }
+   void push(     UStringRep* rep)               { UVector<UStringRep*>::push(rep); }
+   void push_back(UStringRep* rep)               { UVector<UStringRep*>::push(rep); }
+
+   void push(     const char* str, uint32_t len) { push(UStringRep::create(str, len, 0)); }
+   void push_back(const char* str, uint32_t len) { push(UStringRep::create(str, len, 0)); }
 
    void push(     const UString& str);
    void push_back(const UString& str) { push(str); } // add to end
@@ -1097,6 +1101,11 @@ public:
 
    uint32_t intersection(UVector<UString>& set1, UVector<UString>& set2);
 
+   // OPERATOR
+
+   bool operator==(const UVector<UString>& v) const __pure;
+   bool operator!=(const UVector<UString>& v) const { return ! operator==(v); }
+
    // STREAMS
 
    uint32_t readline(  istream& is);
@@ -1115,7 +1124,7 @@ private:
    static void mksort(UStringRep** a, int n, int depth);
           bool _isEqual(UVector<UString>& vec, bool ignore_case);
 
-// uint32_t findWithDataOffset(const char* s, uint32_t n, uint32_t offset = 0) __pure;
+   // uint32_t findWithDataOffset(const char* s, uint32_t n, uint32_t offset = 0) __pure;
 
    UVector<UString>(const UVector<UString>&) : UVector<UStringRep*>() {}
    UVector<UString>& operator=(const UVector<UString>&)               { return *this; }
