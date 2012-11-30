@@ -1375,8 +1375,8 @@ __pure const char* UStringExt::getValueFromName(const UString& buffer, uint32_t 
 {
    U_TRACE(0, "UStringExt::getValueFromName(%.*S,%u,%u,%.*S,%b)", U_STRING_TO_TRACE(buffer), pos, len, U_STRING_TO_TRACE(name), nocase)
 
+   U_INTERNAL_ASSERT(buffer)
    U_INTERNAL_ASSERT_MAJOR(len, 0)
-   U_ASSERT_EQUALS(buffer.empty(), false)
    U_ASSERT_EQUALS(name.find(':'), U_NOT_FOUND)
 
    const char* ptr_header_value;
@@ -1423,8 +1423,8 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 {
    U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
 
+   U_INTERNAL_ASSERT(content)
    U_INTERNAL_ASSERT_POINTER(delim)
-   U_ASSERT_EQUALS(content.empty(),false)
 
    // Parse the data in one fell swoop for efficiency
 

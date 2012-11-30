@@ -129,7 +129,7 @@ SSL_SESSION* USSLSession::fromString(const UString& x)
 {
    U_TRACE(0, "USSLSession::fromString(%.*S)", U_STRING_TO_TRACE(x))
 
-   U_ASSERT_EQUALS(x.empty(), false)
+   U_INTERNAL_ASSERT(x)
 
 #ifdef HAVE_OPENSSL_97
          unsigned char* p =       (unsigned char*)x.data();
@@ -156,7 +156,7 @@ int USSLSession::newSession(SSL* ssl, SSL_SESSION* sess)
 
    UString value = toString(sess);
 
-   U_ASSERT_EQUALS(value.empty(), false)
+   U_INTERNAL_ASSERT(value)
 
    if (value.size() <= 4096) // do not cache too big session
       {

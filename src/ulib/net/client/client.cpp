@@ -97,7 +97,7 @@ bool UClient_Base::setHostPort(const UString& host, int _port)
 {
    U_TRACE(0, "UClient_Base::setHostPort(%.*S,%d)", U_STRING_TO_TRACE(host), _port)
 
-   U_ASSERT(host.empty() == false)
+   U_INTERNAL_ASSERT(host)
 
    bool host_differs = (host  != server),
         port_differs = (_port != port);

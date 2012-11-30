@@ -232,7 +232,7 @@ public:
       {
       U_TRACE(5, "Application::casellaUpdate(%.*S)", U_STRING_TO_TRACE(key))
 
-      U_ASSERT(key.empty() == false)
+      U_INTERNAL_ASSERT(key)
 
       if (key.equalnocase(gds->rep) ||
           isDomainAddress(key))

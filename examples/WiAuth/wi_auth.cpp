@@ -143,7 +143,7 @@
          {
          U_TRACE(5, "WiAuthAccessPoint::toString()")
    
-         U_ASSERT_EQUALS(_label.empty(), false)
+         U_INTERNAL_ASSERT(_label)
    
          value.snprintf(" %u %.*s \"%.*s\" \"%.*s\"",
                         noconsume,
@@ -292,7 +292,7 @@
          {
          U_TRACE(5, "WiAuthNodog::callForAllAccessPoint(%p)", func)
    
-         U_ASSERT_EQUALS(access_point.empty(), false)
+         U_ASSERT(access_point.size())
    
          lindex = U_NOT_FOUND;
    
@@ -326,7 +326,7 @@
    
          U_INTERNAL_DUMP("label = %.*S", U_STRING_TO_TRACE(*label))
    
-         U_ASSERT_EQUALS(label->empty(), false)
+         U_INTERNAL_ASSERT(*label)
    
          callForAllAccessPoint(checkLabel);
    
@@ -357,7 +357,7 @@
    
          U_INTERNAL_DUMP("mac = %.*S", U_STRING_TO_TRACE(*mac))
    
-         U_ASSERT_EQUALS(mac->empty(), false)
+         U_INTERNAL_ASSERT(*mac)
    
          if (findLabel() != U_NOT_FOUND)
             {
@@ -401,7 +401,7 @@
          {
          U_TRACE(5, "WiAuthNodog::fromString()")
    
-         U_ASSERT_EQUALS(value.empty(), false)
+         U_INTERNAL_ASSERT(value)
    
          istrstream is(value.data(), value.size());
    
@@ -413,7 +413,7 @@
    
          _hostname.get(is);
    
-         U_INTERNAL_ASSERT_EQUALS(_hostname.empty(), false)
+         U_INTERNAL_ASSERT(_hostname)
    
          is.get(); // skip ' '
          is.get(); // skip '['
@@ -421,7 +421,7 @@
          access_point.clear();
          access_point.readVector(is, ']');
    
-         U_INTERNAL_ASSERT_EQUALS(access_point.empty(), false)
+         U_ASSERT(access_point.size())
          }
    
       void setLastInfo()
@@ -468,7 +468,7 @@
          {
          U_TRACE(5, "WiAuthNodog::setValue(%.*S)", U_STRING_TO_TRACE(_address))
    
-         U_ASSERT_EQUALS(_address.empty(), false)
+         U_INTERNAL_ASSERT(_address)
    
          value = (*db_ap)[_address];
    
@@ -554,7 +554,7 @@
             {
             // add ap
    
-            U_ASSERT_EQUALS(label->empty(), false)
+            U_INTERNAL_ASSERT(label)
    
             ++num_ap;
    
@@ -610,7 +610,7 @@
    {
       U_TRACE(5, "::get_UserName()")
    
-      U_ASSERT_EQUALS(uid->empty(), false)
+      U_INTERNAL_ASSERT(*uid)
    
       UString pathname(U_CAPACITY), content, user;
    
@@ -680,7 +680,7 @@
          {
          U_TRACE(5, "WiAuthUser::toString()")
    
-         U_INTERNAL_ASSERT_EQUALS(nodog.empty(), false)
+         U_INTERNAL_ASSERT(nodog)
    
          UString x(U_CAPACITY);
    
@@ -923,7 +923,7 @@
          {
          U_TRACE(5, "WiAuthUser::fromString()")
    
-         U_ASSERT_EQUALS(value.empty(), false)
+         U_INTERNAL_ASSERT(value)
    
          istrstream is(value.data(), value.size());
    
@@ -959,14 +959,14 @@
    
          _user.get(is);
    
-         U_INTERNAL_ASSERT_EQUALS(_user.empty(), false)
+         U_INTERNAL_ASSERT(_user)
          }
    
       void setValue()
          {
          U_TRACE(5, "WiAuthUser::setValue()")
    
-         U_ASSERT_EQUALS(uid->empty(), false)
+         U_INTERNAL_ASSERT(*uid)
    
          value      = (*db_user)[*uid];
          user_exist = (value.empty() == false);
@@ -1027,12 +1027,12 @@
          {
          U_TRACE(5, "WiAuthUser::setNodogReference()")
    
-         U_ASSERT_EQUALS( uid->empty(), false)
-         U_ASSERT_EQUALS(nodog.empty(), false)
+         U_INTERNAL_ASSERT(*uid)
+         U_INTERNAL_ASSERT(nodog)
    
          UString x = (connected ? nodog : *address);
    
-         U_ASSERT_EQUALS(x.empty(), false)
+         U_INTERNAL_ASSERT(x)
    
          if (check_user_agent &&
                         agent != UHTTP::getUserAgent())
@@ -1060,7 +1060,7 @@
          {
          U_TRACE(5, "WiAuthUser::setRecord()")
    
-         U_ASSERT_EQUALS(uid->empty(), false)
+         U_INTERNAL_ASSERT(*uid)
    
          if (nodog_rec->setRecord(&index_access_point) == false ||
                                    index_access_point  == U_NOT_FOUND)
@@ -1110,8 +1110,8 @@
             }
          else
             {
-            U_ASSERT_EQUALS(     policy->empty(), false)
-            U_ASSERT_EQUALS(auth_domain->empty(), false)
+            U_INTERNAL_ASSERT(*policy)
+            U_INTERNAL_ASSERT(*auth_domain)
    
                       _auth_domain = *auth_domain;
             bflat = ((_policy      = *policy) == *policy_flat);
@@ -1120,8 +1120,8 @@
          if (bflat ||
              user_exist == false)
             {
-            U_ASSERT_EQUALS(   _time_available->empty(), false)
-            U_ASSERT_EQUALS(_traffic_available->empty(), false)
+            U_INTERNAL_ASSERT(*_time_available)
+            U_INTERNAL_ASSERT(*_traffic_available)
    
                time_available =    _time_available->strtol();
             traffic_available = _traffic_available->strtoll();
@@ -1653,7 +1653,7 @@
          {
          // NB: db can have different users for the same ip...
    
-         U_INTERNAL_ASSERT_EQUALS(user_rec->nodog.empty(), false)
+         U_INTERNAL_ASSERT(user_rec->nodog)
    
          if (user_rec->connected) U_RETURN(true);
          }
@@ -1669,7 +1669,7 @@
    
       U_INTERNAL_DUMP("uid = %.*S", U_STRING_TO_TRACE(*uid))
    
-      U_ASSERT_EQUALS(uid->empty(), false)
+      U_INTERNAL_ASSERT(*uid)
    
       if (uid->size() > 32)
          {
@@ -1962,7 +1962,7 @@
    {
       U_TRACE(5, "::sendRequestToNodog(%S)", fmt)
    
-      U_ASSERT_EQUALS(address->empty(), false)
+      U_INTERNAL_ASSERT(*address)
    
       UString _buffer(U_CAPACITY), url(U_CAPACITY), result;
    
@@ -2297,7 +2297,7 @@
    
       // NB: we must have serviced a info request from nodog by another process istance (PREFORK_CHILD > 2)...
    
-      U_ASSERT_EQUALS(uid->empty(), false)
+      U_INTERNAL_ASSERT(*uid)
    
       if (checkIfUserConnected())
          {
@@ -2442,7 +2442,7 @@
    {
       U_TRACE(5, "::loadPolicy(%.*S)", U_STRING_TO_TRACE(_policy))
    
-      U_ASSERT_EQUALS(_policy.empty(), false)
+      U_INTERNAL_ASSERT(_policy)
    
       const char* key_time    = 0;
       const char* key_traffic = 0;

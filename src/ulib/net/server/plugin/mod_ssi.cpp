@@ -365,7 +365,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 {
    U_TRACE(0, "USSIPlugIn::processSSIRequest(%.*S,%d)", U_STRING_TO_TRACE(content), include_level)
 
-   U_ASSERT_EQUALS(content.empty(), false)
+   U_INTERNAL_ASSERT(content)
 
    UString tmp; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    int32_t i, n;
@@ -1095,7 +1095,7 @@ int USSIPlugIn::handlerRequest()
 
       if (alternative_response == 0)
          {
-         U_ASSERT_EQUALS(output.empty(), false)
+         U_INTERNAL_ASSERT(output)
 
 #     ifdef USE_PAGE_SPEED
          UHTTP::page_speed->minify_html("USSIPlugIn::handlerRequest()", output);

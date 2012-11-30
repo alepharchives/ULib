@@ -703,7 +703,7 @@ open_fw() {
 
 list_open_fw() {
 
-	echo `$IPTABLES -L -nt mangle | grep 'MARK set 0x2'| cut -d' ' -f12 | sort -u`
+	echo `$IPTABLES -L -nt mangle | grep 'MARK set 0x2' | cut -d' ' -f12 | sort -u`
 }
 
 check_arp() {

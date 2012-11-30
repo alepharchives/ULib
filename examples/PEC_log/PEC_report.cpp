@@ -1181,9 +1181,11 @@ void PEC_report::processFiles()
             }
          }
 
+      key = _filename.substr(_filename.distance(basename) + 5, 10);
+
       (void) sprintf(buf, "%c%d", cnt[0], nfiles);
 
-      key = _filename.substr(_filename.distance(basename) + 5, 10) + buf;
+      (void) key.append(buf);
 
       U_INTERNAL_DUMP("key = %.*S", U_STRING_TO_TRACE(key))
       }

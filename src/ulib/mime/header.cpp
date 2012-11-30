@@ -314,7 +314,7 @@ UString UMimeHeader::getCharSet(const UString& content_type)
 {
    U_TRACE(0, "UMimeHeader::getCharSet(%.*S)", U_STRING_TO_TRACE(content_type))
 
-   U_ASSERT(content_type.empty() == false)
+   U_INTERNAL_ASSERT(content_type)
 
    UString charset = getValueAttributeFromKeyValue(content_type, *str_charset, false);
 
@@ -331,7 +331,7 @@ UString UMimeHeader::shortContentType(const UString& content_type)
 {
    U_TRACE(0, "UMimeHeader::shortContentType(%.*S)", U_STRING_TO_TRACE(content_type))
 
-   U_ASSERT(content_type.empty() == false)
+   U_INTERNAL_ASSERT(content_type)
 
    uint32_t pos = content_type.find(';');
 

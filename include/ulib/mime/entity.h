@@ -91,7 +91,7 @@ public:
       {
       U_TRACE(0, "UMimeEntity::parse(%.*S)", U_STRING_TO_TRACE(_data))
 
-      U_ASSERT(data.empty() == true)
+      U_INTERNAL_ASSERT_EQUALS((bool)data, false)
 
       data = _data;
 
@@ -337,7 +337,7 @@ public:
       {
       U_TRACE(0, "UMimeMultipart::setContent(%.*S)", U_STRING_TO_TRACE(_content))
 
-      U_ASSERT(_content.empty() == false)
+      U_INTERNAL_ASSERT(_content)
 
       UMimeEntity::content = _content;
       }
@@ -346,7 +346,7 @@ public:
       {
       U_TRACE(0, "UMimeMultipart::setBoundary(%.*S)", U_STRING_TO_TRACE(_boundary))
 
-      U_ASSERT(_boundary.empty() == false)
+      U_INTERNAL_ASSERT(_boundary)
 
       boundary = _boundary;
       }

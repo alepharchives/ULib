@@ -175,7 +175,7 @@ UString UTimeStamp::getTimeStampToken(int alg, const UString& data, const UStrin
 {
    U_TRACE(0, "UTimeStamp::getTimeStampToken(%d,%.*S,%.*S)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(url))
 
-   U_ASSERT(url.empty() == false)
+   U_INTERNAL_ASSERT(url)
 
    UString token, request = createQuery(alg, data, 0, false, false);
 

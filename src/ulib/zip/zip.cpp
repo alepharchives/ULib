@@ -43,7 +43,7 @@ void UZIP::clear()
 
    if (file)
       {
-      U_ASSERT(tmpdir.empty() == false)
+      U_INTERNAL_ASSERT(tmpdir)
 
       delete file;
              file = 0;
@@ -116,8 +116,8 @@ bool UZIP::extract(const UString* _tmpdir, bool bdir)
 
    U_CHECK_MEMORY
 
-   U_ASSERT(tmpdir.empty())
-   U_ASSERT_EQUALS(content.empty(),false)
+   U_INTERNAL_ASSERT(content)
+   U_INTERNAL_ASSERT_EQUALS((bool)tmpdir, false)
 
    if (_tmpdir) tmpdir = *_tmpdir;
    else
@@ -179,9 +179,9 @@ UString UZIP::archive(const char** add_to_filenames)
 {
    U_TRACE(1, "UZIP::archive(%p)", add_to_filenames)
 
+   U_INTERNAL_ASSERT(tmpdir)
+   U_INTERNAL_ASSERT(content)
    U_INTERNAL_ASSERT_MAJOR(npart,0)
-   U_ASSERT_EQUALS(tmpdir.empty(),false)
-   U_ASSERT_EQUALS(content.empty(),false)
    U_INTERNAL_ASSERT_POINTER(add_to_filenames)
 
    UString result;
@@ -229,8 +229,8 @@ bool UZIP::readContent()
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_ASSERT(content)
    U_INTERNAL_ASSERT_EQUALS(zippartname,0)
-   U_ASSERT_EQUALS(content.empty(),false)
 
    npart = U_SYSCALL(zip_get_content, "%p,%u,%p,%p,%p,%p", U_STRING_TO_PARAM(content), &filenames, &filenames_len, &filecontents, &filecontents_len);
 

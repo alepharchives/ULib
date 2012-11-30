@@ -285,7 +285,7 @@ U_NO_EXPORT void UImapClient::setEnd()
 {
    U_TRACE(0, "UImapClient::setEnd()")
 
-   U_ASSERT(buffer.empty() == false)
+   U_INTERNAL_ASSERT(buffer)
 
    const char* ptr1;
    const char* ptr2;
@@ -794,7 +794,7 @@ bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)
 {
    U_TRACE(0, "UImapClient::selectMailbox(%.*S,%p)", U_STRING_TO_TRACE(name), &retval)
 
-   U_ASSERT(name.empty() == false)
+   U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
@@ -826,7 +826,7 @@ bool UImapClient::examineMailbox(const UString& name, MailboxInfo& retval)
 {
    U_TRACE(0, "UImapClient::examineMailbox(%.*S,%p)", U_STRING_TO_TRACE(name), &retval)
 
-   U_ASSERT(name.empty() == false)
+   U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
@@ -847,7 +847,7 @@ bool UImapClient::createMailbox(const UString& name)
 {
    U_TRACE(0, "UImapClient::createMailbox(%.*S)", U_STRING_TO_TRACE(name))
 
-   U_ASSERT(name.empty() == false)
+   U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
@@ -870,7 +870,7 @@ bool UImapClient::removeMailbox(const UString& name)
 {
    U_TRACE(0, "UImapClient::removeMailbox(%.*S)", U_STRING_TO_TRACE(name))
 
-   U_ASSERT(name.empty() == false)
+   U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
@@ -893,8 +893,8 @@ bool UImapClient::renameMailbox(const UString& from, const UString& to)
 {
    U_TRACE(0, "UImapClient::renameMailbox(%.*S,%.*S)", U_STRING_TO_TRACE(from), U_STRING_TO_TRACE(to))
 
-   U_ASSERT(to.empty() == false)
-   U_ASSERT(from.empty() == false)
+   U_INTERNAL_ASSERT(to)
+   U_INTERNAL_ASSERT(from)
 
    if (state >= AUTHENTICATED)
       {
@@ -917,7 +917,7 @@ bool UImapClient::subscribeMailbox(const UString& name)
 {
    U_TRACE(0, "UImapClient::subscribeMailbox(%.*S)", U_STRING_TO_TRACE(name))
 
-   U_ASSERT(name.empty() == false)
+   U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
@@ -940,7 +940,7 @@ bool UImapClient::unsubscribeMailbox(const UString& name)
 {
    U_TRACE(0, "UImapClient::unsubscribeMailbox(%.*S)", U_STRING_TO_TRACE(name))
 
-   U_ASSERT(name.empty() == false)
+   U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
@@ -960,9 +960,9 @@ bool UImapClient::appendMessage(const UString& mailboxName, const UString& messa
    U_TRACE(0, "UImapClient::appendMessage(%.*S,%.*S,%d,%S)",
                         U_STRING_TO_TRACE(mailboxName), U_STRING_TO_TRACE(messageData), _flags, date)
 
+   U_INTERNAL_ASSERT(mailboxName)
+   U_INTERNAL_ASSERT(messageData)
    U_INTERNAL_ASSERT_POINTER(date)
-   U_ASSERT(mailboxName.empty() == false)
-   U_ASSERT(messageData.empty() == false)
 
    if (state >= AUTHENTICATED)
       {
@@ -1037,8 +1037,8 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
 {
    U_TRACE(0, "UImapClient::search(%p,%.*S,%S,%b)", _ret, U_STRING_TO_TRACE(spec), charSet, usingUID)
 
+   U_INTERNAL_ASSERT(spec)
    U_INTERNAL_ASSERT_POINTER(_ret)
-   U_ASSERT(spec.empty() == false)
    U_INTERNAL_ASSERT_POINTER(charSet)
 
    if (state == SELECTED)
@@ -1083,7 +1083,7 @@ bool UImapClient::fetch(UVector<UString>& vec, int start, int _end, const UStrin
 {
    U_TRACE(0, "UImapClient::fetch(%p,%d,%d,%.*S,%b)", &vec, start, _end, U_STRING_TO_TRACE(spec), usingUID)
 
-   U_ASSERT(spec.empty() == false)
+   U_INTERNAL_ASSERT(spec)
 
    if (state == SELECTED)
       {
@@ -1170,7 +1170,7 @@ bool UImapClient::copy(int start, int _end, const UString& to, bool usingUID)
 {
    U_TRACE(0, "UImapClient::copy(%d,%d,%.*S,%b)", start, _end, U_STRING_TO_TRACE(to), usingUID)
 
-   U_ASSERT(to.empty() == false)
+   U_INTERNAL_ASSERT(to)
 
    if (state == SELECTED)
       {

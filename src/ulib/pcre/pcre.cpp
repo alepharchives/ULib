@@ -121,7 +121,7 @@ void UPCRE::set(const UString& expression, int flags)
 {
    U_TRACE(0, "UPCRE::set(%.*S,%d)", U_STRING_TO_TRACE(expression), flags)
 
-   U_ASSERT_EQUALS(expression.empty(), false)
+   U_INTERNAL_ASSERT(expression)
 
    _expression = expression;
 
@@ -136,7 +136,7 @@ void UPCRE::set(const UString& expression, const char* flags)
 {
    U_TRACE(0, "UPCRE::set(%.*S,%S)", U_STRING_TO_TRACE(expression), flags)
 
-   U_ASSERT_EQUALS(expression.empty(), false)
+   U_INTERNAL_ASSERT(expression)
 
    _expression = expression;
 

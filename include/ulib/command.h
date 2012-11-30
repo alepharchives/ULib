@@ -197,7 +197,7 @@ public:
       {
       U_TRACE(0, "UCommand::isShellScript()")
 
-      U_ASSERT(command.empty() == false)
+      U_INTERNAL_ASSERT(command)
 
       bool result = U_STRNEQ(command.data(), U_PATH_SHELL);
 

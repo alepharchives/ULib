@@ -263,8 +263,8 @@ void UCache::addContent(const UString& _key, const UString& content, uint32_t _t
 {
    U_TRACE(0, "UCache::addContent(%.*S,%.*S,%u)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(content), _ttl)
 
-   U_ASSERT_EQUALS(   _key.empty(), false)
-   U_ASSERT_EQUALS(content.empty(), false)
+   U_INTERNAL_ASSERT(_key)
+   U_INTERNAL_ASSERT(content)
 
    const char*  key =    _key.data();
    const char* data = content.data();
@@ -350,7 +350,7 @@ UString UCache::getContent(const char* key, uint32_t keylen)
 
    UString content = get(key, keylen);
 
-   U_ASSERT_EQUALS(content.empty(), false)
+   U_INTERNAL_ASSERT(content)
 
    content.size_adjust(content.size() - 1); // NB: minus null-terminator...
 

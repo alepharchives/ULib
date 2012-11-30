@@ -104,7 +104,7 @@ void WeightWord::push()
 
    U_INTERNAL_DUMP("UPosting::word_freq = %d", UPosting::word_freq)
 
-   U_ASSERT_EQUALS(UPosting::filename->empty(),false)
+   U_INTERNAL_ASSERT(*UPosting::filename)
 
    WeightWord* item = U_NEW(WeightWord(*UPosting::filename, UPosting::word_freq));
 

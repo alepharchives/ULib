@@ -52,7 +52,7 @@ public:
       {
       U_TRACE(0, "UBison::parse(%p)", obj)
 
-      U_ASSERT(data.empty() == false)
+      U_INTERNAL_ASSERT(data)
 
       /*
       extern int yydebug;

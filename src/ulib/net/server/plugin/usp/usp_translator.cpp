@@ -137,7 +137,7 @@ public:
 
          if (U_STRNEQ(directive, "declaration"))
             {
-            U_ASSERT(declaration.empty()) // NB: <!--#declaration ... --> must be at the beginning...
+            U_INTERNAL_ASSERT_EQUALS((bool)declaration, false) // NB: <!--#declaration ... --> must be at the beginning...
 
             n = token.size() - U_CONSTANT_SIZE("declaration") - 2;
 
@@ -151,7 +151,7 @@ public:
             }
          else if (U_STRNEQ(directive, "header"))
             {
-            U_ASSERT(http_header.empty())
+            U_INTERNAL_ASSERT_EQUALS((bool)http_header, false)
 
             n = token.size() - U_CONSTANT_SIZE("header") - 2;
 

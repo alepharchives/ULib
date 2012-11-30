@@ -446,7 +446,7 @@ int UHttpPlugIn::handlerRequest()
       case U_HTTP_REQUEST_NEED_PROCESSING:
          {
          U_ASSERT(UHTTP::isHTTPRequestNeedProcessing())
-         U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
+         U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
          if (UHTTP::isHttpGETorHEAD() == false)
             {
@@ -470,7 +470,7 @@ int UHttpPlugIn::handlerRequest()
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
 
-         UHTTP::processHTTPGetRequest(*UClientImage_Base::request); // GET,HEAD
+         UHTTP::processHTTPGetRequest(); // GET,HEAD
          }
       break;
 

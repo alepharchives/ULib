@@ -52,7 +52,7 @@ UString URPCParser::processMessage(const UString& msg, URPCObject& object, bool&
 {
    U_TRACE(0, "URPCParser::processMessage(%.*S,%p,%p)", U_STRING_TO_TRACE(msg), &object, &bContainsFault)
 
-   U_ASSERT(msg.empty() == false)
+   U_INTERNAL_ASSERT(msg)
 
    envelope.methodName = msg;
 

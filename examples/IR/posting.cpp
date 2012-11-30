@@ -357,7 +357,7 @@ U_NO_EXPORT bool UPosting::setPosting(bool bcache)
       }
    else
       {
-      U_ASSERT_DIFFERS(posting->empty(),true)
+      U_INTERNAL_ASSERT(*posting)
 
    // if (posting->empty()) U_RETURN(false);
 
@@ -409,9 +409,9 @@ U_NO_EXPORT void UPosting::del()
 {
    U_TRACE(5, "UPosting::del()")
 
+   U_INTERNAL_ASSERT(*word)
+   U_INTERNAL_ASSERT(*posting)
    U_INTERNAL_ASSERT_POINTER(ptr)
-   U_ASSERT_DIFFERS(word->empty(),true)
-   U_ASSERT_DIFFERS(posting->empty(),true)
 
    data = posting->data();
 
@@ -539,7 +539,7 @@ U_NO_EXPORT void UPosting::add()
 {
    U_TRACE(5, "UPosting::add()")
 
-   U_ASSERT_DIFFERS(word->empty(),true)
+   U_INTERNAL_ASSERT(*word)
 
    bool present = (tbl_words ? tbl_words->find(*word)
                              : ((URDB*)cdb_words)->find(*word));
@@ -727,8 +727,7 @@ U_NO_EXPORT void UPosting::checkDocument(UStringRep* word_rep, UStringRep* value
 {
    U_TRACE(5, "UPosting::checkDocument(%.*S,%p)", U_STRING_TO_TRACE(*word_rep), value)
 
-   U_INTERNAL_ASSERT_POINTER(content)
-   U_ASSERT_DIFFERS(content->empty(),true)
+   U_INTERNAL_ASSERT(*content)
 
    if (findCurrentDocIdOnPosting(value))
       {
@@ -805,9 +804,6 @@ void UPosting::setDocID(int32_t op)
 {
    U_TRACE(5, "UPosting::setDocID(%d)", op)
 
-   U_INTERNAL_ASSERT_POINTER(file)
-   U_ASSERT_DIFFERS(filename->empty(),true)
-
    U_DUMP("filename = %.*S", U_STRING_TO_TRACE(*filename))
 
    if (dir_content_as_doc)
@@ -832,10 +828,7 @@ void UPosting::setDocID(int32_t op)
 
    setDocID(true);
 
-   if (tbl_name)
-      {
-      tbl_name->insert(*str_cur_doc_id, *filename);
-      }
+   if (tbl_name) tbl_name->insert(*str_cur_doc_id, *filename);
    else
       {
       int result = 0;
@@ -878,8 +871,8 @@ void UPosting::callForPosting(vPF function)
 {
    U_TRACE(5, "UPosting::callForPosting(%p)", function)
 
+   U_INTERNAL_ASSERT(*posting)
    U_INTERNAL_ASSERT_POINTER(function)
-   U_ASSERT_EQUALS(posting->empty(),false)
 
    data            = posting->data();
    ptr             = data + sizeof(uint32_t);
@@ -907,8 +900,8 @@ U_NO_EXPORT void UPosting::setFilename()
 {
    U_TRACE(5, "UPosting::setFilename()")
 
+   U_INTERNAL_ASSERT(*str_cur_doc_id)
    U_INTERNAL_ASSERT_POINTER(cdb_names)
-   U_ASSERT_DIFFERS(str_cur_doc_id->empty(),true)
 
    *filename = (*cdb_names)[str_cur_doc_id->rep];
 
@@ -943,8 +936,8 @@ U_NO_EXPORT bool UPosting::setVectorCompositeWord()
 {
    U_TRACE(5, "UPosting::setVectorCompositeWord()")
 
+   U_INTERNAL_ASSERT(*word)
    U_INTERNAL_ASSERT_POINTER(cdb_words)
-   U_ASSERT_DIFFERS(word->empty(),true)
    U_INTERNAL_ASSERT_EQUALS(vec_sub_word,0)
    U_INTERNAL_ASSERT_EQUALS(vec_sub_word_posting,0)
 
@@ -1004,7 +997,7 @@ inline bool UPosting::setSubWord(uint32_t i)
 
    *posting = (*vec_sub_word_posting)[i];
 
-   U_ASSERT_DIFFERS(posting->empty(),true)
+   U_INTERNAL_ASSERT(*posting)
 
    U_RETURN(true);
 }
@@ -1073,8 +1066,8 @@ bool UPosting::findDocID(UStringRep* word_rep)
 {
    U_TRACE(5, "UPosting::findDocID(%p)", word_rep)
 
+   U_INTERNAL_ASSERT(*str_cur_doc_id)
    U_INTERNAL_ASSERT_POINTER(cdb_words)
-   U_ASSERT_DIFFERS(str_cur_doc_id->empty(),true)
 
    // manage meta expr, composite word, etc. for all doc name... (save info with property)
 
@@ -1170,8 +1163,8 @@ void UPosting::callForPosting(vPF function, bool is_space)
 {
    U_TRACE(5, "UPosting::callForPosting(%p,%b)", function, is_space)
 
+   U_INTERNAL_ASSERT(*word)
    U_INTERNAL_ASSERT_POINTER(cdb_words)
-   U_ASSERT_EQUALS(word->empty(),false)
 
    if (is_space) // composite word
       {
@@ -1225,7 +1218,7 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
    U_INTERNAL_DUMP("FIRST subword util  = %.*S", U_STRING_TO_TRACE(*sub_word))
    U_INTERNAL_DUMP("first_subword_index = %u", first_subword_index)
 
-   U_ASSERT_DIFFERS(posting->empty(),true)
+   U_INTERNAL_ASSERT(*posting)
 
 #if defined(DEBUG) || defined(U_TEST)
    uint32_t posting_size = posting->size();

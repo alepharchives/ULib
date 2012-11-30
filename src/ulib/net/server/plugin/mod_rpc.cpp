@@ -101,7 +101,7 @@ int URpcPlugIn::handlerRequest()
       // process the RPC request
 
       U_INTERNAL_ASSERT_POINTER(rpc_parser)
-      U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
+      U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
       bool bSendingFault;
       UString method = UClientImage_Base::request->substr(0U, U_TOKEN_NM);

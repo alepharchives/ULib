@@ -574,8 +574,8 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
          key.get(is);
 
+         U_INTERNAL_ASSERT(key)
          U_INTERNAL_ASSERT(key.isNullTerminated())
-         U_INTERNAL_ASSERT_EQUALS(key.empty(),false)
 
          do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
 
@@ -589,8 +589,8 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
          str.get(is);
 
+         U_INTERNAL_ASSERT(str)
          U_INTERNAL_ASSERT(str.isNullTerminated())
-         U_INTERNAL_ASSERT_EQUALS(str.empty(),false)
 
          t.insert(key, str);
          }

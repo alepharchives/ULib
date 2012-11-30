@@ -1194,8 +1194,8 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer, const UString& msg)
 {
    U_TRACE(0, "UNoCatPlugIn::checkAuthMessage(%p,%.*S)", peer, U_STRING_TO_TRACE(msg))
 
+   U_INTERNAL_ASSERT(msg)
    U_INTERNAL_ASSERT_POINTER(peer)
-   U_ASSERT_EQUALS(msg.empty(), false)
 
    uint32_t pos;
    UString action;
@@ -1479,7 +1479,7 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
 
    U_INTERNAL_DUMP("peer->index_AUTH = %u info_url = %p", peer->index_AUTH, info_url)
 
-   U_ASSERT_DIFFERS(peer->user.empty(), true)
+   U_INTERNAL_ASSERT(peer->user)
 
    UString buffer(U_CAPACITY);
 

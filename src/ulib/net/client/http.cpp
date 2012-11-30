@@ -213,9 +213,9 @@ void UHttpClient_Base::str_allocate()
 {
    U_TRACE(0, "UHttpClient_Base::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_www_authenticate,0)
-   U_INTERNAL_ASSERT_EQUALS(str_proxy_authenticate,0)
-   U_INTERNAL_ASSERT_EQUALS(str_proxy_authorization,0)
+   U_INTERNAL_ASSERT_EQUALS(str_www_authenticate, 0)
+   U_INTERNAL_ASSERT_EQUALS(str_proxy_authenticate, 0)
+   U_INTERNAL_ASSERT_EQUALS(str_proxy_authorization, 0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("WWW-Authenticate") },
@@ -354,7 +354,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
                {
                if (name.equal(U_CONSTANT_TO_PARAM("qop")))
                   {
-                  U_ASSERT(qop.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)qop, false)
 
                   qop = value;
                   }
@@ -365,7 +365,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
                {
                if (name.equal(U_CONSTANT_TO_PARAM("realm")))
                   {
-                  U_ASSERT(realm.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)realm, false)
 
                   realm = value;
                   }
@@ -376,7 +376,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
                {
                if (name.equal(U_CONSTANT_TO_PARAM("nonce")))
                   {
-                  U_ASSERT(nonce.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)nonce, false)
 
                   nonce = value;
                   }
@@ -584,7 +584,7 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 {
    U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%u)", U_STRING_TO_TRACE(data), startHeader)
 
-   U_ASSERT_EQUALS(UClient_Base::uri.empty(), false)
+   U_INTERNAL_ASSERT(UClient_Base::uri)
 
    UHTTP::setHTTPInfo(method, UClient_Base::uri);
 

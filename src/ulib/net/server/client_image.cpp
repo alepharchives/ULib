@@ -45,10 +45,10 @@ void UClientImage_Base::logRequest(const char* filereq)
 {
    U_TRACE(0+256, "UClientImage_Base::logRequest(%S)", filereq)
 
+   U_INTERNAL_ASSERT(*request)
    U_INTERNAL_ASSERT_POINTER(logbuf)
    U_INTERNAL_ASSERT_POINTER(request)
    U_INTERNAL_ASSERT(UServer_Base::isLog())
-   U_ASSERT_EQUALS(request->empty(), false)
 
    const char* ptr = request->data();
    uint32_t sz = request->size(), u_printf_string_max_length_save = u_printf_string_max_length;
@@ -80,10 +80,9 @@ void UClientImage_Base::logResponse(const char* fileres)
 {
    U_TRACE(0+256, "UClientImage_Base::logResponse(%S)", fileres)
 
+   U_INTERNAL_ASSERT(*wbuffer)
    U_INTERNAL_ASSERT_POINTER(logbuf)
-   U_INTERNAL_ASSERT_POINTER(wbuffer)
    U_INTERNAL_ASSERT(UServer_Base::isLog())
-   U_ASSERT_EQUALS(wbuffer->empty(), false)
 
    uint32_t sz     = wbuffer->size(), u_printf_string_max_length_save = u_printf_string_max_length;
    const char* ptr = wbuffer->data();
@@ -92,8 +91,6 @@ void UClientImage_Base::logResponse(const char* fileres)
 
    if (u_printf_string_max_length == -1)
       {
-      U_ASSERT_EQUALS(wbuffer->empty(), false)
-
       u_printf_string_max_length = u_findEndHeader(ptr, sz);
 
       if (u_printf_string_max_length == -1) u_printf_string_max_length = sz;
@@ -335,7 +332,7 @@ void UClientImage_Base::initAfterGenericRead()
    U_INTERNAL_DUMP("pipeline = %b pbuffer = %.*S", pipeline, U_STRING_TO_TRACE(*pbuffer))
 
    U_INTERNAL_ASSERT(pbuffer->isNull())
-   U_INTERNAL_ASSERT_EQUALS(pipeline,false)
+   U_INTERNAL_ASSERT_EQUALS(pipeline, false)
 
    if (body->isNull() == false) body->clear();
                              wbuffer->clear();
@@ -348,7 +345,8 @@ bool UClientImage_Base::newConnection()
    U_TRACE(0, "UClientImage_Base::newConnection()")
 
    U_INTERNAL_ASSERT_POINTER(socket)
-   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd,0)
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, 0)
+   U_INTERNAL_ASSERT_MAJOR(socket->iSockDesc, 0)
 
    U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
 
@@ -395,9 +393,9 @@ int UClientImage_Base::handlerResponse()
 {
    U_TRACE(0, "UClientImage_Base::handlerResponse()")
 
+   U_INTERNAL_ASSERT(*wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
    U_ASSERT_EQUALS(isPendingWrite(), false)
-   U_ASSERT_EQUALS(wbuffer->empty(), false)
    U_INTERNAL_ASSERT_EQUALS(write_off, false)
 
    if (logbuf) logResponse();
@@ -588,8 +586,8 @@ loop:
          {
          if (UEventFd::op_mask != U_WRITE_OUT)
             {
-            U_ASSERT(body->empty())
-            U_ASSERT_EQUALS(wbuffer->empty(), false)
+            U_INTERNAL_ASSERT(*wbuffer)
+            U_INTERNAL_ASSERT_EQUALS((bool)*body, false)
 
             if (logbuf) logResponse();
 

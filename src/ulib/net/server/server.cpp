@@ -98,8 +98,7 @@ bool                              UServer_Base::flag_use_tcp_optimization;
 ULog*                             UServer_Base::log;
 pid_t                             UServer_Base::pid;
 time_t                            UServer_Base::expire;
-time_t                            UServer_Base::last_timeout;
-time_t                            UServer_Base::threshold_for_timeout;
+time_t                            UServer_Base::last_event;
 uint32_t                          UServer_Base::start;
 uint32_t                          UServer_Base::count;
 uint32_t                          UServer_Base::vplugin_size;
@@ -237,7 +236,7 @@ public:
                if (delta >=  1000 ||
                    delta <= -1000)
                   {
-                  U_SRV_LOG("Thread watch delta time exceed 1 sec: counter(%d) diff(%d)", watch_counter, delta);
+                  U_SRV_LOG("Thread watch delta time exceed 1 sec: counter(%d) diff(%ldms)", watch_counter, delta);
                   }
                }
 #        endif
@@ -1345,8 +1344,6 @@ void UServer_Base::init()
          updateSharedCacheTime();
 
          ((UTimeThread*)u_pthread_time)->start();
-
-         if (timeoutMS != -1) threshold_for_timeout = 1;
          }
 #  endif
       }
@@ -1446,6 +1443,8 @@ void UServer_Base::init()
    if (timeoutMS   != -1 &&
        isClassic() == false)
       {
+      last_event = u_now->tv_sec;
+
       ptime = U_NEW(UTimeoutConnection);
       }
 
@@ -1575,8 +1574,6 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
 }
 
-static const char* name_function;
-
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
@@ -1585,7 +1582,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    uint32_t counter = 0;
 #endif
 
-start:
+loop:
    U_INTERNAL_ASSERT_MINOR(pClientIndex, eClientImage)
 
    U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (pClientIndex - vClientImage), pClientIndex->sfd)
@@ -1595,30 +1592,26 @@ start:
 
    if (pClientIndex->UEventFd::fd)
       {
-      if (threshold_for_timeout)
+#  ifdef U_HTTP_CACHE_REQUEST
+      if (ptime && counter == 0) // NB: we can't check for idle connection if we are looping on accept()...
+#  else
+      if (ptime)                 // NB:          check for idle connection...
+#  endif
          {
-#     ifdef U_HTTP_CACHE_REQUEST
-         if (counter) goto back; // NB: we can't check for idle connection because we are looping on accept()...
-#     endif
+         U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
 
-         // check for idle connection
-
-         threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
-
-         U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
-         U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
-
-         if (pClientIndex->last_event <= threshold_for_timeout)
+         if ((u_now->tv_sec - pClientIndex->last_event) >= ptime->UTimeVal::tv_sec)
             {
-            name_function = "handlerTimeoutConnection";
+            (void) handlerTimeoutConnection(0);
 
-            if (handlerTimeoutConnection(pClientIndex)) UNotifier::erase(pClientIndex);
+            UNotifier::erase(pClientIndex);
 
-            goto next;
+            goto try_accept;
             }
          }
+
 #ifdef U_HTTP_CACHE_REQUEST
-back:
+try_next:
 #endif
       if (++pClientIndex >= eClientImage)
          {
@@ -1627,11 +1620,11 @@ back:
          pClientIndex = vClientImage;
          }
 
-      goto start;
+      goto loop;
       }
 
-next:
-   U_INTERNAL_ASSERT_EQUALS(pClientIndex->UEventFd::fd,0)
+try_accept:
+   U_INTERNAL_ASSERT_EQUALS(pClientIndex->UEventFd::fd, 0)
 
    USocket* csocket = pClientIndex->socket;
 
@@ -1768,45 +1761,41 @@ retry:
          }
       }
 
-   if (pClientIndex->newConnection() == false) goto check;
-
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (UNotifier::pthread) goto insert;
-#endif
-
-   if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE)
+   if (pClientIndex->newConnection()) // NB: newConnection() can return false only if fail about sending message welcome...
       {
-      pClientIndex->handlerDelete();
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+      if (UNotifier::pthread)
+         {
+         UNotifier::insert(pClientIndex);
 
-      goto check;
+         U_RETURN(U_NOTIFIER_OK);
+         }
+#  endif
+
+      if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE) pClientIndex->handlerDelete();
+      else
+         {
+#     ifndef __MINGW32__
+         // ---------------------------------------------------------------------------------------------------------------------------
+         // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
+         // ---------------------------------------------------------------------------------------------------------------------------
+         // if (pClientIndex->bclose != U_YES) (void)csocket->setSockOpt(SOL_SOCKET,SO_LINGER,(const void*)&lng,sizeof(struct linger)); //send RST-ECONNRESET
+         // ---------------------------------------------------------------------------------------------------------------------------
+#     endif
+
+         UNotifier::insert(pClientIndex);
+         }
       }
 
-#ifndef __MINGW32__
-// ---------------------------------------------------------------------------------------------------------------------------
-// NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
-// ---------------------------------------------------------------------------------------------------------------------------
-// if (pClientIndex->bclose != U_YES) (void)csocket->setSockOpt(SOL_SOCKET,SO_LINGER,(const void*)&lng,sizeof(struct linger)); // send RST - ECONNRESET
-// ---------------------------------------------------------------------------------------------------------------------------
-#endif
-
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-insert:
-#endif
-   UNotifier::insert(pClientIndex);
-
-#ifndef U_HTTP_CACHE_REQUEST
-   U_RETURN(U_NOTIFIER_OK);
-#endif
-
-check:
-#ifdef U_HTTP_CACHE_REQUEST
-   if (accept_edge_triggered && ++counter < 1000) goto back; // NB: we try to manage optimally a burst of new connections...
-#endif
-
-   U_RETURN(U_NOTIFIER_OK);
+   goto check;
 
 error:
    csocket->close();
+
+check:
+#ifdef U_HTTP_CACHE_REQUEST
+   if (accept_edge_triggered && ++counter < 1000) goto try_next; // NB: we try to manage optimally a burst of new connections...
+#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -1866,37 +1855,49 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 {
    U_TRACE(0, "UServer_Base::handlerTimeoutConnection(%p)", cimg)
 
-   U_INTERNAL_ASSERT_POINTER(cimg)
    U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_POINTER(ptime)
    U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
 
-   U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
+   bool from_handlerTime;
 
-   if (cimg != pthis &&
-       cimg != handler_inotify)
+   if (cimg)
       {
-      if (threshold_for_timeout)
-         {
-      // U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
-         U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+      U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
 
-         if (((UClientImage_Base*)cimg)->last_event > threshold_for_timeout)
-            {
-            U_SRV_LOG_WITH_ADDR("%s: client have last_event (%#3D) > threshold_for_timeout (%#3D)", name_function,
-                     ((UClientImage_Base*)cimg)->last_event,         threshold_for_timeout);
-            }
+      if (cimg == pthis ||
+          cimg == handler_inotify)
+         {
+         U_RETURN(false);
          }
 
-      ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN);
-
-      U_SRV_LOG_WITH_ADDR("Client connected didn't send any request in %u secs (timeout), close connection",
-                              U_STREQ(name_function, "handlerTime") ? getReqTimeout()
-                                                                    : u_now->tv_sec - ((UClientImage_Base*)cimg)->last_event);
-
-      U_RETURN(true);
+      from_handlerTime = true;
+      }
+   else
+      {
+      cimg             = pClientIndex;
+      from_handlerTime = false;
       }
 
-   U_RETURN(false);
+   ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN); // NB: this call set also pClientImage...
+
+   U_INTERNAL_ASSERT_EQUALS(pClientImage, cimg) // NB: U_SRV_LOG_WITH_ADDR macro depend on pClientImage...
+
+   if (isLog())
+      {
+      if (from_handlerTime)
+         {
+         U_SRV_LOG_WITH_ADDR("handlerTime: client connected didn't send any request in %u secs (timeout), close connection",
+                              ptime->UTimeVal::tv_sec);
+         }
+      else
+         {
+         U_SRV_LOG_WITH_ADDR("handlerTimeoutConnection: client connected didn't send any request in %u secs (timeout), close connection",
+                              u_now->tv_sec - ((UClientImage_Base*)cimg)->last_event);
+         }
+      }
+
+   U_RETURN(true);
 }
 
 // define method VIRTUAL of class UEventTime
@@ -1909,27 +1910,22 @@ int UServer_Base::UTimeoutConnection::handlerTime()
 
    if (UNotifier::num_connection > UNotifier::min_connection)
       {
-      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
-
       // there are idle connection... (timeout)
 
-      name_function = "handlerTime";
-
-      if (threshold_for_timeout)
+#  ifdef DEBUG
+      if (isLog())
          {
-         threshold_for_timeout = (u_now->tv_sec - (timeoutMS / 1000)) + 1;
+         U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
 
-         U_INTERNAL_DUMP("u_now->tv_sec         = %ld", u_now->tv_sec)
-         U_INTERNAL_DUMP("threshold_for_timeout = %ld", threshold_for_timeout)
+         long delta = u_now->tv_sec - last_event - ptime->UTimeVal::tv_sec;
 
-         if (last_timeout > threshold_for_timeout)
+         if (delta >=  1 ||
+             delta <= -1)
             {
-            U_SRV_LOG_WITH_ADDR("handlerTime: server have last_timeout (%#3D) > threshold_for_timeout (%#3D)",
-                                                          last_timeout,         threshold_for_timeout);
+            U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff(%lds)", delta);
             }
-
-         last_timeout = u_now->tv_sec;
          }
+#  endif
 
       UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
       }
@@ -1983,6 +1979,15 @@ void UServer_Base::runLoop(const char* user)
 
       if (isPreForked())
          {
+#     ifdef DEBUG
+         if (isLog())
+            {
+            U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+
+            last_event = u_now->tv_sec;
+            }
+#     endif
+
          UNotifier::waitForEvent(ptime);
 
          if (UNotifier::empty()) return; // NB: no more event manager registered, child go to exit...
@@ -2001,6 +2006,15 @@ void UServer_Base::runLoop(const char* user)
              UNotifier::num_connection > UNotifier::min_connection)
             {
             // NB: if we have already some client we can't go directly on accept() and block on it...
+
+#        ifdef DEBUG
+            if (isLog())
+               {
+               U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+
+               last_event = u_now->tv_sec;
+               }
+#        endif
 
             UNotifier::waitForEvent(ptime);
 
@@ -2301,6 +2315,7 @@ const char* UServer_Base::dump(bool reset) const
                   << "iBackLog                  " << iBackLog                   << '\n'
                   << "flag_loop                 " << flag_loop                  << '\n'
                   << "timeoutMS                 " << timeoutMS                  << '\n'
+                  << "last_event                " << last_event                 << '\n'
                   << "verify_mode               " << verify_mode                << '\n'
                   << "cgi_timeout               " << cgi_timeout                << '\n'
                   << "verify_mode               " << verify_mode                << '\n'

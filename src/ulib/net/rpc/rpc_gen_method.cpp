@@ -56,7 +56,7 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
       input = theCall.getArgument(i++);
 
-      U_ASSERT(input.empty() == false)
+      U_INTERNAL_ASSERT(input)
 
       pinput = &input;
       }

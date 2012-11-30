@@ -78,7 +78,7 @@ read:
          if (byte_read &&
              s->isTimeout())
             {
-            U_INTERNAL_ASSERT_EQUALS(timeoutMS,500)
+            U_INTERNAL_ASSERT_EQUALS(timeoutMS, 500)
 
             s->iState = USocket::CONNECT;
 
@@ -334,7 +334,7 @@ int USocketExt::vsyncCommandToken(USocket* s, UString& buffer, const char* forma
    U_TRACE(1, "USocketExt::vsyncCommandToken(%p,%.*S,%S)", s, U_STRING_TO_TRACE(buffer), format)
 
    U_INTERNAL_ASSERT(s->isOpen())
-   U_ASSERT(buffer.empty() == true)
+   U_INTERNAL_ASSERT_EQUALS((bool)buffer, false)
 
    static uint32_t cmd_count;
 

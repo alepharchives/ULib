@@ -194,7 +194,7 @@ public:
 
    static int     getPort()       { return port; }
    static int     getCgiTimeout() { return cgi_timeout; }
-   static int     getReqTimeout() { return (timeoutMS / 1000); }
+   static int     getReqTimeout() { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
    static bool    isIPv6()        { return UClientImage_Base::bIPv6; }
    static UString getHost()       { return *host; }
 
@@ -443,9 +443,9 @@ protected:
    static UServer_Base* pthis;
    static UString* senvironment;
    static uint32_t start, count;
+   static time_t expire, last_event;
    static UVector<UIPAllow*>* vallow_IP;
    static UVector<UIPAllow*>* vallow_IP_prv;
-   static time_t expire, threshold_for_timeout, last_timeout;
    static bool flag_loop, flag_use_tcp_optimization, monitoring_process,
                accept_edge_triggered, set_realtime_priority, enable_rfc1918_filter, public_address;
 
@@ -465,7 +465,7 @@ protected:
 
    // COSTRUTTORI
 
-   UTimeoutConnection() : UEventTime(getReqTimeout(), 0L)
+   UTimeoutConnection() : UEventTime(timeoutMS / 1000L, 0L)
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "")
       }

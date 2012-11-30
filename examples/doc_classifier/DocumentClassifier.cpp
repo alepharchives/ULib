@@ -133,8 +133,8 @@ void DocumentClassifier::printCertificate(UTree<UCertificate*>* pnode)
 
    U_INTERNAL_DUMP("cert_exist = %b crl_exist = %b", cert_exist, crl_exist)
 
-   U_INTERNAL_ASSERT_EQUALS(crl.empty(),false)
-   U_INTERNAL_ASSERT_EQUALS(filename.empty(),false)
+   U_INTERNAL_ASSERT(crl)
+   U_INTERNAL_ASSERT(filename)
 
                   buffer += filename + '\n';
    if (crl_exist) buffer += crl      + '\n';
@@ -182,8 +182,8 @@ void DocumentClassifier::printLabel(UTree<UCertificate*>* pnode)
 
    U_INTERNAL_DUMP("cert_exist = %b crl_exist = %b", cert_exist, crl_exist)
 
-   U_INTERNAL_ASSERT_EQUALS(crl.empty(),false)
-   U_INTERNAL_ASSERT_EQUALS(filename.empty(),false)
+   U_INTERNAL_ASSERT(crl)
+   U_INTERNAL_ASSERT(filename)
 
    if (cert_exist == false) (void) UFile::writeTo(filename, cert->getEncoded());
 
@@ -377,7 +377,7 @@ int DocumentClassifier::elementaryTypeOf(const UString& content)
 {
    U_TRACE(5, "DocumentClassifier::elementaryTypeOf(%.*S)", U_STRING_TO_TRACE(content))
 
-   U_ASSERT(content.empty() == false)
+   U_INTERNAL_ASSERT(content)
 
    binary = content.isBinary();
 

@@ -627,7 +627,10 @@ uint32_t UVector<UString>::intersection(UVector<UString>& set1, UVector<UString>
    U_INTERNAL_ASSERT(_length <= _capacity)
 
    if (set1.empty() ||
-       set2.empty()) U_RETURN(0);
+       set2.empty())
+      {
+      U_RETURN(0);
+      }
 
    UString elem;
    uint32_t i, n = _length;
@@ -984,7 +987,7 @@ void UVector<UString>::readVector(istream& is, int terminator)
 
          str.get(is);
 
-      // U_INTERNAL_ASSERT_EQUALS(str.empty(), false) (NB: per file configurazione con elementi posizionali...)
+      // U_INTERNAL_ASSERT(str) // NB: per file configurazione con elementi posizionali...
 
          push(str);
          }

@@ -48,7 +48,7 @@ void UFile::setPathRelativ(const UString* environment)
 
    U_CHECK_MEMORY
 
-   U_ASSERT_EQUALS(pathname.empty(),false)
+   U_INTERNAL_ASSERT(pathname)
 
    reset();
 

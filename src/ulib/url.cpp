@@ -346,7 +346,7 @@ bool Url::setQuery(UVector<UString>& vec)
 {
    U_TRACE(0, "Url::setQuery(%p)", &vec)
 
-   U_INTERNAL_ASSERT_EQUALS(vec.empty(),false)
+   U_INTERNAL_ASSERT_EQUALS(vec.empty(), false)
 
    if (prepareForQuery())
       {

@@ -111,7 +111,7 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
       file_method.clear();
       }
 
-   U_ASSERT(methodList.empty() == false)
+   U_ASSERT(methodList.size())
 }
 
 URPCMethod* URPCObject::find(const UString& methodName)

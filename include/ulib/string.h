@@ -445,8 +445,8 @@ public:
       {
       U_TRACE(0, "UStringRep::unQuote()")
 
-      U_INTERNAL_ASSERT_MAJOR(_length,2)
-      U_INTERNAL_ASSERT_EQUALS(_capacity,0)
+      U_INTERNAL_ASSERT_MAJOR(_length, 2)
+      U_INTERNAL_ASSERT_EQUALS(_capacity, 0)
 
       ++str;
       _length -= 2;
@@ -517,7 +517,7 @@ public:
       {
       U_TRACE(0, "UString::getStringNull()")
 
-      U_ASSERT(string_null->empty())
+      U_INTERNAL_ASSERT_EQUALS((bool)*string_null, false)
 
       return *string_null;
       }
@@ -535,8 +535,10 @@ public:
 
    // SERVICES
 
-   char* data() const { return rep->data(); }
-   bool empty() const { return rep->empty(); }
+   char* data() const         { return rep->data(); }
+   bool empty() const         { return rep->empty(); }
+
+   operator bool() const      { return (rep->_length != 0); }
 
    uint32_t size() const      { return rep->size(); }
    uint32_t space() const     { return ((int32_t)rep->_capacity > 0 ? rep->_capacity - rep->_length : 0); }

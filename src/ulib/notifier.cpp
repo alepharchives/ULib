@@ -619,16 +619,12 @@ loop:
 
       U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
-      /*
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (handler_event->fd == 0)
+      if (handler_event->fd == 0) // NB: sometime happens...
          {
-         U_INTERNAL_ASSERT_POINTER(pthread)
+         --nfd_ready;
 
          goto loop;
          }
-#  endif
-      */
 
       handlerResult(handler_event, bread, bexcept);
 

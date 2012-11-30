@@ -140,7 +140,7 @@ public:
       {
       U_TRACE(5, "WiAuthAccessPoint::toString()")
 
-      U_ASSERT_EQUALS(_label.empty(), false)
+      U_INTERNAL_ASSERT(_label)
 
       value.snprintf(" %u %.*s \"%.*s\" \"%.*s\"",
                      noconsume,
@@ -289,7 +289,7 @@ speed attribute must be a non-negative real number.
       {
       U_TRACE(5, "WiAuthNodog::callForAllAccessPoint(%p)", func)
 
-      U_ASSERT_EQUALS(access_point.empty(), false)
+      U_ASSERT(access_point.size())
 
       lindex = U_NOT_FOUND;
 
@@ -323,7 +323,7 @@ speed attribute must be a non-negative real number.
 
       U_INTERNAL_DUMP("label = %.*S", U_STRING_TO_TRACE(*label))
 
-      U_ASSERT_EQUALS(label->empty(), false)
+      U_INTERNAL_ASSERT(*label)
 
       callForAllAccessPoint(checkLabel);
 
@@ -354,7 +354,7 @@ speed attribute must be a non-negative real number.
 
       U_INTERNAL_DUMP("mac = %.*S", U_STRING_TO_TRACE(*mac))
 
-      U_ASSERT_EQUALS(mac->empty(), false)
+      U_INTERNAL_ASSERT(*mac)
 
       if (findLabel() != U_NOT_FOUND)
          {
@@ -398,7 +398,7 @@ speed attribute must be a non-negative real number.
       {
       U_TRACE(5, "WiAuthNodog::fromString()")
 
-      U_ASSERT_EQUALS(value.empty(), false)
+      U_INTERNAL_ASSERT(value)
 
       istrstream is(value.data(), value.size());
 
@@ -410,7 +410,7 @@ speed attribute must be a non-negative real number.
 
       _hostname.get(is);
 
-      U_INTERNAL_ASSERT_EQUALS(_hostname.empty(), false)
+      U_INTERNAL_ASSERT(_hostname)
 
       is.get(); // skip ' '
       is.get(); // skip '['
@@ -418,7 +418,7 @@ speed attribute must be a non-negative real number.
       access_point.clear();
       access_point.readVector(is, ']');
 
-      U_INTERNAL_ASSERT_EQUALS(access_point.empty(), false)
+      U_ASSERT(access_point.size())
       }
 
    void setLastInfo()
@@ -465,7 +465,7 @@ speed attribute must be a non-negative real number.
       {
       U_TRACE(5, "WiAuthNodog::setValue(%.*S)", U_STRING_TO_TRACE(_address))
 
-      U_ASSERT_EQUALS(_address.empty(), false)
+      U_INTERNAL_ASSERT(_address)
 
       value = (*db_ap)[_address];
 
@@ -551,7 +551,7 @@ speed attribute must be a non-negative real number.
          {
          // add ap
 
-         U_ASSERT_EQUALS(label->empty(), false)
+         U_INTERNAL_ASSERT(label)
 
          ++num_ap;
 
@@ -607,7 +607,7 @@ static UString get_UserName()
 {
    U_TRACE(5, "::get_UserName()")
 
-   U_ASSERT_EQUALS(uid->empty(), false)
+   U_INTERNAL_ASSERT(*uid)
 
    UString pathname(U_CAPACITY), content, user;
 
@@ -677,7 +677,7 @@ public:
       {
       U_TRACE(5, "WiAuthUser::toString()")
 
-      U_INTERNAL_ASSERT_EQUALS(nodog.empty(), false)
+      U_INTERNAL_ASSERT(nodog)
 
       UString x(U_CAPACITY);
 
@@ -920,7 +920,7 @@ public:
       {
       U_TRACE(5, "WiAuthUser::fromString()")
 
-      U_ASSERT_EQUALS(value.empty(), false)
+      U_INTERNAL_ASSERT(value)
 
       istrstream is(value.data(), value.size());
 
@@ -956,14 +956,14 @@ public:
 
       _user.get(is);
 
-      U_INTERNAL_ASSERT_EQUALS(_user.empty(), false)
+      U_INTERNAL_ASSERT(_user)
       }
 
    void setValue()
       {
       U_TRACE(5, "WiAuthUser::setValue()")
 
-      U_ASSERT_EQUALS(uid->empty(), false)
+      U_INTERNAL_ASSERT(*uid)
 
       value      = (*db_user)[*uid];
       user_exist = (value.empty() == false);
@@ -1024,12 +1024,12 @@ public:
       {
       U_TRACE(5, "WiAuthUser::setNodogReference()")
 
-      U_ASSERT_EQUALS( uid->empty(), false)
-      U_ASSERT_EQUALS(nodog.empty(), false)
+      U_INTERNAL_ASSERT(*uid)
+      U_INTERNAL_ASSERT(nodog)
 
       UString x = (connected ? nodog : *address);
 
-      U_ASSERT_EQUALS(x.empty(), false)
+      U_INTERNAL_ASSERT(x)
 
       if (check_user_agent &&
                      agent != UHTTP::getUserAgent())
@@ -1057,7 +1057,7 @@ public:
       {
       U_TRACE(5, "WiAuthUser::setRecord()")
 
-      U_ASSERT_EQUALS(uid->empty(), false)
+      U_INTERNAL_ASSERT(*uid)
 
       if (nodog_rec->setRecord(&index_access_point) == false ||
                                 index_access_point  == U_NOT_FOUND)
@@ -1107,8 +1107,8 @@ public:
          }
       else
          {
-         U_ASSERT_EQUALS(     policy->empty(), false)
-         U_ASSERT_EQUALS(auth_domain->empty(), false)
+         U_INTERNAL_ASSERT(*policy)
+         U_INTERNAL_ASSERT(*auth_domain)
 
                    _auth_domain = *auth_domain;
          bflat = ((_policy      = *policy) == *policy_flat);
@@ -1117,8 +1117,8 @@ public:
       if (bflat ||
           user_exist == false)
          {
-         U_ASSERT_EQUALS(   _time_available->empty(), false)
-         U_ASSERT_EQUALS(_traffic_available->empty(), false)
+         U_INTERNAL_ASSERT(*_time_available)
+         U_INTERNAL_ASSERT(*_traffic_available)
 
             time_available =    _time_available->strtol();
          traffic_available = _traffic_available->strtoll();
@@ -1650,7 +1650,7 @@ static bool checkIfUserConnected()
       {
       // NB: db can have different users for the same ip...
 
-      U_INTERNAL_ASSERT_EQUALS(user_rec->nodog.empty(), false)
+      U_INTERNAL_ASSERT(user_rec->nodog)
 
       if (user_rec->connected) U_RETURN(true);
       }
@@ -1666,7 +1666,7 @@ static bool isUserConnected(bool validation)
 
    U_INTERNAL_DUMP("uid = %.*S", U_STRING_TO_TRACE(*uid))
 
-   U_ASSERT_EQUALS(uid->empty(), false)
+   U_INTERNAL_ASSERT(*uid)
 
    if (uid->size() > 32)
       {
@@ -1959,7 +1959,7 @@ static UString sendRequestToNodog(const char* fmt, ...)
 {
    U_TRACE(5, "::sendRequestToNodog(%S)", fmt)
 
-   U_ASSERT_EQUALS(address->empty(), false)
+   U_INTERNAL_ASSERT(*address)
 
    UString _buffer(U_CAPACITY), url(U_CAPACITY), result;
 
@@ -2294,7 +2294,7 @@ static bool askNodogToLogoutUser(const UString& signed_data)
 
    // NB: we must have serviced a info request from nodog by another process istance (PREFORK_CHILD > 2)...
 
-   U_ASSERT_EQUALS(uid->empty(), false)
+   U_INTERNAL_ASSERT(*uid)
 
    if (checkIfUserConnected())
       {
@@ -2439,7 +2439,7 @@ static void loadPolicy(const UString& _policy)
 {
    U_TRACE(5, "::loadPolicy(%.*S)", U_STRING_TO_TRACE(_policy))
 
-   U_ASSERT_EQUALS(_policy.empty(), false)
+   U_INTERNAL_ASSERT(_policy)
 
    const char* key_time    = 0;
    const char* key_traffic = 0;

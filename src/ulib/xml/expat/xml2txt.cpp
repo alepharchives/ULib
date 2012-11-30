@@ -103,8 +103,6 @@ void UXml2Txt::endElement(const XML_Char* name)
        tag_pos != U_NOT_FOUND &&
        taglist.at(tag_pos) == name)
       {
-      U_ASSERT_EQUALS(taglist.empty(), false)
-
       tag_match = false;
       }
 

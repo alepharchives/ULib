@@ -481,7 +481,7 @@ void UHTTP::in_READ()
 
          for (len = event.ip->len; event.ip->name[len-1] == '\0'; --len) {}
 
-         U_INTERNAL_ASSERT_EQUALS(len,u__strlen(event.ip->name))
+         U_INTERNAL_ASSERT_EQUALS(len, u__strlen(event.ip->name))
 
          checkInotifyForCache(event.ip->wd, event.ip->name, len);
 
@@ -717,7 +717,7 @@ void UHTTP::ctor()
 #endif
 
 #ifdef USE_PAGE_SPEED
-   U_INTERNAL_ASSERT_EQUALS(page_speed,0)
+   U_INTERNAL_ASSERT_EQUALS(page_speed, 0)
 
    (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_pagespeed"));
 
@@ -749,7 +749,7 @@ void UHTTP::ctor()
 #endif
 
 #ifdef USE_LIBV8
-   U_INTERNAL_ASSERT_EQUALS(v8_javascript,0)
+   U_INTERNAL_ASSERT_EQUALS(v8_javascript, 0)
 
    (void) snprintf(buffer, U_PATH_MAX, U_FMT_LIBPATH, U_PATH_CONV(UPlugIn<void*>::plugin_dir), U_CONSTANT_TO_TRACE("mod_v8"));
 
@@ -865,7 +865,7 @@ next:
    UServer_Base::handler_inotify = 0;
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(cache_file,0)
+   U_INTERNAL_ASSERT_EQUALS(cache_file, 0)
 
    cache_file = U_NEW(UHashMap<UFileCacheData*>);
 
@@ -931,7 +931,7 @@ next:
          putDataInCache(getHeaderMimeType(0, U_CTYPE_HTML, 0, 0), content);
 
          U_INTERNAL_ASSERT_POINTER(file_data->array)
-         U_INTERNAL_ASSERT_EQUALS( file_data->array->size(),2)
+         U_INTERNAL_ASSERT_EQUALS( file_data->array->size(), 2)
          }
       }
 
@@ -970,7 +970,7 @@ next:
 
    if (file_data)
       {
-      U_INTERNAL_ASSERT_EQUALS(file_data->array,0)
+      U_INTERNAL_ASSERT_EQUALS(file_data->array, 0)
 
       htpasswd = U_NEW(UString(UFile::contentOf(".htpasswd")));
 
@@ -981,7 +981,7 @@ next:
 
    if (file_data)
       {
-      U_INTERNAL_ASSERT_EQUALS(file_data->array,0)
+      U_INTERNAL_ASSERT_EQUALS(file_data->array, 0)
 
       htdigest = U_NEW(UString(UFile::contentOf(".htdigest")));
 
@@ -1582,7 +1582,7 @@ is_response:
          }
       else
          {
-         U_INTERNAL_ASSERT_EQUALS(c,'\n')
+         U_INTERNAL_ASSERT_EQUALS(c, '\n')
 
          u_line_terminator     = U_LF;
          u_line_terminator_len = 1;
@@ -1663,9 +1663,9 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& buffer)
 {
    U_TRACE(0, "UHTTP::readHTTPHeader(%p,%.*S)", s, U_STRING_TO_TRACE(buffer))
 
-   U_INTERNAL_ASSERT_EQUALS(u_http_info.szHeader,0)
-   U_INTERNAL_ASSERT_EQUALS(u_http_info.endHeader,0)
-   U_INTERNAL_ASSERT_EQUALS(u_http_info.startHeader,0)
+   U_INTERNAL_ASSERT_EQUALS(u_http_info.szHeader, 0)
+   U_INTERNAL_ASSERT_EQUALS(u_http_info.endHeader, 0)
+   U_INTERNAL_ASSERT_EQUALS(u_http_info.startHeader, 0)
 
    uint32_t sz     = buffer.size();
    const char* ptr = buffer.data(); // NB: it is possible a resize of the buffer string...
@@ -1842,12 +1842,23 @@ U_NO_EXPORT bool UHTTP::isHTTPRequestTooLarge(UString& buffer)
    U_RETURN(false);
 }
 
+const char* UHTTP::getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
+{
+   U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S,%.*S,%b)", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(name), nocase)
+
+   if (u_http_info.szHeader) return UStringExt::getValueFromName(request, u_http_info.startHeader, u_http_info.szHeader, name, nocase);
+
+   U_RETURN((const char*)0);
+}
+
+const char* UHTTP::getHTTPHeaderValuePtr(const UString& name, bool nocase) { return getHTTPHeaderValuePtr(*UClientImage_Base::request, name, nocase); }
+
 bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 {
    U_TRACE(0, "UHTTP::readHTTPBody(%p,%.*S,%.*S)", s, U_STRING_TO_TRACE(*pbuffer), U_STRING_TO_TRACE(body))
 
-   U_ASSERT(body.empty())
    U_INTERNAL_ASSERT(s->isConnected())
+   U_INTERNAL_ASSERT_EQUALS((bool)body, false)
 
    // NB: check if request includes an entity-body (as indicated by the presence of Content-Length or Transfer-Encoding)
 
@@ -2109,6 +2120,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    // "Sec-WebSocket-Key: ..."
    // --------------------------------
 
+   U_INTERNAL_ASSERT(request)
    U_INTERNAL_ASSERT_DIFFERS(ptrH, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrR, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrC, 0)
@@ -2121,8 +2133,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
    U_INTERNAL_ASSERT_DIFFERS(ptrP, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrX, 0)
    U_INTERNAL_ASSERT_DIFFERS(ptrS, 0)
-   U_ASSERT_EQUALS(request.empty(), false)
-   U_INTERNAL_ASSERT_MAJOR(u_http_info.szHeader,0)
+   U_INTERNAL_ASSERT_MAJOR(u_http_info.szHeader, 0)
 
    static const unsigned char ctable1[] = {
       0,   0,   0,   0,   0,   0,   0,   0,
@@ -2699,7 +2710,7 @@ end:
 
          U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
 
-         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd, 0)
 
          UServer_Base::pClientImage->sfd    = UServer_Base::sfd;
          UServer_Base::pClientImage->start  = UServer_Base::start;
@@ -2870,7 +2881,7 @@ bool UHTTP::manageHTTPRequest()
    // check the HTTP message
 
    U_ASSERT(isHTTPRequestNotFound())
-   U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
+   U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    const char* ptr;
    uint32_t len1, len2;
@@ -3069,7 +3080,7 @@ next2:
 
       if (isDataFromCache() &&
           isHttpGETorHEAD() &&
-          (checkHTTPGetRequestIfModified(*UClientImage_Base::request) == false || processFileCache()))
+          (checkHTTPGetRequestIfModified() == false || processFileCache()))
          {
 next3:
          setHTTPRequestProcessed();
@@ -3294,7 +3305,7 @@ void UHTTP::setHTTPCookie(const UString& param)
 
             if (item.empty())
                {
-               U_ASSERT(keyID->empty())
+               U_INTERNAL_ASSERT_EQUALS((bool)*keyID, false)
 
                keyID->setBuffer(100U);
 
@@ -3361,7 +3372,7 @@ void UHTTP::addSetCookie(const UString& cookie)
 {
    U_TRACE(0, "UHTTP::addSetCookie(%.*S)", U_STRING_TO_TRACE(cookie))
 
-   U_ASSERT_EQUALS(cookie.empty(), false)
+   U_INTERNAL_ASSERT(cookie)
 
    if (set_cookie->empty() == false) (void) set_cookie->append(U_CONSTANT_TO_PARAM("\r\n"));
                                      (void) set_cookie->append(U_CONSTANT_TO_PARAM("Set-Cookie: "));
@@ -3407,7 +3418,7 @@ bool UHTTP::getHTTPCookie(UString* cookie)
 
    U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
 
-   U_ASSERT(keyID->empty())
+   U_INTERNAL_ASSERT_EQUALS((bool)*keyID, false)
 
    char* ptr;
    bool check;
@@ -3501,7 +3512,7 @@ bool UHTTP::initSession(const char* location, uint32_t size)
 {
    U_TRACE(0, "UHTTP::initSession(%S,%u)", location, size)
 
-   U_INTERNAL_ASSERT_EQUALS(db_session,0)
+   U_INTERNAL_ASSERT_EQUALS(db_session, 0)
 
    if (UServer_Base::preforked_num_kids == 0)
       {
@@ -3574,7 +3585,7 @@ U_NO_EXPORT void UHTTP::removeDataSession(const UString& token)
 {
    U_TRACE(0, "UHTTP::removeDataSession(%.*S)", U_STRING_TO_TRACE(token))
 
-   U_ASSERT_EQUALS(token.empty(), false)
+   U_INTERNAL_ASSERT(token)
 
    UString cookie(100U);
 
@@ -3606,7 +3617,7 @@ U_NO_EXPORT void UHTTP::checkDataSession(const UString& token, time_t expire, bo
 
    if (checked)
       {
-      U_ASSERT_EQUALS(token.empty(), false)
+      U_INTERNAL_ASSERT(token)
 
       if (keyID->empty() == false) // NB: previous valid cookie...
          {
@@ -3649,7 +3660,7 @@ U_NO_EXPORT void UHTTP::checkDataSession(const UString& token, time_t expire, bo
             }
          }
 
-      U_ASSERT(keyID->empty())
+      U_INTERNAL_ASSERT_EQUALS((bool)*keyID, false)
 
       *keyID = token;
 
@@ -3681,7 +3692,7 @@ bool UHTTP::getDataSession(uint32_t index, UString* value)
       if (u_http_info.cookie_len &&
           getHTTPCookie(0))
          {
-         U_ASSERT_EQUALS(keyID->empty(), false)
+         U_INTERNAL_ASSERT(*keyID)
 next:
          if (value &&
              data_session->getValue(index, *value) == false)
@@ -3753,7 +3764,7 @@ void UHTTP::putDataSession(uint32_t index, const char* value, uint32_t size)
 
    U_INTERNAL_DUMP("keyID = %.*S", U_STRING_TO_TRACE(*keyID))
 
-   U_ASSERT_EQUALS(keyID->empty(), false)
+   U_INTERNAL_ASSERT(*keyID)
 
 #ifdef U_HTTP_CACHE_REQUEST
    U_http_no_cache = true;
@@ -3783,7 +3794,7 @@ void UHTTP::putDataSession(uint32_t index, const char* value, uint32_t size)
       {
       UString data = data_session->toString();
 
-      U_ASSERT_EQUALS(data.empty(), false)
+      U_INTERNAL_ASSERT(data)
 
       int result = ((URDB*)db_session)->store(*keyID, data, RDB_REPLACE);
 
@@ -3829,7 +3840,7 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
       {
       UString data = data_storage->toString();
 
-      U_ASSERT_EQUALS(data.empty(), false)
+      U_INTERNAL_ASSERT(data)
 
       int result = ((URDB*)db_session)->store(pkey, data, RDB_REPLACE);
 
@@ -4252,7 +4263,7 @@ UString UHTTP::getHTTPHeaderForResponse(const UString& content, bool connection_
         u_http_info.nResponseCode <  200) ||
         u_http_info.nResponseCode == 304)
       {
-      U_ASSERT(content.empty())
+      U_INTERNAL_ASSERT_EQUALS((bool)content, false)
       }
 #endif
 
@@ -4717,8 +4728,8 @@ void UHTTP::setHTTPCgiResponse(bool header_content_type, bool bcompress, bool co
 
    U_INTERNAL_DUMP("u_http_info.clength = %u", u_http_info.clength)
 
+   U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
    U_INTERNAL_ASSERT_MAJOR(u_http_info.clength, 0)
-   U_ASSERT_EQUALS(UClientImage_Base::wbuffer->empty(), false)
 
    const char* ptr;
    uint32_t sz, endHeader = UClientImage_Base::wbuffer->size() - u_http_info.clength;
@@ -4779,15 +4790,15 @@ void UHTTP::setHTTPCgiResponse(bool header_content_type, bool bcompress, bool co
 
 // --------------------------------------------------------------------------------------------------------------------------------------
 
-U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
+U_NO_EXPORT bool UHTTP::processHTTPAuthorization()
 {
-   U_TRACE(0, "UHTTP::processHTTPAuthorization(%.*S)", U_STRING_TO_TRACE(request))
+   U_TRACE(0, "UHTTP::processHTTPAuthorization()")
 
-   U_ASSERT_EQUALS(request.empty(), false)
+   U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    bool result = false;
 
-   const char* ptr = getHTTPHeaderValuePtr(request, *USocket::str_authorization, false);
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_authorization, false);
 
    if (ptr == 0) U_RETURN(false);
 
@@ -4804,7 +4815,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
       ptr += U_CONSTANT_SIZE("Basic ");
       }
 
-   UString content, tmp = request.substr(request.distance(ptr));
+   UString content, tmp = UClientImage_Base::request->substr(UClientImage_Base::request->distance(ptr));
 
    UTokenizer t(tmp, u_line_terminator);
 
@@ -4833,13 +4844,13 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
                {
                if (name.equal(U_CONSTANT_TO_PARAM("username")))
                   {
-                  U_ASSERT(user.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)user, false)
 
                   user = value;
                   }
                else if (name.equal(U_CONSTANT_TO_PARAM("uri")))
                   {
-                  U_ASSERT(_uri.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)_uri, false)
 
                   // NB: there may be an ALIAS...
 
@@ -4854,13 +4865,13 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
                {
                if (name.equal(U_CONSTANT_TO_PARAM("realm")))
                   {
-                  U_ASSERT(realm.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)realm, false)
 
                   realm = value;
                   }
                else if (name.equal(U_CONSTANT_TO_PARAM("response")))
                   {
-                  U_ASSERT(response.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)response, false)
 
                   if (value.size() != 32) U_RETURN(false);
 
@@ -4873,7 +4884,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
                {
                if (name.equal(U_CONSTANT_TO_PARAM("nonce")))
                   {
-                  U_ASSERT(nonce.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)nonce, false)
 
                   // XXX: Due to a bug in MSIE (version=??), we do not check for authentication timeout...
 
@@ -4883,7 +4894,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
                   }
                else if (name.equal(U_CONSTANT_TO_PARAM("nc")))
                   {
-                  U_ASSERT(nc.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)nc, false)
 
                   nc = value;
                   }
@@ -4894,7 +4905,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
                {
                if (name.equal(U_CONSTANT_TO_PARAM("qop")))
                   {
-                  U_ASSERT(qop.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)qop, false)
 
                   qop = value;
                   }
@@ -4905,7 +4916,7 @@ U_NO_EXPORT bool UHTTP::processHTTPAuthorization(const UString& request)
                {
                if (name.equal(U_CONSTANT_TO_PARAM("cnonce")))
                   {
-                  U_ASSERT(cnonce.empty())
+                  U_INTERNAL_ASSERT_EQUALS((bool)cnonce, false)
 
                   cnonce = value;
                   }
@@ -4995,7 +5006,7 @@ UString UHTTP::getUserHA1(const UString& user, const UString& realm)
          pos += line.size();
          ha1  = htdigest->substr(pos, 32);
 
-         U_INTERNAL_ASSERT_EQUALS(htdigest->c_char(pos + 32),'\n')
+         U_INTERNAL_ASSERT_EQUALS(htdigest->c_char(pos + 32), '\n')
          }
       }
 
@@ -5081,7 +5092,7 @@ bool UHTTP::checkUriProtected()
 
    // check if it's OK via authentication (digest|basic)
 
-   if (processHTTPAuthorization(*UClientImage_Base::request) == false)
+   if (processHTTPAuthorization() == false)
       {
       setHTTPUnAuthorized();
 
@@ -5572,7 +5583,7 @@ UHTTP::UServletPage* UHTTP::getUSP(const UString& key)
 {
    U_TRACE(0, "UHTTP::getUSP(%.*S)", U_STRING_TO_TRACE(key))
 
-   U_ASSERT_DIFFERS(key.empty(), true)
+   U_INTERNAL_ASSERT(key)
    U_INTERNAL_ASSERT_POINTER(cache_file)
 
    usp_page_key      = key.rep;
@@ -5653,7 +5664,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
                USocketExt::byte_read_hook = updateUploadProgress;
 
-               U_INTERNAL_ASSERT_EQUALS(ptr_upload_progress,0)
+               U_INTERNAL_ASSERT_EQUALS(ptr_upload_progress, 0)
 
                ptr_upload_progress = (upload_progress*) UServer_Base::getOffsetToDataShare(sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS);
                }
@@ -5775,7 +5786,7 @@ void UHTTP::checkFileForCache()
    U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
 
    U_INTERNAL_ASSERT_POINTER(pathname)
-   U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
+   U_INTERNAL_ASSERT_EQUALS(u_buffer[0], '.')
 
    if (u_buffer_len <= 2) return;
 
@@ -7339,7 +7350,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfRange(const UString& etag)
 {
    U_TRACE(0, "UHTTP::checkHTTPGetRequestIfRange(%.*S)", U_STRING_TO_TRACE(etag))
 
-   const char* ptr = getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_if_range, false);
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_range, false);
 
    if (ptr)
       {
@@ -7570,14 +7581,13 @@ U_NO_EXPORT int UHTTP::checkHTTPGetRequestForRange(UString& ext, const UString& 
    U_RETURN(U_YES);
 }
 
-#define U_NO_Etag                // for me it's enough Last-Modified: ...
 #define U_NO_If_Unmodified_Since // I think it's not very much used...
 
-U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified(const UString& request)
+U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified()
 {
-   U_TRACE(0, "UHTTP::checkHTTPGetRequestIfModified(%.*S)", U_STRING_TO_TRACE(request))
+   U_TRACE(0, "UHTTP::checkHTTPGetRequestIfModified()")
 
-   U_ASSERT_EQUALS(request.empty(), false)
+   U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    /*
    The If-Modified-Since: header is used with a GET request. If the requested resource has been modified since the given date,
@@ -7616,7 +7626,7 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified(const UString& request)
       [blank line here]
       */
 
-      const char* ptr = getHTTPHeaderValuePtr(request, *USocket::str_if_unmodified_since, false);
+      const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_unmodified_since, false);
 
       if (ptr)
          {
@@ -7641,140 +7651,24 @@ U_NO_EXPORT bool UHTTP::checkHTTPGetRequestIfModified(const UString& request)
    U_RETURN(true);
 }
 
-U_NO_EXPORT bool UHTTP::openFile()
+void UHTTP::processHTTPGetRequest()
 {
-   U_TRACE(0, "UHTTP::openFile()")
+   U_TRACE(0, "UHTTP::processHTTPGetRequest()")
+
+   U_INTERNAL_ASSERT_EQUALS((bool)*UClientImage_Base::body, false)
 
    bool result;
-
-   if (file->dir() == false)
-      {
-      U_INTERNAL_ASSERT_POINTER(file_data)
-
-      if (file_data->fd == -1)
-         {
-         // NB: '.htpasswd' and '.htdigest' are forbidden...
-
-         result = (file->regular()                                                           &&
-                   file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false &&
-                   file->open());
-
-         if (result) file_data->fd = file->fd;
-         }
-      else
-         {
-         result   = true;
-         file->fd = file_data->fd;
-         }
-
-      if (result)
-         {
-         if (file->modified())
-            {
-            file_data->mode  = file->st_mode;
-            file_data->size  = file->st_size;
-            file_data->mtime = file->st_mtime;
-
-            U_INTERNAL_DUMP("file_data->fd = %d st_mode = %d st_size = %I st_mtime = %ld", file_data->fd, file->st_mode, file->st_size, file->st_mtime)
-            }
-
-         if (file_data->size == 0) // NB: check for empty document...
-            {
-            file->close();
-
-            *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(UString::getStringNull(), false);
-
-            U_RETURN(false);
-            }
-         }
-      }
-   else
-      {
-      // NB: servlet is forbidden...
-
-      result = (u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0) == false);
-
-      if (result                         &&
-          U_http_is_navigation  == false &&
-          u_http_info.query_len == 0)
-         {
-         // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
-
-         uint32_t sz      = file->getPathRelativLen(), len = str_indexhtml->size();
-         const char* ptr  = file->getPathRelativ();
-         const char* ptr1 = str_indexhtml->data();
-
-         U_INTERNAL_ASSERT_MAJOR(sz,0)
-
-         pathname->setBuffer(sz + 1 + len);
-
-         bool broot = (sz == 1 && ptr[0] == '/');
-
-         if (broot) pathname->snprintf(     "%.*s",          len, ptr1);
-         else       pathname->snprintf("%.*s/%.*s", sz, ptr, len, ptr1);
-
-         file_data = (*cache_file)[*pathname];
-
-         if (file_data)
-            {
-            if (isDataFromCache()) // NB: check if we have the content of file in cache...
-               {
-               u_http_info.nResponseCode = HTTP_OK;
-
-               bool gzip = (U_http_is_accept_gzip &&
-                            isDataCompressFromCache());
-
-               if (gzip) U_http_is_accept_gzip = '2';
-
-               if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, gzip);
-                                          *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(getDataFromCache(true, gzip), false);
-
-               U_RETURN(false);
-               }
-
-            file->setPath(*pathname);
-
-            file->st_size  = file_data->size;
-            file->st_mode  = file_data->mode;
-            file->st_mtime = file_data->mtime;
-
-            result = (file_data->fd != -1);
-
-            if (result) file->fd = file_data->fd;
-            else
-               {
-               result = (file->regular() &&
-                         file->open());
-
-               if (result) file_data->fd = file->fd;
-               }
-            }
-         }
-      }
-
-   if (result == false) setHTTPForbidden(); // set forbidden error response...
-
-   U_INTERNAL_DUMP("file_data = %p", file_data)
-
-   U_RETURN(result);
-}
-
-void UHTTP::processHTTPGetRequest(const UString& request)
-{
-   U_TRACE(0, "UHTTP::processHTTPGetRequest(%.*S)", U_STRING_TO_TRACE(request))
-
-   U_ASSERT_EQUALS(request.empty(),false)
-   U_ASSERT(UClientImage_Base::body->empty())
-
-   // If the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
-   // the origin server. If the ETags match, a 304 status code is returned reducing the response...
-
    UString etag, ext(U_CAPACITY);
 
-#ifndef U_NO_Etag
+   /* 
+    * If the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
+    * the origin server. If the ETags match, a 304 status code is returned reducing the response...
+    *
+    * For me it's enough Last-Modified: ...
+
    etag = file->etag();
 
-   const char* ptr = getHTTPHeaderValuePtr(request, *USocket::str_if_none_match, false);
+   const char* ptr = getHTTPHeaderValuePtr(*USocket::str_if_none_match, false);
 
    if (ptr)
       {
@@ -7791,58 +7685,165 @@ void UHTTP::processHTTPGetRequest(const UString& request)
       }
 
    ext.snprintf("Etag: %.*s\r\n", U_STRING_TO_TRACE(etag));
-#endif
+   */
 
-   if (checkHTTPGetRequestIfModified(request) == false) return;
-
-   if (openFile() == false)
+   if (file->dir())
       {
-      U_ASSERT_EQUALS(file->isOpen(), false)
+      // we have a directory...
 
-      return;
-      }
-
-   if (file->dir() == false) processHTTPGetRequest(etag, ext);
-   else
-      {
-      // check if it's OK to do directory listing via authentication (digest|basic)
-
-      if (processHTTPAuthorization(request) == false)
+      if (U_http_is_navigation  ||
+          u_http_info.query_len ||
+          u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0)) // NB: servlet is forbidden...
          {
-         setHTTPUnAuthorized();
+         setHTTPForbidden(); // set forbidden error response...
 
          return;
          }
 
-      uint32_t size;
+      // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
 
-      if (isHttpHEAD()) size = getHTMLDirectoryList().size();
-      else
+      uint32_t sz      = file->getPathRelativLen(), len = str_indexhtml->size();
+      const char* ptr  = file->getPathRelativ();
+      const char* ptr1 = str_indexhtml->data();
+
+      U_INTERNAL_ASSERT_MAJOR(sz,0)
+
+      pathname->setBuffer(sz + 1 + len);
+
+      bool broot = (sz == 1 && ptr[0] == '/');
+
+      if (broot) pathname->snprintf(     "%.*s",          len, ptr1);
+      else       pathname->snprintf("%.*s/%.*s", sz, ptr, len, ptr1);
+
+      file_data = (*cache_file)[*pathname];
+
+      if (file_data)
          {
-         *UClientImage_Base::body = getHTMLDirectoryList();
+         // NB: we have an index file (index.html) in the directory...
 
-         if (U_http_is_accept_gzip)
+         if (isDataFromCache()) // NB: check if we have the content of the index file in cache...
             {
-            U_http_is_accept_gzip = '2';
+            u_http_info.nResponseCode = HTTP_OK;
 
-            (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+            bool gzip = (U_http_is_accept_gzip &&
+                         isDataCompressFromCache());
 
-            *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
+            if (gzip) U_http_is_accept_gzip = '2';
+
+            if (isHttpHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, gzip);
+                                       *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(getDataFromCache(true, gzip), false);
+
+            goto end;
             }
 
-         size = UClientImage_Base::body->size();
+         file->setPath(*pathname);
+
+         file->st_size  = file_data->size;
+         file->st_mode  = file_data->mode;
+         file->st_mtime = file_data->mtime;
+
+         goto check_file;
          }
 
-      u_mime_index              = -1;
-      u_http_info.nResponseCode = HTTP_OK;
+      // now we check the directory...
 
-      (void) ext.append(getHeaderMimeType(0, U_CTYPE_HTML, size, 0));
+      if (checkHTTPGetRequestIfModified())
+         {
+         // check if it's OK to do directory listing via authentication (digest|basic)
 
-      *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext, false); // build response...
+         if (processHTTPAuthorization() == false)
+            {
+            setHTTPUnAuthorized();
+
+            return;
+            }
+
+         if (isHttpHEAD()) sz = getHTMLDirectoryList().size();
+         else
+            {
+            *UClientImage_Base::body = getHTMLDirectoryList();
+
+            if (U_http_is_accept_gzip)
+               {
+               U_http_is_accept_gzip = '2';
+
+               (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+
+               *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, true);
+               }
+
+            sz = UClientImage_Base::body->size();
+            }
+
+         u_mime_index              = -1;
+         u_http_info.nResponseCode = HTTP_OK;
+
+         (void) ext.append(getHeaderMimeType(0, U_CTYPE_HTML, sz, 0));
+
+         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(ext, false); // build response...
+         }
+
+      goto end;
       }
 
+check_file: // now we check the file...
+
+   U_INTERNAL_DUMP("file_data = %p", file_data)
+
+   U_INTERNAL_ASSERT_POINTER(file_data)
+
+   if (file_data->fd == -1)
+      {
+      // NB: '.htpasswd' and '.htdigest' are forbidden...
+
+      result = (file->regular()                                                           &&
+                file->isNameDosMatch(U_CONSTANT_TO_PARAM(".htpasswd|.htdigest")) == false &&
+                file->open());
+
+      if (result) file_data->fd = file->fd;
+      }
+   else
+      {
+      result   = true;
+      file->fd = file_data->fd;
+      }
+
+   if (result == false)
+      {
+      setHTTPForbidden(); // set forbidden error response...
+
+      return;
+      }
+
+   if (file->modified())
+      {
+      file_data->mode  = file->st_mode;
+      file_data->size  = file->st_size;
+      file_data->mtime = file->st_mtime;
+
+      U_INTERNAL_DUMP("file_data->fd = %d st_mode = %d st_size = %I st_mtime = %ld", file_data->fd, file->st_mode, file->st_size, file->st_mtime)
+      }
+
+   if (checkHTTPGetRequestIfModified())
+      {
+      // NB: check for empty document...
+
+      if (file_data->size) processHTTPGetRequest(etag, ext);
+      else
+         {
+         file->close();
+
+         file_data->fd = file->fd = -1;
+
+         *UClientImage_Base::wbuffer = getHTTPHeaderForResponse(UString::getStringNull(), false);
+         }
+      }
+
+end:
 #ifdef U_HTTP_CACHE_REQUEST
    manageHTTPRequestCache();  
+#else
+   ; // NB: gcc version 4.4.6 20120305 (Red Hat 4.4.6-4) (GCC) need this...
 #endif
 }
 
@@ -7934,7 +7935,7 @@ next:
 
    if (isHttpGET())
       {
-      U_ASSERT(UClientImage_Base::body->empty())
+      U_INTERNAL_ASSERT_EQUALS((bool)*UClientImage_Base::body, false)
 
       // NB: we check if we need to send the body with sendfile()
 
@@ -7944,10 +7945,9 @@ next:
 sendfile:
          U_INTERNAL_DUMP("UServer_Base::pClientImage->sfd = %d", UServer_Base::pClientImage->sfd)
 
-         U_ASSERT_EQUALS(isHttpHEAD(),false)
-         U_ASSERT(UClientImage_Base::body->empty())
+         U_ASSERT_EQUALS(isHttpHEAD(), false)
          U_INTERNAL_ASSERT(range_size >= min_size_for_sendfile)
-         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd,0)
+         U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage->sfd, 0)
 
          UServer_Base::pClientImage->sfd    = file->fd;
          UServer_Base::pClientImage->start  = UServer_Base::start  = range_start;
@@ -8002,7 +8002,7 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
    U_TRACE(0, "UHTTP::initUploadProgress(%d)", byte_read)
 
    U_ASSERT(UServer_Base::isPreForked())
-   U_ASSERT_EQUALS(UClientImage_Base::request->empty(), false)
+   U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    int i;
    in_addr_t client     = UServer_Base::pClientImage->socket->remoteIPAddress().getInAddr();
@@ -8061,7 +8061,7 @@ U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
 
       const char* uuid_ptr = (n >= 2 && form_name_value->isEqual(n-2, *USocket::str_X_Progress_ID, true)
                                  ? form_name_value->c_pointer(n-1)
-                                 : getHTTPHeaderValuePtr(*UClientImage_Base::request, *USocket::str_X_Progress_ID, true));
+                                 : getHTTPHeaderValuePtr(*USocket::str_X_Progress_ID, true));
 
       U_INTERNAL_DUMP("uuid = %.32S", uuid_ptr)
 

@@ -133,10 +133,15 @@ int UProxyPlugIn::handlerRequest()
       }
 #endif
 
-   // NB: if server no preforked (ex: nodog) process the HTTP request with fork....
+   // A WebSocket is a long-lived connection, lasting hours or days. If each WebSocket proxy holds the original thread,
+   // won't that consume all of the workers very quickly? It looks as if my server, with 16 workers, will be unable to
+   // handle either the 17th WebSocket proxy or any other HTTP request. That's not really practical in a production system.
+   // A WebSocket server could potentially handle hundreds or even thousands of simultaneous connections, which would mean
+   // the same number of proxies in server.
 
-   async = (UServer_Base::preforked_num_kids == 0 &&
-            UClientImage_Base::isPipeline()  == false);
+   async = (service->isWebSocket()                 ||
+            (UServer_Base::preforked_num_kids == 0 && // NB: if server no preforked (ex: nodog) process the HTTP request with fork....
+             UClientImage_Base::isPipeline()  == false));
 
    // check if it is required an action...
 
@@ -158,7 +163,7 @@ int UProxyPlugIn::handlerRequest()
       {
       const char* ptr = UClientImage_Base::wbuffer->data();
 
-      U_ASSERT_EQUALS(UClientImage_Base::wbuffer->empty(), false)
+      U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
 
       if (                     UHTTP::isHTTPRequest(  ptr)                                      == false ||
          (U_HTTP_INFO_INIT(0), UHTTP::scanfHTTPHeader(ptr, UClientImage_Base::wbuffer->size())) == false)

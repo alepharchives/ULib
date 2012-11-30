@@ -280,9 +280,9 @@ public:
 
    static bool manageHTTPRequest();
    static void writeApacheLikeLog();
+   static void processHTTPGetRequest();
    static bool callService(const UString& path);
    static void manageHTTPServletRequest(bool as_service);
-   static void processHTTPGetRequest(const UString& request);
    static bool checkHTTPRequestForHeader(const UString& request);
    static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
@@ -302,14 +302,8 @@ public:
       u_http_info.method = 0; // NB: this mark the end of http request processing...
       }
 
-   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
-      {
-      U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S,%.*S,%b)", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(name), nocase)
-
-      if (u_http_info.szHeader) return UStringExt::getValueFromName(request, u_http_info.startHeader, u_http_info.szHeader, name, nocase);
-
-      U_RETURN((const char*)0);
-      }
+   static const char* getHTTPHeaderValuePtr(                        const UString& name, bool nocase);
+   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase);
 
    // set HTTP main error message
 
@@ -1016,7 +1010,6 @@ private:
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
 #endif
 
-   static bool openFile() U_NO_EXPORT;
    static void in_CREATE() U_NO_EXPORT;
    static void in_DELETE() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
@@ -1029,16 +1022,16 @@ private:
 
    static void deleteSession() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
+   static bool processHTTPAuthorization() U_NO_EXPORT;
    static bool isAlias(UServletPage* usp_page) U_NO_EXPORT;
+   static bool checkHTTPGetRequestIfModified() U_NO_EXPORT;
    static bool isHTTPRequestTooLarge(UString& buffer) U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static void checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static void checkIfAlias(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
-   static bool processHTTPAuthorization(const UString& request) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
-   static bool checkHTTPGetRequestIfModified(const UString& request) U_NO_EXPORT;
    static void processHTTPGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
    static int  checkHTTPGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
    static void checkDataSession(const UString& token, time_t expire, bool check) U_NO_EXPORT;

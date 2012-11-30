@@ -59,9 +59,9 @@ bool UMimeEntity::parse()
 {
    U_TRACE(0, "UMimeEntity::parse()")
 
+   U_INTERNAL_ASSERT(data)
    U_ASSERT(header->empty())
-   U_ASSERT(content.empty())
-   U_ASSERT(data.empty() == false)
+   U_INTERNAL_ASSERT_EQUALS((bool)content, false)
 
    /*
    uint32_t skip,
@@ -158,7 +158,7 @@ bool UMimeEntity::readHeader(USocket* socket)
 {
    U_TRACE(0, "UMimeEntity::readHeader(%p)", socket)
 
-   U_ASSERT(header->empty())
+   U_ASSERT_EQUALS(header->empty(), false)
 
    if (header->readHeader(socket, data))
       {
@@ -175,9 +175,9 @@ bool UMimeEntity::readBody(USocket* socket)
 {
    U_TRACE(0, "UMimeEntity::readBody(%p)", socket)
 
-   U_ASSERT(content.empty())
+   U_INTERNAL_ASSERT_EQUALS((bool)content, false)
    U_INTERNAL_ASSERT_DIFFERS(endHeader, U_NOT_FOUND)
-   U_INTERNAL_ASSERT_EQUALS(endHeader, u_http_info.endHeader)
+   U_INTERNAL_ASSERT_EQUALS( endHeader, u_http_info.endHeader)
 
    u_http_info.clength = header->getHeader(*USocket::str_content_length).strtol();
 
@@ -391,8 +391,8 @@ bool UMimeMultipart::parse()
 {
    U_TRACE(0, "UMimeMultipart::parse()")
 
-   U_ASSERT( content.empty() == false)
-   U_ASSERT(boundary.empty() == false)
+   U_INTERNAL_ASSERT(content)
+   U_INTERNAL_ASSERT(boundary)
 
    // Assume the starting position is the beginning of a line
 

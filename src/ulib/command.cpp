@@ -88,7 +88,7 @@ void UCommand::setCommand()
 {
    U_TRACE(0, "UCommand::setCommand()")
 
-   U_ASSERT(command.empty() == false)
+   U_INTERNAL_ASSERT(command)
 
    command.duplicate();
 
@@ -328,7 +328,7 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
    if (input &&
        input != (void*)-1) // special value...
       {
-      U_ASSERT(input->empty() == false)
+      U_INTERNAL_ASSERT(*input)
 
       (void) UNotifier::write(UProcess::filedes[1], input->data(), input->size());
 
