@@ -16,8 +16,6 @@
 #include <limits.h>
 
 static const short monthDays[] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
-static const char* months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
-static const char* months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
 UTimeDate::UTimeDate(int day, int year)
 {
@@ -42,36 +40,6 @@ __pure int UTimeDate::getDayOfYear()
    int y = _year - 1901;
 
    U_RETURN(getJulian() - (y * 365) - (y / 4) - 2415385); // 2415385 -> 31/12/1900
-}
-
-__pure int UTimeDate::getMonth(const char* buf)
-{
-   U_TRACE(0, "UTimeDate::getMonth(%S)", buf)
-
-   const char* ptr;
-
-   for (int i = 0; i < 12; ++i)
-      {
-      ptr = months[i];
-
-      if (((buf[0] == ptr[0]) || (buf[0] == ptr[0] - 32)) &&
-          ((buf[1] == ptr[1]) || (buf[1] == ptr[1] - 32)) &&
-          ((buf[2] == ptr[2]) || (buf[2] == ptr[2] - 32)))
-         {
-         return i+1;
-         }
-
-      ptr = months_it[i];
-
-      if (((buf[0] == ptr[0]) || (buf[0] == ptr[0] - 32)) &&
-          ((buf[1] == ptr[1]) || (buf[1] == ptr[1] - 32)) &&
-          ((buf[2] == ptr[2]) || (buf[2] == ptr[2] - 32)))
-         {
-         return i+1;
-         }
-      }
-
-   return 0;
 }
 
 bool UTimeDate::leapYear(int y)
@@ -277,7 +245,7 @@ UTimeDate::UTimeDate(const char* str, bool UTC)
       {
       // Complete for the user
 
-      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
 #  if defined(DEBUG) && !defined(__MINGW32__)
       U_SYSCALL_VOID(localtime_r, "%p,%p",      &(u_now->tv_sec), &u_strftime_tm);
@@ -370,13 +338,13 @@ time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, 
           */
 
          tm->tm_mday = atoi(str+5);
-         tm->tm_mon  = getMonth(str+8);
+         tm->tm_mon  = u_getMonth(str+8);
          tm->tm_year = atoi(str+12);
          tm->tm_hour = atoi(str+17);
          tm->tm_min  = atoi(str+20);
          tm->tm_sec  = atoi(str+23);
          }
-      else if ((tm->tm_mon = getMonth(str)))
+      else if ((tm->tm_mon = u_getMonth(str)))
          {
          /* Jan 25 11:54:00 2005 GMT
           * |   |  |  |  |  |

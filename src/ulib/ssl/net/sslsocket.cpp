@@ -16,6 +16,9 @@
 #include <ulib/ssl/net/sslsocket.h>
 #include <ulib/utility/socket_ext.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(OPENSSL_NO_ECDH) && defined(NID_X9_62_prime256v1)
+#include <openssl/ec.h>
+#endif
 #include <openssl/err.h>
 
 #ifndef SSL_ERROR_WANT_ACCEPT
@@ -93,7 +96,7 @@ void USSLSocket::info_callback(const SSL* ssl, int where, int ret)
       {
       U_INTERNAL_DUMP("SSL_CB_HANDSHAKE_DONE")
 
-      ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
+      if (ssl->s3) ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
       }
 }
 
@@ -157,7 +160,11 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool server, long options)
 
    (void) U_SYSCALL(SSL_CTX_set_cipher_list, "%p,%S", ctx, "ECDHE-RSA-AES256-SHA384:AES256-SHA256:RC4-SHA:RC4:HIGH:!MD5:!aNULL:!EDH:!AESGCM");
 
-// (void) U_SYSCALL(SSL_CTX_set_mode, "%p,%d", ctx, SSL_CTX_get_mode(ctx) | SSL_MODE_AUTO_RETRY);
+   // Release/reuse buffers as soon as possibile
+
+#ifdef SSL_MODE_RELEASE_BUFFERS
+   (void) U_SYSCALL(SSL_CTX_set_mode, "%p,%d", ctx, SSL_CTX_get_mode(ctx) | SSL_MODE_RELEASE_BUFFERS);
+#endif
 
    U_RETURN_POINTER(ctx,SSL_CTX);
 }
@@ -280,6 +287,8 @@ bool USSLSocket::useDHFile(const char* dh_file)
 {
    U_TRACE(1, "USSLSocket::useDHFile(%S)", dh_file)
 
+   U_INTERNAL_ASSERT_POINTER(ctx)
+
    // Set up DH stuff
 
    DH* dh;
@@ -297,6 +306,15 @@ bool USSLSocket::useDHFile(const char* dh_file)
       }
    else
       {
+#  if OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(OPENSSL_NO_ECDH) && defined(NID_X9_62_prime256v1)
+      EC_KEY* ecdh = (EC_KEY*) U_SYSCALL(EC_KEY_new_by_curve_name, "%d", NID_X9_62_prime256v1);
+
+      (void) U_SYSCALL(SSL_CTX_set_tmp_ecdh, "%p,%p", ctx, ecdh);
+
+      U_SYSCALL_VOID(EC_KEY_free, "%p", ecdh);
+
+      U_RETURN(true);
+#  else
       static unsigned char dh1024_p[] = {
          0xF8,0x81,0x89,0x7D,0x14,0x24,0xC5,0xD1,0xE6,0xF7,0xBF,0x3A,
          0xE4,0x90,0xF4,0xFC,0x73,0xFB,0x34,0xB5,0xFA,0x4C,0x56,0xA2,
@@ -318,22 +336,21 @@ bool USSLSocket::useDHFile(const char* dh_file)
 
       U_INTERNAL_ASSERT_POINTER(dh->g)
       U_INTERNAL_ASSERT_POINTER(dh->p)
+#  endif
       }
 
    if (dh == 0) U_RETURN(false);
 
    /*
-#ifdef DEBUG
+   #ifdef DEBUG
    unsigned char buf[512];
 
    int len  = i2d_DHparams(dh, 0),
        size = i2d_DHparams(dh, (unsigned char**)&buf);
 
    U_INTERNAL_DUMP("len = %d buf(%d) = %#.*S", len, size, size, buf)
-#endif
+   #endif
    */
-
-   U_INTERNAL_ASSERT_POINTER(ctx)
 
    (void) U_SYSCALL(SSL_CTX_set_tmp_dh, "%p,%p", ctx, dh);
 

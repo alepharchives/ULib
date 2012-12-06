@@ -625,7 +625,7 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 
       if (size > 0)
          {
-         relocated = U_MALLOC_GEN(size);
+         relocated = UMemoryPool::_malloc(size);
 
          (void) U_SYSCALL(tcc_relocate, "%p,%p", s, relocated);
 
@@ -1842,7 +1842,7 @@ U_NO_EXPORT bool UHTTP::isHTTPRequestTooLarge(UString& buffer)
    U_RETURN(false);
 }
 
-const char* UHTTP::getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
+__pure const char* UHTTP::getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase)
 {
    U_TRACE(0, "UHTTP::getHTTPHeaderValuePtr(%.*S,%.*S,%b)", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(name), nocase)
 
@@ -1851,7 +1851,7 @@ const char* UHTTP::getHTTPHeaderValuePtr(const UString& request, const UString& 
    U_RETURN((const char*)0);
 }
 
-const char* UHTTP::getHTTPHeaderValuePtr(const UString& name, bool nocase) { return getHTTPHeaderValuePtr(*UClientImage_Base::request, name, nocase); }
+__pure const char* UHTTP::getHTTPHeaderValuePtr(const UString& name, bool nocase) { return getHTTPHeaderValuePtr(*UClientImage_Base::request, name, nocase); }
 
 bool UHTTP::readHTTPBody(USocket* s, UString* pbuffer, UString& body)
 {
@@ -2739,7 +2739,7 @@ void UHTTP::manageHTTPRequestCache()
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", cbuffer->size(), U_STRING_TO_TRACE(*cbuffer))
 
-      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
       U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)

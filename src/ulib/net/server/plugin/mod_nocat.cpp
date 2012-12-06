@@ -85,47 +85,46 @@ UVector<UIPAllow*>*        UNoCatPlugIn::vLocalNetworkMask;
 UVector<UIPAddress*>**     UNoCatPlugIn::vaddr;
 UHashMap<UModNoCatPeer*>*  UNoCatPlugIn::peers;
 
-const UString*             UNoCatPlugIn::str_ROUTE_ONLY;
-const UString*             UNoCatPlugIn::str_DNS_ADDR;
-const UString*             UNoCatPlugIn::str_INCLUDE_PORTS;
-const UString*             UNoCatPlugIn::str_EXCLUDE_PORTS;
-const UString*             UNoCatPlugIn::str_ALLOWED_WEB_HOSTS;
-const UString*             UNoCatPlugIn::str_EXTERNAL_DEVICE;
-const UString*             UNoCatPlugIn::str_INTERNAL_DEVICE;
-const UString*             UNoCatPlugIn::str_LOCAL_NETWORK_LABEL;
-const UString*             UNoCatPlugIn::str_LOCAL_NETWORK;
-const UString*             UNoCatPlugIn::str_AUTH_SERVICE_URL;
-const UString*             UNoCatPlugIn::str_LOGIN_TIMEOUT;
-const UString*             UNoCatPlugIn::str_DECRYPT_CMD;
-const UString*             UNoCatPlugIn::str_DECRYPT_KEY;
-const UString*             UNoCatPlugIn::str_FW_CMD;
-const UString*             UNoCatPlugIn::str_CHECK_TYPE;
-const UString*             UNoCatPlugIn::str_Action;
-const UString*             UNoCatPlugIn::str_Permit;
-const UString*             UNoCatPlugIn::str_Deny;
-const UString*             UNoCatPlugIn::str_Mode;
-const UString*             UNoCatPlugIn::str_Redirect;
-const UString*             UNoCatPlugIn::str_renew;
-const UString*             UNoCatPlugIn::str_Mac;
-const UString*             UNoCatPlugIn::str_Timeout;
-const UString*             UNoCatPlugIn::str_Token;
-const UString*             UNoCatPlugIn::str_User;
-const UString*             UNoCatPlugIn::str_allowed;
-const UString*             UNoCatPlugIn::str_anonymous;
-const UString*             UNoCatPlugIn::str_Traffic;
-const UString*             UNoCatPlugIn::str_GATEWAY_PORT;
-const UString*             UNoCatPlugIn::str_FW_ENV;
-const UString*             UNoCatPlugIn::str_IPHONE_SUCCESS;
-const UString*             UNoCatPlugIn::str_CHECK_EXPIRE_INTERVAL;
-const UString*             UNoCatPlugIn::str_ALLOWED_MEMBERS;
-const UString*             UNoCatPlugIn::str_without_mac;
-const UString*             UNoCatPlugIn::str_without_label;
-const UString*             UNoCatPlugIn::str_allowed_members_default;
-const UString*             UNoCatPlugIn::str_UserDownloadRate;
-const UString*             UNoCatPlugIn::str_UserUploadRate;
+const UString* UNoCatPlugIn::str_ROUTE_ONLY;
+const UString* UNoCatPlugIn::str_DNS_ADDR;
+const UString* UNoCatPlugIn::str_INCLUDE_PORTS;
+const UString* UNoCatPlugIn::str_EXCLUDE_PORTS;
+const UString* UNoCatPlugIn::str_ALLOWED_WEB_HOSTS;
+const UString* UNoCatPlugIn::str_EXTERNAL_DEVICE;
+const UString* UNoCatPlugIn::str_INTERNAL_DEVICE;
+const UString* UNoCatPlugIn::str_LOCAL_NETWORK_LABEL;
+const UString* UNoCatPlugIn::str_LOCAL_NETWORK;
+const UString* UNoCatPlugIn::str_AUTH_SERVICE_URL;
+const UString* UNoCatPlugIn::str_LOGIN_TIMEOUT;
+const UString* UNoCatPlugIn::str_DECRYPT_CMD;
+const UString* UNoCatPlugIn::str_DECRYPT_KEY;
+const UString* UNoCatPlugIn::str_FW_CMD;
+const UString* UNoCatPlugIn::str_CHECK_TYPE;
+const UString* UNoCatPlugIn::str_Action;
+const UString* UNoCatPlugIn::str_Permit;
+const UString* UNoCatPlugIn::str_Deny;
+const UString* UNoCatPlugIn::str_Mode;
+const UString* UNoCatPlugIn::str_Redirect;
+const UString* UNoCatPlugIn::str_renew;
+const UString* UNoCatPlugIn::str_Mac;
+const UString* UNoCatPlugIn::str_Timeout;
+const UString* UNoCatPlugIn::str_Token;
+const UString* UNoCatPlugIn::str_User;
+const UString* UNoCatPlugIn::str_allowed;
+const UString* UNoCatPlugIn::str_anonymous;
+const UString* UNoCatPlugIn::str_Traffic;
+const UString* UNoCatPlugIn::str_GATEWAY_PORT;
+const UString* UNoCatPlugIn::str_FW_ENV;
+const UString* UNoCatPlugIn::str_IPHONE_SUCCESS;
+const UString* UNoCatPlugIn::str_CHECK_EXPIRE_INTERVAL;
+const UString* UNoCatPlugIn::str_ALLOWED_MEMBERS;
+const UString* UNoCatPlugIn::str_without_mac;
+const UString* UNoCatPlugIn::str_without_label;
+const UString* UNoCatPlugIn::str_allowed_members_default;
+const UString* UNoCatPlugIn::str_UserDownloadRate;
+const UString* UNoCatPlugIn::str_UserUploadRate;
 
-#define U_NO_MORE_TIME       10
-#define U_NOCAT_MAX_TIMEOUT (30 * U_ONE_DAY_IN_SECOND)
+#define U_NOCAT_MAX_TIMEOUT (3 * U_ONE_DAY_IN_SECOND)
 
 #define U_NOCAT_STATUS \
 "<html>\n" \
@@ -176,10 +175,11 @@ UModNoCatPeer::UModNoCatPeer() : token(100U), gateway(100U)
 {
    U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "")
 
-   ctime             = connected = expire = logout = u_now->tv_sec;
+   ctime             = connected = expire = u_now->tv_sec;
    status            = PEER_DENY;
-   traffic_done      = time_no_traffic = ctraffic = 0L;
-   traffic_available = 4UL * 1024UL * 1024UL * 1024UL; // 4G
+   ctraffic          = time_no_traffic = time_remain = logout = 0L;
+   traffic_done      = 0ULL;
+   traffic_available = traffic_remain = 4ULL * 1024ULL * 1024ULL * 1024ULL; // 4G
 }
 
 // define method VIRTUAL of class UEventTime
@@ -188,9 +188,16 @@ int UModNoCatPeer::handlerTime()
 {
    U_TRACE(0, "UModNoCatPeer::handlerTime()")
 
-   UNoCatPlugIn::getTraffic();
+   if (checkPeerInfo(true) == false)
+      {
+      uint32_t tmp =
+      UNoCatPlugIn::login_timeout;
+      UNoCatPlugIn::login_timeout = 0;
 
-   UNoCatPlugIn::deny(this, true, false);
+      UNoCatPlugIn::deny(this, false);
+
+      UNoCatPlugIn::login_timeout = tmp;
+      }
 
    // return value:
    // ---------------
@@ -458,13 +465,13 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
       return;
       }
 
-   char c;
    const char* color;
    const char* status;
-   uint64_t how_much_traffic;
+   time_t how_much_connected;
    UString buffer(U_CAPACITY);
    const char* mac = peer->mac.data();
-   time_t how_much_connected, how_much_remain;
+
+   (void) peer->checkPeerInfo((key == 0));
 
    U_INTERNAL_DUMP("now    = %#5D", u_now->tv_sec)
    U_INTERNAL_DUMP("logout = %#5D", peer->logout)
@@ -476,7 +483,6 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
       status = "PERMIT";
 
       how_much_connected = u_now->tv_sec - peer->connected;
-      how_much_remain    = (peer->expire > u_now->tv_sec ? (peer->expire - u_now->tv_sec) : 0);
       }
    else
       {
@@ -484,23 +490,19 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
       status = "DENY";
 
       how_much_connected = peer->logout - peer->connected;
-      how_much_remain    = peer->expire - peer->logout;
       }
 
-   U_INTERNAL_DUMP("traffic_available = %llu traffic_done = %llu", peer->traffic_available, peer->traffic_done)
+   char c;
+   uint64_t traffic_remain = peer->traffic_remain /1024;
 
-   how_much_traffic = (peer->traffic_available > peer->traffic_done ? (peer->traffic_available - peer->traffic_done) : 0);
+   U_INTERNAL_DUMP("traffic_remain = %llu", traffic_remain)
 
-   U_INTERNAL_DUMP("how_much_traffic = %llu", how_much_traffic)
-
-   how_much_traffic /= 1024;
-
-   if (how_much_traffic < 1024) c = 'K';
+   if (traffic_remain < 1024) c = 'K';
    else
       {
       c = 'M';
 
-      how_much_traffic /= 1024;
+      traffic_remain /= 1024;
       }
 
    buffer.snprintf("<tr>\n"
@@ -518,8 +520,9 @@ void UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
                    peer->UIPAddress::pcStrAddress,
                    peer->connected + u_now_adjust,
                    how_much_connected,
-                   how_much_remain,
-                   peer->traffic_done / 1024, how_much_traffic, c,
+                   peer->time_remain,
+                   peer->traffic_done / 1024,
+                   traffic_remain, c,
                    mac[0], mac[1], mac[3], mac[4], mac[6], mac[7], mac,
                    color, status);
 
@@ -568,6 +571,8 @@ void UNoCatPlugIn::setStatusContent(UModNoCatPeer* peer, const UString& _label)
    if (peer) getPeerStatus(0, peer);
    else
       {
+      getTraffic();
+
       peers->callForAllEntry(getPeerStatus);
 
       U_INTERNAL_ASSERT(hostname->isNullTerminated())
@@ -654,7 +659,10 @@ void UNoCatPlugIn::getTraffic()
                   peer->ctraffic     += traffic;
                   peer->traffic_done += traffic;
 
-                  U_INTERNAL_DUMP("traffic = %u traffic_done = %llu ctraffic = %u", traffic, peer->traffic_done, peer->ctraffic)
+                  peer->traffic_remain = (peer->traffic_available > peer->traffic_done ? (peer->traffic_available - peer->traffic_done) : 0);
+
+                  U_INTERNAL_DUMP("traffic = %u traffic_done = %llu ctraffic = %u traffic_remain = %llu",
+                                   traffic, peer->traffic_done, peer->ctraffic, peer->traffic_remain)
                   }
                }
             }
@@ -663,15 +671,15 @@ void UNoCatPlugIn::getTraffic()
 #endif
 }
 
-void UNoCatPlugIn::setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* _ip, uint32_t n)
+void UNoCatPlugIn::setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* _ip)
 {
-   U_TRACE(0, "UNoCatPlugIn::setFireWallCommand(%p,%.*S)", &cmd, U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), _ip, n)
+   U_TRACE(0, "UNoCatPlugIn::setFireWallCommand(%p,%.*S)", &cmd, U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), _ip)
 
-   // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) rulenum UserDownloadRate UserUploadRate
+   // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
    UString command(100U);
 
-   command.snprintf("/bin/sh %.*s deny %.*s %s Member %u 0 0", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), _ip, n);
+   command.snprintf("/bin/sh %.*s deny %.*s %s Member 0 0", U_STRING_TO_TRACE(script), U_STRING_TO_TRACE(mac), _ip);
 
    cmd.set(command, (char**)0);
    cmd.setEnvironment(fw_env);
@@ -723,19 +731,12 @@ int UNoCatPlugIn::handlerTime()
       {
       U_INTERNAL_ASSERT_MAJOR(check_expire, 0)
 
-      // NB: maybe we must delayed the check cause of http request processing...
-
       U_INTERNAL_DUMP("u_http_info.method = %p", u_http_info.method)
 
-      if (u_http_info.method) next_event_time = 3;
-      else
-         {
-         if (UServer_Base::isLog()) UServer_Base::mod_name->snprintf("[mod_nocat] ", 0);
+      next_event_time = check_expire;
 
-         checkSystem();
-
-         if (UServer_Base::isLog()) UServer_Base::mod_name->setEmpty();
-         }
+      if (u_http_info.method == 0) checkSystem(UServer_Base::isLog());
+      else                         UServer_Base::bpluginsHandlerReset = true; // NB: we put the check after the http request processing...
 
       U_INTERNAL_ASSERT_MAJOR(next_event_time, 0)
 
@@ -751,9 +752,9 @@ int UNoCatPlugIn::handlerTime()
    U_RETURN(0);
 }
 
-void UNoCatPlugIn::checkSystem()
+void UNoCatPlugIn::checkSystem(bool blog)
 {
-   U_TRACE(1, "UNoCatPlugIn::checkSystem()")
+   U_TRACE(1, "UNoCatPlugIn::checkSystem(%b)", blog)
 
    flag_check_system = true;
 
@@ -785,6 +786,8 @@ void UNoCatPlugIn::checkSystem()
       }
    }
 
+   if (blog) UServer_Base::mod_name->snprintf("[mod_nocat] ", 0);
+
    {
    UString output;
 
@@ -801,7 +804,7 @@ void UNoCatPlugIn::checkSystem()
 
    U_INTERNAL_DUMP("openlist->split() = %u total_connections = %u peers->size() = %u", n, total_connections, peers->size())
 
-   U_SRV_LOG("checkSystem(): total_connections %u firewall %u", total_connections, n);
+   U_SRV_LOG("checkSystem(%b): total_connections %u firewall %u", blog, total_connections, n);
 
    if (n != total_connections)
       {
@@ -832,9 +835,9 @@ void UNoCatPlugIn::checkSystem()
 
             if (_mac.empty()) _mac = *str_without_mac;
 
-            // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) rulenum UserDownloadRate UserUploadRate
+            // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
-            setFireWallCommand(_fw, *fw_cmd, _mac, ptr, 0);
+            setFireWallCommand(_fw, *fw_cmd, _mac, ptr);
 
             (void) _fw.execute(0, 0, -1, fd_stderr);
 
@@ -909,13 +912,13 @@ remove:
       goto end;
       }
 
-   U_SRV_LOG("Checking peers for info");
-
-   getTraffic();
-
    for (nfds = i = 0; i < num_radio; ++i) vaddr[i]->clear();
 
    FD_ZERO(&addrmask);
+
+   U_SRV_LOG("Checking peers for info");
+
+   getTraffic();
 
    peers->callForAllEntry(checkPeerInfo);
 
@@ -956,7 +959,7 @@ result:
                   }
 #           endif
 
-               deny(peer, false, true);
+               deny(peer, true);
                }
             }
          }
@@ -980,11 +983,11 @@ result:
          *info_url = *((*vauth_url)[i]);
          }
       }
-
-   next_event_time = check_expire;
    }
 
 end:
+   if (blog) UServer_Base::mod_name->setEmpty();
+
    flag_check_system = false;
 }
 
@@ -1016,59 +1019,51 @@ retry:
    last_request_firewall = u_now->tv_sec;
 }
 
-void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool alarm, bool disconnected)
+void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool disconnected)
 {
-   U_TRACE(0, "UNoCatPlugIn::deny(%p,%b,%b)", peer, alarm, disconnected)
+   U_TRACE(0, "UNoCatPlugIn::deny(%p,%b)", peer, disconnected)
 
    if (peer->status == UModNoCatPeer::PEER_DENY)
       {
       U_SRV_LOG("Peer already deny: IP %s MAC %.*s", peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac));
+
+      return;
+      }
+
+   if (peer->logout) 
+      {
+      // NB: user with no more time or no more traffic...
+
+      U_INTERNAL_ASSERT_EQUALS(peer->logout, peer->expire)
+      U_INTERNAL_ASSERT(peer->time_remain == 0 || peer->traffic_remain == 0)
       }
    else
       {
-      --total_connections;
+      // NB: request of logout or user disconnected...
 
-      bool bdelete;
-      uint64_t traffic = (peer->traffic_available > peer->traffic_done ? (peer->traffic_available - peer->traffic_done) : 0);
+      peer->logout = u_now->tv_sec;
+      }
 
-      if (traffic < 1024ULL ||
-          (peer->expire - u_now->tv_sec) <= U_NO_MORE_TIME)
-         {
-         // user with no more time or no more traffic...
+   addPeerInfo(peer, disconnected ? -1 : peer->logout); // -1 => disconnected (logout implicito)
 
-         bdelete      = true;
-         peer->logout = peer->expire;
+   executeCommand(peer, UModNoCatPeer::PEER_DENY);
 
-         (void) peers->erase(peer->ip);
-         }
-      else
-         {
-         // request of logout or user disconnected...
+   --total_connections;
 
-         bdelete      = false;
-         peer->logout = u_now->tv_sec;
-         }
+   U_SRV_LOG("Peer denied: IP %s MAC %.*s remain: %ld secs %llu bytes - total_connections %u",
+               peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), peer->time_remain, peer->traffic_remain, total_connections);
 
-      time_t logout = (disconnected ? -1 : peer->logout); // -1 => disconnected (logout implicito)
+   if (login_timeout)
+      {
+      UTimer::erase(peer, false, true);
 
-      addPeerInfo(peer, logout);
-
-      executeCommand(peer, UModNoCatPeer::PEER_DENY);
-
-      if (alarm == false)
-         {
-         if (login_timeout) UTimer::erase(peer, bdelete, true);
-
-         peer->UEventTime::reset();
-         }
-
-      U_SRV_LOG("Peer denied: IP %s MAC %.*s - total_connections %u", peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), total_connections);
+      peer->UEventTime::reset();
       }
 }
 
-void UNoCatPlugIn::permit(UModNoCatPeer* peer, time_t timeout, uint32_t UserDownloadRate, uint32_t UserUploadRate)
+void UNoCatPlugIn::permit(UModNoCatPeer* peer, uint32_t UserDownloadRate, uint32_t UserUploadRate)
 {
-   U_TRACE(0, "UNoCatPlugIn::permit(%p,%ld,%u,%u)", peer, timeout, UserDownloadRate, UserUploadRate)
+   U_TRACE(0, "UNoCatPlugIn::permit(%p,%u,%u)", peer, UserDownloadRate, UserUploadRate)
 
    if (peer->status == UModNoCatPeer::PEER_PERMIT)
       {
@@ -1082,7 +1077,7 @@ void UNoCatPlugIn::permit(UModNoCatPeer* peer, time_t timeout, uint32_t UserDown
 
          (void) snprintf(buffer, sizeof(buffer), "%u", UserDownloadRate);
 
-         peer->fw.setArgument(8, buffer);
+         peer->fw.setArgument(7, buffer);
          }
 
       if (UserUploadRate)
@@ -1091,20 +1086,22 @@ void UNoCatPlugIn::permit(UModNoCatPeer* peer, time_t timeout, uint32_t UserDown
 
          (void) snprintf(buffer, sizeof(buffer), "%u", UserUploadRate);
 
-         peer->fw.setArgument(9, buffer);
+         peer->fw.setArgument(8, buffer);
          }
 
       executeCommand(peer, UModNoCatPeer::PEER_PERMIT);
 
       // set connection time
 
-      peer->expire = (peer->ctime = peer->connected = peer->logout = u_now->tv_sec) + timeout;
+      peer->logout = 0L;
+      peer->expire = (peer->ctime = peer->connected = u_now->tv_sec) + peer->time_remain;
 
-      if (timeout > U_NOCAT_MAX_TIMEOUT) timeout = U_NOCAT_MAX_TIMEOUT; // check for safe timeout...
+      if (login_timeout)
+         {
+         peer->UEventTime::setSecond(peer->time_remain);
 
-      peer->UEventTime::setSecond(timeout);
-
-      if (login_timeout) UTimer::insert(peer, true);
+         UTimer::insert(peer, true);
+         }
 
       ++total_connections;
 
@@ -1200,6 +1197,7 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer, const UString& msg)
    uint32_t pos;
    UString action;
    Url destination;
+   uint64_t traffic;
    bool result = true;
    UHashMap<UString> args;
    UVector<UString> name_value;
@@ -1261,17 +1259,17 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer, const UString& msg)
 
    if (action == *str_Permit)
       {
-      time_t timeout = args[*str_Timeout].strtol();
+      uint32_t timeout = args[*str_Timeout].strtol();
 
-      if (timeout == 0) timeout = 3600 * 2; // default value (2h)...
+      if (timeout || peer->time_remain == 0) peer->time_remain = (timeout ? timeout : 3600 * 2); // default value (2h)...
 
-      permit(peer, timeout, args[*str_UserDownloadRate].strtol(), args[*str_UserUploadRate].strtol());
+      U_INTERNAL_DUMP("time_remain = %ld", peer->time_remain)
+
+      permit(peer, args[*str_UserDownloadRate].strtol(), args[*str_UserUploadRate].strtol());
       }
    else if (action == *str_Deny)
       {
-      getTraffic();
-
-      deny(peer, false, false);
+      if (peer->checkPeerInfo(true) == false) deny(peer, false);
       }
    else
       {
@@ -1311,9 +1309,9 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer, const UString& msg)
 
    // get traffic available
 
-   peer->traffic_available = args[*str_Traffic].strtoll();
+   traffic = args[*str_Traffic].strtoll();
 
-   if (peer->traffic_available == 0) peer->traffic_available = 300 * (1024ULL * 1024ULL); // default value (300M)...
+   if (traffic || peer->traffic_available == 0) peer->traffic_available = (traffic ? traffic : 300 * (1024ULL * 1024ULL)); // default value (300M)...
 
    U_INTERNAL_DUMP("traffic_available = %llu", peer->traffic_available)
 
@@ -1390,14 +1388,13 @@ void UNoCatPlugIn::setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH)
 
    U_INTERNAL_DUMP("peer->gateway = %.*S peer->label = %.*S", U_STRING_TO_TRACE(peer->gateway), U_STRING_TO_TRACE(peer->label))
 
-   peer->rulenum    = total_connections + 1; // iptables FORWARD
    peer->index_AUTH = index_AUTH;
 
-   U_INTERNAL_DUMP("peer->rulenum = %u peer->index_AUTH = %u", peer->rulenum, peer->index_AUTH)
+   U_INTERNAL_DUMP("peer->index_AUTH = %u", peer->index_AUTH)
 
-   // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) rulenum UserDownloadRate UserUploadRate
+   // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
-   setFireWallCommand(peer->fw, *fw_cmd, peer->mac, peer->UIPAddress::pcStrAddress, peer->rulenum);
+   setFireWallCommand(peer->fw, *fw_cmd, peer->mac, peer->UIPAddress::pcStrAddress);
 
    peers->insertAfterFind(peer->ip, peer);
 }
@@ -1420,7 +1417,7 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
    peer->mac = UServer_Base::getMacAddress(peer->UIPAddress::pcStrAddress);
 
    if (peer->mac.empty() && ip->equal(UServer_Base::getClientAddress())) peer->mac = UServer_Base::getMacAddress(extdev->data());
-   if (peer->mac.empty())                                               peer->mac = *str_without_mac;
+   if (peer->mac.empty())                                                peer->mac = *str_without_mac;
 
    setNewPeer(peer, index_AUTH);
 
@@ -1441,9 +1438,7 @@ void UNoCatPlugIn::checkOldPeer(UModNoCatPeer* peer)
                                                                                 peer->UIPAddress::pcStrAddress,
                                                                                 U_STRING_TO_TRACE(peer->mac));
 
-      getTraffic();
-
-      deny(peer, false, false);
+      if (peer->checkPeerInfo(true) == false) deny(peer, true);
 
       peer->mac = mac;
 
@@ -1470,8 +1465,6 @@ void UNoCatPlugIn::addPeerInfo(UModNoCatPeer* peer, time_t logout)
    // $6 -> logout
    // $7 -> connected
    // $8 -> traffic
-
-   U_INTERNAL_DUMP("u_http_info.method = %p", u_http_info.method)
 
    Url* info_url = (*vinfo_url)[peer->index_AUTH];
 
@@ -1527,8 +1520,8 @@ void UNoCatPlugIn::checkPeerStatus(UStringRep* key, void* value)
          {
          --total_connections;
 
-         U_SRV_LOG("I try to deny user with status permit: IP %s MAC %.*s - total_connections %u",
-                        peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), total_connections);
+         U_SRV_LOG("I try to deny user with status permit: IP %s MAC %.*s remain: %ld secs %llu bytes - total_connections %u",
+                     peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), peer->time_remain, peer->traffic_remain, total_connections);
 
          executeCommand(peer, UModNoCatPeer::PEER_DENY);
 
@@ -1553,11 +1546,57 @@ void UNoCatPlugIn::checkPeerStatus(UStringRep* key, void* value)
          {
          openlist->erase(pos);
 
-         U_SRV_LOG("I try to deny user with status deny: IP %s MAC %.*s", peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac));
+         U_SRV_LOG("I try to deny user with status deny: IP %s MAC %.*s remain: %ld secs %llu bytes - total_connections %u",
+                     peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), peer->time_remain, peer->traffic_remain, total_connections);
 
          executeCommand(peer, UModNoCatPeer::PEER_DENY);
          }
       }
+}
+
+bool UModNoCatPeer::checkPeerInfo(bool btraffic)
+{
+   U_TRACE(0, "UModNoCatPeer::checkPeerInfo(%b)", btraffic)
+
+   if (allowed == false &&
+       status  == PEER_PERMIT)
+      {
+      if (btraffic) UNoCatPlugIn::getTraffic();
+
+      if (ctraffic == 0)
+         {
+         time_no_traffic += (u_now->tv_sec - ctime);
+
+         U_INTERNAL_DUMP("time_no_traffic = %ld", time_no_traffic)
+
+         U_SRV_LOG("Peer IP %s MAC %.*s has made no traffic for %ld secs", UIPAddress::pcStrAddress, U_STRING_TO_TRACE(mac), time_no_traffic);
+         }
+
+      bool result = true;
+      time_remain = (expire > u_now->tv_sec ? (expire - u_now->tv_sec) : 0);
+
+      if (time_remain <= 15)
+         {
+         result      = false;
+         logout      = expire; // NB: user with no more time or no more traffic...
+         time_remain = 0;
+
+         U_SRV_LOG("Peer IP %s MAC %.*s has no more time - remain traffic for %llu bytes", UIPAddress::pcStrAddress, U_STRING_TO_TRACE(mac), traffic_remain);
+         }
+
+      if (traffic_remain <= 1024ULL)
+         {
+         result         = false;
+         logout         = expire; // NB: user with no more time or no more traffic...
+         traffic_remain = 0;
+
+         U_SRV_LOG("Peer IP %s MAC %.*s has no more traffic - remain time for %lu sec", UIPAddress::pcStrAddress, U_STRING_TO_TRACE(mac), time_remain);
+         }
+
+      U_RETURN(result);
+      }
+
+   U_RETURN(true);
 }
 
 void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
@@ -1565,6 +1604,13 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
    U_TRACE(0, "UNoCatPlugIn::checkPeerInfo(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
 
    UModNoCatPeer* peer = (UModNoCatPeer*) value;
+
+   if (peer->checkPeerInfo(false) == false)
+      {
+      deny(peer, false);
+
+      return;
+      }
 
    if (peer->status == UModNoCatPeer::PEER_PERMIT)
       {
@@ -1575,55 +1621,26 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
          return;
          }
 
-      time_t t         = peer->expire - u_now->tv_sec;
-      uint64_t traffic = (peer->traffic_available > peer->traffic_done ? (peer->traffic_available - peer->traffic_done) : 0);
-
-      U_SRV_LOG("Checking peer: IP %s MAC %.*s for info, remain: %ld secs %llu bytes", peer->UIPAddress::pcStrAddress,
-                     U_STRING_TO_TRACE(peer->mac), U_max(0,t), traffic);
-
       if ((check_type & U_CHECK_TRAFFIC) != 0)
          {
-         bool bdeny = false;
+         U_INTERNAL_DUMP("peer->time_no_traffic = %ld", peer->time_no_traffic)
 
-         if (peer->ctraffic == 0)
+#     ifdef DEBUG
+         if (peer->time_no_traffic >= (check_expire * 5))
+#     else
+         if (peer->time_no_traffic >= (check_expire * 1)) // NB: 1 (dopo che il portale lo gestisce) diventera' 5...
+#     endif
             {
-            peer->time_no_traffic += (u_now->tv_sec - peer->ctime);
+            U_INTERNAL_ASSERT(u_now->tv_sec >= peer->ctime)
 
-            U_INTERNAL_DUMP("peer->time_no_traffic = %ld", peer->time_no_traffic)
-
-            U_SRV_LOG("Peer IP %s MAC %.*s has made no traffic for %ld secs",
-                        peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), peer->time_no_traffic);
-
-            U_INTERNAL_ASSERT_MAJOR(peer->time_no_traffic, 0)
-
-#        ifdef DEBUG
-            if (peer->time_no_traffic >= (check_expire * 5))
-#        else
-            if (peer->time_no_traffic >= (check_expire * 1)) // NB: 1 (dopo che il portale lo gestisce) diventera' 5 - limite massimo (indipendentemente dalla policy)... 
-#        endif
-               {
-               bdeny = true;
-
-               U_INTERNAL_ASSERT(u_now->tv_sec >= peer->ctime)
-               }
-            }
-
-         if (login_timeout &&
-             (traffic < 1024 || t <= U_NO_MORE_TIME))
-            {
-            bdeny = true;
-
-            U_SRV_LOG("Peer IP %s MAC %.*s has no more time - remain traffic for %llu bytes",
-                        peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), traffic);
-            }
-
-         if (bdeny)
-            {
-            deny(peer, false, false);
+            deny(peer, true);
 
             return;
             }
          }
+
+      U_SRV_LOG("Peer IP %s MAC %.*s remain: %ld secs %llu bytes",
+                  peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac), peer->time_remain, peer->traffic_remain);
 
       uint32_t index_device = peer->index_device;
 
@@ -1638,7 +1655,7 @@ void UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
             U_SRV_LOG("Peer IP %s MAC %.*s not present in ARP cache, I assume he is disconnected...",
                         peer->UIPAddress::pcStrAddress, U_STRING_TO_TRACE(peer->mac));
 
-            deny(peer, false, true);
+            deny(peer, true);
 
             return;
             }
@@ -1946,6 +1963,8 @@ int UNoCatPlugIn::handlerInit()
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
+// U_PRINT_SIZEOF(UModNoCatPeer);
+
    Url* url;
    UIPAddress addr;
    UString auth_ip, _ip;
@@ -2061,7 +2080,7 @@ int UNoCatPlugIn::handlerInit()
 
    UServer_Base::monitoring_process = true;
 
-   U_INTERNAL_ASSERT_EQUALS(UPing::addrmask,0)
+   U_INTERNAL_ASSERT_EQUALS(UPing::addrmask, 0)
 
    UPing::addrmask = (fd_set*) UServer_Base::getOffsetToDataShare(sizeof(fd_set) + sizeof(uint32_t));
 
@@ -2184,7 +2203,7 @@ int UNoCatPlugIn::handlerFork()
 
          setNewPeer(peer, getIndexAUTH(peer->UIPAddress::pcStrAddress));
 
-         permit(peer, 0, UserDownloadRate, UserUploadRate);
+         permit(peer, UserDownloadRate, UserUploadRate);
          }
       }
 
@@ -2206,7 +2225,7 @@ int UNoCatPlugIn::handlerRequest()
 
       U_INTERNAL_DUMP("_host = %.*S UServer_Base::getClientAddress() = %S", U_STRING_TO_TRACE(_host), UServer_Base::getClientAddress())
 
-      U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
+      U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
       if (UServer_Base::isLog() == false) (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
@@ -2227,7 +2246,7 @@ int UNoCatPlugIn::handlerRequest()
 
          if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/check"))
             {
-            if (flag_check_system == false) checkSystem();
+            if (flag_check_system == false) checkSystem(false);
 
             notifyAuthOfUsersInfo(index_AUTH);
 
@@ -2326,9 +2345,7 @@ int UNoCatPlugIn::handlerRequest()
                   }
                else
                   {
-                  getTraffic();
-
-                  deny(peer, false, false);
+                  if (peer->checkPeerInfo(true) == false) deny(peer, false);
 
                   notifyAuthOfUsersInfo(index_AUTH);
                   }
@@ -2518,6 +2535,19 @@ end:
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
+int UNoCatPlugIn::handlerReset()
+{
+   U_TRACE(0, "UNoCatPlugIn::handlerReset()")
+
+   U_INTERNAL_DUMP("u_http_info.method = %p", u_http_info.method)
+
+   checkSystem(UServer_Base::isLog());
+
+   UServer_Base::bpluginsHandlerReset = false;
+
+   U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+}
+
 // DEBUG
 
 #ifdef DEBUG
@@ -2532,9 +2562,11 @@ const char* UModNoCatPeer::dump(bool _reset) const
                   << "ctraffic              " << ctraffic          <<  '\n'
                   << "connected             " << connected         <<  '\n'
                   << "index_AUTH            " << index_AUTH        <<  '\n'
+                  << "time_remain           " << time_remain       <<  '\n'
                   << "index_device          " << index_device      <<  '\n'
                   << "traffic_done          " << traffic_done      <<  '\n'
                   << "index_network         " << index_network     <<  '\n'
+                  << "traffic_remain        " << traffic_remain    <<  '\n'
                   << "time_no_traffic       " << time_no_traffic   <<  '\n'
                   << "traffic_available     " << traffic_available <<  '\n'
                   << "ip        (UString    " << (void*)&ip        << ")\n"

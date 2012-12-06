@@ -10,109 +10,107 @@
 #ifdef PRINT_SIZE 
 #  include <ulib/all.h>
 
-#define U_PRINT_SIZEOF(class) printf("%ld sizeof(%s)\n", sizeof(class), #class);
-
 static void print_size()
 {
    U_TRACE(5, "print_size()")
 
-   U_PRINT_SIZEOF(UApplication)
-// U_PRINT_SIZEOF(UBison)
-   U_PRINT_SIZEOF(UCDB)
-   U_PRINT_SIZEOF(UCURL)
-   U_PRINT_SIZEOF(UCache)
-   U_PRINT_SIZEOF(UCertificate)
-// U_PRINT_SIZEOF(UCgiInput)
-// U_PRINT_SIZEOF(UClassSlot)
-   U_PRINT_SIZEOF(UClientImage<UTCPSocket>)
-   U_PRINT_SIZEOF(UCommand)
-// U_PRINT_SIZEOF(UConnection)
-// U_PRINT_SIZEOF(UConstMethodSlot)
+   U_PRINT_SIZEOF(UApplication);
+// U_PRINT_SIZEOF(UBison);
+   U_PRINT_SIZEOF(UCDB);
+   U_PRINT_SIZEOF(UCURL);
+   U_PRINT_SIZEOF(UCache);
+   U_PRINT_SIZEOF(UCertificate);
+// U_PRINT_SIZEOF(UCgiInput);
+// U_PRINT_SIZEOF(UClassSlot);
+   U_PRINT_SIZEOF(UClientImage<UTCPSocket>);
+   U_PRINT_SIZEOF(UCommand);
+// U_PRINT_SIZEOF(UConnection);
+// U_PRINT_SIZEOF(UConstMethodSlot);
 #ifdef HAVE_CURL
-   U_PRINT_SIZEOF(UCrl)
+   U_PRINT_SIZEOF(UCrl);
 #endif
-   U_PRINT_SIZEOF(UTimeDate)
-   U_PRINT_SIZEOF(UDialog)
-// U_PRINT_SIZEOF(UFCgi)
-   U_PRINT_SIZEOF(UFile)
-   U_PRINT_SIZEOF(UFileConfig)
-// U_PRINT_SIZEOF(UFlexer)
-   U_PRINT_SIZEOF(UFtpClient)
-// U_PRINT_SIZEOF(UFuncSlot)
-   U_PRINT_SIZEOF(UHashMap<UString>)
-   U_PRINT_SIZEOF(UHashMapNode)
-   U_PRINT_SIZEOF(UHttpClient<UTCPSocket>)
-   U_PRINT_SIZEOF(UIPAddress)
+   U_PRINT_SIZEOF(UTimeDate);
+   U_PRINT_SIZEOF(UDialog);
+// U_PRINT_SIZEOF(UFCgi);
+   U_PRINT_SIZEOF(UFile);
+   U_PRINT_SIZEOF(UFileConfig);
+// U_PRINT_SIZEOF(UFlexer);
+   U_PRINT_SIZEOF(UFtpClient);
+// U_PRINT_SIZEOF(UFuncSlot);
+   U_PRINT_SIZEOF(UHashMap<UString>);
+   U_PRINT_SIZEOF(UHashMapNode);
+   U_PRINT_SIZEOF(UHttpClient<UTCPSocket>);
+   U_PRINT_SIZEOF(UIPAddress);
 #ifdef HAVE_LDAP
-   U_PRINT_SIZEOF(ULDAP)
-   U_PRINT_SIZEOF(ULDAPEntry)
+   U_PRINT_SIZEOF(ULDAP);
+   U_PRINT_SIZEOF(ULDAPEntry);
 #endif
-   U_PRINT_SIZEOF(ULock)
-   U_PRINT_SIZEOF(ULog)
+   U_PRINT_SIZEOF(ULock);
+   U_PRINT_SIZEOF(ULog);
 #ifdef USE_LIBMAGIC
-   U_PRINT_SIZEOF(UMagic)
+   U_PRINT_SIZEOF(UMagic);
 #endif
-// U_PRINT_SIZEOF(UMethodSlot)
-   U_PRINT_SIZEOF(UHTTP::UFileCacheData)
-   U_PRINT_SIZEOF(UMimeEntity)
-   U_PRINT_SIZEOF(UMimeHeader)
-   U_PRINT_SIZEOF(UMimeMessage)
-   U_PRINT_SIZEOF(UMimeMultipart)
-   U_PRINT_SIZEOF(UMimeMultipartMsg)
-   U_PRINT_SIZEOF(UMimePKCS7)
-   U_PRINT_SIZEOF(UNotifier)
-   U_PRINT_SIZEOF(UOptions)
+// U_PRINT_SIZEOF(UMethodSlot);
+   U_PRINT_SIZEOF(UHTTP::UFileCacheData);
+   U_PRINT_SIZEOF(UMimeEntity);
+   U_PRINT_SIZEOF(UMimeHeader);
+   U_PRINT_SIZEOF(UMimeMessage);
+   U_PRINT_SIZEOF(UMimeMultipart);
+   U_PRINT_SIZEOF(UMimeMultipartMsg);
+   U_PRINT_SIZEOF(UMimePKCS7);
+   U_PRINT_SIZEOF(UNotifier);
+   U_PRINT_SIZEOF(UOptions);
 #ifdef USE_LIBPCRE
-   U_PRINT_SIZEOF(UPCRE)
+   U_PRINT_SIZEOF(UPCRE);
 #endif
-   U_PRINT_SIZEOF(UPKCS10)
-   U_PRINT_SIZEOF(UPKCS7)
-   U_PRINT_SIZEOF(UPlugIn<void*>)
-   U_PRINT_SIZEOF(UProcess)
-   U_PRINT_SIZEOF(UQueryNode)
-   U_PRINT_SIZEOF(UQueryParser)
-   U_PRINT_SIZEOF(URDB)
-   U_PRINT_SIZEOF(URDBClient<UTCPSocket>)
-   U_PRINT_SIZEOF(URDBServer)
-// U_PRINT_SIZEOF(URUBY)
-   U_PRINT_SIZEOF(USOAPClient<UTCPSocket>)
-   U_PRINT_SIZEOF(USOAPEncoder)
-   U_PRINT_SIZEOF(USOAPFault)
-   U_PRINT_SIZEOF(USOAPGenericMethod)
-   U_PRINT_SIZEOF(USOAPObject)
-   U_PRINT_SIZEOF(USOAPParser)
+   U_PRINT_SIZEOF(UPKCS10);
+   U_PRINT_SIZEOF(UPKCS7);
+   U_PRINT_SIZEOF(UPlugIn<void*>);
+   U_PRINT_SIZEOF(UProcess);
+   U_PRINT_SIZEOF(UQueryNode);
+   U_PRINT_SIZEOF(UQueryParser);
+   U_PRINT_SIZEOF(URDB);
+   U_PRINT_SIZEOF(URDBClient<UTCPSocket>);
+   U_PRINT_SIZEOF(URDBServer);
+// U_PRINT_SIZEOF(URUBY);
+   U_PRINT_SIZEOF(USOAPClient<UTCPSocket>);
+   U_PRINT_SIZEOF(USOAPEncoder);
+   U_PRINT_SIZEOF(USOAPFault);
+   U_PRINT_SIZEOF(USOAPGenericMethod);
+   U_PRINT_SIZEOF(USOAPObject);
+   U_PRINT_SIZEOF(USOAPParser);
 #ifdef HAVE_SSH
-   U_PRINT_SIZEOF(USSHSocket)
+   U_PRINT_SIZEOF(USSHSocket);
 #endif
 #ifdef USE_LIBSSL
-   U_PRINT_SIZEOF(USSLSocket)
+   U_PRINT_SIZEOF(USSLSocket);
 #endif
-   U_PRINT_SIZEOF(USemaphore)
-   U_PRINT_SIZEOF(UServer<UTCPSocket>)
-   U_PRINT_SIZEOF(USmtpClient)
-   U_PRINT_SIZEOF(USocket)
-   U_PRINT_SIZEOF(UString)
-   U_PRINT_SIZEOF(UStringRep)
-   U_PRINT_SIZEOF(UTCPSocket)
-// U_PRINT_SIZEOF(UTimeStamp)
-   U_PRINT_SIZEOF(UTimeVal)
-   U_PRINT_SIZEOF(UTimer)
-   U_PRINT_SIZEOF(UTokenizer)
+   U_PRINT_SIZEOF(USemaphore);
+   U_PRINT_SIZEOF(UServer<UTCPSocket>);
+   U_PRINT_SIZEOF(USmtpClient);
+   U_PRINT_SIZEOF(USocket);
+   U_PRINT_SIZEOF(UString);
+   U_PRINT_SIZEOF(UStringRep);
+   U_PRINT_SIZEOF(UTCPSocket);
+// U_PRINT_SIZEOF(UTimeStamp);
+   U_PRINT_SIZEOF(UTimeVal);
+   U_PRINT_SIZEOF(UTimer);
+   U_PRINT_SIZEOF(UTokenizer);
 #ifdef DEBUG
-   U_PRINT_SIZEOF(UTrace)
+   U_PRINT_SIZEOF(UTrace);
 #endif
-   U_PRINT_SIZEOF(UTree<UString>)
-   U_PRINT_SIZEOF(UUDPSocket)
-   U_PRINT_SIZEOF(UVector<UString>)
+   U_PRINT_SIZEOF(UTree<UString>);
+   U_PRINT_SIZEOF(UUDPSocket);
+   U_PRINT_SIZEOF(UVector<UString>);
 #ifdef HAVE_EXPAT
-   U_PRINT_SIZEOF(UXMLAttribute)
-   U_PRINT_SIZEOF(UXMLElement)
-   U_PRINT_SIZEOF(UXMLParser)
+   U_PRINT_SIZEOF(UXMLAttribute);
+   U_PRINT_SIZEOF(UXMLElement);
+   U_PRINT_SIZEOF(UXMLParser);
 #endif
 #ifdef USE_LIBZ
-   U_PRINT_SIZEOF(UZIP)
+   U_PRINT_SIZEOF(UZIP);
 #endif
-   U_PRINT_SIZEOF(Url)
+   U_PRINT_SIZEOF(Url);
 }
 #endif
 
@@ -125,50 +123,50 @@ static void check_size()
 
    for (uint32_t sz = 1; sz <= U_MAX_SIZE_PREALLOCATE; ++sz)
       {
-      stack_index = UMemoryPool::findStackIndex(sz);
+      stack_index = U_SIZE_TO_STACK_INDEX(sz);
 
       printf("%4u %2u\n", sz, stack_index);
       }
    */
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_0 - 1) ==  0 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_0 - 0) ==  0 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_0 + 1) ==  1 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_0 - 1) ==  0 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_0 - 0) ==  0 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_0 + 1) ==  1 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_1 - 1) ==  1 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_1 - 0) ==  1 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_1 + 1) ==  2 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1 - 1) ==  1 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1 - 0) ==  1 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1 + 1) ==  2 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_2 - 1) ==  2 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_2 - 0) ==  2 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_2 + 1) ==  3 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2 - 1) ==  2 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2 - 0) ==  2 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2 + 1) ==  3 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_3 - 1) ==  3 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_3 - 0) ==  3 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_3 + 1) ==  4 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_3 - 1) ==  3 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_3 - 0) ==  3 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_3 + 1) ==  4 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_4 - 1) ==  4 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_4 - 0) ==  4 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_4 + 1) ==  5 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4 - 1) ==  4 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4 - 0) ==  4 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4 + 1) ==  5 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_5 - 1) ==  5 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_5 - 0) ==  5 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_5 + 1) ==  6 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5 - 1) ==  5 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5 - 0) ==  5 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5 + 1) ==  6 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_6 - 1) ==  6 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_6 - 0) ==  6 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_6 + 1) ==  7 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_6 - 1) ==  6 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_6 - 0) ==  6 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_6 + 1) ==  7 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_7 - 1) ==  7 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_7 - 0) ==  7 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_7 + 1) ==  8 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_7 - 1) ==  7 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_7 - 0) ==  7 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_7 + 1) ==  8 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_8 - 1) ==  8 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_8 - 0) ==  8 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_8 + 1) ==  9 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_8 - 1) ==  8 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_8 - 0) ==  8 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_8 + 1) ==  9 )
 
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_9 - 1) ==  9 )
-   U_ASSERT( UMemoryPool::findStackIndex(U_STACK_TYPE_9 - 0) ==  9 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_9 - 1) ==  9 )
+   U_ASSERT( U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_9 - 0) ==  9 )
 }
 
 static struct itimerval timeval = { { 0, 2000 }, { 0, 2000 } };

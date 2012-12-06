@@ -475,3 +475,7 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 #else
 #  define U_gettimeofday                            (void) gettimeofday(u_now, 0);
 #endif
+
+/* To print size of class */
+
+#define U_PRINT_SIZEOF(class) printf("%ld sizeof(%s)\n", sizeof(class), #class)

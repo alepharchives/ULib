@@ -271,7 +271,7 @@ bool USocket::checkTime(long time_limit, long& timeout)
 
    U_INTERNAL_ASSERT_RANGE(1,time_limit,8L*60L) // 8 minuts
 
-   U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+   U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
    if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 
@@ -297,6 +297,8 @@ bool USocket::bind(SocketAddress& cLocal)
 
    int result, counter = 0;
 
+   cLocal.getPortNumber(iLocalPort);
+
 loop:
    result = U_SYSCALL(bind, "%d,%p,%d", getFd(), (sockaddr*)cLocal, cLocal.sizeOf());
 
@@ -304,6 +306,8 @@ loop:
        errno  == EADDRINUSE &&
        ++counter <= 3)
       {
+      U_WARNING("Probably another instance of userver is running on the same port: %d", iLocalPort);
+
       UTimeVal(1L).nanosleep();
 
       goto loop;
@@ -313,13 +317,11 @@ loop:
       {
       bLocalSet = true;
 
-      cLocal.getPortNumber(iLocalPort);
-
       socklen_t slDummy = cLocal.sizeOf();
 
       result = U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)cLocal, &slDummy);
 
-      U_INTERNAL_ASSERT_EQUALS(result,0)
+      U_INTERNAL_ASSERT_EQUALS(result, 0)
 
       cLocal.getIPAddress(cLocalAddress);
 

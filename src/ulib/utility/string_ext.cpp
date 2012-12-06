@@ -1609,7 +1609,7 @@ void UStringExt::minifyCssJs(UString& x)
    const char* begin = x.data();
    uint32_t capacity, sz1, sz = 0;
    const char* _end  = (s = begin) + n;
-   char* str = (char*) U_MALLOC_STR(n + 128, capacity);
+   char* str = (char*) UMemoryPool::_malloc_str(n + 128, capacity);
 
    // we have these tokens: comment, whitespace, single/double-quoted string, and other
 
@@ -1715,5 +1715,5 @@ void UStringExt::minifyCssJs(UString& x)
    (void) x.replace(str, sz);
 
 end:
-   U_FREE_STR(str, capacity);
+   UMemoryPool::_free_str(str, capacity);
 }

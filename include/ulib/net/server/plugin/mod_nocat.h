@@ -53,13 +53,15 @@ public:
 #endif
 
 protected:
-   uint64_t traffic_done, traffic_available;
-   UString ip, mac, token, user, ifname, label, gateway;
    UCommand fw;
-   time_t connected, expire, logout, ctime, time_no_traffic;
-   uint32_t ctraffic, rulenum, index_AUTH, index_device, index_network;
+   UString ip, mac, token, user, ifname, label, gateway;
+   uint64_t traffic_done, traffic_available, traffic_remain;
+   time_t connected, expire, logout, ctime, time_no_traffic, time_remain;
+   uint32_t ctraffic, index_AUTH, index_device, index_network;
    int status;
    bool allowed;
+
+   bool checkPeerInfo(bool btraffic);
 
 private:
    UModNoCatPeer(const UModNoCatPeer&) : UIPAddress(), UEventTime() {}
@@ -67,6 +69,8 @@ private:
 
    friend class UNoCatPlugIn;
 };
+
+// NB: sizeof(UModNoCatPeer) 32bit == 240 (=> U_STACK_TYPE_5)
 
 // override the default...
 template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UIPAddress*>(%p,%u)", ptr, n) }
@@ -143,6 +147,7 @@ public:
    // Connection-wide hooks
 
    virtual int handlerRequest();
+   virtual int handlerReset();
 
    // define method VIRTUAL of class UEventTime
 
@@ -207,9 +212,8 @@ protected:
    static UModNoCatPeer* creatNewPeer(uint32_t index_AUTH);
    static void             setNewPeer(UModNoCatPeer* peer, uint32_t index_AUTH);
 
-   static void checkSystem();
    static void setPeerListInfo();
-   static void checkPeersForInfo();
+   static void checkSystem(bool blog);
    static void addPeerInfo(UModNoCatPeer* peer, time_t logout);
    static bool checkAuthMessage(UModNoCatPeer* peer, const UString& msg);
    static void setStatusContent(UModNoCatPeer* peer, const UString& label);
@@ -229,8 +233,8 @@ protected:
    static UString getIPAddress(const char* ptr, uint32_t len);
    static UString getSignedData(const char* ptr, uint32_t len);
 
-   static void   deny(UModNoCatPeer* peer, bool alarm, bool disconnected);
-   static void permit(UModNoCatPeer* peer, time_t timeout, uint32_t UserDownloadRate, uint32_t UserUploadRate);
+   static void   deny(UModNoCatPeer* peer, bool disconnected);
+   static void permit(UModNoCatPeer* peer, uint32_t UserDownloadRate, uint32_t UserUploadRate);
 
    static void getTraffic();
    static void setHTTPResponse(const UString& content);
@@ -240,7 +244,7 @@ protected:
    static void checkPeerStatus(UStringRep* key, void* value);
    static void getPeerListInfo(UStringRep* key, void* value);
    static void executeCommand(UModNoCatPeer* peer, int type);
-   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* ip, uint32_t n);
+   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const char* ip);
 
    static bool isPingAsyncPending()
       {

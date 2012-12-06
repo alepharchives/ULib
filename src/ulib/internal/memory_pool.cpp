@@ -37,13 +37,13 @@
 sig_atomic_t UMemoryPool::index_stack_busy = -1;
 #endif
 
+/*
 uint32_t UMemoryPool::findStackIndex(uint32_t sz)
 {
    U_TRACE(0, "UMemoryPool::findStackIndex(%u)", sz)
 
    U_INTERNAL_ASSERT_RANGE(1,sz,U_MAX_SIZE_PREALLOCATE)
 
-   /*
    static const uint32_t stack_type[U_NUM_STACK_TYPE] =
       { U_STACK_TYPE_0,  U_STACK_TYPE_1, U_STACK_TYPE_2,
         U_STACK_TYPE_3,  U_STACK_TYPE_4, U_STACK_TYPE_5,
@@ -69,7 +69,6 @@ uint32_t UMemoryPool::findStackIndex(uint32_t sz)
    U_INTERNAL_ASSERT(sz <= stack_type[low])
 
    U_RETURN(low);
-   */
 
    if (sz <= U_STACK_TYPE_0) U_RETURN(0);
    if (sz <= U_STACK_TYPE_1) U_RETURN(1);
@@ -81,7 +80,7 @@ uint32_t UMemoryPool::findStackIndex(uint32_t sz)
    if (sz <= U_STACK_TYPE_7) U_RETURN(7);
    if (sz <= U_STACK_TYPE_8) U_RETURN(8);
                              U_RETURN(9);
-   /*
+
    static uint32_t last_sz, last_stack_type;
 
    if (sz != last_sz)
@@ -109,8 +108,8 @@ uint32_t UMemoryPool::findStackIndex(uint32_t sz)
 
 end:
    U_RETURN(last_stack_type);
-   */
 }
+*/
 
 void* UMemoryPool::_malloc_str(size_t sz, uint32_t& capacity)
 {
@@ -123,12 +122,7 @@ void* UMemoryPool::_malloc_str(size_t sz, uint32_t& capacity)
       {
       int stack_index;
 
-      if (sz <= U_STACK_TYPE_4) // 128
-         {
-         capacity    = U_STACK_TYPE_4;
-         stack_index = 4;
-         }
-      else if (sz <= U_STACK_TYPE_5) // 256
+      if (sz <= U_STACK_TYPE_5) // 256
          {
          capacity    = U_STACK_TYPE_5;
          stack_index = 5;
@@ -150,11 +144,13 @@ void* UMemoryPool::_malloc_str(size_t sz, uint32_t& capacity)
          }
       else // if (sz <= U_STACK_TYPE_9) // 4096
          {
+         U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE)
+
          capacity    = U_STACK_TYPE_9;
          stack_index = 9;
          }
 
-      U_INTERNAL_DUMP("capacity = %u", capacity)
+      U_INTERNAL_DUMP("capacity = %u stack_index = %u", capacity, stack_index)
 
       ptr = UMemoryPool::pop(stack_index);
       }
@@ -176,12 +172,11 @@ void UMemoryPool::_free_str(void* ptr, size_t sz)
 
       switch (sz)
          {
-         case U_STACK_TYPE_4: stack_index = 4; break; //  128
-         case U_STACK_TYPE_5: stack_index = 5; break; //  256
-         case U_STACK_TYPE_6: stack_index = 6; break; //  512
-         case U_STACK_TYPE_7: stack_index = 7; break; // 1024
-         case U_STACK_TYPE_8: stack_index = 8; break; // 2048
-         default:             stack_index = 9; break; // 4096
+         case U_STACK_TYPE_5: stack_index = 5;                                                     break; //  256
+         case U_STACK_TYPE_6: stack_index = 6;                                                     break; //  512
+         case U_STACK_TYPE_7: stack_index = 7;                                                     break; // 1024
+         case U_STACK_TYPE_8: stack_index = 8;                                                     break; // 2048
+         default:             stack_index = 9; U_INTERNAL_ASSERT_EQUALS(sz,U_MAX_SIZE_PREALLOCATE) break; // 4096
          }
 
       U_INTERNAL_DUMP("stack_index = %u", stack_index)
@@ -214,13 +209,14 @@ typedef struct ustackmemorypool {
    2 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
    1 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
       --   --   --   --   --   --   --   --   --   -- 
-        8   24   52   88  128  256  512 1024 2048 4096 -> type
+        8   24   56  128  240  256  512 1024 2048 4096 -> type
         0    1    2    3    4    5    6    7    8    9 -> index
         0    1    2    3    4    5    6    7    8    9 -> index_stack_mem_block
 */
 
 class U_NO_EXPORT UStackMemoryPool {
 public:
+
    // Check for memory error
    U_MEMORY_TEST
 
@@ -261,20 +257,20 @@ public:
       {
       U_TRACE(1, "UStackMemoryPool::growPointerBlock()")
 
-      U_INTERNAL_ASSERT_EQUALS(len,space) // isFull()
+      U_INTERNAL_ASSERT_EQUALS(len, space) // isFull()
 
       // si alloca lo space per numero totale puntatori (blocchi allocati precedentemente + un nuovo insieme di blocchi)
       // relativi a type 'dimensione' stack corrente...
 
-      U_INTERNAL_DUMP("index = %u", index)
-
       uint32_t old_size = space * sizeof(void*);
+                          space <<= 1; // x 2...
+      uint32_t new_size = space * sizeof(void*);
 
-      space *= 2;
+      U_INTERNAL_DUMP("index = %u old_size = %u space = %u new_size = %u", index, old_size, space, new_size)
 
       // NB: pop() non varia gli attributi 'pointer_block', 'space' e quindi a questo punto si puo' anche fare la pop su se stesso...
 
-      void** new_pointer_block = (void**) UMemoryPool::_malloc(space * sizeof(void*));
+      void** new_pointer_block = (void**) UMemoryPool::_malloc(new_size);
 
       U__MEMCPY(new_pointer_block, pointer_block, old_size);
 
@@ -291,14 +287,11 @@ public:
       {
       U_TRACE(0, "UStackMemoryPool::push(%p)", ptr)
 
-      U_INTERNAL_ASSERT_MINOR(index,U_NUM_STACK_TYPE)
-      U_INTERNAL_ASSERT_DIFFERS(index,(uint32_t)UMemoryPool::index_stack_busy)
-      U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)),0) // memory aligned
+      U_INTERNAL_ASSERT_MINOR(index, U_NUM_STACK_TYPE)
+      U_INTERNAL_ASSERT_DIFFERS(index, (uint32_t)UMemoryPool::index_stack_busy)
+      U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
 
-      if (isFull()) // len == space
-         {
-         growPointerBlock();
-         }
+      if (isFull()) growPointerBlock(); // len == space
 
 #  if defined(DEBUG) || defined(U_TEST)
       UMemoryPool::index_stack_busy = index;
@@ -419,7 +412,7 @@ public:
          }
 
       printf("       --   --   --   --   --   --   --   --   --   --\n"
-             "         8   24   32   88  128  256  512 1024 2048 4096\n");
+             "         8   24   56  128  240  256  512 1024 2048 4096\n");
       }
 
 #endif
@@ -445,7 +438,7 @@ void* UStackMemoryPool::pop()
    UMemoryPool::index_stack_busy = -1;
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)),0) // memory aligned
+   U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
 
    U_RETURN(ptr);
 }
@@ -479,7 +472,7 @@ void UMemoryPool::push(void* ptr, int stack_index)
 {
    U_TRACE(0+256, "UMemoryPool::push(%p,%d)", ptr, stack_index)
 
-   U_INTERNAL_ASSERT_MINOR(stack_index,U_NUM_STACK_TYPE)
+   U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE)
 
 #ifdef ENABLE_MEMPOOL
    ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->push(ptr);
@@ -493,7 +486,7 @@ void* UMemoryPool::_malloc(size_t sz)
    U_TRACE(0, "UMemoryPool::_malloc(%lu)", sz)
 
    void* ptr = (sz <= U_MAX_SIZE_PREALLOCATE
-                  ? UMemoryPool::pop(findStackIndex(sz))
+                  ? UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz))
                   : U_SYSCALL(malloc, "%u", sz));
 
    U_RETURN(ptr);
@@ -503,7 +496,7 @@ void UMemoryPool::_free(void* ptr, size_t sz)
 {
    U_TRACE(0, "UMemoryPool::_free(%p,%lu)", ptr, sz)
 
-   if (sz <= U_MAX_SIZE_PREALLOCATE) UMemoryPool::push(ptr, findStackIndex(sz));
+   if (sz <= U_MAX_SIZE_PREALLOCATE) UMemoryPool::push(ptr, U_SIZE_TO_STACK_INDEX(sz));
    else                              U_SYSCALL_VOID(free, "%p", ptr);
 }
 

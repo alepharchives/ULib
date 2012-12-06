@@ -104,10 +104,11 @@ public:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int  handlerRead();
-   virtual int  handlerWrite();
+   virtual int handlerRead();
+   virtual int handlerWrite();
+   virtual int handlerError(int sock_state);
+
    virtual void handlerDelete();
-   virtual void handlerError(int sock_state);
 
    // method VIRTUAL to redefine
 

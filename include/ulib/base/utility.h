@@ -265,6 +265,10 @@ U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t ad
 
 U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
 
+/* Get address space and rss (resident set size) usage */
+
+U_EXPORT void u_get_memusage(uint32_t* vsz, uint32_t* rss);
+
 /* Get the number of the processors including offline CPUs */
 
 U_EXPORT int u_get_num_cpu(void);

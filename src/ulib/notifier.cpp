@@ -526,8 +526,8 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
       U_INTERNAL_ASSERT(FD_ISSET(handler_event->fd, &fd_set_read))
 #  endif
 
-      ret = (bexcept ? (handler_event->handlerError(USocket::BROKEN | USocket::EPOLLERROR), U_NOTIFIER_DELETE)
-                     :  handler_event->handlerRead());
+      ret = (bexcept == false ? handler_event->handlerRead()
+                              : handler_event->handlerError(USocket::BROKEN | USocket::EPOLLERROR));
       }
    else
       {
@@ -553,7 +553,7 @@ U_NO_EXPORT void UNotifier::handlerResult(UEventFd* handler_event, bool bread, b
       U_INTERNAL_ASSERT_EQUALS(handler_event, pevents->data.ptr)
 #  endif
 
-      U_INTERNAL_ASSERT_MAJOR(handler_event->fd,0)
+      U_INTERNAL_ASSERT_MAJOR(handler_event->fd, 0)
 
       handlerDelete(handler_event);
       }
@@ -619,25 +619,13 @@ loop:
 
       U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
-      if (handler_event->fd == 0) // NB: sometime happens...
-         {
-         --nfd_ready;
-
-         goto loop;
-         }
-
       handlerResult(handler_event, bread, bexcept);
 
-      if (nfd_ready == 0)
-         {
-         U_INTERNAL_DUMP("events[%d]: return", (pevents - events))
+      if (nfd_ready) goto loop;
 
-         U_INTERNAL_ASSERT_EQUALS(pevents, events)
+      U_INTERNAL_DUMP("events[%d]: return", (pevents - events))
 
-         return;
-         }
-
-      goto loop;
+      U_INTERNAL_ASSERT_EQUALS(pevents, events)
 #  else
       int fd, fd_cnt = (fd_read_cnt + fd_write_cnt);
 

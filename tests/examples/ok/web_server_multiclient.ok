@@ -1,4 +1,4 @@
-(pid 27381) 09/11/12 16:41:35> *** STARTUP userver_tcp (pid 27381) [root@localhost] ***
+(pid 27381) 09/11/12 16:41:35> *** STARTUP userver_tcp (64bit, pid 27381) [root@localhost] ***
 (pid 27381) 09/11/12 16:41:35> Building Environment: Gentoo 2.2 (AMD64) (Nov  9 2012)
 (pid 27381) 09/11/12 16:41:35> Current Operating System: Linux x86_64 v#2 SMP Tue Nov 6 15:08:04 CET 2012 3.6.6
 (pid 27381) 09/11/12 16:41:35> working directory (DOCUMENT_ROOT) changed to "/usr/src/ULib-1.1.0/tests/examples/benchmark/docroot"
@@ -41,6 +41,7 @@
 (pid 27381) 09/11/12 16:41:35> [mod_http] file cached: "images/sad.png" - 429 bytes - (0%) compressed ratio
 (pid 27381) 09/11/12 16:41:35> [mod_http] file cached: "favicon.ico" - 318 bytes - (65%) compressed ratio
 (pid 27381) 09/11/12 16:41:35> [mod_http] initialization of plugin success
+(pid 27381) 09/11/12 16:41:35> Mapped 1088 bytes (1 KB) of shared memory for 2 process
 (pid 27381) 09/11/12 16:41:35> Thread watch optimization for time resolution of one second actived (pid 27396)
 (pid 27381) 09/11/12 16:41:35> started new child (pid 27397), up to 1 children, affinity mask: 2
 (pid 27397) 09/11/12 16:41:35> server run with user "apache" permission

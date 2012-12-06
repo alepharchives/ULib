@@ -2976,7 +2976,12 @@ error:
 
    // redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
 
-   user_rec->setChunkValue();
+   if (user_rec->consume) user_rec->setChunkValue();
+   else
+      {
+         _time_chunk->snprintf("%ld",   3600L * 24L);                   // 24h
+      _traffic_chunk->snprintf("%llu", 1024UL * 1024UL * 1024UL * 4UL); // 4G
+      }
 
    UString signed_data = UDES3::signData("\n"
       "Action Permit\n"

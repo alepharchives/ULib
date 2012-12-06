@@ -56,7 +56,7 @@ U_NO_EXPORT void UCache::init(UFile& _x, uint32_t size, bool bexist)
 
       U_INTERNAL_DUMP("hsize = %u writer = %u oldest = %u unused = %u size = %u", info->hsize, info->writer, info->oldest, info->unused, info->size)
 
-      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
       start = u_now->tv_sec;
       }

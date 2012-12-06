@@ -6,9 +6,12 @@ static void usp_init()
    {
    U_TRACE(5, "::usp_init()")
    
-   UHTTP::ptr_upload_progress = (UHTTP::upload_progress*) UServer_Base::getPointerToDataShare(UHTTP::ptr_upload_progress);
+   if (UServer_Base::isPreForked())
+      {
+      UHTTP::ptr_upload_progress = (UHTTP::upload_progress*) UServer_Base::getPointerToDataShare(UHTTP::ptr_upload_progress);
    
-   U_INTERNAL_ASSERT_EQUALS(UHTTP::ptr_upload_progress->byte_read,0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::ptr_upload_progress->byte_read, 0)
+      }
    }  
    
 extern "C" {

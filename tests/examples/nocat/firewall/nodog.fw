@@ -486,11 +486,11 @@ access_fw() {
 		checkDeviceUpload
 
 		if [ "$action" = "permit" ]; then
-			if [ $6 -ne 0 ]; then
-				UserDownloadRate = $6
+			if [ $5 -ne 0 ]; then
+				UserDownloadRate = $5
 			fi
-			if [ $7 -ne 0 ]; then
-				UserUploadRate = $7
+			if [ $6 -ne 0 ]; then
+				UserUploadRate = $6
 			fi
 
 			UserUploadRatio=$((   $UserUploadRate	 * 100 / ${UploadRate} ))
@@ -736,10 +736,10 @@ do_cmd() {
 
 	case "$1" in
 		arp)			shift;	  check_arp		  "$@" ;; #				   (IP)
-		deny)			shift;     access_fw "-D" "$@" ;; # (CMD) (MAC) (IP) (Class) (rulenum)
+		deny)			shift;     access_fw "-D" "$@" ;; # (CMD) (MAC) (IP) (Class)
 		clear)      shift;      clear_fw		  "$@" ;;
 		reset)      shift;      reset_fw		  "$@" ;;
-		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (rulenum) (UserDownloadRate) (UserUploadRate)
+		permit)		shift;     access_fw "-A" "$@" ;; # (CMD) (MAC) (IP) (Class) (UserDownloadRate) (UserUploadRate)
 
 		openlist)			  list_open_fw				 ;;
 		initialize) shift; initialize_fw		  "$1" ;;

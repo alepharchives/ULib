@@ -84,7 +84,7 @@ const char* restrict u_progpath;
 const char* restrict u_progname;
 
 /* Current working directory */
-char                 u_cwd[U_PATH_MAX];
+char*                u_cwd;
 uint32_t             u_cwd_len;
 
 /* Location info */
@@ -101,10 +101,13 @@ bool   u_daylight;
 time_t u_start_time;
 time_t u_now_adjust; /* GMT based time */
 struct tm u_strftime_tm;
-
 void*  u_pthread_time; /* pthread clock */
+
 struct timeval u_timeval;
 struct timeval* u_now = &u_timeval;
+
+const char* u_months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
+const char* u_months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
 /* Scan services */
 const char* restrict u_line_terminator     = U_LF;
@@ -263,9 +266,23 @@ void u_init_ulib_hostname(void)
 
 void u_getcwd(void) /* get current working directory */
 {
+   size_t newsize = 256;
+
    U_INTERNAL_TRACE("u_getcwd()")
 
-   (void) getcwd(u_cwd, sizeof(u_cwd));
+loop:
+   u_cwd = (char*) malloc(newsize);
+
+   if (getcwd(u_cwd, newsize) == 0 && errno == ERANGE)
+      {
+      newsize += 256;
+
+      U_WARNING("current working directory need a bigger buffer (%u bytes), doing reallocation", newsize);
+
+      free(u_cwd);
+
+      goto loop;
+      }
 
 #ifdef __MINGW32__
    (void) u_strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
@@ -273,15 +290,48 @@ void u_getcwd(void) /* get current working directory */
 
    u_cwd_len = u__strlen(u_cwd);
 
-   U_INTERNAL_ASSERT_MAJOR(u_cwd_len,0)
-   U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
+   U_INTERNAL_ASSERT_MAJOR(u_cwd_len, 0)
+   U_INTERNAL_ASSERT_MINOR(u_cwd_len, newsize)
 }
 
-void u_setStartTime(void)
+__pure int u_getMonth(const char* buf)
 {
-   U_INTERNAL_TRACE("u_setStartTime()")
+   int i;
+   const char* ptr;
 
-   time_t lnow;
+   U_INTERNAL_TRACE("u_getMonth(%s)", buf)
+
+   for (i = 0; i < 12; ++i)
+      {
+      ptr = u_months[i];
+
+      if ((ptr[0] == u__tolower(buf[0])) &&
+          (ptr[1] == u__tolower(buf[1])) &&
+          (ptr[2] == u__tolower(buf[2])))
+         {
+         return i+1;
+         }
+
+      ptr = u_months_it[i];
+
+      if ((ptr[0] == u__tolower(buf[0])) &&
+          (ptr[1] == u__tolower(buf[1])) &&
+          (ptr[2] == u__tolower(buf[2])))
+         {
+         return i+1;
+         }
+      }
+
+   return 0;
+}
+
+bool u_setStartTime(void)
+{
+   struct tm tm;
+   time_t t, lnow;
+   const char* compilation_date;
+
+   U_INTERNAL_TRACE("u_setStartTime()")
 
    U_INTERNAL_ASSERT_POINTER(u_now)
 
@@ -340,9 +390,48 @@ void u_setStartTime(void)
 
    U_INTERNAL_ASSERT(u_now_adjust <= ((daylight ? 3600 : 0) - timezone))
 
-   /* NB: check if current date is OK - Fri Apr 23 17:26:25 CEST 2010 */
+   /* NB: check if current date is OK (>= compilation_date) */
 
-   if (u_now->tv_sec > 1272036378L) u_start_time = u_now->tv_sec + u_now_adjust;
+   compilation_date = __DATE__; /* Dec  6 2012 */
+
+// (void) memset(&tm, 0, sizeof(struct tm));
+
+   tm.tm_min   = 0;
+   tm.tm_hour  = 0;
+   tm.tm_mday  =       atoi(compilation_date+4);
+   tm.tm_mon   = u_getMonth(compilation_date)   -    1; /* tm relative format month - range from 0-11 */
+   tm.tm_year  =       atoi(compilation_date+7) - 1900; /* tm relative format year  - is number of years since 1900 */
+   tm.tm_sec   = 1;
+   tm.tm_wday  = 0; /* day of the week */
+   tm.tm_yday  = 0; /* day in the year */
+   tm.tm_isdst = -1;
+
+   t = mktime(&tm); /* NB: The timelocal() function is equivalent to the POSIX standard function mktime(3) */
+
+   U_INTERNAL_PRINT("lnow = %ld t = %ld", lnow, t)
+
+   if (lnow >= t)
+      {
+      u_start_time = lnow; /* u_now->tv_sec + u_now_adjust */
+
+      /* The mktime() function modifies the fields of the tm structure as follows: tm_wday and tm_yday are set to values
+       * determined from the contents of the other fields; if structure members are outside their valid interval, they will
+       * be normalized (so that, for example, 40 October is changed into 9 November); tm_isdst is set (regardless of its
+       * initial value) to a positive value or to 0, respectively, to indicate whether DST is or is not in effect at the
+       * specified time.  Calling mktime() also sets the external variable tzname with information about the current timezone.
+       */
+
+#  ifndef TM_HAVE_TM_GMTOFF
+      u_daylight = (tm.tm_isdst != 0);
+
+      U_INTERNAL_PRINT("u_daylight = %d tzname[2] = { %s, %s }",
+                        u_daylight,     tzname[0], tzname[1])
+#  endif
+
+      return true;
+      }
+
+   return false;
 }
 
 void u_init_ulib(char** restrict argv)
@@ -384,7 +473,7 @@ void u_init_ulib(char** restrict argv)
 
    (void) atexit(u_exit);
 
-   u_setStartTime();
+   (void) u_setStartTime();
 }
 
 /*
@@ -1662,24 +1751,38 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                 u_pthread_time)
                {
                /*
-               NB: optimization for high traffic
+               NB: optimization if it is enough a time resolution of one second...
 
+               typedef struct shared_data {
+                  ...........
+                  struct timeval _timeval;
+                  long last_sec[3];
+                  char data_1[17]; // 18/06/12 18:45:56
+                  char  null1[1];  // 123456789012345678901234567890
+                  char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+                  char  null2[1];  // 123456789012345678901234567890
+                  char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+                  char  null3[1];  // 123456789012345678901234567890
+               } shared_data;
+               
                u_now = &(ptr_shared_data->_timeval);
-
-               struct timeval _timeval;
-               char data_1[17]; // 18/06/12 18:45:56
-               char  null1[1];  // 123456789012345678901234567890
-               char data_2[26]; // 04/Jun/2012:18:18:37 +0200
-               char  null2[1];  // 123456789012345678901234567890
-               char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-               char  null3[1];  // 123456789012345678901234567890
                */
 
-               const char* ptr = (const char*)u_now + sizeof(struct timeval);
+               long* last_sec = (long*)((char*)u_now    + sizeof(struct timeval));
+               char* ptr      =         (char*)last_sec + sizeof(long) * 3;
 
-               len = (width == 10 ?                    17  :
-                      width == 11 ? (ptr += 17+1,      26) :
-                                    (ptr += 17+1+26+1, 29));
+               len = (width == 10 ?                        17             :
+                      width == 11 ? (last_sec += 1, ptr += 17+1,      26) :
+                                    (last_sec += 2, ptr += 17+1+26+1, 29));
+
+               if (*last_sec != u_now->tv_sec)
+                  {
+                   *last_sec  = u_now->tv_sec;
+
+                       if (width == 10) (void) u_strftime(ptr, 17, "%d/%m/%y %H:%M:%S",         *last_sec + u_now_adjust);
+                  else if (width == 11) (void) u_strftime(ptr, 26, "%d/%b/%Y:%H:%M:%S %z",      *last_sec + u_now_adjust);
+                  else                  (void) u_strftime(ptr, 29, "%a, %d %b %Y %H:%M:%S GMT", *last_sec);
+                  }
 
                u__memcpy(bp, ptr, len, __PRETTY_FUNCTION__);
 
@@ -2060,10 +2163,10 @@ void u_printf2(int fd, const char* restrict format, ...)
 {
    char buffer[4096];
 
-   U_INTERNAL_TRACE("u_printf2(%d,%s)", fd, format)
-
    va_list argp;
    va_start(argp, format);
+
+   U_INTERNAL_TRACE("u_printf2(%d,%s)", fd, format)
 
    (void) write(fd, buffer, u__vsnprintf(buffer, sizeof(buffer), format, argp));
 
@@ -2091,10 +2194,10 @@ void u__printf(const char* format, ...)
    char buffer[4096];
    uint32_t bytes_written;
 
-   U_INTERNAL_TRACE("u__printf(%s)", format)
-
    va_list argp;
    va_start(argp, format);
+
+   U_INTERNAL_TRACE("u__printf(%s)", format)
 
    bytes_written = u__vsnprintf(buffer, sizeof(buffer)-1, format, argp);
 

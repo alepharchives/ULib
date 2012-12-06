@@ -371,6 +371,8 @@ int UHttpPlugIn::handlerREAD()
 
    if (UHTTP::cbuffer->isNull() == false)
       {
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+
       U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
       U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
 

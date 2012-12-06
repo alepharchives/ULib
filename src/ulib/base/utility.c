@@ -851,6 +851,22 @@ bool u_switch_to_realtime_priority(pid_t pid)
    return result;
 }
 
+void u_get_memusage(uint32_t* vsz, uint32_t* rss)
+{
+   FILE* fp = fopen("/proc/self/stat", "r");
+
+   U_INTERNAL_TRACE("u_get_memusage(%p,%p)", vsz, rss)
+
+   if (fp)
+      {
+      (void) fscanf(fp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %u %u", vsz, rss);
+
+      (void) fclose(fp);
+
+      *rss *= PAGESIZE;
+      }
+}
+
 __pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
 {
    U_INTERNAL_TRACE("u_rmatch(%.*s,%u,%.*s,%u)", U_min(haystack_len,128), haystack, haystack_len,

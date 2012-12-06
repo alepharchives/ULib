@@ -148,8 +148,6 @@ public:
 
    void addMonths(int months);
 
-   static int getMonth(const char* buf) __pure;
-
    void addYears(int years)
       {
       U_TRACE(0, "UTimeDate::addYears(%d)", years)
@@ -227,7 +225,7 @@ public:
       {
       U_TRACE(0, "UTimeDate::setCurrentDate()")
 
-      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
       fromTime(u_now->tv_sec);
       }

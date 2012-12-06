@@ -110,7 +110,7 @@ public:
       {
       U_TRACE(0, "UCache::getTime()")
 
-      U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
       uint32_t now = (uint32_t)(u_now->tv_sec - start);
 

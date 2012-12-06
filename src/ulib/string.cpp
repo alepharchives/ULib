@@ -28,7 +28,7 @@ static ustringrep empty_string_rep_storage = {
    0,                                      // _length
    0,                                      // _capacity
    0,                                      // references
-   (const char*)&empty_string_rep_storage  // str           NB: we need an address because c_str(),isNullTerminated(),...
+   (const char*)&empty_string_rep_storage  // str NB: we need an address because c_str(),isNullTerminated(),...
 };
 
 static uustringrep uustringrepnull      = { &empty_string_rep_storage };
@@ -135,7 +135,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
       // NB: Need an array of char[capacity], plus a terminating null char element,
       //     plus enough for the UStringRep data structure. Whew. Seemingly so needy, yet so elemental...
 
-      r = (UStringRep*) U_MALLOC_STR(sizeof(UStringRep) + capacity + 1, capacity);
+      r = (UStringRep*) UMemoryPool::_malloc_str(sizeof(UStringRep) + capacity + 1, capacity);
 
       r->set(length, capacity - (sizeof(UStringRep) + 1), (const char*)(r + 1));
 
@@ -396,8 +396,8 @@ void UStringRep::release()
    memory._this = 0;
 #endif
 
-   if (_capacity == 0) UMemoryPool::push(this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // no room for data, constant string...
-   else                       U_FREE_STR(this,       _capacity + 1 + sizeof(UStringRep));
+   if (_capacity == 0) UMemoryPool::push(     this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // no room for data, constant string...
+   else                UMemoryPool::_free_str(this,       _capacity + 1 + sizeof(UStringRep));
 }
 
 uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const

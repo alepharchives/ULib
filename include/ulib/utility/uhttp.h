@@ -302,8 +302,8 @@ public:
       u_http_info.method = 0; // NB: this mark the end of http request processing...
       }
 
-   static const char* getHTTPHeaderValuePtr(                        const UString& name, bool nocase);
-   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase);
+   static const char* getHTTPHeaderValuePtr(                        const UString& name, bool nocase) __pure;
+   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
 
    // set HTTP main error message
 
@@ -755,7 +755,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UCServletPage)
 
-      if (relocated) U_FREE_GEN(relocated,size);
+      if (relocated) UMemoryPool::_free(relocated, size);
       }
 
    bool compile(const UString& program);

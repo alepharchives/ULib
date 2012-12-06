@@ -80,10 +80,11 @@ public:
 
    // method VIRTUAL to define
 
-   virtual int  handlerRead()           { return U_NOTIFIER_DELETE; }
-   virtual int  handlerWrite()          { return U_NOTIFIER_DELETE; }
-   virtual void handlerDelete()         { delete this; }
-   virtual void handlerError(int state) {}
+   virtual int handlerRead()           { return U_NOTIFIER_DELETE; }
+   virtual int handlerWrite()          { return U_NOTIFIER_DELETE; }
+   virtual int handlerError(int state) { return U_NOTIFIER_DELETE; }
+
+   virtual void handlerDelete()        { delete this; }
 
 #ifdef USE_LIBEVENT
    UEvent<UEventFd>* pevent;

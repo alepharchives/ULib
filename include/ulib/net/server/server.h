@@ -268,6 +268,7 @@ public:
       ULog::log_data log_data_shared;
    // ---------------------------------
       struct timeval _timeval;
+      long last_sec[3];
       char data_1[17]; // 18/06/12 18:45:56
       char  null1[1];  // 123456789012345678901234567890
       char data_2[26]; // 04/Jun/2012:18:18:37 +0200
@@ -293,6 +294,8 @@ public:
    static uint32_t shared_data_add;
    static shared_data* ptr_shared_data;
 
+   // NB: two step acquisition - first we get the offset, after the pointer...
+
    static void* getOffsetToDataShare(uint32_t shared_data_size)
       {
       U_TRACE(0, "UServer_Base::getOffsetToDataShare(%u)", shared_data_size)
@@ -306,6 +309,8 @@ public:
    static void* getPointerToDataShare(void* shared_data_ptr)
       {
       U_TRACE(0, "UServer_Base::getPointerToDataShare(%p)", shared_data_ptr)
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
       shared_data_ptr = (void*)((ptrdiff_t)ptr_shared_data + (ptrdiff_t)shared_data_ptr);
 
@@ -498,10 +503,6 @@ protected:
    static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
    static void handlerCloseConnection(UClientImage_Base* ptr);
-
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   static void updateSharedCacheTime();
-#endif
 
    // define method VIRTUAL of class UEventFd
 

@@ -92,13 +92,14 @@
  192 sizeof(URDBClient<UTCPSocket>)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
- 216 sizeof(USocket) <==
+ 216 sizeof(USocket)
  216 sizeof(UTCPSocket)
  216 sizeof(UUDPSocket)
+ 240 sizeof(USSLSocket)
+ 240 sizeof(UModNoCatPeer: 32bit) <==
 -------------------------
    U_STACK_TYPE_4
 
- 240 sizeof(USSLSocket)
  248 sizeof(UHttpClient<UTCPSocket>)
  256 sizeof(UFileConfig)
 -------------------------
@@ -126,11 +127,14 @@
    U_STACK_TYPE_9
 */
 
+// NB: con U_NUM_ENTRY_MEM_BLOCK == 32 sono necessari i tipi stack
+//     multipli di 2 a partire da 128 per i blocchi puntatori per 32bit arch...
+
 #define U_STACK_TYPE_0     8U
 #define U_STACK_TYPE_1    24U
 #define U_STACK_TYPE_2    56U
 #define U_STACK_TYPE_3   128U
-#define U_STACK_TYPE_4   216U
+#define U_STACK_TYPE_4   240U
 #define U_STACK_TYPE_5   256U
 #define U_STACK_TYPE_6   512U
 #define U_STACK_TYPE_7  1024U
@@ -151,8 +155,7 @@
                                     (sz) <= U_STACK_TYPE_5 ? 5 : \
                                     (sz) <= U_STACK_TYPE_6 ? 6 : \
                                     (sz) <= U_STACK_TYPE_7 ? 7 : \
-                                    (sz) <= U_STACK_TYPE_8 ? 8 : \
-                                    (sz) <= U_STACK_TYPE_9 ? 9 : 10)
+                                    (sz) <= U_STACK_TYPE_8 ? 8 : 9)
 
 struct U_EXPORT UMemoryPool {
 
@@ -160,7 +163,7 @@ struct U_EXPORT UMemoryPool {
    static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
 #endif
 
-   static uint32_t findStackIndex(uint32_t sz);
+// static uint32_t findStackIndex(uint32_t sz);
 
    // allocazione area di memoria <= U_MAX_SIZE_PREALLOCATE
    // ritorna area di memoria preallocata su stack predefiniti
@@ -203,7 +206,7 @@ extern "C++" {
       U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
       void* ptr = (sz <= U_MAX_SIZE_PREALLOCATE
-                     ? UMemoryPool::_new(findStackIndex(sz + sizeof(int)))
+                     ? UMemoryPool::_new(U_SIZE_TO_STACK_INDEX(sz + sizeof(int)))
                      : U_SYSCALL(malloc, "%u", sz));
 
       U_RETURN(ptr);

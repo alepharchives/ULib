@@ -300,7 +300,7 @@ __pure int UClientImage_Base::genericRead()
       }
 #endif
 
-   handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method: we use the pointer 'this')
+   (void) handlerError(USocket::CONNECT); // NB: we must call function cause of SSL (must be a virtual method: we use the pointer 'this')
 
    // reset buffer before read
 
@@ -382,6 +382,8 @@ bool UClientImage_Base::newConnection()
 
          U_RETURN(false);
          }
+
+      // NB: we don't need to call U_gettimeofday because we have log enabled...
 
       last_event = u_now->tv_sec;
       }
@@ -512,7 +514,7 @@ partial:
 
 // define method VIRTUAL of class UEventFd
 
-void UClientImage_Base::handlerError(int sock_state)
+int UClientImage_Base::handlerError(int sock_state)
 {
    U_TRACE(0, "UClientImage_Base::handlerError(%d)", sock_state)
 
@@ -520,11 +522,25 @@ void UClientImage_Base::handlerError(int sock_state)
 
    U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
 
-   socket->iState = sock_state;
+#if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT)
+   if (UEventFd::fd) // NB: sometime happens that epoll fire event despite fd == 0...
+#endif
+      {
+      socket->iState = sock_state;
 
-   UServer_Base::pClientImage = this;
+      UServer_Base::pClientImage = this;
 
-// if (socket->isTimeout()) {} // maybe we need some specific processing...
+   // if (socket->isTimeout()) {} // maybe we need some specific kind of processing...
+
+      U_RETURN(U_NOTIFIER_DELETE);
+      }
+
+#if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT)
+   if (logbuf) UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s\n",
+                                       U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(*logbuf));
+
+   U_RETURN(U_NOTIFIER_OK);
+#endif
 }
 
 int UClientImage_Base::handlerRead()
@@ -611,8 +627,13 @@ next:
 #ifdef U_HTTP_CACHE_REQUEST
    if ((state & U_PLUGIN_HANDLER_AGAIN) != 0)
       {
-      if ((state & U_PLUGIN_HANDLER_ERROR) == 0) goto end;
-           state = U_PLUGIN_HANDLER_ERROR;
+      if ((state & U_PLUGIN_HANDLER_ERROR) != 0) state = U_PLUGIN_HANDLER_ERROR;
+      else
+         {
+         last_event = u_now->tv_sec;
+
+         U_RETURN(U_NOTIFIER_OK);
+         }
       }
    else
 #endif
@@ -635,7 +656,7 @@ next:
   
       resetPipeline();
 
-      U_INTERNAL_ASSERT_MAJOR(UEventFd::fd,0)
+      U_INTERNAL_ASSERT_MAJOR(UEventFd::fd, 0)
 
       U_RETURN(U_NOTIFIER_DELETE);
       }
@@ -683,9 +704,8 @@ next:
       pbuffer->clear();
       }
 
-#ifdef U_HTTP_CACHE_REQUEST
-end:
-#endif
+   if (logbuf == 0) U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+
    last_event = u_now->tv_sec;
 
    U_RETURN(U_NOTIFIER_OK);

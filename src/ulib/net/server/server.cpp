@@ -125,7 +125,7 @@ UProcess*                         UServer_Base::proc;
 UEventFd*                         UServer_Base::handler_inotify;
 UEventTime*                       UServer_Base::ptime;
 UServer_Base*                     UServer_Base::pthis;
-// struct linger                  UServer_Base::lng = { 1, 0 };
+//struct linger                   UServer_Base::lng = { 1, 0 };
 UVector<UString>*                 UServer_Base::vplugin_name;
 UVector<UString>*                 UServer_Base::vplugin_name_static;
 UClientImage_Base*                UServer_Base::pClientIndex;
@@ -197,7 +197,7 @@ public:
       UTimeVal before, after;
 #  endif
 
-      U_SRV_LOG("Thread watch optimization for time resolution of one second activated (pid %u)", UThread::getTID());
+      U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (pid %u)", UThread::getTID());
 
       int watch_counter  = 1;
       struct timespec ts = { 1L, 0L };
@@ -233,16 +233,14 @@ public:
                after -= before;
                delta  = after.getMilliSecond();
 
-               if (delta >=  1000 ||
-                   delta <= -1000)
+               if (delta >=  1000L ||
+                   delta <= -1000L)
                   {
-                  U_SRV_LOG("Thread watch delta time exceed 1 sec: counter(%d) diff(%ldms)", watch_counter, delta);
+                  U_SRV_LOG("UTimeThread delta time exceed 1 sec: counter(%d) diff(%ld ms)", watch_counter, delta);
                   }
                }
 #        endif
             }
-
-         UServer_Base::updateSharedCacheTime();
          }
       }
 };
@@ -259,34 +257,6 @@ public:
       while (UServer_Base::flag_loop) UNotifier::waitForEvent(UServer_Base::ptime);
       }
 };
-
-void UServer_Base::updateSharedCacheTime()
-{
-   U_TRACE(0, "UServer_Base::updateSharedCacheTime()")
-
-   U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-   U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
-
-   /*
-   u_now = &(ptr_shared_data->_timeval);
-
-   struct timeval _timeval;
-   char data_1[17]; // 18/06/12 18:45:56
-   char  null1[1];  // 123456789012345678901234567890
-   char data_2[26]; // 04/Jun/2012:18:18:37 +0200
-   char  null2[1];  // 123456789012345678901234567890
-   char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-   char  null3[1];  // 123456789012345678901234567890
-   */
-
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval))
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+17+1)
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+17+1+26+1)
-
-   if (isLog())      (void) u_strftime(ptr_shared_data->data_1, 17, "%d/%m/%y %H:%M:%S",         u_now->tv_sec + u_now_adjust);
-   if (isOtherLog()) (void) u_strftime(ptr_shared_data->data_2, 26, "%d/%b/%Y:%H:%M:%S %z",      u_now->tv_sec + u_now_adjust);
-                     (void) u_strftime(ptr_shared_data->data_3, 29, "%a, %d %b %Y %H:%M:%S GMT", u_now->tv_sec);
-}
 #endif
 
 #ifndef __MINGW32__
@@ -474,7 +444,11 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
 #endif
 
-   if (u_start_time == 0) u_setStartTime();
+   if (u_start_time     == 0 &&
+       u_setStartTime() == false)
+      {
+      U_WARNING("System date not updated: %#5D", u_now->tv_sec);
+      }
 
    if (cfg) loadConfigParam(*cfg);
 }
@@ -1305,29 +1279,16 @@ void UServer_Base::init()
       U_ERROR("Plugins initialization FAILED. Going down...");
       }
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-   if (isLog() ||
-       isOtherLog())
-      {
-      U_INTERNAL_ASSERT_EQUALS(u_pthread_time,0)
+   flag_loop = true; // NB: UTimeThread loop depend on this...
 
-      U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
-      }
-#endif
-
-   flag_loop = true;
-
-   U_INTERNAL_DUMP("u_pthread_time = %p shared_data_add = %u", u_pthread_time, shared_data_add)
-
-   if (isPreForked()   ||
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-       u_pthread_time  ||
-#  endif
+   if (isPreForked() ||
        shared_data_add)
       {
       // manage shared data...
 
-      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data,0)
+      U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
+
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data, 0)
 
       ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
 
@@ -1335,16 +1296,36 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      if (u_pthread_time)
-         {
-         u_now = U_NOW;
+      /* NB: optimization if it is enough a time resolution of one second...
 
-         (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+      typedef struct shared_data {
+         ...........
+         struct timeval _timeval;
+         long last_sec[3];
+         char data_1[17]; // 18/06/12 18:45:56
+         char  null1[1];  // 123456789012345678901234567890
+         char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+         char  null2[1];  // 123456789012345678901234567890
+         char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+         char  null3[1];  // 123456789012345678901234567890
+      };
+      */
 
-         updateSharedCacheTime();
+      U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
-         ((UTimeThread*)u_pthread_time)->start();
-         }
+      U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
+
+      U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
+
+      u_now = U_NOW; // &(ptr_shared_data->_timeval);
+
+      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval)+3*sizeof(long))
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1)
+      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1+26+1)
+
+      ((UTimeThread*)u_pthread_time)->start();
 #  endif
       }
 
@@ -1358,7 +1339,14 @@ void UServer_Base::init()
       shared = (preforked_num_kids > 1); // NB: for nodog it is not shared...
 #  endif
 
-      if (shared) ULog::setShared((ptr_shared_data ? U_LOG_DATA_SHARED : 0));
+      if (shared)
+         {
+         ULog::setShared((ptr_shared_data ? U_LOG_DATA_SHARED : 0));
+
+         uint32_t size_shared_data = sizeof(shared_data) + shared_data_add;
+
+         U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d process", size_shared_data, size_shared_data / 1024, preforked_num_kids);
+         }
       }
 
    // init notifier event manager...
@@ -1427,7 +1415,7 @@ void UServer_Base::init()
       msg = "unknow";
 #  endif
 
-      U_SRV_LOG("SSL Server: use %s protocol", msg);
+      U_SRV_LOG("SSL Server use %s protocol", msg);
       }
 #elif defined(U_HTTP_CACHE_REQUEST) && !defined(__MINGW32__)
    UEventFd::op_mask     |= EPOLLET;
@@ -1598,7 +1586,7 @@ loop:
       if (ptime)                 // NB:          check for idle connection...
 #  endif
          {
-         U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
          if ((u_now->tv_sec - pClientIndex->last_event) >= ptime->UTimeVal::tv_sec)
             {
@@ -1879,7 +1867,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
       from_handlerTime = false;
       }
 
-   ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN); // NB: this call set also pClientImage...
+   (void) ((UClientImage_Base*)cimg)->handlerError(USocket::TIMEOUT | USocket::BROKEN); // NB: this call set also pClientImage...
 
    U_INTERNAL_ASSERT_EQUALS(pClientImage, cimg) // NB: U_SRV_LOG_WITH_ADDR macro depend on pClientImage...
 
@@ -1915,14 +1903,14 @@ int UServer_Base::UTimeoutConnection::handlerTime()
 #  ifdef DEBUG
       if (isLog())
          {
-         U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
          long delta = u_now->tv_sec - last_event - ptime->UTimeVal::tv_sec;
 
          if (delta >=  1 ||
              delta <= -1)
             {
-            U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff(%lds)", delta);
+            U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
             }
          }
 #  endif
@@ -1982,7 +1970,7 @@ void UServer_Base::runLoop(const char* user)
 #     ifdef DEBUG
          if (isLog())
             {
-            U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+            U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
             last_event = u_now->tv_sec;
             }
@@ -2010,7 +1998,7 @@ void UServer_Base::runLoop(const char* user)
 #        ifdef DEBUG
             if (isLog())
                {
-               U_gettimeofday; // NB: optimization if it is enough a resolution of one second...
+               U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
                last_event = u_now->tv_sec;
                }
@@ -2039,7 +2027,11 @@ void UServer_Base::run()
 
    init();
 
-   if (u_start_time == 0) u_setStartTime();
+   if (u_start_time     == 0 &&
+       u_setStartTime() == false)
+      {
+      U_ERROR("System date not updated. Going down...");
+      }
 
    if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED)
       {
@@ -2072,8 +2064,6 @@ void UServer_Base::run()
    if (monitoring_process == false) runLoop(user);
    else
       {
-      U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
-
       /**
       * Main loop for the parent process with the new preforked implementation.
       * The parent is just responsible for keeping a pool of children and they accept connections themselves...

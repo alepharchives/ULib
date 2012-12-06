@@ -35,7 +35,7 @@ bool            ULog::log_data_must_be_unmapped;
 ULog*           ULog::pthis;
 char*           ULog::file_limit;
 ULock*          ULog::lock;
-const char*     ULog::fmt = "*** %s %N (pid %P) [%U@%H] ***\n";
+const char*     ULog::fmt = "*** %s %N (%ubit, pid %P) [%U@%H] ***\n";
 const char*     ULog::prefix;
 const char*     ULog::dir_log_gz;
 ULog::log_data* ULog::ptr_log_data;
@@ -60,7 +60,7 @@ void ULog::startup()
 
    U_INTERNAL_ASSERT_POINTER(fmt)
 
-   log(fmt, "STARTUP");
+   log(fmt, "STARTUP", sizeof(void*) * 8);
 
    log("Building Environment: " PLATFORM_VAR " (" __DATE__ ")\n", 0);
 
@@ -70,6 +70,10 @@ void ULog::startup()
    (void) U_SYSCALL(uname, "%p", &u);
 
    log("Current Operating System: %s %s v%s %s\n", u.sysname, u.machine, u.version, u.release);
+#endif
+
+#if defined(__BIG_ENDIAN__) && !defined(__LITTLE_ENDIAN__)
+   log("Big endian arch detected\n", 0);
 #endif
 }
 
@@ -354,7 +358,7 @@ void ULog::close()
 
          lock->lock();
 
-         if (fmt) log(fmt, "SHUTDOWN");
+         if (fmt) log(fmt, "SHUTDOWN", sizeof(void*) * 8);
 
          if (file_limit)
             {
