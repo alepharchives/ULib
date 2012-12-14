@@ -73,8 +73,11 @@ public:
 
    // convert letter to upper or lower case
 
-   static UString tolower(const UString& s);
-   static UString toupper(const UString& s);
+   static UString tolower(const char* s, uint32_t n);
+   static UString toupper(const char* s, uint32_t n);
+
+   static UString tolower(const UString& s) { return tolower(U_STRING_TO_PARAM(s)); }
+   static UString toupper(const UString& s) { return toupper(U_STRING_TO_PARAM(s)); }
 
    // manage pathname
 

@@ -5,12 +5,14 @@ print_page() {
 
 	if [ -r $DIR_TEMPLATE/$REQUEST_URI.tmpl ]; then
 
-		BODY_SHTML=`cat $DIR_TEMPLATE/$REQUEST_URI.tmpl 2>/dev/null`
+		SSI_BODY=`cat $DIR_TEMPLATE/$REQUEST_URI.tmpl 2>/dev/null`
 
 		if [ $# -ne 0 ]; then
-			BODY_SHTML=`printf "$BODY_SHTML" "$@" 2>/dev/null`
+			SSI_BODY=`printf "$SSI_BODY" "$@" 2>/dev/null`
 		fi
 	fi
+
+	EXIT_VALUE=0
 }
 
 message_page() {
@@ -138,6 +140,74 @@ get_user_nome_cognome() {
 		USER="$v1 $v2"
 	else
 		USER=$UUID
+	fi
+}
+
+uscita() {
+
+	rm -f $TMPFILE.out $TMPFILE.err
+
+	if [ $EXIT_VALUE -eq 0 ]; then
+		exit 0
+	fi
+
+	exit 400 # Bad Request
+}
+
+write_SSI() {
+
+	if [ -n "$CONNECTION_CLOSE" ]; then
+		HTTP_RESPONSE_HEADER="Connection: close\r\n$HTTP_RESPONSE_HEADER"
+	fi
+
+	if [ -n  "$HTTP_RESPONSE_HEADER" ]; then
+		echo \"HTTP_RESPONSE_HEADER=$HTTP_RESPONSE_HEADER\"
+	fi
+
+	if [ -n "$HTTP_RESPONSE_BODY" ]; then
+		echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
+	else
+		if [ -z "$SSI_BODY" ]; then
+			EXIT_VALUE=400
+			uscita
+		fi
+
+		if [ -z "$TITLE_TXT" ]; then
+			TITLE_TXT=$TITLE_DEFAULT
+		fi
+
+		echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
+		
+		if [ -n "$SSI_HEAD" ]; then
+			echo "'SSI_HEAD=$SSI_HEAD'"
+		fi
+
+		echo -n -e "$SSI_BODY" > $SSI_FILE_BODY
+	fi
+
+	uscita
+}
+
+main() {
+
+	if [ $DEBUG -eq 0 ]; then
+		do_cmd "$@"
+	else
+		DBG_FILE_OUT=/tmp/main_$$.out
+		DBG_FILE_ERR=/tmp/main_$$.err
+		(
+		echo "ENVIRONMENT:"
+		echo "-----------------------------------------------------------"
+		env
+		echo "-----------------------------------------------------------"
+		echo "STDERR:"
+		echo "-----------------------------------------------------------"
+		set -x
+		do_cmd "$@"
+		set +x
+		) > $DBG_FILE_OUT 2>>$DBG_FILE_ERR
+		echo "-----------------------------------------------------------" 2>>$DBG_FILE_ERR >&2
+		cat $DBG_FILE_OUT
 	fi
 }
 #-----------------------------------

@@ -76,7 +76,7 @@ public:
 
    static void setAlternativeRedirect(const char* fmt, ...);
    static void setAlternativeResponse(const UString& _body);
-   static void setAlternativeInclude(const UString& tmpl, const char* title_txt, const char* head_html, const char* body_style, ...);
+   static void setAlternativeInclude(const UString& tmpl, bool bprocess, const char* title_txt, const char* ssi_head, const char* body_style, ...);
 
    // DEBUG
 

@@ -1,6 +1,6 @@
 # .functions
 
-export TITLE_TXT TITLE_HTML HEAD_HTML BODY_SHTML BODY_STYLE \
+export TITLE_TXT TITLE_HTML SSI_HEAD SSI_BODY BODY_STYLE \
 		 tipo TIPO TMP_FORM_FILE SET_COOKIE CONNECTION_CLOSE NUM_START NUM_END NUM_DOC FOR_PAGE pagina_corrente link_paginazione
 
 write_SSI() {
@@ -21,8 +21,8 @@ write_SSI() {
       EXIT_VALUE=1
 	fi
 
-	echo -n -e "$HEAD_HTML"	 > $FILE_HEAD_HTML
-	echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
+	echo -n -e "$SSI_HEAD" > $SSI_FILE_HEAD
+	echo -n -e "$SSI_BODY" > $SSI_FILE_BODY
 
 	echo	  -e "TITLE_TXT=$TITLE_TXT\nTITLE_HTML=$TITLE_HTML\nBODY_STYLE=$BODY_STYLE"
 

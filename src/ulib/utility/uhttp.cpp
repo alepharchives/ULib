@@ -84,14 +84,16 @@ UString*    UHTTP::cache_file_mask;
 UString*    UHTTP::uri_protected_mask;
 UString*    UHTTP::uri_request_cert_mask;
 UString*    UHTTP::maintenance_mode_page;
+UString*    UHTTP::string_HTTP_Variables;
 UString*    UHTTP::uri_strict_transport_security_mask;
-uint32_t    UHTTP::sid_counter_gen;
-uint32_t    UHTTP::sid_counter_cur;
+uint32_t    UHTTP::npathinfo;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
+uint32_t    UHTTP::sid_counter_gen;
+uint32_t    UHTTP::sid_counter_cur;
+uint32_t    UHTTP::limit_request_body = U_STRING_LIMIT;
 uint32_t    UHTTP::request_read_timeout;
 uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size it is better to use sendfile()...
-uint32_t    UHTTP::limit_request_body = U_STRING_LIMIT;
 UStringRep* UHTTP::pkey;
 const char* UHTTP::ptrH;
 const char* UHTTP::ptrC;
@@ -789,23 +791,19 @@ void UHTTP::ctor()
    -------------------------------------------------------------------------------------------------------------------------------------------
    SERVER_PORT
    SERVER_ADDR
-   SERVER_NAME
-      Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
-   SERVER_SOFTWARE
-      Name and version of the information server software answering the request (and running the gateway). Format: name/version.
-   GATEWAY_INTERFACE
-      CGI specification revision with which this server complies. Format: CGI/revision.
-   DOCUMENT_ROOT
-      The root directory of your server.
+   SERVER_NAME       - Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
+   DOCUMENT_ROOT     - The root directory of your server.
+   SERVER_SOFTWARE   - Name and version of the information server software answering the request (and running the gateway). Format: name/version.
+   GATEWAY_INTERFACE - CGI specification revision with which this server complies. Format: CGI/revision.
 
    Example:
    ----------------------------------------------------------------------------------------------------------------------------
    SERVER_PORT=80
    SERVER_ADDR=127.0.0.1
    SERVER_NAME=localhost
+   DOCUMENT_ROOT="/var/www/localhost/htdocs"
    SERVER_SOFTWARE=Apache
    GATEWAY_INTERFACE=CGI/1.1
-   DOCUMENT_ROOT="/var/www/localhost/htdocs"
    ----------------------------------------------------------------------------------------------------------------------------
    */
 
@@ -821,7 +819,8 @@ void UHTTP::ctor()
                                             U_STRING_TO_TRACE(ip_server),
                                             UServer_Base::port);
 
-   (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"
+   (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM(
+                                             "GATEWAY_INTERFACE=CGI/1.1\n"
                                              "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n" // The server software you're using (such as Apache 1.3)
                                              "PATH=/usr/local/bin:/usr/bin:/bin\n"                 // The system path your server is running under
                                              "REDIRECT_STATUS=200\n"));
@@ -1000,6 +999,7 @@ void UHTTP::dtor()
    if (uri_protected_mask)                 delete uri_protected_mask;
    if (uri_request_cert_mask)              delete uri_request_cert_mask;
    if (maintenance_mode_page)              delete maintenance_mode_page;
+   if (string_HTTP_Variables)              delete string_HTTP_Variables;
    if (uri_strict_transport_security_mask) delete uri_strict_transport_security_mask;
 
    if (file)
@@ -1675,6 +1675,8 @@ bool UHTTP::readHTTPHeader(USocket* s, UString& buffer)
    if ( sz < 18 && // 18 -> "GET / HTTP/1.0\r\n\r\n"
        (sz <  4 || (*(uint32_t*)(buffer.c_pointer(sz - 4)) != (*(uint32_t*)U_CRLF2))))
       {
+      if (buffer.isBinary()) U_RETURN(false);
+
 read:
       if (USocketExt::read(s, buffer, 18, UServer_Base::timeoutMS, request_read_timeout) == false)
          {
@@ -6348,165 +6350,157 @@ bool UHTTP::callService(const UString& path)
 }
 
 /*
-Set up CGI environment variables.
-The following table describes common CGI environment variables that the server creates (some of these are not available with some servers):
+Set up CGI environment variables. The following table describes common CGI environment variables that the server
+creates (some of these are not available with some servers):
 
-CGI server variable  Description
+CGI server variable Description
 -------------------------------------------------------------------------------------------------------------------------------------------
-SERVER_SOFTWARE
-   Name and version of the information server software answering the request (and running the gateway). Format: name/version.
-SERVER_NAME
-   Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
-GATEWAY_INTERFACE
-   CGI specification revision with which this server complies. Format: CGI/revision.
-SERVER_PROTOCOL
-   Name and revision of the information protocol this request came in with. Format: protocol/revision.
-SERVER_PORT
-   Port number to which the request was sent.
-REQUEST_METHOD
-   Method with which the request was made. For HTTP, this is Get, Head, Post, and so on.
-PATH_INFO
-   Extra path information, as given by the client. Scripts can be accessed by their virtual pathname, followed by extra information at the end
-   of this path. The extra information is sent as PATH_INFO.
-PATH_TRANSLATED
-   Translated version of PATH_INFO after any virtual-to-physical mapping.
-SCRIPT_NAME
-   Virtual path to the script that is executing; used for self-referencing URLs.
-QUERY_STRING
-   Query information that follows the ? in the URL that referenced this script.
-REMOTE_HOST
-   Hostname making the request. If the server does not have this information, it sets REMOTE_ADDR and does not set REMOTE_HOST.
-REMOTE_ADDR
-   IP address of the remote host making the request.
-AUTH_TYPE
-   If the server supports user authentication, and the script is protected, the protocol-specific authentication method used to validate the user.
-AUTH_USER
-REMOTE_USER
-   If the server supports user authentication, and the script is protected, the username the user has authenticated as. (Also available as AUTH_USER.)
-REMOTE_IDENT
-   If the HTTP server supports RFC 931 identification, this variable is set to the remote username retrieved from the server.
-   Use this variable for logging only.
-CONTENT_TYPE
-   For queries that have attached information, such as HTTP POST and PUT, this is the content type of the data.
-CONTENT_LENGTH
-   Length of the content as given by the client.
+AUTH_TYPE         - If the server supports user authentication, and the script is protected, the protocol-specific
+                    authentication method used to validate the user.
+PATH_INFO         - The remainder of the request URL 'path', designating the virtual 'location' of the request
+                    target within the application. This may be an empty string, if the request URL targets the
+                    application root and does not have a trailing slash. This value may be percent-encoded when I
+                    originating from a URL. Scripts can be accessed by their virtual pathname, followed by this
+                    extra information at the end of this path. This extra information is sent as PATH_INFO. If
+                    non-empty, must start with /.
+SCRIPT_NAME       - The initial portion of the request URL 'path' that corresponds to the application object, so that
+                    the application knows its virtual 'location'. This may be an empty string, if the application
+                    corresponds to the 'root' of the server. If non-empty, must start with /
+REMOTE_USER       - If the server supports user authentication, and the script is protected, the username the user has
+                    authenticated as. (Also available as AUTH_USER)
+SERVER_PORT       - Port number to which the request was sent.
+SERVER_NAME       - Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs.
+                    When SERVER_NAME and SERVER_PORT are combined with SCRIPT_NAME and PATH_INFO, these variables can be
+                    used to complete the URL. Note, however, that HTTP_HOST, if present, should be used in preference to
+                    SERVER_NAME for reconstructing the request URL. SERVER_NAME and SERVER_PORT can never be empty strings,
+                    and so are always required.
+REMOTE_HOST       - Hostname making the request. If the server does not have this information, it sets REMOTE_ADDR and does not set REMOTE_HOST.
+REMOTE_ADDR       - IP address of the remote host making the request.
+REMOTE_IDENT      - If the HTTP server supports RFC 931 identification, this variable is set to the remote username
+                    retrieved from the server. Use this variable for logging only.
+QUERY_STRING      - The portion of the request URL that follows the ?, if any. May be empty, but is always required!
+CONTENT_TYPE      - For queries that have attached information, such as HTTP POST and PUT, this is the content type of the data.
+REQUEST_METHOD    - The HTTP request method, such as 'GET' or 'POST'. This cannot ever be an empty string, and so is always required.
+CONTENT_LENGTH    - Length of the content as given by the client. If given, must consist of digits only.
+PATH_TRANSLATED   - Translated version of PATH_INFO after any virtual-to-physical mapping.
+SERVER_PROTOCOL   - Name and revision of the information protocol this request came in with. Format: protocol/revision.
+SERVER_SOFTWARE   - Name and version of the information server software answering the request (and running the gateway). Format: name/version.
+GATEWAY_INTERFACE - CGI specification revision with which this server complies. Format: CGI/revision.
 
-CERT_ISSUER
-   Issuer field of the client certificate (O=MS, OU=IAS, CN=user name, C=USA).
-CERT_SUBJECT
-   Subject field of the client certificate.
-CERT_SERIALNUMBER
-   Serial number field of the client certificate.
+CERT_ISSUER       - Issuer field of the client certificate (O=MS, OU=IAS, CN=user name, C=USA).
+CERT_SUBJECT      - Subject field of the client certificate.
+CERT_SERIALNUMBER - Serial number field of the client certificate.
 -------------------------------------------------------------------------------------------------------------------------------------------
 
 The following table describes common CGI environment variables the browser creates and passes in the request header:
 
-CGI client variable  Description
+CGI client variable      Description
 -------------------------------------------------------------------------------------------------------------------------------------------
-HTTP_REFERER
-   The referring document that linked to or submitted form data.
-HTTP_USER_AGENT
-   The browser that the client is currently using to send the request. Format: software/version library/version.
-HTTP_IF_MODIFIED_SINCE
-   The last time the page was modified. The browser determines whether to set this variable, usually in response to the server having sent
-   the LAST_MODIFIED HTTP header. It can be used to take advantage of browser-side caching.
+HTTP_REFERER           - The referring document that linked to or submitted form data.
+HTTP_USER_AGENT        - The browser that the client is currently using to send the request. Format: software/version library/version.
+HTTP_IF_MODIFIED_SINCE - The last time the page was modified. The browser determines whether to set this variable, usually in response
+                         to the server having sent the LAST_MODIFIED HTTP header. It can be used to take advantage of browser-side caching.
 -------------------------------------------------------------------------------------------------------------------------------------------
 
+HTTP_Variables: Variables corresponding to the client-supplied HTTP request headers (i.e., variables whose names begin with HTTP_).
+                The presence or absence of these variables should correspond with the presence or absence of the appropriate HTTP
+                header in the request. The environment must not contain the keys HTTP_CONTENT_TYPE or HTTP_CONTENT_LENGTH
+                (use the versions without HTTP_).
+
+There are the following restrictions:
+
+1) One of SCRIPT_NAME or PATH_INFO must be set. PATH_INFO should be / if SCRIPT_NAME is empty. SCRIPT_NAME never should be /, but instead be empty.
+2) http://${SERVER_NAME}:${SERVER_PORT}${SCRIPT_NAME}${PATH_INFO} will always be an accessible URL that points to the current script.
+
 Example:
-----------------------------------------------------------------------------------------------------------------------------
-GATEWAY_INTERFACE=CGI/1.1
-QUERY_STRING=
+-------------------------------------------------------------------------------------------------------------------------------------------
+PATH="/lib64/rc/sbin:/lib64/rc/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
+UNIQUE_ID="b032zQoeAYMAAA-@BZwAAAAA"
 REMOTE_ADDR=127.0.0.1
-REQUEST_METHOD=GET
 SCRIPT_NAME=/cgi-bin/printenv
 SERVER_NAME=localhost
 SERVER_PORT=80
-SERVER_PROTOCOL=HTTP/1.1
-SERVER_SOFTWARE=Apache
-
-HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
-PATH="/lib64/rc/sbin:/lib64/rc/bin:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin"
-SCRIPT_FILENAME="/var/www/localhost/cgi-bin/printenv"
-HTTP_COOKIE="_saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;"
-
-DOCUMENT_ROOT="/var/www/localhost/htdocs"
-HTTP_ACCEPT="text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png"
-HTTP_ACCEPT_CHARSET="ISO-8859-1,utf-8;q=0.7,*;q=0.7"
-HTTP_ACCEPT_ENCODING="gzip, deflate"
-HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
-HTTP_CONNECTION="keep-alive"
-HTTP_HOST="localhost"
-HTTP_KEEP_ALIVE="300"
-HTTP_USER_AGENT="Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.8.1.14) Gecko/20080421 Firefox/2.0.0.14"
 REQUEST_URI="/cgi-bin/printenv"
 REMOTE_PORT="35653"
 SERVER_ADDR="127.0.0.1"
 SERVER_ADMIN="root@localhost"
+QUERY_STRING=
+DOCUMENT_ROOT="/var/www/localhost/htdocs"
+REQUEST_METHOD=GET
+SERVER_SOFTWARE=Apache
+SERVER_PROTOCOL=HTTP/1.1
+SCRIPT_FILENAME="/var/www/localhost/cgi-bin/printenv"
 SERVER_SIGNATURE="<address>Apache Server at localhost Port 80</address>\n"
-UNIQUE_ID="b032zQoeAYMAAA-@BZwAAAAA"
-----------------------------------------------------------------------------------------------------------------------------
+GATEWAY_INTERFACE=CGI/1.1
 
-http://$SERVER_NAME:$SERVER_PORT$SCRIPT_NAME$PATH_INFO will always be an accessible URL that points to the current script...
+HTTP_HOST="localhost"
+HTTP_COOKIE="_saml_idp=dXJuOm1hY2U6dGVzdC5zXRo; _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost;"
+HTTP_ACCEPT="text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,text/plain;q=0.8,image/png"
+HTTP_KEEP_ALIVE="300"
+HTTP_USER_AGENT="Mozilla/5.0 (X11; U; Linux x86_64; en-US; rv:1.8.1.14) Gecko/20080421 Firefox/2.0.0.14"
+HTTP_CONNECTION="keep-alive"
+HTTP_ACCEPT_CHARSET="ISO-8859-1,utf-8;q=0.7,*;q=0.7"
+HTTP_ACCEPT_ENCODING="gzip, deflate"
+HTTP_ACCEPT_LANGUAGE="en-us,en;q=0.5"
+-------------------------------------------------------------------------------------------------------------------------------------------
 */
 
-UString UHTTP::getCGIEnvironment()
+U_NO_EXPORT void UHTTP::add_HTTP_Variables(UStringRep* key, void* value)
 {
-   U_TRACE(0, "UHTTP::getCGIEnvironment()")
+   U_TRACE(0+256, "UHTTP::add_HTTP_Variables(%.*S,%.*S)", U_STRING_TO_TRACE(*key), U_STRING_TO_TRACE(*(UStringRep*)value))
+
+   U_INTERNAL_ASSERT_POINTER(value)
+
+   UString buffer(20U + key->size() + ((UStringRep*)value)->size()), name = UStringExt::toupper(U_STRING_TO_PARAM(*key));
+
+   (void) buffer.snprintf("'HTTP_%*.s=%.*s'\n", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(*(UStringRep*)value));
+
+   (void) string_HTTP_Variables->append(buffer);
+}
+
+UString UHTTP::getCGIEnvironment(bool bHTTP_Variables)
+{
+   U_TRACE(0, "UHTTP::getCGIEnvironment(%b)", bHTTP_Variables)
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::pClientImage->client_address)
 
-   const char* cgi_dir;
-   UString _uri = getRequestURI(),
-           buffer(4000U + u_http_info.query_len + u_http_info.referer_len + u_http_info.user_agent_len);
+   UString _uri            = getRequestURI(), buffer(4000U + u_http_info.query_len + u_http_info.referer_len + u_http_info.user_agent_len);
+   uint32_t agent          = getUserAgent();
+   int remote_port         = UServer_Base::pClientImage->socket->remotePortNumber(); 
+   const char* remote_addr = UServer_Base::pClientImage->client_address;
 
    U_INTERNAL_DUMP("u_mime_index = %C", u_mime_index)
 
-   if (u_is_cgi() == false) cgi_dir = "";
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(file_data)
-
-      cgi_dir = ((UHTTP::ucgi*)file_data->ptr)->dir;
-      }
+   const char* cgi_dir = (u_is_cgi() ? (bHTTP_Variables = true, ((UHTTP::ucgi*)file_data->ptr)->dir) : "");
 
    U_INTERNAL_DUMP("cgi_dir = %S", cgi_dir)
 
-   buffer.snprintf("CONTENT_LENGTH=%u\n" // The first header must have the name "CONTENT_LENGTH" and a value that is body length in decimal.
-                                         // The "CONTENT_LENGTH" header must always be present, even if its value is "0".
-                // "REMOTE_HOST=%.*s\n"  // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is the IP address again)
-                // "REMOTE_USER=%.*s\n"  // The visitor's username (for .htaccess-protected pages)
-                // "SERVER_ADMIN=%.*s\n" // The email address for your server's webmaster
-                   "REMOTE_ADDR=%s\n"    // The IP address of the visitor
-                   "REMOTE_PORT=%u\n"    // The port the visitor is connected to on the web server
-                   "SESSION_ID=%s:%u\n"  // The IP address of the visitor + HTTP_USER_AGENT hashed
+   buffer.snprintf("CONTENT_LENGTH=%u\n"   // The first header must have the name "CONTENT_LENGTH" and a value that is body length in decimal.
+                                           // The "CONTENT_LENGTH" header must always be present, even if its value is "0".
+                // "REMOTE_HOST=%.*s\n"    // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is IP address again)
+                // "REMOTE_USER=%.*s\n"    // The visitor's username (for .htaccess-protected pages)
+                // "SERVER_ADMIN=%.*s\n"   // The email address for your server's webmaster
+                   "REMOTE_PORT=%d\n"      // The port the visitor is connected to on the web server
+                   "REMOTE_ADDR=%s\n"      // The IP address of the visitor
+                   "SESSION_ID=%s:%u\n"    // The IP address of the visitor        + HTTP_USER_AGENT hashed (NB: it is weak respect to netfilter MASQUERADE)
+                   "REQUEST_ID=%s:%d:%u\n" // The IP address of the visitor + port + HTTP_USER_AGENT hashed
                    "SERVER_PROTOCOL=HTTP/1.%c\n"
-                   "SCRIPT_NAME=%.*s\n"  // The interpreted pathname of the current CGI (relative to the document root)
                    // ext
                    "PWD=%w/%s\n"
                    "SCRIPT_FILENAME=%w%.*s\n" // The full pathname of the current CGI (is used by PHP for determining the name of script to execute)
                    // PHP
                    "REQUEST_METHOD=%.*s\n",   // dealing with POST requests
                    (isHttpPOST() ? UClientImage_Base::body->size() : 0),
-                   UServer_Base::pClientImage->client_address,
-                   UServer_Base::pClientImage->socket->remotePortNumber(),
-                   UServer_Base::pClientImage->client_address, getUserAgent(),
+                   remote_port,
+                   remote_addr,
+                   remote_addr,              agent,
+                   remote_addr, remote_port, agent,
                    (U_http_version ? U_http_version : '0'),
-                   U_HTTP_URI_TO_TRACE,
                    // ext
                    cgi_dir,
                    U_HTTP_URI_TO_TRACE,
                    // PHP
                    U_HTTP_METHOD_TO_TRACE);
-
-   // The hostname of your server from header's request.
-   // The difference between HTTP_HOST and U_HTTP_VHOST is that
-   // HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
-
-   if (u_http_info.host_len)
-      {
-                        buffer.snprintf_add("HTTP_HOST=%.*s\n",    U_HTTP_HOST_TO_TRACE);
-      if (virtual_host) buffer.snprintf_add("VIRTUAL_HOST=%.*s\n", U_HTTP_VHOST_TO_TRACE);
-      }
 
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl)
@@ -6530,6 +6524,58 @@ UString UHTTP::getCGIEnvironment()
       }
 #endif
 
+   if (u_http_info.content_type_len) buffer.snprintf_add("'CONTENT_TYPE=%.*s'\n", U_HTTP_CTYPE_TO_TRACE);
+
+   if (npathinfo == 0)
+      {
+      buffer.snprintf_add("SCRIPT_NAME=%.*s\n", U_HTTP_URI_TO_TRACE); // The interpreted pathname of the current CGI (relative to the document root)
+      }
+   else
+      {
+      UString scriptname(u_http_info.uri,                                   npathinfo),
+                pathinfo(u_http_info.uri + npathinfo, u_http_info.uri_len - npathinfo);
+
+      buffer.snprintf_add("SCRIPT_NAME=%.*s\n"
+                            "PATH_INFO=%.*s\n",
+                          U_STRING_TO_TRACE(scriptname),
+                          U_STRING_TO_TRACE(pathinfo));
+      }
+
+   UMimeHeader requestHeader;
+   UHashMap<UString>* prequestHeader = 0;
+
+   if (bHTTP_Variables)
+      {
+      requestHeader.setIgnoreCase(true);
+
+      if (requestHeader.parse(UClientImage_Base::request->c_pointer(u_http_info.startHeader), u_http_info.szHeader))
+         {
+         // The environment must not contain the keys HTTP_CONTENT_TYPE or HTTP_CONTENT_LENGTH (use the versions without HTTP_).
+
+         requestHeader.removeHeader(*USocket::str_content_type);
+         requestHeader.removeHeader(*USocket::str_content_length);
+
+         if (requestHeader.empty() == false) prequestHeader = &(requestHeader.table);
+         }
+      }
+
+   // The hostname of your server from header's request.
+   // The difference between HTTP_HOST and U_HTTP_VHOST is that
+   // HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
+
+   if (u_http_info.host_len)
+      {
+                        buffer.snprintf_add("HTTP_HOST=%.*s\n",    U_HTTP_HOST_TO_TRACE);
+      if (virtual_host) buffer.snprintf_add("VIRTUAL_HOST=%.*s\n", U_HTTP_VHOST_TO_TRACE);
+
+      if (prequestHeader)
+         {
+         requestHeader.removeHeader(*USocket::str_host);
+
+         if (requestHeader.empty()) prequestHeader = 0;
+         }
+      }
+
    // The visitor's cookie, if one is set
    // ------------------------------------------------------------------------------------------------------------------
    // Cookie: _saml_idp=dXJuOm1hY2U6dGVzdC5zXRo, _redirect_user_idp=urn%3Amace%3Atest.shib%3Afederation%3Alocalhost; ...
@@ -6552,16 +6598,66 @@ UString UHTTP::getCGIEnvironment()
          (void) buffer.append(cookie);
          (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
          }
+
+      if (prequestHeader)
+         {
+         requestHeader.removeHeader(*USocket::str_cookie);
+
+         if (requestHeader.empty()) prequestHeader = 0;
+         }
       }
 
    // The URL of the page that called your script
-   if (u_http_info.referer_len) buffer.snprintf_add("'HTTP_REFERER=%.*s'\n",  U_HTTP_REFERER_TO_TRACE);
+
+   if (u_http_info.referer_len)
+      {
+      buffer.snprintf_add("'HTTP_REFERER=%.*s'\n", U_HTTP_REFERER_TO_TRACE);
+
+      if (prequestHeader)
+         {
+         requestHeader.removeHeader(*USocket::str_referer);
+
+         if (requestHeader.empty()) prequestHeader = 0;
+         }
+      }
 
    // The browser type of the visitor
-   if (u_http_info.accept_len)          buffer.snprintf_add("'HTTP_ACCEPT=%.*s'\n",          U_HTTP_ACCEPT_TO_TRACE);
-   if (u_http_info.user_agent_len)      buffer.snprintf_add("'HTTP_USER_AGENT=%.*s'\n",      U_HTTP_USER_AGENT_TO_TRACE);
-   if (u_http_info.content_type_len)    buffer.snprintf_add("'CONTENT_TYPE=%.*s'\n",         U_HTTP_CTYPE_TO_TRACE);
-   if (u_http_info.accept_language_len) buffer.snprintf_add("'HTTP_ACCEPT_LANGUAGE=%.*s'\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
+
+   if (u_http_info.accept_len)
+      {
+      buffer.snprintf_add("'HTTP_ACCEPT=%.*s'\n", U_HTTP_ACCEPT_TO_TRACE);
+
+      if (prequestHeader)
+         {
+         requestHeader.removeHeader(*USocket::str_accept);
+
+         if (requestHeader.empty()) prequestHeader = 0;
+         }
+      }
+
+   if (u_http_info.user_agent_len)
+      {
+      buffer.snprintf_add("'HTTP_USER_AGENT=%.*s'\n", U_HTTP_USER_AGENT_TO_TRACE);
+
+      if (prequestHeader)
+         {
+         requestHeader.removeHeader(*USocket::str_user_agent);
+
+         if (requestHeader.empty()) prequestHeader = 0;
+         }
+      }
+
+   if (u_http_info.accept_language_len)
+      {
+      buffer.snprintf_add("'HTTP_ACCEPT_LANGUAGE=%.*s'\n", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE);
+
+      if (prequestHeader)
+         {
+         requestHeader.removeHeader(*USocket::str_accept_language);
+
+         if (requestHeader.empty()) prequestHeader = 0;
+         }
+      }
 
    if (buffer.isBinary())
       {
@@ -6577,6 +6673,17 @@ UString UHTTP::getCGIEnvironment()
 
    // The interpreted pathname of the requested document or CGI (relative to the document root)
    buffer.snprintf_add("'REQUEST_URI=%.*s'\n", U_STRING_TO_TRACE(_uri));
+
+   if (prequestHeader)
+      {
+      if (string_HTTP_Variables == 0) string_HTTP_Variables = U_NEW(UString(U_CAPACITY));
+
+      prequestHeader->callForAllEntry(add_HTTP_Variables);
+
+      (void) buffer.append(*string_HTTP_Variables);
+
+      string_HTTP_Variables->clear();
+      }
 
    (void) buffer.append(*geoip);
    (void) buffer.append(*UServer_Base::senvironment);
@@ -7200,7 +7307,7 @@ bool UHTTP::processCGIRequest(UCommand& cmd, UString* penv, const char* cgi_dir,
 
    if (environment.empty())
       {
-      environment = getCGIEnvironment();
+      environment = getCGIEnvironment(true);
 
       if (environment.empty())
          {

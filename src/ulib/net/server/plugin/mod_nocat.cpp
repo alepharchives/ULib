@@ -1269,7 +1269,9 @@ bool UNoCatPlugIn::checkAuthMessage(UModNoCatPeer* peer, const UString& msg)
       }
    else if (action == *str_Deny)
       {
-      if (peer->checkPeerInfo(true) == false) deny(peer, false);
+      (void) peer->checkPeerInfo(true);
+
+      deny(peer, false);
       }
    else
       {
@@ -1569,7 +1571,10 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
 
          U_INTERNAL_DUMP("time_no_traffic = %ld", time_no_traffic)
 
-         U_SRV_LOG("Peer IP %s MAC %.*s has made no traffic for %ld secs", UIPAddress::pcStrAddress, U_STRING_TO_TRACE(mac), time_no_traffic);
+         if (time_no_traffic)
+            {
+            U_SRV_LOG("Peer IP %s MAC %.*s has made no traffic for %ld secs", UIPAddress::pcStrAddress, U_STRING_TO_TRACE(mac), time_no_traffic);
+            }
          }
 
       bool result = true;
@@ -2345,7 +2350,9 @@ int UNoCatPlugIn::handlerRequest()
                   }
                else
                   {
-                  if (peer->checkPeerInfo(true) == false) deny(peer, false);
+                  (void) peer->checkPeerInfo(true);
+
+                  deny(peer, false);
 
                   notifyAuthOfUsersInfo(index_AUTH);
                   }

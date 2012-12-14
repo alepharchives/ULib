@@ -158,7 +158,7 @@ int USCGIPlugIn::handlerRequest()
 
       char* equalPtr;
       char* envp[128];
-      UString environment = UHTTP::getCGIEnvironment();
+      UString environment = UHTTP::getCGIEnvironment(true);
 
       if (environment.empty())
          {

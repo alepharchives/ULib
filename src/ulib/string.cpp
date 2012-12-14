@@ -465,22 +465,32 @@ __pure bool UStringRep::isBase64(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBase64(%u)", pos)
 
-   U_INTERNAL_ASSERT_MINOR(pos,_length)
+   if (_length)
+      {
+      U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-   bool result = u_isBase64(str + pos, _length - pos);
+      bool result = u_isBase64(str + pos, _length - pos);
 
-   U_RETURN(result);
+      U_RETURN(result);
+      }
+
+   U_RETURN(false);
 }
 
 __pure bool UStringRep::isWhiteSpace(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isWhiteSpace(%u)", pos)
 
-   U_INTERNAL_ASSERT_MINOR(pos,_length)
+   if (_length)
+      {
+      U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-   bool result = u_isWhiteSpace(str + pos, _length - pos);
+      bool result = u_isWhiteSpace(str + pos, _length - pos);
 
-   U_RETURN(result);
+      U_RETURN(result);
+      }
+
+   U_RETURN(false);
 }
 
 __pure bool UStringRep::someWhiteSpace(uint32_t pos) const
@@ -533,22 +543,32 @@ __pure bool UStringRep::isText(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isText(%u)", pos)
 
-   U_INTERNAL_ASSERT_MINOR(pos,_length)
+   if (_length)
+      {
+      U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-   bool result = u_isText((const unsigned char*)(str + pos), _length - pos);
+      bool result = u_isText((const unsigned char*)(str + pos), _length - pos);
 
-   U_RETURN(result);
+      U_RETURN(result);
+      }
+
+   U_RETURN(false);
 }
 
 __pure bool UStringRep::isBinary(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBinary(%u)", pos)
 
-   U_INTERNAL_ASSERT_MINOR(pos,_length)
+   if (_length)
+      {
+      U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-   bool result = u_isBinary((const unsigned char*)(str + pos), _length - pos);
+      bool result = u_isBinary((const unsigned char*)(str + pos), _length - pos);
 
-   U_RETURN(result);
+      U_RETURN(result);
+      }
+
+   U_RETURN(false);
 }
 
 __pure bool UStringRep::isUTF8(uint32_t pos) const

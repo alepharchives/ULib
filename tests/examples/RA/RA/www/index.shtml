@@ -7,7 +7,7 @@
 <!--#endif -->
   <title><!--#echo var=$TITLE_TXT --></title>
   <link type="text/css" href="/css/style.css" rel="stylesheet">
-  <!--#include direct=$FILE_HEAD_HTML -->
+  <!--#include direct=$SSI_FILE_HEAD -->
 </head>
 <body <!--#echo var=$BODY_STYLE -->>
 <!--#if expr="! ($REQUEST_URI ^= /stampa-rid)" -->
@@ -24,7 +24,7 @@
   </table>
   <hr>
 <!--#endif -->
-  <!--#include direct=$FILE_BODY_SHTML -->
+  <!--#include direct=$SSI_FILE_BODY -->
 <!--#if expr="! ($REQUEST_URI ^= /stampa)" -->
   <hr><address>ULib Server</address>
 <!--#endif -->

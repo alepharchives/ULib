@@ -4,13 +4,13 @@
 
 sync
 echo -----------------------------------------------------------------------------------------------------------------------------------
-grep --colour -i -E -e assert /tmp/userver-firenze_*.err
+grep --colour -i -E -e 'assert|OVERLAP' /tmp/userver-*.err
 echo -----------------------------------------------------------------------------------------------------------------------------------
-grep --colour -i -E -e 'ERROR|ABORT|ASSERT' /var/log/userver-firenze_*.log /var/log/uclient-firenze.log | grep -v 'SSL EOF observed that violates the protocol'
+grep --colour -i -E -e 'ERROR|ABORT|ASSERT' /var/log/userver-*.log /var/log/uclient-*.log | grep -v 'SSL EOF observed that violates the protocol'
 echo -----------------------------------------------------------------------------------------------------------------------------------
-grep --colour -i -E -e 'Bad Req| write ' /var/log/userver-firenze_*.log
+grep --colour -i -E -e 'Bad Req| diff|detected' /var/log/userver-*.log
 echo -----------------------------------------------------------------------------------------------------------------------------------
-# zcat /var/log/userver-firenze_*.gz | grep --colour -i -E -e 'ERROR|ABORT|ASSERT' | grep -v 'SSL EOF observed that violates the protocol'
+#zcat /var/log/userver-*.gz | grep --colour -i -E -e 'ERROR|ABORT|ASSERT' | grep -v 'SSL EOF observed that violates the protocol'
 echo -----------------------------------------------------------------------------------------------------------------------------------
-# zcat /var/log/wi-auth-logs-archives/*.gz | grep --colour -i -E -e 'ERROR|ABORT|ASSERT'
+zcat /var/log/wi-auth-logs-archives/*.gz | grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV'
 echo -----------------------------------------------------------------------------------------------------------------------------------

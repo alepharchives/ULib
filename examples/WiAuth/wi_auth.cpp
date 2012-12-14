@@ -31,12 +31,13 @@
    static UString* empty_list;
    static UString* nodog_conf;
    static UString* policy_flat;
+   static UString* request_uri;
    static UString* environment;
    static UString* auth_domain;
-   static UString* account_auth;
-   static UString* request_uri;
-   static UString* client_address;
    static UString* virtual_name;
+   static UString* account_auth;
+   static UString* title_default;
+   static UString* client_address;
    static UString* ldap_card_param;
    static UString* ldap_user_param;
    static UString* redirect_default;
@@ -112,7 +113,7 @@
       U_MEMORY_ALLOCATOR
       U_MEMORY_DEALLOCATOR
    
-      UString value, _label, mac_mask, group_account;
+      UString _label, mac_mask, group_account, value;
       bool noconsume;
    
       // COSTRUTTORE
@@ -223,8 +224,8 @@
       U_MEMORY_ALLOCATOR
       U_MEMORY_DEALLOCATOR
    
-      time_t last_info;
-      UString value, _hostname;
+      time_t last_info, since;
+      UString _hostname, value;
       UVector<UString> access_point;
       int port;
       bool down;
@@ -384,9 +385,10 @@
    
          buffer->setBuffer(U_CAPACITY);
    
-         buffer->snprintf("%u %10ld %u %.*s [",
+         buffer->snprintf("%u %10ld %10ld %u %.*s [",
                            down,
                            last_info,
+                           since,
                            port,
                            U_STRING_TO_TRACE(_hostname));
    
@@ -407,6 +409,7 @@
    
          is >> down
             >> last_info
+            >> since
             >> port;
    
          is.get(); // skip ' '
@@ -424,44 +427,37 @@
          U_ASSERT(access_point.size())
          }
    
-      void setLastInfo()
-         {
-         U_TRACE(5, "WiAuthNodog::setLastInfo()")
-   
-         char* _ptr = value.c_pointer(2);
-   
-         U_INTERNAL_DUMP("_ptr = %.40s", _ptr)
-   
-         (void) u__snprintf(_ptr, 10, "%10ld", u_now->tv_sec); // last_info
-   
-         U_INTERNAL_ASSERT(u__isspace(_ptr[10]))
-         }
-   
-      void setDown(bool bdown)
+      bool setDown(bool bdown)
          {
          U_TRACE(5, "WiAuthNodog::setDown(%b)", bdown)
    
-         char c     = (bdown ? '1' : '0');
          char* _ptr = value.c_pointer(0);
    
          U_INTERNAL_DUMP("_ptr = %.40s", _ptr)
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[1]))
    
-      // char old = _ptr[0];
-                    _ptr[0] = c;
+         bool old = (_ptr[0] ==                   '1');
+                     _ptr[0]  = ((down = bdown) ? '1' : '0');
    
-         /*
-         if ((down          && old != '1') ||
-             (down == false && old != '0'))
+         _ptr += 2;
+   
+         (void) u__snprintf(_ptr, 10, "%10ld", u_now->tv_sec); // last_info
+   
+         if (old != bdown)
             {
-            U_LOGGER("*** setDown(%b) AP(%.*s@%.*s) WITH DIFFERENT STATE ***", bdown, U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address));
+            _ptr += 10;
+   
+            U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
+   
+            (void) u__snprintf(++_ptr, 10, "%10ld", (since = u_now->tv_sec)); // since
+   
+            U_INTERNAL_ASSERT(u__isspace(_ptr[10]))
+   
+            U_RETURN(true);
             }
-         */
    
-         down = bdown;
-   
-         setLastInfo();
+         U_RETURN(false);
          }
    
       bool setValue(const UString& _address)
@@ -495,8 +491,9 @@
             {
             U_ASSERT((*db_ap)[*address].empty())
    
-            down   = bdown;
-            port   = _port;
+            down  = bdown;
+            port  = _port;
+            since = u_now->tv_sec;
    
             op     = RDB_INSERT;
             add_ap = true;
@@ -526,8 +523,8 @@
             U_INTERNAL_DUMP("lindex = %u", lindex)
             }
    
-         _hostname = *hostname;
-         last_info = u_now->tv_sec;
+         _hostname  = *hostname;
+         last_info  = u_now->tv_sec;
    
          if (add_ap == false)
             {
@@ -586,6 +583,7 @@
          {
          *UObjectIO::os << "down                           " << down                 << '\n'
                         << "port                           " << port                 << '\n'
+                        << "since                          " << since                << '\n'
                         << "last_info                      " << last_info            << '\n'
                         << "value        (UString          " << (void*)&value        << ")\n"
                         << "_hostname    (UString>         " << (void*)&_hostname    << ")\n"
@@ -638,9 +636,9 @@
       U_MEMORY_DEALLOCATOR
    
       uint64_t traffic_done, traffic_available, traffic_consumed;
+      uint32_t index_access_point, agent, DownloadRate, UploadRate;
       time_t login_time, last_modified, time_done, time_available, time_consumed;
       UString value, _ip, _auth_domain, _mac, _policy, nodog, _user;
-      uint32_t index_access_point, agent, DownloadRate, UploadRate;
       bool connected, consume;
    
       // COSTRUTTORE
@@ -649,11 +647,11 @@
          {
          U_TRACE_REGISTER_OBJECT(5, WiAuthUser, "")
    
-         consume            = true;
-         connected          = false;
-         time_done          = time_available = time_consumed = login_time = last_modified = 0;
-         traffic_done       = traffic_available = traffic_consumed = 0;
-         index_access_point = agent = DownloadRate = UploadRate = 0;
+         agent        = index_access_point = DownloadRate = UploadRate = 0;
+         time_done    = time_available = time_consumed = login_time = last_modified = 0;
+         traffic_done = traffic_available = traffic_consumed = 0;
+         consume      = true;
+         connected    = false;
          }
    
       ~WiAuthUser()
@@ -758,23 +756,46 @@
          {
          U_TRACE(5, "WiAuthUser::resetCounter()")
    
-         // 172.16.1.172 1 1346679913 1346679913        8            12736          4      7200         12736   314572800 
+         // ip           c modified        login time_consume traff_consume  time_done time_avail traff_done  traff_avail x m agent     Dr Ur domain
+         // 172.16.1.172 0 1355492583          0     2572         4378722          0          0      4378722    314572800 0 1 2161242255 0 0 PASS_AUTH
    
          char* _ptr = value.c_pointer(_ip.size() + 2 + 11 + 11 + 9 + 16); // connected + last_modified + login_time + time_consumed + traffic_consumed
    
          U_INTERNAL_DUMP("_ptr = %.40s", _ptr)
    
+         // time_done
          (void) u__snprintf(++_ptr,   10, "%10ld", (time_done = 0));
                               _ptr += 10;
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
    
-         _ptr += 11; // time_available
+         // time_available
+         if (time_available) _ptr += 11;
+         else
+            {
+            U_INTERNAL_ASSERT(*_time_available)
+   
+            (void) u__snprintf(++_ptr,   10, "%10ld", (time_available = _time_available->strtol()));
+                                 _ptr += 10;
+            }
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
    
+         // traffic_done
          (void) u__snprintf(++_ptr,   12, "%12llu", (traffic_done = 0));
                               _ptr += 12;
+   
+         U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
+   
+         // traffic_available
+         if (traffic_available) _ptr += 13;
+         else
+            {
+            U_INTERNAL_ASSERT(*_traffic_available)
+   
+            (void) u__snprintf(++_ptr,   12, "%12llu", (traffic_available = _traffic_available->strtoll()));
+                                 _ptr += 12;
+            }
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
          }
@@ -789,15 +810,15 @@
    
          char* _ptr = value.c_pointer(_ip.size());
    
-         // 172.16.1.172 1 1346679913 1346679913        8            12736          4      7200         12736   314572800 
-         // 0 1 3821975508 PASS_AUTH 00:14:a5:6e:9c:cb DAILY 10.8.1.2
+         // ip           c modified        login time_consume traff_consume  time_done time_avail traff_done  traff_avail x m agent     Dr Ur domain
+         // 172.16.1.172 0 1355492583          0     2572         4378722          0          0      4378722    314572800 0 1 2161242255 0 0 PASS_AUTH
    
          U_INTERNAL_DUMP("_ptr = %.40s", _ptr)
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
          U_INTERNAL_ASSERT_EQUALS(_ptr[1], '1')
    
-         _ptr += 2;
+         _ptr += 2; // connected
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[0]))
    
@@ -1249,6 +1270,9 @@
    }
    
    #define VIRTUAL_HOST "wifi-aaa.comune.fi.it"
+   /*
+   #define VIRTUAL_HOST "auth.t-unwired.com"
+   */
    
    static void usp_init()
    {
@@ -1334,6 +1358,7 @@
       request_uri        = U_NEW(UString);
       auth_domain        = U_NEW(UString);
       account_auth       = U_NEW(U_STRING_FROM_CONSTANT("ACCOUNT_AUTH"));
+      title_default      = U_NEW(UString);
       client_address     = U_NEW(UString);
       allowed_web_hosts  = U_NEW(UString);
    
@@ -1352,6 +1377,7 @@
       dir_reg            = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"),            environment)));
       dir_root           = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_ROOT"),           environment)));
       virtual_name       = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("VIRTUAL_NAME"),       environment)));
+      title_default      = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"),      environment)));
       historical_log_dir = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
    
       UString tmp1 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LDAP_CARD_PARAM"),    environment),
@@ -1492,6 +1518,7 @@
          delete request_uri;
          delete account_auth;
          delete virtual_name;
+         delete title_default;
          delete client_address;
          delete ldap_user_param;
          delete ldap_card_param;
@@ -1893,6 +1920,7 @@
                     U_STRING_TO_TRACE(*address),
                     U_STRING_TO_TRACE(nodog_rec->_hostname),
                     ptr1, ptr2,
+                    u_now->tv_sec - nodog_rec->since,
                     nodog_rec->last_info + u_now_adjust,
                     ptr3, ptr4,
                     U_STRING_TO_TRACE(ap_rec->mac_mask),
@@ -1939,19 +1967,9 @@
          {
          result = client->getContent();
    
-         if (nodog_rec->down) nodog_rec->setDown(false);
-         else                 nodog_rec->setLastInfo();
+         (void) nodog_rec->setDown(false);
          }
-      else
-         {
-         if (nodog_rec->down) nodog_rec->setLastInfo();
-         else
-            {
-            nodog_rec->setDown(true);
-   
-            callForAllUsers(quitUserConnected);
-            }
-         }
+      else if (nodog_rec->setDown(true)) callForAllUsers(quitUserConnected);
    
       client->reset(); // NB: url is referenced by UClient::url...
    
@@ -2295,7 +2313,7 @@
             }
          }
    
-      // NB: we must have serviced a info request from nodog by another process istance (PREFORK_CHILD > 2)...
+      // NB: we must have do serviced a info request from nodog by another process istance (PREFORK_CHILD > 2)...
    
       U_INTERNAL_ASSERT(*uid)
    
@@ -2407,8 +2425,8 @@
             {
             user_rec->getCounter();
    
-            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("ringraziamenti.tmpl")),
-                                              "Firenze WiFi", 0, 0,
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("ringraziamenti.tmpl")), true,
+                                              title_default->data(), 0, 0,
                                               U_STRING_TO_TRACE(*uid),
                                               _time_chunk->data(), _traffic_chunk->data());
             }
@@ -2416,8 +2434,8 @@
             {
             U_http_is_connection_close = U_YES;
    
-            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_notify.tmpl")),
-                                              "Firenze WiFi", "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>",
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_notify.tmpl")), false,
+                                              title_default->data(), "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>",
                                               "'onload=\"CloseItAfterSomeTime()\"'",
                                               U_STRING_TO_TRACE(*uid));
             }
@@ -2432,8 +2450,8 @@
    
       UString x = user_rec->getAP();
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logged.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logged.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         url_banner_ap->data(), help_url->data(), wallet_url->data(),
                                         x.data(), "/logged_login_request", url_banner_comune->data());
    }
@@ -2514,8 +2532,8 @@
          if (UHTTP::form_name_value->empty() == false) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
          else
             {
-            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("edit_ap.tmpl")),
-                                              "Firenze WiFi", 0, 0,
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("edit_ap.tmpl")), false,
+                                              title_default->data(), 0, 0,
                                               U_CONSTANT_TO_TRACE("ap"),             "",
                                               U_CONSTANT_TO_TRACE("10.8.0.xxx"),     "",
                                               U_CONSTANT_TO_TRACE("aaa-r29587_bbb"), "",
@@ -2527,8 +2545,8 @@
          }
       else
          {
-         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("edit_ap.tmpl")),
-                                           "Firenze WiFi", 0, 0,
+         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("edit_ap.tmpl")), false,
+                                           title_default->data(), 0, 0,
                                            U_STRING_TO_TRACE(ap_rec->_label),       "readonly",
                                            U_STRING_TO_TRACE(*address),             "readonly",
                                            U_STRING_TO_TRACE(nodog_rec->_hostname), "readonly",
@@ -2778,8 +2796,8 @@
    {
       U_TRACE(5, "::GET_logged_login_request()")
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logged_login_request.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logged_login_request.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         0);
    }
    
@@ -2856,8 +2874,8 @@
    
       request.snprintf("/login_request?%.*s", U_HTTP_QUERY_TO_TRACE);
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         url_banner_ap->data(), ap_ref->data(), help_url->data(), wallet_url->data(),
                                         ap->c_str(), request.data(), url_banner_comune->data(), ap_ref->data());
    #endif
@@ -2893,8 +2911,8 @@
          UHTTP::getFormValue(*ap,      U_CONSTANT_TO_PARAM("ap"),       0, 13, end);
          }
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login_request.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login_request.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         login_url->data(), mac->c_str(), ip->c_str(), redirect.c_str(),
                                         gateway->c_str(), timeout.c_str(), token->c_str(), ap->c_str());
    }
@@ -3021,8 +3039,8 @@
    {
       U_TRACE(5, "::GET_logout_page()")
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_page.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_page.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         0);
    }
    
@@ -3058,7 +3076,7 @@
    
          const char* _ptr = uid->c_str();
    
-         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_popup.tmpl")),
+         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_popup.tmpl")), false,
                                            "Logout popup", 0, 0,
                                            _ptr, _ptr);
    
@@ -3104,8 +3122,8 @@
    
       U_http_is_connection_close = U_YES;
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("postlogin.tmpl")),
-                                        "Firenze WiFi", "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>", _buffer.data(),
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("postlogin.tmpl")), false,
+                                        title_default->data(), "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>", _buffer.data(),
                                         ptr1, ptr2, ptr2);
    #endif
    }
@@ -3150,7 +3168,7 @@
    
       U_INTERNAL_ASSERT(tutela_dati.isNullTerminated())
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("registrazione.tmpl")),
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("registrazione.tmpl")), false,
                             "Registrazione utente",
                             "<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">"
                             "<script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
@@ -3166,6 +3184,8 @@
       else
          {
          *policy = U_STRING_FROM_CONSTANT("DAILY");
+   
+         loadPolicy(*policy);
    
          callForAllUsers(resetUserPolicy);
    
@@ -3188,7 +3208,12 @@
    
          UHTTP::getFormValue(pid, U_CONSTANT_TO_PARAM("pid"), 0, 5, UHTTP::form_name_value->size());
    
-         U_LOGGER("%.*s:%.*s %s", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), (pid.strtol() ? "*** AP CRASHED ***" : "started"));
+         bool bstart = (pid.strtol() == 0);
+   
+         if (bstart) nodog_rec->setDown(true);
+              (void) nodog_rec->setDown(false);
+   
+         U_LOGGER("%.*s:%.*s %s", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), bstart ? "started" : "*** AP CRASHED ***");
    
          callForAllUsers(quitUserConnected);
          }
@@ -3228,7 +3253,7 @@
    
       UString x = user_rec->getAP(), user = getUserName();
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("stato_utente.tmpl")),
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("stato_utente.tmpl")), false,
                                         "Stato utente", 0, 0,
                                         U_STRING_TO_TRACE(user),
                                         U_STRING_TO_TRACE(*uid), x.data(),
@@ -3336,8 +3361,8 @@
    {
       U_TRACE(5, "::GET_unifi()")
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("unifi_page.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("unifi_page.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         url_banner_ap->data(), help_url->data(), wallet_url->data(),
                                         "unifi", "/unifi_login_request", url_banner_comune->data());
    }
@@ -3346,8 +3371,8 @@
    {
       U_TRACE(5, "::GET_unifi_login_request()")
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("unifi_login_request.tmpl")),
-                                        "Firenze WiFi", 0, 0,
+      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("unifi_login_request.tmpl")), false,
+                                        title_default->data(), 0, 0,
                                         0);
    }
    
@@ -3355,8 +3380,9 @@
    {
       U_TRACE(5, "::GET_view_user()")
    
+      if (*client_address != *ip_server) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
    #ifndef U_MANAGED_BY_MAIN_BASH
-      if (*ip_server == *client_address)
+      else
          {
          // $1 -> uid
          // $2 -> outfile
@@ -3831,7 +3857,7 @@
             {
             ....
    
-            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("post_registrazione.tmpl")),
+            USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("post_registrazione.tmpl")), true,
                                               "Registrazione effettuata", 0, 0,
                                               caller_id->data(), password.c_str(), "polling_attivazione", caller_id->data(), password.c_str());
             }

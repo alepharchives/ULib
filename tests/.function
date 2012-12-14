@@ -401,3 +401,5 @@ TIMEOUT() {
       eval "$@"
    fi
 }
+
+# grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP' err/*

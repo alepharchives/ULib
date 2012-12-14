@@ -75,8 +75,11 @@
    DispositionType& ContentDisposition()  { return (DispositionType&) FieldBody("Content-Disposition"); }
 */
 
+class UHTTP;
+
 class U_EXPORT UMimeHeader {
 public:
+
    // Check for memory error
    U_MEMORY_TEST
 
@@ -427,6 +430,8 @@ protected:
 private:
    UMimeHeader(const UMimeHeader&)            {}
    UMimeHeader& operator=(const UMimeHeader&) { return *this; }
+
+   friend class UHTTP;
 };
 
 #endif

@@ -216,6 +216,9 @@ initialize_fw() {
 			networkMatchIface $iface $net
 			[ $? -eq 1 ] || continue
 
+			# check mascheramento del traffico verso portale autorizzativo
+			[ $MasqueradeAuthServiceIP -gt 0 ] || $nat -o $ifaceout -s $net -d $AuthServiceIP -j RETURN
+
 			for fwmark in $classes; do
 				# Only forward tagged traffic per class
 				$fwd -i $iface -s $net -m mark --mark $fwmark -j ACCEPT
@@ -754,7 +757,7 @@ export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHo
 		 EnableBandwidthLimits IMQdevice IFBdevice UserDelay UserPriority UserUploadRate UserPacketSize \
 		 UserAverageRate UserDownloadRate UploadRate DownloadRate ReservedRatio ReservedClass ReservedDelay \
 		 ReservedPriority ReservedAverageRate ReservedPacketSize DosPrevention DosAllowTries DosTimeInterval \
-		 IMQdisabled IFBdisabled IQdevice
+		 IMQdisabled IFBdisabled IQdevice MasqueradeAuthServiceIP
 
 # ------------------------------------------------------------
 # load eventuale script configuration (NON piace a Ghivizzani)
@@ -781,8 +784,6 @@ export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHo
 # AllowedWebHosts List any domains that you would like to allow web access (TCP port 80 and 443) BEFORE logging in (this is the
 #                 pre-'skip' stage, so be careful about what you allow
 #
-# MasqueradeDevice
-#
 # ExternalDevice  The interface connected to the Internet. Usually 'eth0' or 'eth1' under Linux, or maybe even 'ppp0' if you're running PPP or PPPoE
 #
 # InternalDevice  Required if and only if your machine has more than two network interfaces. Must be set to the interface connected to your local
@@ -799,11 +800,15 @@ export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHo
 #						point AuthServiceIP somewhere that doesn't include a skip button (likeat your own Auth server)
 #
 # MaxSegmentSize  Give this if you want to reduce MTU
+#
+# MasqueradeDevice		  maschera il traffico verso il device
+# MasqueradeAuthServiceIP maschera il traffico verso portale autorizzativo
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 RouteOnly=${RouteOnly:-0}
 MembersOnly=${MembersOnly:-1}
 GatewayPort=${GatewayPort:-5280}
 MaxSegmentSize=${MaxSegmentSize:-0}
+MasqueradeAuthServiceIP=${MasqueradeAuthServiceIP:-1}
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------
 # Gestione dei limiti sulla banda per gli utenti

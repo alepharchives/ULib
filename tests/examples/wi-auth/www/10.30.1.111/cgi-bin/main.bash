@@ -6,10 +6,11 @@
 USER=""
 OUTPUT=""
 TMPFILE=""
+SSI_HEAD=""
+SSI_BODY=""
 TITLE_TXT=""
 EXIT_VALUE=0
-HEAD_HTML=""
-BODY_SHTML=""
+CONNECTION_CLOSE=""
 HTTP_RESPONSE_BODY=""
 HTTP_RESPONSE_HEADER=""
 
@@ -480,37 +481,6 @@ view_user() {
 	fi
 }
 
-write_SSI() {
-
-	rm -f $TMPFILE.out $TMPFILE.err
-
-	if [ -n  "$HTTP_RESPONSE_HEADER" ]; then
-		echo \"HTTP_RESPONSE_HEADER=$HTTP_RESPONSE_HEADER\"
-	fi
-
-	if [ -n "$HTTP_RESPONSE_BODY" ]; then
-		echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
-	else
-		if [ -z "$BODY_SHTML" ]; then
-			exit 400 
-		fi
-
-		if [ -z "$TITLE_TXT" ]; then
-			TITLE_TXT="Firenze WiFi"
-		fi
-
-		echo \"TITLE_TXT=$TITLE_TXT\"
-
-		if [ -n "$HEAD_HTML" ]; then
-			echo "'HEAD_HTML=$HEAD_HTML'"
-		fi
-
-		echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
-	fi
-
-	exit $EXIT_VALUE
-}
-
 do_cmd() {
 
 	if [ "$REQUEST_METHOD" = "GET" ]; then
@@ -525,12 +495,12 @@ do_cmd() {
 
          /admin)
             HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
-            HTTP_RESPONSE_HEADER="Refresh: 0; url=https://$SERVER_ADDR/admin.html\r\n"
+            HTTP_RESPONSE_HEADER="Refresh: 0; url=https://$HTTP_HOST/admin.html\r\n"
          ;;
 			/admin_view_user)
 				REQUEST_URI=get_user_id
 				TITLE_TXT="Visualizzazione dati utente"
-				HEAD_HTML="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
+				SSI_HEAD="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
 							  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
 
 				print_page "Visualizzazione dati utente" "admin_view_user"
@@ -538,7 +508,7 @@ do_cmd() {
 			/admin_recovery)
 				REQUEST_URI=get_user_id
 				TITLE_TXT="Recovery utente"
-				HEAD_HTML="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
+				SSI_HEAD="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
 							  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
 
 				print_page "Procedura di Recovery" "admin_recovery"
@@ -549,8 +519,8 @@ do_cmd() {
 				$CLIENT_HTTP "http://$VIRTUAL_NAME/status_network?outfile=$TMPFILE.out" >/dev/null 2>>/tmp/CLIENT_HTTP.err
 
 				if [ $? -eq 0 ]; then
-					TITLE_TXT="Firenze WiFi: stato rete"
-					HEAD_HTML="<meta http-equiv=\"refresh\" content=\"30\">"
+					TITLE_TXT="$TITLE_DEFAULT: stato rete"
+					SSI_HEAD="<meta http-equiv=\"refresh\" content=\"30\">"
 
 					print_page "`date`" "`cat $TMPFILE.out`"
 				fi
@@ -561,8 +531,8 @@ do_cmd() {
 				$CLIENT_HTTP "http://$VIRTUAL_NAME/status_nodog?outfile=$TMPFILE.out" >/dev/null 2>>/tmp/CLIENT_HTTP.err
 
 				if [ $? -eq 0 ]; then
-					TITLE_TXT="Firenze WiFi: stato access point"
-					HEAD_HTML="<meta http-equiv=\"refresh\" content=\"30\">"
+					TITLE_TXT="$TITLE_DEFAULT: stato access point"
+					SSI_HEAD="<meta http-equiv=\"refresh\" content=\"30\">"
 
 					print_page "`date`" "`cat $TMPFILE.out`"
 				fi
@@ -595,22 +565,4 @@ do_cmd() {
 #-----------------------------------
 DEBUG=0
 
-if [ $DEBUG -eq 0 ]; then
-	do_cmd "$@"
-else
-	DBG_FILE_OUT=/tmp/main_$$.out
-	DBG_FILE_ERR=/tmp/main_$$.err
-	(
-	echo "ENVIRONMENT:"
-	echo "-----------------------------------------------------------"
-	env
-	echo "-----------------------------------------------------------"
-	echo "STDERR:"
-	echo "-----------------------------------------------------------"
-	set -x
-	do_cmd "$@"
-	set +x
-	) > $DBG_FILE_OUT 2>>$DBG_FILE_ERR
-	echo "-----------------------------------------------------------" 2>>$DBG_FILE_ERR >&2
-	cat $DBG_FILE_OUT
-fi
+main "$@"

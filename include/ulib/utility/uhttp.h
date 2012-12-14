@@ -271,12 +271,13 @@ public:
    static UString* uri_protected_mask;
    static UString* uri_request_cert_mask;
    static UString* maintenance_mode_page;
+   static UString* string_HTTP_Variables;
    static UString* uri_strict_transport_security_mask;
 
    static UFile*   file;
    static UFile*   apache_like_log;
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
-   static uint32_t limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
+   static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
    static bool manageHTTPRequest();
    static void writeApacheLikeLog();
@@ -652,7 +653,7 @@ public:
       U_RETURN(result);
       }
 
-   static UString getCGIEnvironment();
+   static UString getCGIEnvironment(bool bHTTP_Variables);
 
    static bool processCGIOutput();
    static bool isGenCGIRequest() __pure;
@@ -1030,6 +1031,7 @@ private:
    static void checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static void checkIfAlias(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
+   static void add_HTTP_Variables(UStringRep* key, void* value) U_NO_EXPORT;
    static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static void processHTTPGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;

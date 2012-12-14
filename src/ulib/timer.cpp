@@ -33,6 +33,12 @@ void UTimer::init(bool _async)
 {
    U_TRACE(0, "UTimer::init(%b)", _async)
 
+   if (u_start_time     == 0 &&
+       u_setStartTime() == false)
+      {
+      U_ERROR("UTimer::init: system date not updated. Going down...");
+      }
+
    if ((async = _async)) UInterrupt::insert(             SIGALRM, (sighandler_t)UTimer::handlerAlarm); // async signal
    else                  UInterrupt::setHandlerForSignal(SIGALRM, (sighandler_t)UTimer::handlerAlarm);
 

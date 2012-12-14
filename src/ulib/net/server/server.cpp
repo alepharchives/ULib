@@ -2027,15 +2027,15 @@ void UServer_Base::run()
 
    init();
 
-   if (u_start_time     == 0 &&
-       u_setStartTime() == false)
-      {
-      U_ERROR("System date not updated. Going down...");
-      }
-
    if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED)
       {
       U_ERROR("Plugins running FAILED. Going down...");
+      }
+
+   if (u_start_time     == 0 &&
+       u_setStartTime() == false)
+      {
+      U_SRV_LOG("System date not updated. Going down...");
       }
 
    bpluginsHandlerReset   = false; // default is NOT call...

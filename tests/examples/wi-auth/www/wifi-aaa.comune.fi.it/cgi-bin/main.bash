@@ -18,13 +18,12 @@ FILE_CTX=""
 FILE_CNT=""
 FILE_UID=""
 REQ_FILE=""
+SSI_HEAD=""
+SSI_BODY=""
 TITLE_TXT=""
 EXIT_VALUE=0
 CALLER_ID=""
-HEAD_HTML=""
-SET_COOKIE=""
 BODY_STYLE=""
-BODY_SHTML=""
 CONSUME_ON=""
 MAX_TRAFFIC=""
 SIGNED_DATA=""
@@ -1452,8 +1451,8 @@ postlogin() {
 
 		CONNECTION_CLOSE=1
 
+ 		SSI_HEAD="<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>"
 		BODY_STYLE=`printf "onload=\"doOnLoad('postlogin?uid=%s&gateway=%s','%s')\"" "$1" "$2" "$3" 2>/dev/null`
- 		HEAD_HTML="<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>"
 
 		print_page "$1" "$3" "$3"
 
@@ -1477,7 +1476,7 @@ logout_notified_from_popup() {
 
 	CONNECTION_CLOSE=1
 
-	HEAD_HTML="<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>"
+	SSI_HEAD="<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>"
 	BODY_STYLE='onload="CloseItAfterSomeTime()"'
 
 	REQUEST_URI=logout_notify
@@ -1573,7 +1572,7 @@ registrazione_request() {
 
 		CONNECTION_CLOSE=1
 		TITLE_TXT="Registrazione utente"
-		HEAD_HTML="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
+		SSI_HEAD="<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\">
 					  <script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>"
 
 		print_page $REGISTRAZIONE_URL "`cat $DIR_TEMPLATE/tutela_dati.txt`"
@@ -1581,7 +1580,7 @@ registrazione_request() {
 		return
 	fi
 
-	if [ "$VIRTUAL_HOST" != "wifi-aaa.comune.fi.it" ]; then
+	if [ -n "$generate_PASSWORD" ]; then
 
 		PASSWORD=`apg -a 1 -M n -n 1 -m 6 -x 6` # generate PASSWORD
 
@@ -1765,7 +1764,7 @@ stato_utente() {
 		FMT=`cat $DIR_TEMPLATE/stato_utente.tmpl 2>/dev/null`
 		DATE=`date`
 
-		BODY_SHTML=`printf "$FMT" "$USER" $UUID $AP "$OUTPUT" 2>/dev/null`
+		SSI_BODY=`printf "$FMT" "$USER" $UUID $AP "$OUTPUT" 2>/dev/null`
 	fi
 }
 
@@ -2111,10 +2110,10 @@ reset_policy() {
 
 		load_policy
 
-		if [ -n "$POLICY_RESET" ]; then
-			rm	-rf   $DIR_CNT/$POLICY 2>/dev/null
-			mkdir -p $DIR_CNT/$POLICY
-		fi
+ 		if [ -n "$POLICY_RESET" ]; then
+ 			rm	-rf   $DIR_CNT/$POLICY 2>/dev/null
+ 			mkdir -p $DIR_CNT/$POLICY
+ 		fi
 	done
 
 	# cleaning
@@ -2134,12 +2133,12 @@ polling_attivazione() {
 	INFO=""
 	LOGIN_FORM=""
 	TITLE="VERIFICA ATTIVAZIONE: ATTENDERE..."
-	HEAD_HTML="<meta http-equiv=\"refresh\" content=\"3\">"
+	SSI_HEAD="<meta http-equiv=\"refresh\" content=\"3\">"
 	CREDENTIALS_TAG="<p class=\"bigger\">&nbsp;</p><p class=\"bigger\">&nbsp;</p>"
 
 	# ldapsearch -LLL -b ou=cards,o=unwired-portal -x -D cn=admin,o=unwired-portal -w programmer -H ldap://127.0.0.1
 
-	if [ "$VIRTUAL_HOST" = "wifi-aaa.comune.fi.it" ]; then
+	if [ -z "$generate_PASSWORD" ]; then
 
 		ask_to_LDAP ldapsearch "-LLL -b $WIAUTH_CARD_BASEDN $LDAP_CARD_PARAM" "waLogin=$1"
 
@@ -2196,7 +2195,7 @@ polling_attivazione() {
 </form>
 "
 
-		HEAD_HTML=""
+		SSI_HEAD=""
 		TITLE="LE TUE CREDENZIALI SONO:"
 		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><!-- <p class=\"bigger\">Password: $WA_PASSWORD</p> -->"
 	fi
@@ -2204,73 +2203,6 @@ polling_attivazione() {
 	TITLE_TXT="Verifica attivazione"
 
 	print_page "$TITLE" "$CREDENTIALS_TAG" "$INFO" "$LOGIN_FORM"
-}
-
-uscita() {
-
-	rm -f $TMPFILE.out $TMPFILE.err
-
-	if [ $EXIT_VALUE -eq 0 ]; then
-		exit 0
-	fi
-
-	exit 400 # Bad Request
-}
-
-write_SSI() {
-
-	if [ -n "$CONNECTION_CLOSE" ]; then
-		HTTP_RESPONSE_HEADER="Connection: close\r\n$HTTP_RESPONSE_HEADER"
-	fi
-
-	if [ -n "$SET_COOKIE" ]; then
-
-		# ----------------------------------------------------------------------------------------------------------------------------
-		# REQ: Set-Cookie: TODO[ data expire path domain secure HttpOnly ]
-		# ----------------------------------------------------------------------------------------------------------------------------
-		# string -- key_id or data to put into cookie   -- must
-		# int    -- lifetime of the cookie in HOURS     -- must (0 -> valid until browser exit)
-		# string -- path where the cookie can be used   --  opt
-		# string -- domain which can read the cookie    --  opt
-		# bool   -- secure mode                         --  opt
-		# bool   -- only allow HTTP usage               --  opt
-		# ----------------------------------------------------------------------------------------------------------------------------
-		# RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
-		# ----------------------------------------------------------------------------------------------------------------------------
-
-		HTTP_RESPONSE_HEADER="Set-Cookie: TODO[ $SET_COOKIE 4320 ]\r\n$HTTP_RESPONSE_HEADER" # 180 days
-	fi
-
-	if [ -n "$FILE_RESPONSE_HTML" ]; then
-		echo \"FILE_RESPONSE_HTML=$FILE_RESPONSE_HTML\"
-	else
-		if [ -n  "$HTTP_RESPONSE_HEADER" ]; then
-			echo \"HTTP_RESPONSE_HEADER=$HTTP_RESPONSE_HEADER\"
-		fi
-
-		if [ -n "$HTTP_RESPONSE_BODY" ]; then
-			echo  \"HTTP_RESPONSE_BODY=$HTTP_RESPONSE_BODY\"
-		else
-			if [ -z "$BODY_SHTML" ]; then
-				EXIT_VALUE=400
-				uscita
-			fi
-
-			if [ -z "$TITLE_TXT" ]; then
-				TITLE_TXT="Firenze WiFi"
-			fi
-
-         echo -e "'TITLE_TXT=$TITLE_TXT'\nBODY_STYLE=$BODY_STYLE"
-			
-			if [ -n "$HEAD_HTML" ]; then
-				echo "'HEAD_HTML=$HEAD_HTML'"
-			fi
-
-			echo -n -e "$BODY_SHTML" > $FILE_BODY_SHTML
-		fi
-	fi
-
-	uscita
 }
 
 do_cmd() {
@@ -2323,7 +2255,7 @@ do_cmd() {
 
 					if [ -n "$GATEWAY" ]; then
 
-						echo -n ${GATEWAY%:*} > $DIR_ROOT/client/$SESSION_ID.srv
+						echo -n ${GATEWAY%:*} > $DIR_ROOT/client/$REQUEST_ID.srv
 
 						HTTP_RESPONSE_BODY="<html><body>OK</body></html>"
 						HTTP_RESPONSE_HEADER="Refresh: 0; url=http://$VIRTUAL_NAME/cgi-bin/webif/status-basic.sh?cat=Status\r\n"
@@ -2382,22 +2314,4 @@ do_cmd() {
 #-----------------------------------
 DEBUG=0
 
-if [ $DEBUG -eq 0 ]; then
-	do_cmd "$@"
-else
-	DBG_FILE_OUT=/tmp/main_$$.out
-	DBG_FILE_ERR=/tmp/main_$$.err
-	(
-	echo "ENVIRONMENT:"
-	echo "-----------------------------------------------------------"
-	env
-	echo "-----------------------------------------------------------"
-	echo "STDERR:"
-	echo "-----------------------------------------------------------"
-	set -x
-	do_cmd "$@"
-	set +x
-	) > $DBG_FILE_OUT 2>>$DBG_FILE_ERR
-	echo "-----------------------------------------------------------" 2>>$DBG_FILE_ERR >&2
-	cat $DBG_FILE_OUT
-fi
+main "$@"

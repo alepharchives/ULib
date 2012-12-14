@@ -303,7 +303,7 @@ int UFCGIPlugIn::handlerRequest()
 
       // Set environment for the FCGI application server
 
-      UString environment = UHTTP::getCGIEnvironment();
+      UString environment = UHTTP::getCGIEnvironment(true);
 
       if (environment.empty())
          {

@@ -137,7 +137,7 @@ int UWebSocketPlugIn::handlerRequest()
          {
          // Set environment for the command application server
 
-         UString environment = UHTTP::getCGIEnvironment();
+         UString environment = UHTTP::getCGIEnvironment(true);
 
          if (environment.empty()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 

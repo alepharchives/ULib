@@ -1325,20 +1325,16 @@ UString UStringExt::gunzip(const UString& s, uint32_t space) // .gz uncompress
 
 // convert letter to upper or lower case
 
-UString UStringExt::tolower(const UString& x)
+UString UStringExt::tolower(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::tolower(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "UStringExt::tolower(%.*S,%u)", n, s, n)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(x.rep->_length,0,"elaborazione su stringa vuota: inserire if empty()...")
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
-   UString r(x.rep->_length);
+   UString r(n);
 
-   r.rep->_length = x.rep->_length;
-
-   char* ptr = r.rep->data();
-
-   const char* s   = x.rep->str;
-   const char* end = s + x.rep->_length;
+         char* ptr =      r.rep->data();
+   const char* end = s + (r.rep->_length = n);
 
    while (s < end) *ptr++ = u__tolower(*s++);
 
@@ -1347,20 +1343,16 @@ UString UStringExt::tolower(const UString& x)
    U_RETURN_STRING(r);
 }
 
-UString UStringExt::toupper(const UString& x)
+UString UStringExt::toupper(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::toupper(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "UStringExt::toupper(%.*S,%u)", n, s, n)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(x.rep->_length,0,"elaborazione su stringa vuota: inserire if empty()...")
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
-   UString r(x.rep->_length);
+   UString r(n);
 
-   r.rep->_length = x.rep->_length;
-
-   char* ptr = r.rep->data();
-
-   const char* s   = x.rep->str;
-   const char* end = s + x.rep->_length;
+         char* ptr =      r.rep->data();
+   const char* end = s + (r.rep->_length = n);
 
    while (s < end) *ptr++ = u__toupper(*s++);
 

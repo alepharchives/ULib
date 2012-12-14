@@ -21,9 +21,9 @@
     <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
   <!--#endif -->
   <title><!--#echo var=$TITLE_TXT --></title>
-  <!--#echo var=$HEAD_HTML -->
+  <!--#echo var=$SSI_HEAD -->
 </head>
 <body <!--#echo var=$BODY_STYLE -->>
-  <!--#include direct=$FILE_BODY_SHTML -->
+  <!--#include direct=$SSI_FILE_BODY -->
 </body>
 </html>

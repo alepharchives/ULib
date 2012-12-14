@@ -18,10 +18,12 @@
 #ifndef FW_CONF_DEF
 #define FW_CONF_DEF
 #endif
-#define FW_ENV_VALUE 'ExternalDevice=eth0 tun0' \
-	'AuthServiceAddr=http://wifi-aaa.comune.fi.it' \
-	MasqueradeDevice=eth0 \
+#define FW_ENV_VALUE \
 	MaxSegmentSize=1 \
+	MasqueradeDevice=eth0 \
+	MasqueradeAuthServiceIP=1 \
+	'ExternalDevice=eth0 tun0' \
+	'AuthServiceAddr=http://wifi-aaa.comune.fi.it' \
 	FW_CONF_DEF \
 	LOCAL_NETWORK_DEF \
 	INTERNAL_DEVICE_DEF \

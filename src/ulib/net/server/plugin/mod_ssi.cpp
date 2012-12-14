@@ -237,9 +237,11 @@ void USSIPlugIn::setAlternativeResponse(const UString& _body)
       }
 }
 
-void USSIPlugIn::setAlternativeInclude(const UString& tmpl, const char* title_txt,  const char* head_html, const char* body_style, ...)
+void USSIPlugIn::setAlternativeInclude(const UString& tmpl, bool bprocess, const char* title_txt, const char* ssi_head, const char* body_style, ...)
 {
-   U_TRACE(0, "USSIPlugIn::setAlternativeInclude(%.*S,%S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, head_html, body_style)
+   U_TRACE(0, "USSIPlugIn::setAlternativeInclude(%.*S,%b,%S,%S,%S)", U_STRING_TO_TRACE(tmpl), bprocess, title_txt, ssi_head, body_style)
+
+   U_INTERNAL_ASSERT_POINTER(title_txt)
 
    alternative_include->setBuffer(tmpl.size() + 256 * 1024);
 
@@ -254,20 +256,20 @@ void USSIPlugIn::setAlternativeInclude(const UString& tmpl, const char* title_tx
 
    UString buffer(U_CAPACITY);
 
-   U_INTERNAL_ASSERT_POINTER(title_txt)
-
                    buffer.snprintf(    "'TITLE_TXT=%s'\n", title_txt);
-   if (head_html)  buffer.snprintf_add("'HEAD_HTML=%s'\n", head_html);
+   if (ssi_head)   buffer.snprintf_add("'SSI_HEAD=%s'\n",  ssi_head);
    if (body_style) buffer.snprintf_add("BODY_STYLE=%s\n",  body_style);
 
    (void) UClientImage_Base::environment->append(buffer);
+
+   if (bprocess) *alternative_include = processSSIRequest(*alternative_include, 0);
 }
 
 void USSIPlugIn::setMessagePage(const UString& tmpl, const char* title_txt, const char* message)
 {
    U_TRACE(0, "USSIPlugIn::setMessagePage(%.*S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, message)
 
-   setAlternativeInclude(tmpl, title_txt, 0, 0, title_txt, message);
+   setAlternativeInclude(tmpl, false, title_txt, 0, 0, title_txt, message);
 }
 
 void USSIPlugIn::setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...)
@@ -801,8 +803,12 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
             if (pathname.empty() == false)
                {
-               if (alternative_include->empty() == false &&
-                   pathname.equal(U_CONSTANT_TO_PARAM("$FILE_BODY_SHTML")))
+               // NB: we check if we are near to the end of ssi processing (include of services output file)...
+
+               bool bfile = u_startsWith(U_STRING_TO_PARAM(pathname), U_CONSTANT_TO_PARAM("$SSI_FILE_")); // HEAD|BODY
+
+               if (bfile &&
+                   alternative_include->empty() == false)
                   {
                   (void) output.append(*alternative_include);
                                         alternative_include->clear();
@@ -812,16 +818,25 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                UHTTP::file->setPath(pathname, UClientImage_Base::environment);
 
-               if (UHTTP::isFileInCache() &&
+               if (bfile == false      &&
+                   UHTTP::isFileInCache() &&
                    UHTTP::isDataFromCache())
                   {
                   include = UHTTP::getDataFromCache(false, false);
                   }
                else if (UHTTP::file->open())
                   {
-                  UHTTP::file->fstat();
-
+                            UHTTP::file->fstat();
                   include = UHTTP::file->getContent();
+
+                  // NB: we want to clean temporary file generate by shell script services...
+
+                  if (bfile                                                                         &&
+                      (u_endsWith(U_FILE_TO_PARAM(*UHTTP::file), U_CONSTANT_TO_PARAM(":head.html")) ||
+                       u_endsWith(U_FILE_TO_PARAM(*UHTTP::file), U_CONSTANT_TO_PARAM(":body.html"))))
+                     {
+                     (void) UHTTP::file->_unlink();
+                     }
                   }
                }
 
@@ -891,17 +906,21 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   {
                   // NB: check if there is an alternative response to elaborate...
 
-                  UString rfile = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FILE_RESPONSE_HTML"), UClientImage_Base::wbuffer);
+                  UString rfile = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("SSI_FILE_BODY"), UClientImage_Base::wbuffer);
 
-                  U_INTERNAL_DUMP("FILE_RESPONSE_HTML(%u) = %.*S", rfile.size(), U_STRING_TO_TRACE(rfile))
+                  U_INTERNAL_DUMP("SSI_FILE_BODY(%u) = %.*S", rfile.size(), U_STRING_TO_TRACE(rfile))
 
                   if (rfile.empty() == false)
                      {
-                     // 2 => body response in var 'header' (take from from file of name: var environment 'FILE_RESPONSE_HTML')
+                     // 2 => body response in var 'header' (take from from file of name: var environment 'SSI_FILE_BODY')
 
                      alternative_response = 2;
 
                      *header = UFile::contentOf(rfile);
+
+                     // NB: we want to clean temporary file generate by shell script services...
+
+                     if (u_endsWith(U_STRING_TO_PARAM(rfile), U_CONSTANT_TO_PARAM(":body.html"))) (void) UFile::_unlink(rfile.data());
 
                      // NB: with an alternative response we cannot use the cached header response...
 
@@ -1044,7 +1063,7 @@ int USSIPlugIn::handlerRequest()
       {
       // init
 
-      *UClientImage_Base::environment = UHTTP::getCGIEnvironment();
+      *UClientImage_Base::environment = UHTTP::getCGIEnvironment(false);
 
       if (environment) (void) UClientImage_Base::environment->append(*environment);
 
@@ -1132,7 +1151,7 @@ int USSIPlugIn::handlerRequest()
          // -----------------------------------------------------------------------------------------------------
          // 1 => response already complete (nothing to do)
          // ------------------------------------------------------------------------------------------------------
-         // 2 => body response in var 'header' (take from from file of name: var environment 'FILE_RESPONSE_HTML')
+         // 2 => body response in var 'header' (take from from file of name: var environment 'SSI_FILE_BODY')
          // ------------------------------------------------------------------------------------------------------
          // 3 => var environment 'HTTP_RESPONSE_HEADER' inserted in header response (var 'header')
          // ------------------------------------------------------------------------------------------------------
