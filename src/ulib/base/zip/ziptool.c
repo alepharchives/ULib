@@ -259,7 +259,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
 
    ze->filename = (char*) malloc((file_name_length + 1) * sizeof(char));
 
-   (void) u_strcpy(ze->filename, fname);
+   (void) u__strcpy(ze->filename, fname);
 
    ze->csize    = statbuf->st_size;
    ze->usize    = ze->csize;
@@ -397,7 +397,7 @@ static int add_to_zip(int fd, const char* file)
 
       fullname = (char*) calloc(1, nlen);
 
-      (void) u_strcpy(fullname, file);
+      (void) u__strcpy(fullname, file);
 
       nlen = u__strlen(file);
 
@@ -437,7 +437,7 @@ static int add_to_zip(int fd, const char* file)
          }
 
       ze->filename = (char*) malloc((nlen + 1) * sizeof(char) + 1);
-      (void) u_strcpy(ze->filename, fullname);
+      (void) u__strcpy(ze->filename, fullname);
       ze->filename[nlen] = '\0';
 
       ze->offset     = lseek(fd, 0, SEEK_CUR);
@@ -456,7 +456,7 @@ static int add_to_zip(int fd, const char* file)
 
          d_namlen = NAMLEN(de);
 
-         (void) u_strncpy(t_ptr, de->d_name, d_namlen);
+         (void) u__strncpy(t_ptr, de->d_name, d_namlen);
 
          t_ptr[d_namlen] = '\0';
 
@@ -870,7 +870,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
             start = idx + 1;
 
-            (void) u_strncpy(tmp_buff, (const char *)filename, (idx - filename));
+            (void) u__strncpy(tmp_buff, (const char *)filename, (idx - filename));
 
             tmp_buff[(idx - filename)] = '\0';
 

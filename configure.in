@@ -583,6 +583,7 @@ case "$target_os" in
 	;;
 	*)
 	LIBS=""
+	AC_CHECK_LIB(cap,cap_init)
 	AC_CHECK_LIB(pthread,sem_init)
 	if test "$ac_cv_lib_pthread_sem_init" = "yes" && test "$enable_thread" = "yes"; then
 		OST_LIB_PTHREAD
@@ -614,6 +615,9 @@ case "$target_os" in
 	fi
 	if test "$ac_cv_lib_tcc_tcc_compile_string" = "yes"; then
 		LIBS_SAVE="-ltcc ${LIBS_SAVE}"
+	fi
+	if test "$ac_cv_lib_cap_cap_init" = "yes"; then
+		LIBS_SAVE="${LIBS_SAVE} -lcap";
 	fi
 	;;
 esac

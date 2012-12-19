@@ -204,7 +204,7 @@ public:
 
       // NB: we need to remember the previous element to discriminate if current element is structured (folder)...
 
-      (void) u_strcpy(old_prefix, prefix);
+      (void) u__strcpy(old_prefix, prefix);
 
       U__MEMCPY(old_buffer, u_buffer_ptr, (old_buffer_len = u_buffer_len));
       }

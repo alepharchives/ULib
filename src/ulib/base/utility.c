@@ -52,6 +52,15 @@
 
 #ifndef __MINGW32__
 #  include <pwd.h>
+#  if defined(__linux__) && defined(HAVE_LIBCAP)
+#     include <sys/prctl.h>
+#     include <sys/capability.h>
+#     ifdef SECBIT_KEEP_CAPS
+#        define U_PR_SET_KEEPCAPS SECBIT_KEEP_CAPS
+#     else
+#        define U_PR_SET_KEEPCAPS PR_SET_KEEPCAPS
+#     endif
+#  endif
 #endif
 
 /* Match */
@@ -97,11 +106,11 @@ size_t u__strlen(const char* restrict s)
    return strlen(s);
 }
 
-char* u_strcpy(char* restrict dest, const char* restrict src)
+char* u__strcpy(char* restrict dest, const char* restrict src)
 {
    size_t n = u__strlen(src);
 
-   U_INTERNAL_TRACE("u_strcpy(%p,%p,%ld)", dest, src, n)
+   U_INTERNAL_TRACE("u__strcpy(%p,%p,%ld)", dest, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -113,9 +122,9 @@ char* u_strcpy(char* restrict dest, const char* restrict src)
    return dest;
 }
 
-char* u_strncpy(char* restrict dest, const char* restrict src, size_t n)
+char* u__strncpy(char* restrict dest, const char* restrict src, size_t n)
 {
-   U_INTERNAL_TRACE("u_strncpy(%p,%p,%ld)", dest, src, n)
+   U_INTERNAL_TRACE("u__strncpy(%p,%p,%ld)", dest, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -208,20 +217,20 @@ void u_need_root(bool necessary)
 #ifndef __MINGW32__
    if (effective_uid)
       {
-      if (necessary) U_ERROR(  "require root privilege but not setuid root");
+      if (necessary) U_ERROR(  "require root privilege but not setuid root. Going down...");
                      U_WARNING("require root privilege but not setuid root");
 
       return;
       }
 
-   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
+   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called. Going down...");
 
    if (geteuid() == 0) return; /* nothing to do */
 
    if (seteuid(effective_uid) == -1 ||
        geteuid()              !=  0)
       {
-      if (necessary) U_ERROR(  "did not get root privilege");
+      if (necessary) U_ERROR(  "did not get root privilege. Going down...");
                      U_WARNING("did not get root privilege");
       }
 #endif
@@ -238,14 +247,14 @@ void u_dont_need_root(void)
 #ifndef __MINGW32__
    if (effective_uid) return;
 
-   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
+   if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called. Going down...");
 
    if (geteuid() != 0) return; /* nothing to do */
 
    if (seteuid(real_uid) == -1 ||
        geteuid()         != real_uid)
       {
-      U_ERROR("did not drop root privilege");
+      U_ERROR("did not drop root privilege. Going down...");
       }
 #endif
 }
@@ -254,11 +263,89 @@ void u_dont_need_root(void)
 
 void u_never_need_root(void)
 {
+#ifndef __MINGW32__
+#  if defined(__linux__) && defined(HAVE_LIBCAP)
+/*
+cap_list[] = {
+   {"chown",               CAP_CHOWN},
+   {"dac_override",        CAP_DAC_OVERRIDE},
+   {"dac_read_search",     CAP_DAC_READ_SEARCH},
+   {"fowner",              CAP_FOWNER},
+   {"fsetid",              CAP_FSETID},
+   {"kill",                CAP_KILL},
+   {"setgid",              CAP_SETGID},
+   {"setuid",              CAP_SETUID},
+   {"setpcap",             CAP_SETPCAP},
+   {"linux_immutable",     CAP_LINUX_IMMUTABLE},
+   {"net_bind_service",    CAP_NET_BIND_SERVICE},
+   {"net_broadcast",       CAP_NET_BROADCAST},
+   {"net_admin",           CAP_NET_ADMIN},
+   {"net_raw",             CAP_NET_RAW},
+   {"ipc_lock",            CAP_IPC_LOCK},
+   {"ipc_owner",           CAP_IPC_OWNER},
+   {"sys_module",          CAP_SYS_MODULE},
+   {"sys_rawio",           CAP_SYS_RAWIO},
+   {"sys_chroot",          CAP_SYS_CHROOT},
+   {"sys_ptrace",          CAP_SYS_PTRACE},
+   {"sys_pacct",           CAP_SYS_PACCT},
+   {"sys_admin",           CAP_SYS_ADMIN},
+   {"sys_boot",            CAP_SYS_BOOT},
+   {"sys_nice",            CAP_SYS_NICE},
+   {"sys_resource",        CAP_SYS_RESOURCE},
+   {"sys_time",            CAP_SYS_TIME},
+   {"sys_tty_config",      CAP_SYS_TTY_CONFIG},
+   {"mknod",               CAP_MKNOD},
+#ifdef CAP_LEASE
+   {"lease",               CAP_LEASE},
+#endif
+#ifdef CAP_AUDIT_WRITE
+   {"audit_write",         CAP_AUDIT_WRITE},
+#endif
+#ifdef CAP_AUDIT_CONTROL
+   {"audit_control",       CAP_AUDIT_CONTROL},
+#endif
+#ifdef CAP_SETFCAP
+   {"setfcap",             CAP_SETFCAP},
+#endif
+#ifdef CAP_MAC_OVERRIDE
+   {"mac_override",        CAP_MAC_OVERRIDE},
+#endif
+#ifdef CAP_MAC_ADMIN
+   {"mac_admin",           CAP_MAC_ADMIN},
+#endif
+#ifdef CAP_SYSLOG
+   {"syslog",              CAP_SYSLOG},
+#endif
+#ifdef CAP_WAKE_ALARM
+   {"wake_alarm",          CAP_WAKE_ALARM},
+#endif
+   {0, -1}
+   };
+*/
+
+   cap_value_t minimal_cap_values[] = { CAP_SETUID, CAP_SETGID, CAP_SETPCAP };
+
+   cap_t caps = cap_init();
+
+   if (caps == 0) U_ERROR("cap_init() failed. Going down...");
+
+   (void) cap_clear(caps);
+
+   (void) cap_set_flag(caps, CAP_EFFECTIVE,   3, minimal_cap_values, CAP_SET);
+   (void) cap_set_flag(caps, CAP_PERMITTED,   3, minimal_cap_values, CAP_SET);
+   (void) cap_set_flag(caps, CAP_INHERITABLE, 3, minimal_cap_values, CAP_SET);
+
+   if (cap_set_proc(caps) < 0) U_ERROR("cap_set_proc() failed. Going down...");
+
+   (void) cap_free(caps);
+
+   if (prctl(U_PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0) U_ERROR("prctl() failed. Going down...");
+#  endif
+
    U_INTERNAL_TRACE("u_never_need_root()")
 
    U_INTERNAL_PRINT("(_euid_=%d, uid=%d)", effective_uid, real_uid)
 
-#ifndef __MINGW32__
    if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
 
    if (geteuid() == 0) (void) setuid(real_uid);
@@ -266,10 +353,10 @@ void u_never_need_root(void)
    if (geteuid() != real_uid ||
        getuid()  != real_uid)
       {
-      U_ERROR("did not drop root privilege");
+      U_ERROR("did not drop root privilege. Going down...");
       }
 
-    effective_uid = real_uid;
+   effective_uid = real_uid;
 #endif
 }
 
@@ -282,14 +369,14 @@ void u_need_group(bool necessary)
    U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
 
 #ifndef __MINGW32__
-   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
+   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called. Going down...");
 
    if (getegid() == effective_gid) return; /* nothing to do */
 
     if (setegid(effective_gid) == -1 ||
         getegid()              != effective_gid)
       {
-      if (necessary) U_ERROR(  "did not get group privilege");
+      if (necessary) U_ERROR(  "did not get group privilege. Going down...");
                      U_WARNING("did not get group privilege");
       }
 #endif
@@ -304,14 +391,14 @@ void u_dont_need_group(void)
    U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
 
 #ifndef __MINGW32__
-   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
+   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called. Going down...");
 
    if (getegid() != effective_gid) return; /* nothing to do */
 
     if (setegid(real_gid) == -1 ||
         getegid()         != real_gid)
       {
-      U_ERROR("did not drop group privilege");
+      U_ERROR("did not drop group privilege. Going down...");
       }
 #endif
 }
@@ -325,14 +412,14 @@ void u_never_need_group(void)
    U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
 
 #ifndef __MINGW32__
-   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
+   if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called. Going down...");
 
    if (getegid() != effective_gid) (void) setgid(real_gid);
 
    if (getegid() != real_gid ||
        getgid()  != real_gid)
       {
-      U_ERROR("did not drop group privilege");
+      U_ERROR("did not drop group privilege. Going down...");
       }
 
     effective_gid = real_gid;
@@ -377,7 +464,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
 
    u_setHOME(pw->pw_dir);
 
-   (void) u_strncpy(u_user_name, user, (u_user_name_len = u__strlen(user))); /* change user name */
+   (void) u__strncpy(u_user_name, user, (u_user_name_len = u__strlen(user))); /* change user name */
 
    if (change_dir &&
        pw->pw_dir &&
@@ -569,7 +656,7 @@ void u_printSize(char* restrict buffer, uint64_t bytes)
 
    if (bytes == 0)
       {
-      (void) u_strcpy(buffer, "0 Byte");
+      (void) u__strcpy(buffer, "0 Byte");
 
       return;
       }
@@ -930,12 +1017,12 @@ __pure void* u_find(const char* restrict s, uint32_t n, const char* restrict a, 
  * Locates the first occurrence in the string s of any of the characters in the string accept
  */
  
-__pure const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict _accept)
+__pure const char* u__strpbrk(const char* restrict s, uint32_t slen, const char* restrict _accept)
 {
    const char* restrict c;
    const char* restrict end = s + slen;
 
-   U_INTERNAL_TRACE("u_strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, _accept)
+   U_INTERNAL_TRACE("u__strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, _accept)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(slen,0)
@@ -1197,7 +1284,7 @@ const char* u_delimit_token(const char* restrict s, const char** restrict p, con
       }
    else if (delim)
       {
-      s = (const char* restrict) u_strpbrk(s, end - s, delim);
+      s = (const char* restrict) u__strpbrk(s, end - s, delim);
 
       if (s == 0) return end;
       }
@@ -1901,7 +1988,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
 
    if (dot_path[0])
       {
-      u_strcpy(result, dot_path);
+      u__strcpy(result, dot_path);
 
       result_len = u__strlen(result);
 
@@ -1920,7 +2007,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
       result_len = 2;
       }
 
-   u_strcpy(result + result_len, string);
+   u__strcpy(result + result_len, string);
 }
 
 /* --------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2052,7 +2139,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
          is_modified = true;
 
-         for (src = s, dst = p + 1; (*dst = *src); ++src, ++dst) {} /* u_strcpy(p + 1, s); */
+         for (src = s, dst = p + 1; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p + 1, s); */
 
          U_INTERNAL_PRINT("path = %s", path)
          }
@@ -2070,7 +2157,7 @@ bool u_canonicalize_pathname(char* restrict path)
          {
          is_modified = true;
 
-         for (src = p + 2, dst = p; (*dst = *src); ++src, ++dst) {} /* u_strcpy(p, p + 2); */
+         for (src = p + 2, dst = p; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p, p + 2); */
 
          U_INTERNAL_PRINT("path = %s", path)
          }
@@ -2106,7 +2193,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
       is_modified = true;
 
-      for (src = lpath + 2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* u_strcpy(lpath, lpath + 2); */
+      for (src = lpath + 2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* u__strcpy(lpath, lpath + 2); */
 
       U_INTERNAL_PRINT("path = %s", path)
       }
@@ -2186,7 +2273,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
          is_modified = true;
 
-         for (src = p + 4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* u_strcpy(s + (s == lpath && *s == '/'), p + 4); */
+         for (src = p + 4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* u__strcpy(s + (s == lpath && *s == '/'), p + 4); */
 
          U_INTERNAL_PRINT("path = %s", path)
 

@@ -21,6 +21,7 @@
 
 // U_STACK_TYPE_* 'tipi' stack per cui la richiesta viene gestita tramite preallocazione
 
+#ifdef HAVE_ARCH64
 /* NO DEBUG (64 bit)
 -------------------------
    1 sizeof(UMagic)
@@ -33,43 +34,49 @@
    U_STACK_TYPE_0
 
   12 sizeof(UProcess)
-  16 sizeof(UTimeDate)
   16 sizeof(ULock)
   16 sizeof(UTimer)
   16 sizeof(UPKCS7)
   16 sizeof(UTimeVal)
-  16 sizeof(USemaphore)
+  16 sizeof(UTimeDate)
   16 sizeof(UXMLParser)
+  16 sizeof(URDBServer)
   16 sizeof(UVector<UString>)
+  16 sizeof(UServer<UTCPSocket>)
+  24 sizeof(USemaphore)
   24 sizeof(UStringRep) <==
   24 sizeof(USOAPObject)
 -------------------------
    U_STACK_TYPE_1
 
-  32 sizeof(UCache)
   32 sizeof(ULDAPEntry)
   32 sizeof(UQueryNode)
   32 sizeof(USOAPFault)
   32 sizeof(UTokenizer)
-  32 sizeof(UHashMapNode)                                                      
+  32 sizeof(UHashMapNode) <==
   32 sizeof(UXMLAttribute)
   32 sizeof(UTree<UString>)
+-------------------------
+   U_STACK_TYPE_2
+
   40 sizeof(Url)
   40 sizeof(ULDAP)
+  40 sizeof(UCache)
   40 sizeof(UHashMap<UString>)
   48 sizeof(UCURL)
   48 sizeof(UDialog)
   48 sizeof(UMimeHeader)
   48 sizeof(UMimeEntity)
+  48 sizeof(UXMLElement)
   48 sizeof(UQueryParser)
   48 sizeof(USOAPEncoder)
-  48 sizeof(UXMLElement)
   48 sizeof(USOAPGenericMethod)
   56 sizeof(UOptions)
+  56 sizeof(UIPAddress)
   56 sizeof(UPlugIn<void*>)
   56 sizeof(UHTTP::UFileCacheData) <==
 -------------------------
-   U_STACK_TYPE_2
+   U_STACK_TYPE_3
 
   64 sizeof(UPCRE)
   64 sizeof(UCommand)
@@ -77,43 +84,129 @@
   72 sizeof(UMimePKCS7)
   72 sizeof(UClientImage<UTCPSocket>)
   80 sizeof(UZIP)
-  88 sizeof(UIPAddress)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)
- 120 sizeof(UServer<UTCPSocket>)
- 128 sizeof(URDBServer)
  128 sizeof(USOAPParser)
  128 sizeof(UMimeMultipart)
 -------------------------
-   U_STACK_TYPE_3
+   U_STACK_TYPE_4
 
+ 144 sizeof(USocket)
+ 144 sizeof(UTCPSocket)
+ 144 sizeof(UUDPSocket)
+ 176 sizeof(USSLSocket)
  184 sizeof(ULog)
  184 sizeof(UFile)
  192 sizeof(URDBClient<UTCPSocket>)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
- 216 sizeof(USocket)
- 216 sizeof(UTCPSocket)
- 216 sizeof(UUDPSocket)
- 240 sizeof(USSLSocket)
- 240 sizeof(UModNoCatPeer: 32bit) <==
+ 232 sizeof(USmtpClient)
+ 256 sizeof(UFileConfig)
+ 256 sizeof(UHttpClient<UTCPSocket>)
+-------------------------
+   U_STACK_TYPE_5
+
+ 296 sizeof(UCDB)
+ 304 sizeof(UModNoCatPeer: 64bit) <==
+ 304 sizeof(USOAPClient<UTCPSocket>)
+ 360 sizeof(UFtpClient)
+ 512 sizeof(URDB)
+-------------------------
+   U_STACK_TYPE_6
+*/
+#else
+/* NO DEBUG (32 bit)
+-------------------------
+   1 sizeof(UMagic)
+   1 sizeof(UNotifier)
+   4 sizeof(UCrl)
+   4 sizeof(UPKCS10)
+   4 sizeof(UString) <==
+   4 sizeof(UCertificate)
+-------------------------
+   U_STACK_TYPE_0
+
+   8 sizeof(ULock)
+   8 sizeof(UTimer)
+   8 sizeof(UPKCS7)
+   8 sizeof(UTimeVal)
+  12 sizeof(UProcess)
+  12 sizeof(USemaphore)
+  12 sizeof(URDBServer)
+  12 sizeof(UVector<UString>)
+  12 sizeof(UServer<UTCPSocket>)
+  16 sizeof(UTimeDate)
+  16 sizeof(UXMLParser)
+  16 sizeof(UQueryNode)
+  16 sizeof(USOAPFault)
+  16 sizeof(UTokenizer)
+  16 sizeof(UStringRep) <==
+  16 sizeof(USOAPObject)
+  16 sizeof(UHashMapNode)
+-------------------------
+   U_STACK_TYPE_1
+
+  20 sizeof(UCache)
+  20 sizeof(UTree<UString>)
+  24 sizeof(UQueryParser)
+  24 sizeof(USOAPGenericMethod)
+  28 sizeof(UCURL)
+  28 sizeof(UDialog)
+  28 sizeof(UMimeEntity)
+  28 sizeof(USOAPEncoder)
+  28 sizeof(UPlugIn<void*>)
+  32 sizeof(UOptions)
+  32 sizeof(UHashMap<UString>)
+  36 sizeof(Url)
+  36 sizeof(UApplication)
+  36 sizeof(UMimeHeader)
+  36 sizeof(UHTTP::UFileCacheData) <==
+-------------------------
+   U_STACK_TYPE_2
+
+  40 sizeof(UPCRE)
+  40 sizeof(UCommand)
+  40 sizeof(UMimePKCS7)
+  44 sizeof(UZIP)
+  48 sizeof(UIPAddress)
+  48 sizeof(UClientImage<UTCPSocket>)
+  56 sizeof(UMimeMessage)
+  68 sizeof(USOAPParser)
+  80 sizeof(UMimeMultipart)
+  80 sizeof(UMimeMultipartMsg)
+ 120 sizeof(ULog)
+ 120 sizeof(UFile)
+ 120 sizeof(URDBClient<UTCPSocket>)
+ 124 sizeof(USocket)
+ 124 sizeof(UTCPSocket)
+ 124 sizeof(UUDPSocket)
+ 128
+-------------------------
+   U_STACK_TYPE_3
+
+ 144 sizeof(USSLSocket)
+ 156 sizeof(UHttpClient<UTCPSocket>)
+ 172 sizeof(UFileConfig)
+ 176 sizeof(USmtpClient)
+ 180 sizeof(USOAPClient<UTCPSocket>)
+ 196 sizeof(UModNoCatPeer: 32bit) <==
+ 200 sizeof(UCDB)
 -------------------------
    U_STACK_TYPE_4
 
- 248 sizeof(UHttpClient<UTCPSocket>)
- 256 sizeof(UFileConfig)
+ 256
 -------------------------
    U_STACK_TYPE_5
 
  264 sizeof(USSHSocket)
- 296 sizeof(UCDB)
- 296 sizeof(USmtpClient)
- 304 sizeof(USOAPClient<UTCPSocket>)
- 496 sizeof(UFtpClient)
- 512 sizeof(URDB)
+ 300 sizeof(UFtpClient)
+ 336 sizeof(URDB)
+ 512
 -------------------------
    U_STACK_TYPE_6
-
+*/
+#endif
+/*
  1024
 -------------------------
    U_STACK_TYPE_7
@@ -127,19 +220,28 @@
    U_STACK_TYPE_9
 */
 
+#ifdef HAVE_ARCH64
+#  define U_STACK_TYPE_0   8U
+#  define U_STACK_TYPE_1  24U
+#  define U_STACK_TYPE_2  32U
+#  define U_STACK_TYPE_3  56U
+#  define U_STACK_TYPE_4 128U
+#else
+#  define U_STACK_TYPE_0   4U
+#  define U_STACK_TYPE_1  16U
+#  define U_STACK_TYPE_2  36U
+#  define U_STACK_TYPE_3 128U
+#  define U_STACK_TYPE_4 196U // sizeof(UModNoCatPeer: 32bit) 
+#endif
+
 // NB: con U_NUM_ENTRY_MEM_BLOCK == 32 sono necessari i tipi stack
 //     multipli di 2 a partire da 128 per i blocchi puntatori per 32bit arch...
 
-#define U_STACK_TYPE_0     8U
-#define U_STACK_TYPE_1    24U
-#define U_STACK_TYPE_2    56U
-#define U_STACK_TYPE_3   128U
-#define U_STACK_TYPE_4   240U
-#define U_STACK_TYPE_5   256U
-#define U_STACK_TYPE_6   512U
-#define U_STACK_TYPE_7  1024U
-#define U_STACK_TYPE_8  2048U
-#define U_STACK_TYPE_9  U_MAX_SIZE_PREALLOCATE
+#define U_STACK_TYPE_5  256U
+#define U_STACK_TYPE_6  512U
+#define U_STACK_TYPE_7 1024U
+#define U_STACK_TYPE_8 2048U
+#define U_STACK_TYPE_9 U_MAX_SIZE_PREALLOCATE
 
 // U_NUM_STACK_TYPE: numero 'tipi' stack per cui la richiesta viene gestita tramite preallocazione
 
@@ -147,15 +249,15 @@
 
 /* Implements a simple stack allocator */
 
-#define U_SIZE_TO_STACK_INDEX(sz)  ((sz) <= U_STACK_TYPE_0 ? 0 : \
-                                    (sz) <= U_STACK_TYPE_1 ? 1 : \
-                                    (sz) <= U_STACK_TYPE_2 ? 2 : \
-                                    (sz) <= U_STACK_TYPE_3 ? 3 : \
-                                    (sz) <= U_STACK_TYPE_4 ? 4 : \
-                                    (sz) <= U_STACK_TYPE_5 ? 5 : \
-                                    (sz) <= U_STACK_TYPE_6 ? 6 : \
-                                    (sz) <= U_STACK_TYPE_7 ? 7 : \
-                                    (sz) <= U_STACK_TYPE_8 ? 8 : 9)
+#define U_SIZE_TO_STACK_INDEX(sz) ((sz) <= U_STACK_TYPE_0 ? 0 : \
+                                   (sz) <= U_STACK_TYPE_1 ? 1 : \
+                                   (sz) <= U_STACK_TYPE_2 ? 2 : \
+                                   (sz) <= U_STACK_TYPE_3 ? 3 : \
+                                   (sz) <= U_STACK_TYPE_4 ? 4 : \
+                                   (sz) <= U_STACK_TYPE_5 ? 5 : \
+                                   (sz) <= U_STACK_TYPE_6 ? 6 : \
+                                   (sz) <= U_STACK_TYPE_7 ? 7 : \
+                                   (sz) <= U_STACK_TYPE_8 ? 8 : 9)
 
 struct U_EXPORT UMemoryPool {
 

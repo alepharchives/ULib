@@ -25,8 +25,17 @@
 #  include <sys/socket.h>
 #endif
 
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN  16
+#endif
 #ifndef INET6_ADDRSTRLEN
 #define INET6_ADDRSTRLEN 46
+#endif
+
+#ifndef ENABLE_IPV6
+#define U_INET_ADDRSTRLEN INET_ADDRSTRLEN
+#else
+#define U_INET_ADDRSTRLEN INET6_ADDRSTRLEN
 #endif
 
 union uusockaddr {
@@ -144,6 +153,11 @@ union uupcAddress {
    char p[16];
 };
 
+#define U_ipaddress_HostNameUnresolved(obj)   (obj)->UIPAddress::flag[0]
+#define U_ipaddress_StrAddressUnresolved(obj) (obj)->UIPAddress::flag[1]
+#define U_ipaddress_unused1(obj)              (obj)->UIPAddress::flag[2]
+#define U_ipaddress_unused2(obj)              (obj)->UIPAddress::flag[3]
+
 class U_EXPORT UIPAddress {
 public:
 
@@ -257,8 +271,8 @@ public:
    // Returns a constant string pointer to the string
    // representation of the IP Address suitable for visual presentation
 
-   const char* getAddressString() { if (bStrAddressUnresolved) resolveStrAddress(); return pcStrAddress; }
-   
+   const char* getAddressString() { if (U_ipaddress_StrAddressUnresolved(this)) resolveStrAddress(); return pcStrAddress; }
+
    // Check equality with an existing UIPAddress object
 
    bool operator==(const UIPAddress& cOtherAddr) const
@@ -307,11 +321,11 @@ public:
 #endif
 
 protected:
-   union uupcAddress pcAddress;
-   char pcStrAddress[INET6_ADDRSTRLEN];
-   int iAddressLength, iAddressType;
    UString strHostName;
-   bool bHostNameUnresolved, bStrAddressUnresolved;
+   int iAddressLength, iAddressType;
+   char flag[4];
+   union uupcAddress pcAddress;
+   char pcStrAddress[U_INET_ADDRSTRLEN];
 
    void resolveHostName();
    void resolveStrAddress();

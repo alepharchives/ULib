@@ -80,7 +80,7 @@ public:
 
       UIPAddress addr;
 
-      bool result = (addr.setHostName(host, USocket::bIPv6Socket) && ping(addr));
+      bool result = (addr.setHostName(host, U_socket_IPv6(this)) && ping(addr));
 
       U_RETURN(result);
       }
@@ -105,7 +105,7 @@ public:
 
       UIPAddress addr;
 
-      bool result = (addr.setHostName(host, USocket::bIPv6Socket) && arping(addr, device));
+      bool result = (addr.setHostName(host, U_socket_IPv6(this)) && arping(addr, device));
 
       U_RETURN(result);
       }

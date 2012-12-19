@@ -290,7 +290,7 @@ loop: // wait for response
 
       if (cResponseIP != addr) goto loop;
 
-      if (bIPv6Socket)
+      if (U_socket_IPv6(this))
          {
          if (ret < (int)sizeof(rephdr)) goto loop; 
 
@@ -532,7 +532,7 @@ void UPing::initArpPing(const char* device)
    (void) U_SYSCALL(memset, "%p,%C,%u", &arp, '\0', sizeof(arp));
    (void) U_SYSCALL(memset, "%p,%C,%u", &ifr, '\0', sizeof(struct ifreq));
 
-   (void) u_strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
+   (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFINDEX, (char*)&ifr) == -1)
       {
@@ -660,7 +660,7 @@ retry:
    struct sockaddr _saddr;
 
    (void) U_SYSCALL(memset, "%p,%C,%u", &_saddr, '\0', sizeof(struct sockaddr));
-   (void) u_strncpy(_saddr.sa_data, device, sizeof(_saddr.sa_data));
+   (void) u__strncpy(_saddr.sa_data, device, sizeof(_saddr.sa_data));
 
    size_t len             = sizeof(arp);
    socklen_t alen         = sizeof(struct sockaddr);

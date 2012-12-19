@@ -70,8 +70,9 @@ bool UUnixSocket::setServer(int port, int iBackLog)
       listen(iBackLog);
 
       iState     = LOGIN;
-      bLocalSet  = true;
       iLocalPort = iRemotePort = port;
+
+      U_socket_LocalSet(this) = true;
 
       U_RETURN(true);
       }
@@ -105,8 +106,9 @@ loop:
    if (result ==  0)
       {
       iState     = CONNECT;
-      bLocalSet  = true;
       iLocalPort = iRemotePort = iServPort;
+
+      U_socket_LocalSet(this) = true;
 
       U_RETURN(true);
       }

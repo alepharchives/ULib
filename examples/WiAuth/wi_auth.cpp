@@ -29,11 +29,13 @@
    static UString* login_url;
    static UString* empty_str;
    static UString* empty_list;
+   static UString* dir_policy;
    static UString* nodog_conf;
-   static UString* policy_flat;
    static UString* request_uri;
    static UString* environment;
    static UString* auth_domain;
+   static UString* policy_flat;
+   static UString* policy_daily;
    static UString* virtual_name;
    static UString* account_auth;
    static UString* title_default;
@@ -46,6 +48,8 @@
    static UString* historical_log_dir;
    static UString* wiauth_card_basedn;
    static UString* wiauth_user_basedn;
+   static UString* content_policy_flat;
+   static UString* content_policy_daily;
    static UString* message_page_template;
    static UString* status_nodog_template;
    static UString* status_network_template;
@@ -207,7 +211,7 @@
    
       if (result)
          {
-         U_SRV_LOG("store with flag %d on db %.*S failed with error %d", op, U_FILE_TO_TRACE(*db), result);
+         U_SRV_LOG("Store with flag %d on db %.*S failed with error %d", op, U_FILE_TO_TRACE(*db), result);
    
          U_RETURN(false);
          }
@@ -1127,7 +1131,7 @@
             consume      = false;
             _auth_domain = *account_auth;
    
-            loadPolicy(_policy = *policy_flat);
+            loadPolicy((_policy = *policy_flat));
             }
          else
             {
@@ -1269,9 +1273,9 @@
       num_user = _num_user;
    }
    
-   #define VIRTUAL_HOST "wifi-aaa.comune.fi.it"
-   /*
    #define VIRTUAL_HOST "auth.t-unwired.com"
+   /*
+   #define VIRTUAL_HOST "wifi-aaa.comune.fi.it"
    */
    
    static void usp_init()
@@ -1306,7 +1310,7 @@
          {
          callForAllAP(countAP, 0);
    
-         U_SRV_LOG("db initialization of wi-auth access point WiAuthAccessPoint.cdb %s: num_ap %u", result ? "success" : "FAILED", num_ap);
+         U_SRV_LOG("DB initialization of wi-auth access point WiAuthAccessPoint.cdb %s: num_ap %u", result ? "success" : "FAILED", num_ap);
    
          UFile::writeToTmpl("/tmp/WiAuthAccessPoint.init", db_ap->print());
    
@@ -1325,7 +1329,7 @@
    
          callForAllUsers(countUsers);
    
-         U_SRV_LOG("db initialization of wi-auth users WiAuthUser.cdb %s: num_user %u connected  %u", result ? "success" : "FAILED", num_user, users_connected);
+         U_SRV_LOG("DB initialization of wi-auth users WiAuthUser.cdb %s: num_user %u connected  %u", result ? "success" : "FAILED", num_user, users_connected);
    
          UFile::writeToTmpl("/tmp/WiAuthUser.init", db_user->print());
    
@@ -1354,7 +1358,6 @@
       cert_auth          = U_NEW(U_STRING_FROM_CONSTANT("CERT_AUTH"));
       nodog_conf         = U_NEW(UString(UFile::contentOf("ap/nodog.conf.template")));
       empty_list         = U_NEW(U_STRING_FROM_CONSTANT("()"));
-      policy_flat        = U_NEW(U_STRING_FROM_CONSTANT("FLAT"));
       request_uri        = U_NEW(UString);
       auth_domain        = U_NEW(UString);
       account_auth       = U_NEW(U_STRING_FROM_CONSTANT("ACCOUNT_AUTH"));
@@ -1376,6 +1379,7 @@
    
       dir_reg            = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"),            environment)));
       dir_root           = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_ROOT"),           environment)));
+      dir_policy         = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_POLICY"),         environment)));
       virtual_name       = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("VIRTUAL_NAME"),       environment)));
       title_default      = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"),      environment)));
       historical_log_dir = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
@@ -1479,6 +1483,19 @@
       (void) UServer_Base::addLog(file_LOG);
       (void) UServer_Base::addLog(file_WARNING);
       (void) UServer_Base::addLog(file_RECOVERY, O_CREAT | O_RDWR | O_APPEND);
+   
+      policy_flat  = U_NEW(U_STRING_FROM_CONSTANT("FLAT"));
+      policy_daily = U_NEW(U_STRING_FROM_CONSTANT("DAILY"));
+   
+      UString pathname(U_CAPACITY);
+   
+      pathname.snprintf("%.*s/FLAT", U_STRING_TO_TRACE(*dir_policy));
+   
+      content_policy_flat = U_NEW(UString(UFile::contentOf(pathname)));
+   
+      pathname.snprintf("%.*s/DAILY", U_STRING_TO_TRACE(*dir_policy));
+   
+      content_policy_daily = U_NEW(UString(UFile::contentOf(pathname)));
    }
    
    static void usp_end()
@@ -1511,11 +1528,13 @@
          delete empty_str;
          delete cert_auth;
          delete nodog_conf;
+         delete dir_policy;
          delete empty_list;
+         delete request_uri;
          delete auth_domain;
          delete environment;
          delete policy_flat;
-         delete request_uri;
+         delete policy_daily;
          delete account_auth;
          delete virtual_name;
          delete title_default;
@@ -1526,6 +1545,8 @@
          delete wiauth_card_basedn;
          delete wiauth_user_basedn;
          delete historical_log_dir;
+         delete content_policy_flat;
+         delete content_policy_daily;
          delete message_page_template;
          delete status_nodog_template;
          delete status_network_template;
@@ -1779,6 +1800,7 @@
       UString user;
    
       if (user_exist == false) user = get_UserName();
+      else
          {
          user = user_rec->_user;
    
@@ -2359,7 +2381,7 @@
          UHTTP::getFormValue(*ip, U_CONSTANT_TO_PARAM("ip"), 0,  3, end);
          UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 13, end);
    
-         if (end == 22) U_RETURN(true);
+         if (end == 24) U_RETURN(true);
    
          if (setAccessPointAddress())
             {
@@ -2456,11 +2478,11 @@
                                         x.data(), "/logged_login_request", url_banner_comune->data());
    }
    
-   static void loadPolicy(const UString& _policy)
+   static void loadPolicy(const UString& name)
    {
-      U_TRACE(5, "::loadPolicy(%.*S)", U_STRING_TO_TRACE(_policy))
+      U_TRACE(5, "::loadPolicy(%.*S)", U_STRING_TO_TRACE(name))
    
-      U_INTERNAL_ASSERT(_policy)
+      U_INTERNAL_ASSERT(name)
    
       const char* key_time    = 0;
       const char* key_traffic = 0;
@@ -2472,11 +2494,18 @@
          }
       else
          {
-         UString pathname(U_CAPACITY), content;
+         UString content;
    
-         pathname.snprintf("%.*s/policy/%.*s", U_STRING_TO_TRACE(*dir_root), U_STRING_TO_TRACE(_policy));
+              if (name == *policy_flat)  content = *content_policy_flat;
+         else if (name == *policy_daily) content = *content_policy_daily;
+         else
+            {
+            UString pathname(U_CAPACITY);
    
-         content = UFile::contentOf(pathname);
+            pathname.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(*dir_policy), U_STRING_TO_TRACE(name));
+   
+            content = UFile::contentOf(pathname);
+            }
    
          if (UFileConfig::loadProperties(*table, content.data(), content.end()))
             {
@@ -3000,26 +3029,31 @@
       if (user_rec->consume) user_rec->setChunkValue();
       else
          {
-            _time_chunk->snprintf("%ld",   3600L * 24L);                   // 24h
-         _traffic_chunk->snprintf("%llu", 1024UL * 1024UL * 1024UL * 4UL); // 4G
+         loadPolicy(*policy_flat);
+   
+            _time_chunk->snprintf("%.*s", U_STRING_TO_TRACE(*_time_available));
+         _traffic_chunk->snprintf("%.*s", U_STRING_TO_TRACE(*_traffic_available));
          }
    
       UString signed_data = UDES3::signData("\n"
-         "Action Permit\n"
-         "Mode Login\n"
+      // "Action Permit\n"
+      // "Mode Login\n"
          "Redirect http://" VIRTUAL_HOST "/postlogin?%.*s\n"
          "Mac %.*s\n"
          "Timeout %.*s\n"
          "Traffic %.*s\n"
          "Token %.*s\n"
          "User %.*s\n"
+         "Policy %.*s\n"
          "UserDownloadRate %.*s\n"
          "UserUploadRate %.*s\n",
          U_HTTP_QUERY_TO_TRACE,
          U_STRING_TO_TRACE(*mac),
          U_STRING_TO_TRACE(*_time_chunk),
          U_STRING_TO_TRACE(*_traffic_chunk),
-         U_STRING_TO_TRACE(*token), U_STRING_TO_TRACE(*uid),
+         U_STRING_TO_TRACE(*token),
+         U_STRING_TO_TRACE(*uid),
+         U_STRING_TO_TRACE(user_rec->_policy),
          U_STRING_TO_TRACE(*user_DownloadRate), U_STRING_TO_TRACE(*user_UploadRate));
    
       USSIPlugIn::setAlternativeRedirect("http://%.*s/ticket?ticket=%.*s", U_STRING_TO_TRACE(*gateway), U_STRING_TO_TRACE(signed_data));
@@ -3132,8 +3166,9 @@
    {
       U_TRACE(5, "::GET_recovery()")
    
+      if (*client_address != *ip_server) u_http_info.nResponseCode = HTTP_BAD_REQUEST;
    #ifndef U_MANAGED_BY_MAIN_BASH
-      if (*ip_server == *client_address)
+      else
          {
          // ----------------------------
          // $1 -> uid
@@ -3143,13 +3178,13 @@
    
          if (checkIfUserConnected()) (void) askNodogToLogoutUser();
    
-         UString user = getUserName();
+         UString user = get_UserName();
    
          u_printf2(file_RECOVERY->getFd(), "%6D %.*s \"%.*s\"\n", U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(user));
    
          int result = db_user->remove(*uid);
    
-         if (result) U_SRV_LOG("remove of user %.*s on db WiAuthUser failed with error %d", U_STRING_TO_TRACE(*uid), result);
+         if (result) U_SRV_LOG("Remove of user %.*s on db WiAuthUser failed with error %d", U_STRING_TO_TRACE(*uid), result);
    
          USSIPlugIn::setAlternativeResponse(UString::getStringNull());
          }
@@ -3183,9 +3218,7 @@
    #ifndef U_MANAGED_BY_MAIN_BASH
       else
          {
-         *policy = U_STRING_FROM_CONSTANT("DAILY");
-   
-         loadPolicy(*policy);
+         loadPolicy((*policy = *policy_daily));
    
          callForAllUsers(resetUserPolicy);
    
@@ -3630,11 +3663,12 @@
       // $8  -> realm
       // $9  -> uid
       // $10 -> password
-      // $11 -> bottone
+      // $11 -> submit.x 
+      // $12 -> submit.y - if it came from main.bash...
       // ---------------------------------------------------------------------------------------------------
     
    #ifndef U_MANAGED_BY_MAIN_BASH
-      if (checkLoginRequest(22) == false)
+      if (checkLoginRequest(24) == false)
          {
          loginWithProblem();
    
@@ -3690,7 +3724,7 @@
    
          if (runAuthCmd(uid->c_str(), password.c_str()) == false) return;
    
-         *policy      = U_STRING_FROM_CONSTANT("DAILY");
+         *policy      = *policy_daily;
          *auth_domain = U_STRING_FROM_CONSTANT("AUTH_") + UStringExt::trim(*output);
          }
       else

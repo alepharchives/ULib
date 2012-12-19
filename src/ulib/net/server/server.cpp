@@ -1418,8 +1418,8 @@ void UServer_Base::init()
       U_SRV_LOG("SSL Server use %s protocol", msg);
       }
 #elif defined(U_HTTP_CACHE_REQUEST) && !defined(__MINGW32__)
-   UEventFd::op_mask     |= EPOLLET;
-   accept_edge_triggered  = true;
+   accept_edge_triggered     = true;
+   pthis->UEventFd::op_mask |= EPOLLET;
 #endif
 
    socket->flags |= O_CLOEXEC;
@@ -1501,7 +1501,11 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    U_INTERNAL_ASSERT(proc->parent())
 
-   U_SRV_LOG("--- SIGHUP (Interrupt) ---");
+   uint32_t vsz, rss;
+
+   u_get_memusage(&rss, &vsz);
+
+   U_SRV_LOG("SIGHUP (Interrupt) - {address space usage: %u bytes/%uMB} {rss usage: %u bytes/%uMB}", vsz, vsz / (1024 * 1024), rss, rss / (1024 * 1024));
 
    pthis->handlerSignal(); // manage before regenering preforked pool of children...
 
@@ -1528,9 +1532,13 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 {
    U_TRACE(0, "[SIGTERM] UServer_Base::handlerForSigTERM(%d)", signo)
 
-   U_SRV_LOG("--- SIGTERM (Interrupt) ---");
-
    flag_loop = false;
+
+   uint32_t vsz, rss;
+
+   u_get_memusage(&rss, &vsz);
+
+   U_SRV_LOG("SIGTERM (Interrupt) - {address space usage: %u bytes/%uMB} {rss usage: %u bytes/%uMB}", vsz, vsz / (1024 * 1024), rss, rss / (1024 * 1024));
 
    if (proc->parent())
       {

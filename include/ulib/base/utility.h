@@ -109,15 +109,15 @@ U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, s
 U_EXPORT uint32_t u_ptr2int(void* ptr);
 /* NB: u_strlen() and u_memcpy conflit with /usr/include/unicode/urename.h */
 U_EXPORT size_t   u__strlen(const char* restrict s);
-U_EXPORT char*    u_strcpy( char* restrict dest, const char* restrict src);
-U_EXPORT void*    u__memcpy(void* restrict dest, const void* restrict src, size_t n, const char* function);
-U_EXPORT char*    u_strncpy(char* restrict dest, const char* restrict src, size_t n);
+U_EXPORT char*    u__strcpy( char* restrict dest, const char* restrict src);
+U_EXPORT void*    u__memcpy( void* restrict dest, const void* restrict src, size_t n, const char* function);
+U_EXPORT char*    u__strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
 #  define u_ptr2int(x)               ((long)x)
 #  define u__strlen(s)                      strlen((s))
-#  define u_strcpy(dest,src)                strcpy( (dest),(src))
+#  define u__strcpy(dest,src)               strcpy( (dest),(src))
 #  define u__memcpy(dest,src,n,func) (void) memcpy( (dest),(src),(n))
-#  define u_strncpy(dest,src,n)             strncpy((dest),(src),(n))
+#  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))
 #endif
 
 static inline int u_equal(const void* restrict s1, const void* restrict s2, uint32_t n, bool ignore_case) /* Equal with ignore case */
@@ -158,7 +158,7 @@ U_EXPORT const char* u_delimit_token(const char* restrict s,   const char** rest
 
 /* Search a string for any of a set of characters. Locates the first occurrence in the string s of any of the characters in the string accept */
 
-U_EXPORT const char* u_strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept) __pure;
+U_EXPORT const char* u__strpbrk(const char* restrict s, uint32_t slen, const char* restrict accept) __pure;
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 

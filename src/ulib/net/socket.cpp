@@ -153,18 +153,19 @@ USocket::USocket(bool bSocketIsIPv6)
 
    flags       = O_RDWR;
    iState      = CLOSE;
-   iRemotePort = 0;
-   bLocalSet   = false;
-
-#ifdef __MINGW32__
-   fh          = -1;
-#endif
    iSockDesc   = -1;
+   iRemotePort = 0;
 
 #ifdef ENABLE_IPV6
-   bIPv6Socket = bSocketIsIPv6;
+   U_socket_IPv6(this) = bSocketIsIPv6;
 #else
-   bIPv6Socket = false;
+   U_socket_IPv6(this) = false;
+#endif
+
+   U_socket_LocalSet(this) = false;
+
+#ifdef __MINGW32__
+   fh = -1;
 #endif
 
    if (str_host == 0) str_allocate();
@@ -208,10 +209,10 @@ bool USocket::socket(int iSocketType, int protocol)
    U_INTERNAL_ASSERT(isClosed())
 
 #ifdef __MINGW32__
-   fh        = U_SYSCALL(socket, "%d,%d,%d", bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+   fh        = U_SYSCALL(socket, "%d,%d,%d", U_socket_IPv6(this) ? AF_INET6 : AF_INET, iSocketType, protocol);
    iSockDesc = _open_osfhandle((long)fh, O_RDWR | O_BINARY);
 #else
-   iSockDesc = U_SYSCALL(socket, "%d,%d,%d", bIPv6Socket ? AF_INET6 : AF_INET, iSocketType, protocol);
+   iSockDesc = U_SYSCALL(socket, "%d,%d,%d", U_socket_IPv6(this) ? AF_INET6 : AF_INET, iSocketType, protocol);
 #endif
 
    if (isOpen()) U_RETURN(true);
@@ -306,8 +307,6 @@ loop:
        errno  == EADDRINUSE &&
        ++counter <= 3)
       {
-      U_WARNING("Probably another instance of userver is running on the same port: %d", iLocalPort);
-
       UTimeVal(1L).nanosleep();
 
       goto loop;
@@ -315,7 +314,7 @@ loop:
 
    if (result == 0)
       {
-      bLocalSet = true;
+      U_socket_LocalSet(this) = true;
 
       socklen_t slDummy = cLocal.sizeOf();
 
@@ -328,6 +327,11 @@ loop:
       iState = LOGIN;
 
       U_RETURN(true);
+      }
+
+   if (errno == EADDRINUSE)
+      {
+      U_WARNING("Probably another instance of userver is running on the same port: %d", iLocalPort);
       }
 
    U_RETURN(false);
@@ -351,7 +355,7 @@ bool USocket::bind(int port)
 
    SocketAddress cLocal;
 
-   cLocal.setIPAddressWildCard(bIPv6Socket);
+   cLocal.setIPAddressWildCard(U_socket_IPv6(this));
    cLocal.setPortNumber(port);
 
    return bind(cLocal);
@@ -371,7 +375,7 @@ void USocket::setLocal()
 
    if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)cLocal, &slDummy) == 0)
       {
-      bLocalSet = true;
+      U_socket_LocalSet(this) = true;
 
       cLocal.getPortNumber(iLocalPort);
       cLocal.getIPAddress(cLocalAddress);
@@ -687,7 +691,7 @@ bool USocket::connectServer(const UString& server, int iServPort)
 
    U_CHECK_MEMORY
 
-   if (cRemoteAddress.setHostName(server, bIPv6Socket))
+   if (cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
       {
       iRemotePort = iServPort;
 
@@ -707,12 +711,12 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
 
    // Avoid "Address already in use" thingie
 
-   const int flag = 1;
+   const int _flag = 1;
    struct linger ling = { 0, 0 };
 
-   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, &flag, sizeof(flag));
-   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &flag, sizeof(flag));
-   (void) setSockOpt(SOL_SOCKET, SO_LINGER,    &ling, sizeof(ling));
+   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, &_flag, sizeof(_flag));
+   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &_flag, sizeof(_flag));
+   (void) setSockOpt(SOL_SOCKET, SO_LINGER,    &ling,  sizeof(ling));
 
    if (bind(cLocal))
       {
@@ -732,7 +736,7 @@ bool USocket::setServer(int port, int iBackLog)
 
    SocketAddress cLocal;
 
-   cLocal.setIPAddressWildCard(bIPv6Socket);
+   cLocal.setIPAddressWildCard(U_socket_IPv6(this));
    cLocal.setPortNumber(port);
 
    return setServer(cLocal, iBackLog);
@@ -746,7 +750,7 @@ bool USocket::setServer(const UString& cLocalAddr, int port, int iBackLog)
 
    UIPAddress addr;
 
-   if (addr.setHostName(cLocalAddr, bIPv6Socket) == false) U_RETURN(false);
+   if (addr.setHostName(cLocalAddr, U_socket_IPv6(this)) == false) U_RETURN(false);
 
    SocketAddress cLocal;
 
@@ -789,7 +793,7 @@ bool USocket::acceptClient(USocket* pcNewConnection)
       U_INTERNAL_DUMP("pcNewConnection->iSockDesc = %d pcNewConnection->flags = %d %B",
                        pcNewConnection->iSockDesc, pcNewConnection->flags, pcNewConnection->flags)
 
-      U_INTERNAL_ASSERT_EQUALS(pcNewConnection->bIPv6Socket, (cRemoteAddress.getAddressFamily() == AF_INET6))
+      U_INTERNAL_ASSERT_EQUALS(U_socket_IPv6(pcNewConnection), (cRemoteAddress.getAddressFamily() == AF_INET6))
       
 #  ifdef HAVE_ACCEPT4
       U_INTERNAL_ASSERT_EQUALS(((accept4_flags & SOCK_CLOEXEC)  != 0),((pcNewConnection->flags & O_CLOEXEC)  != 0))
@@ -1084,10 +1088,8 @@ const char* USocket::dump(bool reset) const
    *UObjectIO::os << "flags                         " << flags                  << '\n'
                   << "iState                        " << iState                 << '\n'
                   << "iSockDesc                     " << iSockDesc              << '\n'
-                  << "bLocalSet                     " << bLocalSet              << '\n'
                   << "iLocalPort                    " << iLocalPort             << '\n'
                   << "iRemotePort                   " << iRemotePort            << '\n'
-                  << "bIPv6Socket                   " << bIPv6Socket            << '\n'
                   << "cLocalAddress   (UIPAddress   " << (void*)&cLocalAddress  << ")\n"
                   << "cRemoteAddress  (UIPAddress   " << (void*)&cRemoteAddress << ')';
 

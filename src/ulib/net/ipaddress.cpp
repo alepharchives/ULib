@@ -108,7 +108,8 @@ void UIPAddress::setAddress(void* address, bool bIPv6)
       iAddressLength = sizeof(in_addr);
       }
 
-   bHostNameUnresolved = bStrAddressUnresolved = true;
+   U_ipaddress_HostNameUnresolved(this)   =
+   U_ipaddress_StrAddressUnresolved(this) = true;
 
 // U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -136,8 +137,8 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       pcAddress.i = cOtherAddr.pcAddress.i;
       }
 
-   if ((bHostNameUnresolved   = cOtherAddr.bHostNameUnresolved)   == false)                 strHostName = cOtherAddr.strHostName;
-   if ((bStrAddressUnresolved = cOtherAddr.bStrAddressUnresolved) == false) (void) u_strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
+   if ((U_ipaddress_HostNameUnresolved(this)   = U_ipaddress_HostNameUnresolved(&cOtherAddr))   == false) strHostName = cOtherAddr.strHostName;
+   if ((U_ipaddress_StrAddressUnresolved(this) = U_ipaddress_StrAddressUnresolved(&cOtherAddr)) == false) (void) u__strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -163,7 +164,7 @@ void UIPAddress::setLocalHost(bool bIPv6)
       iAddressType   = AF_INET6;
       iAddressLength = sizeof(in6_addr);
 
-      (void) u_strcpy(pcStrAddress, "::1");
+      (void) u__strcpy(pcStrAddress, "::1");
       }
    else
 #endif
@@ -176,10 +177,11 @@ void UIPAddress::setLocalHost(bool bIPv6)
       iAddressType   = AF_INET;
       iAddressLength = sizeof(in_addr);
 
-      (void) u_strcpy(pcStrAddress, "127.0.0.1");
+      (void) u__strcpy(pcStrAddress, "127.0.0.1");
       }
 
-   bHostNameUnresolved = bStrAddressUnresolved = false;
+   U_ipaddress_HostNameUnresolved(this)   =
+   U_ipaddress_StrAddressUnresolved(this) = false;
 }
 
 void UIPAddress::setAddress(const char* pcNewAddress, int iNewAddressLength)
@@ -213,7 +215,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
       (void) strHostName.replace(pcNewHostName);
 
-      bHostNameUnresolved = false;
+      U_ipaddress_StrAddressUnresolved(this) = false;
 
       U_RETURN(true);
       }
@@ -331,8 +333,8 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
    setAddress(pheDetails->h_addr_list[0], pheDetails->h_length);
 #endif
 
-   bHostNameUnresolved   = false;
-   bStrAddressUnresolved = true;
+   U_ipaddress_HostNameUnresolved(this)   = false;
+   U_ipaddress_StrAddressUnresolved(this) = true;
 
    U_RETURN(true);
 }
@@ -353,19 +355,19 @@ void UIPAddress::resolveStrAddress()
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT(bStrAddressUnresolved)
+   U_INTERNAL_ASSERT(U_ipaddress_StrAddressUnresolved(this))
 
    const char* result = 0;
 
 #ifdef HAVE_INET_NTOP
-   result = U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, pcAddress.p, pcStrAddress, INET6_ADDRSTRLEN);
+   result = U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, pcAddress.p, pcStrAddress, U_INET_ADDRSTRLEN);
 #else
    result = U_SYSCALL(inet_ntoa, "%u", *((struct in_addr*)pcAddress.p));
 
-   if (result) (void) u_strcpy(pcStrAddress, result);
+   if (result) (void) u__strcpy(pcStrAddress, result);
 #endif
 
-   if (result) bStrAddressUnresolved = false;
+   if (result) U_ipaddress_StrAddressUnresolved(this) = false;
 }
 
 /****************************************************************************/
@@ -389,7 +391,7 @@ void UIPAddress::resolveHostName()
 
    U_CHECK_MEMORY
 
-   if (bHostNameUnresolved)
+   if (U_ipaddress_HostNameUnresolved(this))
       {
 #  ifdef HAVE_GETNAMEINFO
       char hbuf[NI_MAXHOST];
@@ -404,7 +406,7 @@ void UIPAddress::resolveHostName()
          {
          U_WARNING("getnameinfo() error: %s", gai_strerror(gai_err));
 
-         if (bStrAddressUnresolved) resolveStrAddress();
+         if (U_ipaddress_StrAddressUnresolved(this)) resolveStrAddress();
 
          (void) strHostName.replace(pcStrAddress);
          }
@@ -426,13 +428,13 @@ void UIPAddress::resolveHostName()
       if (pheDetails) (void) strHostName.replace(pheDetails->h_name);
       else
          {
-         if (bStrAddressUnresolved) resolveStrAddress();
+         if (U_ipaddress_StrAddressUnresolved(this)) resolveStrAddress();
 
          (void) strHostName.replace(pcStrAddress);
          }
 #  endif
 
-      bHostNameUnresolved = false;
+      U_ipaddress_HostNameUnresolved(this) = false;
       }
 }
 
@@ -483,7 +485,8 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 
       iAddressType = iNewAddressFamily;
 
-      bHostNameUnresolved = bStrAddressUnresolved = true;
+      U_ipaddress_HostNameUnresolved(this)   =
+      U_ipaddress_StrAddressUnresolved(this) = true;
       }
 }
 #endif

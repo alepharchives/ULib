@@ -204,7 +204,7 @@ bool UFile::chdir(const char* path, bool flag_save)
          {
          cwd_len_save = u_cwd_len;
 
-         (void) u_strcpy(cwd_save, u_cwd);
+         (void) u__strcpy(cwd_save, u_cwd);
          }
       }
    else
@@ -225,7 +225,7 @@ bool UFile::chdir(const char* path, bool flag_save)
 
          u_cwd_len = cwd_len_save;
 
-         (void) u_strcpy(u_cwd, cwd_save);
+         (void) u__strcpy(u_cwd, cwd_save);
          }
       else if (IS_DIR_SEPARATOR(path[0]) == false) u_getcwd();
       else
@@ -234,7 +234,7 @@ bool UFile::chdir(const char* path, bool flag_save)
 
          U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
 
-         (void) u_strcpy(u_cwd, path);
+         (void) u__strcpy(u_cwd, path);
          }
       }
 

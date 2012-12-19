@@ -67,8 +67,8 @@ struct passwd* getpwuid(uid_t uid)
       char name[256];
       DWORD length = sizeof(name);
 
-      if (GetUserName(name, &length)) u_strcpy(passwd_any_name, name);
-      else                            u_strcpy(passwd_any_name, "unknown");
+      if (GetUserName(name, &length)) u__strcpy(passwd_any_name, name);
+      else                            u__strcpy(passwd_any_name, "unknown");
       }
 
    return &passwd_any;
@@ -136,12 +136,12 @@ char* realpath(const char* name, char* resolved_path)
       return NULL;
       }
 
-   if (U_STREQ(name, ".")) (void) u_strncpy(resolved_path, u_cwd, u_cwd_len);
+   if (U_STREQ(name, ".")) (void) u__strncpy(resolved_path, u_cwd, u_cwd_len);
    else
       {
       /* We can, so normalize the name and return it below */
 
-      (void) u_strcpy(resolved_path, name);
+      (void) u__strcpy(resolved_path, name);
 
       (void) u_canonicalize_pathname(resolved_path);
       }

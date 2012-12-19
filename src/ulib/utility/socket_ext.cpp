@@ -523,8 +523,8 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
 #if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
    struct ifreq ifaddr, ifnetmask;
 
-   (void) u_strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
-   (void) u_strncpy(ifnetmask.ifr_name, device, IFNAMSIZ-1);
+   (void) u__strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
+   (void) u__strncpy(ifnetmask.ifr_name, device, IFNAMSIZ-1);
 
    (void) U_SYSCALL(ioctl, "%d,%d,%p", fd,    SIOCGIFADDR, &ifaddr);
    (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFNETMASK, &ifnetmask);
@@ -664,7 +664,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
 
       struct ifreq ifr;
 
-      (void) u_strncpy(ifr.ifr_name, device_or_ip, IFNAMSIZ-1);
+      (void) u__strncpy(ifr.ifr_name, device_or_ip, IFNAMSIZ-1);
 
       (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFHWADDR, &ifr);
 
@@ -695,7 +695,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 #if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
    struct ifreq ifr;
 
-   (void) u_strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
+   (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
    /* Get the IP address of the interface */
 

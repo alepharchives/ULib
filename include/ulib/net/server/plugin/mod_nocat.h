@@ -25,7 +25,7 @@
 class UIptAccount;
 class UNoCatPlugIn;
 
-class UModNoCatPeer : public UIPAddress, UEventTime {
+class UModNoCatPeer : public UEventTime, UIPAddress {
 public:
 
    // Allocator e Deallocator
@@ -54,23 +54,32 @@ public:
 
 protected:
    UCommand fw;
+   char flag[8];
    UString ip, mac, token, user, ifname, label, gateway;
    uint64_t traffic_done, traffic_available, traffic_remain;
    time_t connected, expire, logout, ctime, time_no_traffic, time_remain;
-   uint32_t ctraffic, index_AUTH, index_device, index_network;
-   int status;
-   bool allowed;
+   uint32_t ctraffic;
 
    bool checkPeerInfo(bool btraffic);
 
 private:
-   UModNoCatPeer(const UModNoCatPeer&) : UIPAddress(), UEventTime() {}
+   UModNoCatPeer(const UModNoCatPeer&) : UEventTime(), UIPAddress() {}
    UModNoCatPeer& operator=(const UModNoCatPeer&)                   { return *this; }
 
    friend class UNoCatPlugIn;
 };
 
-// NB: sizeof(UModNoCatPeer) 32bit == 240 (=> U_STACK_TYPE_5)
+#define U_peer_status(peer)        (peer)->UModNoCatPeer::flag[0]
+#define U_peer_allowed(peer)       (peer)->UModNoCatPeer::flag[1]
+#define U_peer_index_AUTH(peer)    (peer)->UModNoCatPeer::flag[2]
+#define U_peer_policy_flat(peer)   (peer)->UModNoCatPeer::flag[3]
+#define U_peer_index_device(peer)  (peer)->UModNoCatPeer::flag[4]
+#define U_peer_index_network(peer) (peer)->UModNoCatPeer::flag[5]
+#define U_peer_unused1             (peer)->UModNoCatPeer::flag[6]
+#define U_peer_unused2             (peer)->UModNoCatPeer::flag[7]
+
+// NB: sizeof(UModNoCatPeer) 32bit == 196 (=> U_STACK_TYPE_4)
+// NB: sizeof(UModNoCatPeer) 64bit == 304 (=> U_STACK_TYPE_6)
 
 // override the default...
 template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UIPAddress*>(%p,%u)", ptr, n) }
@@ -110,6 +119,8 @@ public:
    static const UString* str_allowed;
    static const UString* str_anonymous;
    static const UString* str_Traffic;
+   static const UString* str_Policy;
+   static const UString* str_Policy_FLAT;
    static const UString* str_GATEWAY_PORT;
    static const UString* str_FW_ENV;
    static const UString* str_IPHONE_SUCCESS;
@@ -161,7 +172,6 @@ public:
 
 protected:
    static UString* ip;
-   static UString* mode;
    static UString* host;
    static UString* input;
    static UString* label;
@@ -195,14 +205,16 @@ protected:
    static fd_set* paddrmask;
    static UIptAccount* ipt;
    static bool flag_check_system;
+   static UString* login_timeout;
    static UString* status_content;
    static int fd_stderr, check_type;
    static UVector<UString>* openlist;
+   static uint64_t traffic_available;
    static UVector<UIPAddress*>** vaddr;
    static const UString* label_to_match;
    static UHashMap<UModNoCatPeer*>* peers;
-   static uint32_t total_connections, login_timeout, nfds, num_radio;
-   static time_t last_request_firewall, last_request_check, check_expire, next_event_time;
+   static uint32_t total_connections, nfds, num_radio;
+   static time_t time_available, last_request_firewall, last_request_check, check_expire, next_event_time;
 
    // VARIE
 

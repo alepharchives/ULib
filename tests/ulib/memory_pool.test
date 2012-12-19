@@ -14,4 +14,4 @@ start_msg memory_pool
 start_prg memory_pool 1
 
 # Test against expected output
-test_output_diff memory_pool
+test_output_wc l memory_pool

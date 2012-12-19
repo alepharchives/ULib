@@ -69,6 +69,7 @@ HTTP_RESPONSE_HEADER=""
 #-----------------------------------
 write_ENV() {
 
+	return
 	(
 	echo "ENVIRONMENT:"
 	echo "-----------------------------------------------------------"
@@ -1671,7 +1672,7 @@ waTraffic: $MAX_TRAFFIC
 	REQUEST_URI=post_registrazione
 	TITLE_TXT="Registrazione effettuata"
 
-	print_page $CALLER_ID "$8"	"polling_attivazione" $CALLER_ID "$8"
+	print_page "$TELEFONO_REGISTRAZIONE" $CALLER_ID "$8"	"polling_attivazione" $CALLER_ID "$8"
 }
 
 card_activation() {

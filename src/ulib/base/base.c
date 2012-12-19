@@ -237,7 +237,7 @@ void u_init_ulib_hostname(void)
       {
       char* restrict tmp = getenv("HOSTNAME"); /* bash setting... */
 
-      if (tmp && *tmp) u_strcpy(u_hostname, tmp);
+      if (tmp && *tmp) u__strcpy(u_hostname, tmp);
       else
          {
 #     ifndef __MINGW32__
@@ -285,7 +285,7 @@ loop:
       }
 
 #ifdef __MINGW32__
-   (void) u_strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
+   (void) u__strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
 #endif
 
    u_cwd_len = u__strlen(u_cwd);
@@ -832,7 +832,7 @@ uint32_t u__strftime(char* restrict s, uint32_t maxsize, const char* restrict fo
 
          // if (count >= (maxsize - n)) return 0;
 
-            (void) u_strncpy(&s[count], tzname[u_daylight], n);
+            (void) u__strncpy(&s[count], tzname[u_daylight], n);
 
             count += n;
             }

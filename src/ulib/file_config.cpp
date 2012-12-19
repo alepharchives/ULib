@@ -424,7 +424,7 @@ bool UFileConfig::loadINI()
          {
          ++_start;
 
-         ptr = u_strpbrk(_start, _end - _start, "]\n");
+         ptr = u__strpbrk(_start, _end - _start, "]\n");
 
          if (ptr == 0)
             {
@@ -439,7 +439,7 @@ bool UFileConfig::loadINI()
          }
       else // every other line denotes a property assignment in the form <value key> = <value>
          {
-         ptr = u_strpbrk(_start, _end - _start, "=\n");
+         ptr = u__strpbrk(_start, _end - _start, "=\n");
 
          if (ptr == 0)
             {
@@ -540,7 +540,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
       // every other line denotes a property assignment in the form <key> = <value>
 
-      ptr = u_strpbrk(_start, _end - _start, "=:\r\n");
+      ptr = u__strpbrk(_start, _end - _start, "=:\r\n");
 
       if (ptr == 0)
          {

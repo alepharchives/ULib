@@ -32,8 +32,9 @@ void USSHSocket::close()
       }
 
    USocket::iSockDesc = -1;
-   USocket::bLocalSet = false;
    USocket::iState    = CLOSE;
+
+   U_socket_LocalSet(this) = false;
 }
 
 U_NO_EXPORT const char* USSHSocket::status()
@@ -106,7 +107,7 @@ bool USSHSocket::connectServer(const UString& server, int iServPort) // 22
    if (UTCPSocket::connectServer(server, iServPort))
       {
 #else
-   if (UTCPSocket::cRemoteAddress.setHostName(server, UTCPSocket::bIPv6Socket))
+   if (UTCPSocket::cRemoteAddress.setHostName(server, U_socket_IPv6(this)))
       {
       UTCPSocket::iRemotePort = iServPort;
 #endif

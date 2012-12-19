@@ -450,9 +450,9 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
    U_RETURN(true);
 }
 
-const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uint32_t buffer_size)
+const char* USSLSocket::status(SSL* _ssl, int _ret, bool _flag, char* buffer, uint32_t buffer_size)
 {
-   U_TRACE(1, "USSLSocket::status(%p,%d,%b,%p,%u)", _ssl, _ret, flag, buffer, buffer_size)
+   U_TRACE(1, "USSLSocket::status(%p,%d,%b,%p,%u)", _ssl, _ret, _flag, buffer, buffer_size)
 
    if (buffer == 0)
       {
@@ -467,7 +467,7 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool flag, char* buffer, uin
 
    if (_ret != SSL_ERROR_NONE) // 0
       {
-      if (flag) _ret = U_SYSCALL(SSL_get_error, "%p,%d", _ssl, _ret);
+      if (_flag) _ret = U_SYSCALL(SSL_get_error, "%p,%d", _ssl, _ret);
 
       /* -------------------------------------
        * #define SSL_ERROR_NONE              0

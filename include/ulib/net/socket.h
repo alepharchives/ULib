@@ -79,6 +79,11 @@ class UServer_Base;
 class SocketAddress;
 class UClientImage_Base;
 
+#define U_socket_IPv6(obj)     (obj)->USocket::flag[0]
+#define U_socket_LocalSet(obj) (obj)->USocket::flag[1]
+#define U_socket_unused1(obj)  (obj)->USocket::flag[2]
+#define U_socket_unused2(obj)  (obj)->USocket::flag[3]
+
 class U_EXPORT USocket {
 public:
 
@@ -306,7 +311,7 @@ public:
 
    /**
    This method is called when the local socket address is valid.
-   It sets the bLocalSet flag, obtains details of the local address and stores them in the internal member variables
+   It sets the LocalSet flag, obtains details of the local address and stores them in the internal member variables
    */
 
    void setLocal();
@@ -314,11 +319,12 @@ public:
       {
       U_TRACE(0, "USocket::setLocal(%p)", &addr)
 
-      bLocalSet     = true;
       cLocalAddress = addr;
+
+      U_socket_LocalSet(this) = true;
       }
 
-   bool isLocalSet() const { return bLocalSet; }
+   bool isLocalSet() const { return U_socket_LocalSet(this); }
 
    /**
    Get details of the IP address and port number bound to the remote socket
@@ -652,12 +658,12 @@ public:
 #endif
 
 protected:
-   int iSockDesc, iState, iLocalPort, iRemotePort, flags;
    UIPAddress cLocalAddress, cRemoteAddress;
+   int iSockDesc, iState, iLocalPort, iRemotePort, flags;
+   char flag[4];
 #ifdef __MINGW32__
    SOCKET fh;
 #endif
-   bool bIPv6Socket, bLocalSet;
 
    bool connect();
    void setRemote();

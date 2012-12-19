@@ -434,7 +434,7 @@ void UOptions::printHelp(vPF func)
 
       if (i < 2)
          {
-         (void) u_strcpy(ptr, (i ? "Show version information"
+         (void) u__strcpy(ptr, (i ? "Show version information"
                                  : "Show help about options"));
 
          ptr += u__strlen(ptr);

@@ -71,11 +71,11 @@ public:
 
    // VARIE
 
-   void setActive(bool flag)
+   void setActive(bool _flag)
       {
-      U_TRACE(0, "USSLSocket::setActive(%b)", flag)
+      U_TRACE(0, "USSLSocket::setActive(%b)", _flag)
 
-      active = flag;
+      active = _flag;
       }
 
    bool secureConnection(int fd);
@@ -267,9 +267,9 @@ protected:
    static int session_cache_index;
 
    static void        info_callback(const SSL* ssl, int where, int ret);
-   static const char* status(SSL* ssl, int ret, bool flag, char* buffer, uint32_t buffer_size);
+   static const char* status(SSL* ssl, int ret, bool _flag, char* buffer, uint32_t buffer_size);
 
-          const char* status(bool flag) const { return status(ssl, ret, flag, 0, 0); }
+          const char* status(bool _flag) const { return status(ssl, ret, _flag, 0, 0); }
 
    static SSL_CTX* getClientContext() { return getContext(0, false, 0); }
    static SSL_CTX* getServerContext() { return getContext(0, true,  0); }

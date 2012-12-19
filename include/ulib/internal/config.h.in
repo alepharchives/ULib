@@ -327,6 +327,9 @@ typedef unsigned long long uint64;
 /* Define to 1 if you have the <ip_nat.h> header file. */
 #undef HAVE_IP_NAT_H
 
+/* Define to 1 if you have the `cap' library (-lcap). */
+#undef HAVE_LIBCAP
+
 /* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
 #undef HAVE_LIBGEOIP
 

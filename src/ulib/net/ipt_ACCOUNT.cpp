@@ -99,7 +99,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    uint32_t s = sizeof(struct ipt_acc_handle_sockopt);
 
-   (void) u_strncpy(handle->name, table, ACCOUNT_TABLE_NAME_LEN-1);
+   (void) u__strncpy(handle->name, table, ACCOUNT_TABLE_NAME_LEN-1);
 
    // Get table information
 

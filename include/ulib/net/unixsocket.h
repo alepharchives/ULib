@@ -68,9 +68,9 @@ public:
 
    // COSTRUTTORI
 
-   UUnixSocket(bool flag = false) : USocket(false)
+   UUnixSocket(bool _flag = false) : USocket(false)
       {
-      U_TRACE_REGISTER_OBJECT(0, UUnixSocket, "%b", flag)
+      U_TRACE_REGISTER_OBJECT(0, UUnixSocket, "%b", _flag)
       }
 
    virtual ~UUnixSocket()

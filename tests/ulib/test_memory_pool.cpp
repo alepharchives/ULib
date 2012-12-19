@@ -63,8 +63,6 @@ static void print_size()
 #ifdef USE_LIBPCRE
    U_PRINT_SIZEOF(UPCRE);
 #endif
-   U_PRINT_SIZEOF(UPKCS10);
-   U_PRINT_SIZEOF(UPKCS7);
    U_PRINT_SIZEOF(UPlugIn<void*>);
    U_PRINT_SIZEOF(UProcess);
    U_PRINT_SIZEOF(UQueryNode);
@@ -83,6 +81,9 @@ static void print_size()
    U_PRINT_SIZEOF(USSHSocket);
 #endif
 #ifdef USE_LIBSSL
+   U_PRINT_SIZEOF(UCrl);
+   U_PRINT_SIZEOF(UPKCS7);
+   U_PRINT_SIZEOF(UPKCS10);
    U_PRINT_SIZEOF(USSLSocket);
 #endif
    U_PRINT_SIZEOF(USemaphore);

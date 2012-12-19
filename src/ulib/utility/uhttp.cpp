@@ -2263,7 +2263,7 @@ bool UHTTP::checkHTTPRequestForHeader(const UString& request)
 
                   U_INTERNAL_DUMP("Connection: = %.*S", pos2 - pos1 - 1, p)
 
-                  if (U_STRNEQ(p, "close"))
+                  if (U_STRNCASECMP(p, "close"))
                      {
                      U_http_is_connection_close = U_YES;
 
