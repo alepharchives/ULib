@@ -1780,7 +1780,7 @@
       U_RETURN(false);
    }
    
-   static bool isUserConnected(UStringRep* data)
+   __pure static bool isUserConnected(UStringRep* data)
    {
       U_TRACE(5, "::isUserConnected(%.*S)", U_STRING_TO_TRACE(*data))
    
@@ -2137,7 +2137,7 @@
       // $3 -> pid (0 => start)
    
       int ap_port = 5280;
-      uint32_t index_access_point, end = UHTTP::processHTTPForm();
+      uint32_t index_access_point, end = UHTTP::processForm();
    
             ap->clear();
          label->clear();
@@ -2375,7 +2375,7 @@
    
       user_exist = false;
    
-      if (end == (UHTTP::form_name_value->empty() ? UHTTP::processHTTPForm()
+      if (end == (UHTTP::form_name_value->empty() ? UHTTP::processForm()
                                                   : UHTTP::form_name_value->size()))
          {
          UHTTP::getFormValue(*ip, U_CONSTANT_TO_PARAM("ip"), 0,  3, end);
@@ -2419,7 +2419,7 @@
          // $1 -> uid
          // ----------------------------
    
-         UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("uid"), 0, 1, UHTTP::processHTTPForm());
+         UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("uid"), 0, 1, UHTTP::processForm());
          }
    
       UString signed_data;
@@ -2611,7 +2611,7 @@
       // $2 -> key
    
       UString body;
-      uint32_t end = UHTTP::processHTTPForm();
+      uint32_t end = UHTTP::processForm();
    
       if (end)
          {
@@ -2750,7 +2750,7 @@
    
    #ifndef U_MANAGED_BY_MAIN_BASH
       UString logout, connected, traffic;
-      uint32_t end, num_args = UHTTP::processHTTPForm() / 2;
+      uint32_t end, num_args = UHTTP::processForm() / 2;
    
       U_INTERNAL_DUMP("num_args = %u", num_args)
    
@@ -2927,7 +2927,7 @@
       // -----------------------------------------------------------------------------
    
       UString redirect, timeout;
-      uint32_t end = UHTTP::processHTTPForm();
+      uint32_t end = UHTTP::processForm();
    
       if (end)
          {
@@ -3094,7 +3094,7 @@
       U_TRACE(5, "::GET_postlogin()")
    
    #ifndef U_MANAGED_BY_MAIN_BASH
-      uint32_t num_args = UHTTP::processHTTPForm() / 2;
+      uint32_t num_args = UHTTP::processForm() / 2;
    
       U_INTERNAL_DUMP("num_args = %u", num_args)
    
@@ -3174,7 +3174,7 @@
          // $1 -> uid
          // ----------------------------
    
-         UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("user"), 0, 1, UHTTP::processHTTPForm());
+         UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("user"), 0, 1, UHTTP::processForm());
    
          if (checkIfUserConnected()) (void) askNodogToLogoutUser();
    
@@ -3334,7 +3334,7 @@
    
          UString outfile;
    
-         UHTTP::getFormValue(outfile, U_CONSTANT_TO_PARAM("outfile"), 0, 1, UHTTP::processHTTPForm());
+         UHTTP::getFormValue(outfile, U_CONSTANT_TO_PARAM("outfile"), 0, 1, UHTTP::processForm());
    
          UString _buffer(U_CAPACITY),
                  _template = cache->getContent(U_CONSTANT_TO_PARAM("status_network_head.tmpl"));
@@ -3369,7 +3369,7 @@
    
          UString outfile;
    
-         UHTTP::getFormValue(outfile, U_CONSTANT_TO_PARAM("outfile"), 0, 1, UHTTP::processHTTPForm());
+         UHTTP::getFormValue(outfile, U_CONSTANT_TO_PARAM("outfile"), 0, 1, UHTTP::processForm());
    
          UString _buffer(U_CAPACITY),
                  _template = cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_head.tmpl"));
@@ -3420,7 +3420,7 @@
          // $1 -> uid
          // $2 -> outfile
    
-         uint32_t end = UHTTP::processHTTPForm();
+         uint32_t end = UHTTP::processForm();
    
          if (end)
             {
@@ -3504,7 +3504,8 @@
                {
                last_modified = 0;
    
-               ptr  = ptr7 = "";
+               ptr  = "";
+               ptr7 = "no";
                ptr3 = ptr4 = ptr5 = ptr6 = "Non disponibile";
                }
    
@@ -3601,7 +3602,7 @@
       // $7 -> ap_consume
       // $8 -> submit
    
-      uint32_t end = UHTTP::processHTTPForm();
+      uint32_t end = UHTTP::processForm();
    
       if (end)
          {
@@ -3869,7 +3870,7 @@
       // $9  -> password_conferma
       // $10 -> submit
    
-      uint32_t end = UHTTP::processHTTPForm();
+      uint32_t end = UHTTP::processForm();
    
       if (end)
          {
@@ -3906,7 +3907,7 @@
    
       // $1 -> path file uploaded
    
-      if (UHTTP::processHTTPForm())
+      if (UHTTP::processForm())
          {
          UString tmpfile(100U);
    

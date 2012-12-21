@@ -13,7 +13,7 @@ comments;
     <h1>Welcome to ULib Web Server! (Ver. <!--#puts ULIB_VERSION -->)</h1>
   </center>
 <!--#code
-if (UHTTP::isHttpGET())
+if (UHTTP::isGET())
 {
 -->
   <form action="example_form" method="post">

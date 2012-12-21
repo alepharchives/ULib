@@ -253,10 +253,10 @@ void UModProxyService::setMsgError(int err, UVector<UString>& vmsg_error)
 
    switch (err)
       {
-      case UModProxyService::INTERNAL_ERROR:   UHTTP::setHTTPInternalError(); break;
-      case UModProxyService::BAD_REQUEST:      UHTTP::setHTTPBadRequest();    break;
-      case UModProxyService::NOT_FOUND:        UHTTP::setHTTPNotFound();      break;
-      case UModProxyService::FORBIDDEN:        UHTTP::setHTTPForbidden();     break;
+      case UModProxyService::INTERNAL_ERROR:   UHTTP::setInternalError(); break;
+      case UModProxyService::BAD_REQUEST:      UHTTP::setBadRequest();    break;
+      case UModProxyService::NOT_FOUND:        UHTTP::setNotFound();      break;
+      case UModProxyService::FORBIDDEN:        UHTTP::setForbidden();     break;
 
       default:
          {

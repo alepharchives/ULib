@@ -11,7 +11,7 @@ rm -f ../db/session.ssl* /tmp/ssl_session.txt \
 		/var/log/httpd/access_log \
 	   web_server_ssl?.log* uploads/* \
       out/userver_ssl.out err/userver_ssl.err web_server_ssl.err \
-      trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*
+      trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]*
 
 #UTRACE="0 50M 0"
 #UOBJDUMP="0 10M 5000"

@@ -1522,9 +1522,26 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_DUMP("u__ct_tab[ '\377'] = %d %B", u_cttab('\377'), u_cttab('\377'))
    U_INTERNAL_DUMP("u__isdigit('\377') = %b", u__isdigit('\377'))
 
+   U_INTERNAL_DUMP("u__ct_tab[ '\026'] = %d %B", u_cttab('\026'), u_cttab('\026'))
+   U_INTERNAL_DUMP("u__istext('\026') = %b", u__istext('\026'))
+   U_INTERNAL_DUMP("u__ct_tab[ '\003'] = %d %B", u_cttab('\003'), u_cttab('\003'))
+   U_INTERNAL_DUMP("u__istext('\003') = %b", u__istext('\003'))
+   U_INTERNAL_DUMP("u__ct_tab[ '\001'] = %d %B", u_cttab('\001'), u_cttab('\001'))
+   U_INTERNAL_DUMP("u__istext('\001') = %b", u__istext('\001'))
+   U_INTERNAL_DUMP("u__ct_tab[ '\000'] = %d %B", u_cttab('\000'), u_cttab('\000'))
+   U_INTERNAL_DUMP("u__istext('\000') = %b", u__istext('\000'))
+
    const char* str;
    uint32_t str_len;
 
+   str     = "\026\003\001";
+   str_len = strlen(str) + 1;
+
+   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
+   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == true )
+   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == false )
+ 
    // NB: in UTF-8 the character ü is encoded as two bytes C3 (hex) and BC (hex)
 
    str     = "The string \xC3\xBC@foo-bar"; // "The string ü@foo-bar"

@@ -14,7 +14,7 @@ start_msg tsa_https
 
 rm -rf tsa_https.log TSA/log \
 		 out/userver_ssl.out err/userver_ssl.err \
-       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
+       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]*
 
 # usage: openssl s_client args
 # ----------------------------------------------------------------

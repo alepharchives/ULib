@@ -401,8 +401,8 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 
    U_HTTP_INFO_INIT(0);
 
-   bool result = (UHTTP::readHTTPHeader(socket, data) &&
-                  UHTTP::findEndHeader(         data)
+   bool result = (UHTTP::readHeader(socket, data) &&
+                  UHTTP::findEndHeader(     data)
                      ? parse(data.c_pointer(u_http_info.startHeader), u_http_info.szHeader) > 0
                      : false);
 

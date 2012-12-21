@@ -79,7 +79,7 @@ public:
 
       this->UClient_Base::request = URPCMethod::encoder->encodeMethodCall(method, *URPCMethod::str_ns);
 
-      UHTTP::setHTTPInfo(U_CONSTANT_TO_PARAM("POST"), U_CONSTANT_TO_PARAM("/soap"));
+      UHTTP::setInfo(U_CONSTANT_TO_PARAM("POST"), U_CONSTANT_TO_PARAM("/soap"));
 
       UClient_Base::wrapRequestWithHTTP("", "application/soap+xml; charset=\"utf-8\"");
 

@@ -88,7 +88,7 @@ bool UWebSocket::sendAccept()
 
    U_INTERNAL_ASSERT(U_http_websocket)
    U_INTERNAL_ASSERT_POINTER(str_websocket_key)
-   U_INTERNAL_ASSERT_MAJOR(u_http_info.websocket_len, 0)
+   U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
 
    // In order to establish a websocket connection, a client (a web browser) sends a HTTP GET request with a number of HTTP headers.
    // Among those headers there is the Sec-WebSocket-Key header, which contains a handshake key. According to the WebSocket protocol,
@@ -100,14 +100,14 @@ bool UWebSocket::sendAccept()
 
    unsigned char challenge[128];
 
-   U__MEMCPY(challenge,                           u_http_info.websocket, u_http_info.websocket_len);
-   U__MEMCPY(challenge+u_http_info.websocket_len, WEBSOCKET_GUID, WEBSOCKET_GUID_LEN);
+   U__MEMCPY(challenge,                      u_http_info.websocket, U_http_websocket_len);
+   U__MEMCPY(challenge+U_http_websocket_len, WEBSOCKET_GUID, WEBSOCKET_GUID_LEN);
 
    // SHA1(challenge)
 
    UString accept(U_CAPACITY);
 
-   UServices::generateDigest(U_HASH_SHA1, 0, challenge, u_http_info.websocket_len+WEBSOCKET_GUID_LEN, accept, true);
+   UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len+WEBSOCKET_GUID_LEN, accept, true);
 
    /*
    UString tmp(100U);

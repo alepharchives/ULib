@@ -615,7 +615,7 @@ int UShibPlugIn::handlerRequest()
    // find shib service for the HTTP request
 
    UString host(U_HTTP_HOST_TO_PARAM),
-           method = UHTTP::getHTTPMethod();
+           method = UHTTP::getMethod();
 
    UModProxyService* service = UModProxyService::findService(host, method, vservice);
 
@@ -639,7 +639,7 @@ int UShibPlugIn::handlerRequest()
       UShibTarget::location = 0;
       UShibTarget::sendpage = 0;
 
-      if (UHTTP::isHttpGET())
+      if (UHTTP::isGET())
          {
          if (shib_check_user()) mode = -1;
          else
@@ -665,7 +665,7 @@ int UShibPlugIn::handlerRequest()
          }
       else
          {
-         U_ASSERT(UHTTP::isHttpPOST())
+         U_ASSERT(UHTTP::isPOST())
          U_ASSERT(U_HTTP_CTYPE_STRNEQ("application/x-www-form-urlencoded"))
 
          UShibTarget::content_type = "application/x-www-form-urlencoded";
@@ -707,9 +707,9 @@ int UShibPlugIn::handlerRequest()
                UShibTarget::setcookie = 0;
                }
 
-            UHTTP::setHTTPRedirectResponse(0, ext, UShibTarget::location, u__strlen(UShibTarget::location));
+            UHTTP::setRedirectResponse(0, ext, UShibTarget::location, u__strlen(UShibTarget::location));
 
-            UHTTP::setHTTPRequestProcessed();
+            UHTTP::setRequestProcessed();
             }
          }
       }

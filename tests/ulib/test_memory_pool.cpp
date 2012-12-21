@@ -240,7 +240,7 @@ U_EXPORT main(int argc, char** argv)
    if (argc > 2) printf("Time Consumed with U_NUM_ENTRY_MEM_BLOCK(%d) = %ld ms\n", n, crono.getTimeElapsed());
 
 #ifdef DEBUG
-   UMemoryPool::printInfo();
+   UMemoryPool::printInfo(cout);
 #endif
 
    // RISULTATI

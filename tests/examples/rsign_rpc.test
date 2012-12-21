@@ -13,7 +13,7 @@ start_msg rsignclient_rpc
 
 rm -rf rsignserver_rpc.log RSIGN/log \
 		 out/userver_ssl.out err/userver_ssl.err \
-		 trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
+		 trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]*
 
 # usage: openssl s_client args
 # ----------------------------------------------------------------

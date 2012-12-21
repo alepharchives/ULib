@@ -14,11 +14,11 @@ start_msg lcspclient_rpc
 
 rm -rf lcspserver_rpc.log rsignserver.log CSP/DB_CA/log CSP/DB_CA/CA CSP/DB_CA/CA_1 \
 		 out/userver_ipc.out err/userver_ipc.err \
-		 trace.*userver_ipc*.[0-9]* object.*userver_ipc*.[0-9]* stack.*userver_ipc*.[0-9]* \
+		 trace.*userver_ipc*.[0-9]* object.*userver_ipc*.[0-9]* stack.*userver_ipc*.[0-9]* mempool.*userver_ipc*.[0-9]* \
 		 rsignserver.log RSIGN/log out/rsignserver.out err/rsignserver.err \
 		 out/userver_ssl.out err/userver_ssl.err \
-       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* \
-		 trace.*rsign*.[0-9]* object.*rsign*.[0-9]* stack.*rsign*.[0-9]*
+       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]* \
+		 trace.*rsign*.[0-9]* object.*rsign*.[0-9]* stack.*rsign*.[0-9]* mempool.*rsign*.[0-9]*
 
 # usage: openssl s_client args
 # ----------------------------------------------------------------

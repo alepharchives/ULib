@@ -6,9 +6,9 @@
 
 start_msg workflow
 
-rm -f err/validation.err trace.*validation*.[0-9]* object.*validation*.[0-9]* \
-		err/production.err trace.*production*.[0-9]* object.*production*.[0-9]* \
-		err/error.err		 trace.*error*.[0-9]*		object.*error*.[0-9]*
+rm -f err/validation.err trace.*validation*.[0-9]* object.*validation*.[0-9]* stack.*validation*.[0-9]* mempool.*validation*.[0-9]* \
+		err/production.err trace.*production*.[0-9]* object.*production*.[0-9]* stack.*production*.[0-9]* mempool.*production*.[0-9]* \
+		err/error.err		 trace.*error*.[0-9]*		object.*error*.[0-9]*      stack.*error*.[0-9]*      mempool.*error*.[0-9]*
 
 #UTRACE="0 5M 0"
 #UOBJDUMP="0 100k 10"

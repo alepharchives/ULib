@@ -162,7 +162,7 @@ int USCGIPlugIn::handlerRequest()
 
       if (environment.empty())
          {
-         UHTTP::setHTTPBadRequest();
+         UHTTP::setBadRequest();
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
@@ -220,8 +220,8 @@ int USCGIPlugIn::handlerRequest()
 
       goto end; // skip error...
 
-err:  UHTTP::setHTTPInternalError();
-end:  UHTTP::setHTTPRequestProcessed();
+err:  UHTTP::setInternalError();
+end:  UHTTP::setRequestProcessed();
 
       // reset
 

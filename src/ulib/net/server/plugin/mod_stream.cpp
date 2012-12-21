@@ -231,7 +231,7 @@ int UStreamPlugIn::handlerRequest()
       u_http_info.nResponseCode  = HTTP_OK;
       U_http_is_connection_close = U_YES;
 
-      UHTTP::setHTTPResponse(content_type, 0);
+      UHTTP::setResponse(content_type, 0);
 
       USocket* csocket = UServer_Base::pClientImage->socket;
 
@@ -243,7 +243,7 @@ int UStreamPlugIn::handlerRequest()
 
          UClientImage_Base::write_off = true;
 
-         if (UHTTP::isHttpHEAD()) goto end;
+         if (UHTTP::isHEAD()) goto end;
 
          readd = rbuf->open();
 
@@ -267,7 +267,7 @@ int UStreamPlugIn::handlerRequest()
          }
 
 end:
-      UHTTP::setHTTPRequestProcessed();
+      UHTTP::setRequestProcessed();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

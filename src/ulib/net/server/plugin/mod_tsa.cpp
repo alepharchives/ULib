@@ -93,13 +93,13 @@ int UTsaPlugIn::handlerRequest()
          {
          u_http_info.nResponseCode  = HTTP_OK;
 
-         UHTTP::setHTTPResponse(UHTTP::str_ctype_tsa, &body);
+         UHTTP::setResponse(UHTTP::str_ctype_tsa, &body);
          }
-      else UHTTP::setHTTPInternalError();
+      else UHTTP::setInternalError();
 
       UServer_Base::logCommandMsgError(command->getCommand(), true);
 
-      UHTTP::setHTTPRequestProcessed();
+      UHTTP::setRequestProcessed();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

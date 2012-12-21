@@ -181,7 +181,7 @@ bool UMimeEntity::readBody(USocket* socket)
 
    u_http_info.clength = header->getHeader(*USocket::str_content_length).strtol();
 
-   if (UHTTP::readHTTPBody(socket, &data, content) &&
+   if (UHTTP::readBody(socket, &data, content) &&
        checkContentType())
       {
       decodeBody();

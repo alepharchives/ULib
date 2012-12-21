@@ -85,52 +85,52 @@ public:
    static void ctor();
    static void dtor();
 
-   static void setHTTPMethod(const char* method, uint32_t method_len)
+   static void setMethod(const char* method, uint32_t method_len)
       {
-      U_TRACE(0, "UHTTP::setHTTPMethod(%.*S,%u)", method_len, method, method_len)
+      U_TRACE(0, "UHTTP::setMethod(%.*S,%u)", method_len, method, method_len)
 
-      u_http_info.method     = method;
-      u_http_info.method_len = method_len;
+      U_http_method_len  = method_len;
+      u_http_info.method = method;
 
       U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
       }
 
-   static void setHTTPMethodType(char c)
+   static void setMethodType(char c)
       {
-      U_TRACE(0, "UHTTP::setHTTPMethodType(%C)", c)
+      U_TRACE(0, "UHTTP::setMethodType(%C)", c)
 
       if (c == 'G') // GET
          {
          U_http_method_type = HTTP_GET;
 
-         U_INTERNAL_ASSERT_EQUALS(u_http_info.method_len, 3)
+         U_INTERNAL_ASSERT_EQUALS(U_http_method_len, 3)
          U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "GET"))
          }
       else if (c == 'P') // POST
          {
          U_http_method_type = HTTP_POST;
 
-         U_INTERNAL_ASSERT_EQUALS(u_http_info.method_len, 4)
+         U_INTERNAL_ASSERT_EQUALS(U_http_method_len, 4)
          U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "POST"))
          }
       else // HEAD
          {
          U_http_method_type = HTTP_HEAD;
 
-         U_INTERNAL_ASSERT_EQUALS(u_http_info.method_len, 4)
+         U_INTERNAL_ASSERT_EQUALS(U_http_method_len, 4)
          U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "HEAD"))
          }
 
       U_INTERNAL_DUMP("method_type = %C", U_http_method_type)
       }
 
-   static UString getHTTPMethod()
+   static UString getMethod()
       {
-      U_TRACE(0, "UHTTP::getHTTPMethod()")
+      U_TRACE(0, "UHTTP::getMethod()")
 
-      if (u_http_info.method_len)
+      if (U_http_method_len)
          {
-         UString method((void*)u_http_info.method, u_http_info.method_len);
+         UString method((void*)u_http_info.method, U_http_method_len);
 
          U_RETURN_STRING(method);
          }
@@ -138,9 +138,9 @@ public:
       U_RETURN_STRING(UString::getStringNull());
       }
 
-   static void setHTTPUri(const char* uri, uint32_t uri_len)
+   static void setUri(const char* uri, uint32_t uri_len)
       {
-      U_TRACE(0, "UHTTP::setHTTPUri(%.*S,%u)", uri_len, uri, uri_len)
+      U_TRACE(0, "UHTTP::setUri(%.*S,%u)", uri_len, uri, uri_len)
 
       U_INTERNAL_ASSERT_POINTER(uri)
       U_INTERNAL_ASSERT_EQUALS(uri[0],'/')
@@ -151,9 +151,9 @@ public:
       U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
       }
 
-   static void setHTTPQuery(const char* query, uint32_t query_len)
+   static void setQuery(const char* query, uint32_t query_len)
       {
-      U_TRACE(0, "UHTTP::setHTTPQuery(%.*S,%u)", query_len, query, query_len)
+      U_TRACE(0, "UHTTP::setQuery(%.*S,%u)", query_len, query, query_len)
 
       u_http_info.query     = query;
       u_http_info.query_len = query_len;
@@ -161,92 +161,91 @@ public:
       U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
       }
 
-   static void setHTTPInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
+   static void setInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
       {
-      U_TRACE(0, "UHTTP::setHTTPInfo(%.*S,%u,%.*S,%u)", method_len, method, method_len, uri_len, uri, uri_len)
+      U_TRACE(0, "UHTTP::setInfo(%.*S,%u,%.*S,%u)", method_len, method, method_len, uri_len, uri, uri_len)
 
       U_HTTP_INFO_INIT(0);
 
-      setHTTPMethod(     method, method_len);
-      setHTTPMethodType(*method);
-      setHTTPUri(           uri,    uri_len);
-      setHTTPQuery(           0,          0);
+      setMethod(     method, method_len);
+      setMethodType(*method);
+      setUri(           uri,    uri_len);
+      setQuery(           0,          0);
       }
 
-   static void getHTTPInfo(const UString& request, UString& method,       UString& uri);
-   static void setHTTPInfo(                  const UString& method, const UString& uri)
-      { setHTTPInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
+   static void setInfo(                  const UString& method, const UString& uri) { setInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
+   static void getInfo(const UString& request, UString& method,       UString& uri);
 
-   static bool    isHTTPRequest(const char* ptr) __pure;
-   static bool scanfHTTPHeader( const char* ptr, uint32_t size);
+   static bool isValidRequest(const char* ptr) __pure;
+   static bool scanfHeader(const char* ptr, uint32_t size);
 
-   static const char* getHTTPStatus();
-   static const char* getHTTPStatusDescription(uint32_t nResponseCode);
+   static const char* getStatus();
+   static const char* getStatusDescription(uint32_t nResponseCode);
 
-   static bool readHTTPRequest();
-   static bool findEndHeader(             const UString& buffer);
-   static bool readHTTPHeader( USocket* socket, UString& buffer);
-   static bool readHTTPBody(   USocket* socket, UString* buffer, UString& body);
+   static bool readRequest();
+   static bool findEndHeader(         const UString& buffer);
+   static bool readHeader( USocket* socket, UString& buffer);
+   static bool readBody(   USocket* socket, UString* buffer, UString& body);
 
    // TYPE
 
-   static bool isHttpGETorHEAD()
+   static bool isGETorHEAD()
       {
-      U_TRACE(0, "UHTTP::isHttpGETorHEAD()")
+      U_TRACE(0, "UHTTP::isGETorHEAD()")
 
       bool result = (U_http_method_type >= HTTP_GET);
 
       U_RETURN(result);
       }
 
-   static bool isHttpGET()
+   static bool isGET()
       {
-      U_TRACE(0, "UHTTP::isHttpGET()")
+      U_TRACE(0, "UHTTP::isGET()")
 
       bool result = (U_http_method_type == HTTP_GET);
 
       U_RETURN(result);
       }
 
-   static bool isHttpHEAD()
+   static bool isHEAD()
       {
-      U_TRACE(0, "UHTTP::isHttpHEAD()")
+      U_TRACE(0, "UHTTP::isHEAD()")
 
       bool result = (U_http_method_type == HTTP_HEAD);
 
       U_RETURN(result);
       }
 
-   static bool isHttpPOST()
+   static bool isPOST()
       {
-      U_TRACE(0, "UHTTP::isHttpPOST()")
+      U_TRACE(0, "UHTTP::isPOST()")
 
       bool result = (U_http_method_type == HTTP_POST);
 
       U_RETURN(result);
       }
 
-   static bool isHttpPUT()
+   static bool isPUT()
       {
-      U_TRACE(0, "UHTTP::isHttpPUT()")
+      U_TRACE(0, "UHTTP::isPUT()")
 
       bool result = (U_http_method_type == HTTP_PUT);
 
       U_RETURN(result);
       }
 
-   static bool isHttpDELETE()
+   static bool isDELETE()
       {
-      U_TRACE(0, "UHTTP::isHttpDELETE()")
+      U_TRACE(0, "UHTTP::isDELETE()")
 
       bool result = (U_http_method_type == HTTP_DELETE);
 
       U_RETURN(result);
       }
 
-   static bool isHttpCOPY()
+   static bool isCOPY()
       {
-      U_TRACE(0, "UHTTP::isHttpCOPY()")
+      U_TRACE(0, "UHTTP::isCOPY()")
 
       bool result = (U_http_method_type == HTTP_COPY);
 
@@ -256,7 +255,7 @@ public:
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
 
-   static bool isHTTPRequest() { return (U_http_method_type); }
+   static bool isValidRequest() { return (U_http_method_type); }
 
    // SERVICES
 
@@ -279,13 +278,13 @@ public:
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
-   static bool manageHTTPRequest();
+   static bool manageRequest();
    static void writeApacheLikeLog();
-   static void processHTTPGetRequest();
+   static void processGetRequest();
    static bool callService(const UString& path);
-   static void manageHTTPServletRequest(bool as_service);
-   static bool checkHTTPRequestForHeader(const UString& request);
-   static bool checkHTTPContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
+   static void manageServletRequest(bool as_service);
+   static bool checkRequestForHeader(const UString& request);
+   static bool checkContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static uint32_t getUserAgent();
    static UString  getRequestURI();
@@ -294,42 +293,42 @@ public:
    static UString  getRequestURIWithQuery();
    static UString  getHeaderMimeType(const char* content, const char* content_type, uint32_t size, time_t expire);
 
-   static void endHTTPRequestProcessing()
+   static void endRequestProcessing()
       {
-      U_TRACE(0, "UHTTP::endHTTPRequestProcessing()")
+      U_TRACE(0, "UHTTP::endRequestProcessing()")
 
       if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
 
       u_http_info.method = 0; // NB: this mark the end of http request processing...
       }
 
-   static const char* getHTTPHeaderValuePtr(                        const UString& name, bool nocase) __pure;
-   static const char* getHTTPHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
+   static const char* getHeaderValuePtr(                        const UString& name, bool nocase) __pure;
+   static const char* getHeaderValuePtr(const UString& request, const UString& name, bool nocase) __pure;
 
    // set HTTP main error message
 
-   static void setHTTPNotFound();
-   static void setHTTPForbidden();
-   static void setHTTPBadMethod();
-   static void setHTTPBadRequest();
-   static void setHTTPUnAuthorized();
-   static void setHTTPInternalError();
-   static void setHTTPServiceUnavailable();
+   static void setNotFound();
+   static void setForbidden();
+   static void setBadMethod();
+   static void setBadRequest();
+   static void setUnAuthorized();
+   static void setInternalError();
+   static void setServiceUnavailable();
 
    // set HTTP response message
 
-   static void setHTTPResponse(const UString* content_type, const UString* body);
-   static void setHTTPRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
+   static void setResponse(const UString* content_type, const UString* body);
+   static void setRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
 
    // get HTTP response message
 
    static UString getUrlEncodedForResponse(const char* fmt);
-   static UString getHTTPHeaderForResponse(const UString& content, bool connection_close);
+   static UString getHeaderForResponse(const UString& content, bool connection_close);
 
 #ifdef U_HTTP_CACHE_REQUEST
-   static void  clearHTTPRequestCache();
-   static int   checkHTTPRequestCache();
-   static void manageHTTPRequestCache();
+   static void  clearRequestCache();
+   static int   checkRequestCache();
+   static void manageRequestCache();
 #endif
 
    // manage HTTP request service
@@ -355,22 +354,22 @@ public:
 #  define U_HTTP_REQUEST_IS_FORBIDDEN          '1'
 #  define U_HTTP_REQUEST_IS_NOT_FOUND           0
 
-   static void setHTTPRequestProcessed()
+   static void setRequestProcessed()
       {
-      U_TRACE(0, "UHTTP::setHTTPRequestProcessed()")
+      U_TRACE(0, "UHTTP::setRequestProcessed()")
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
       U_http_request_check = U_HTTP_REQUEST_IS_ALREADY_PROCESSED;
       }
 
-   static bool isHTTPRequestAlreadyProcessed()
+   static bool isRequestAlreadyProcessed()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestAlreadyProcessed()")
+      U_TRACE(0, "UHTTP::isRequestAlreadyProcessed()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
@@ -379,13 +378,13 @@ public:
       U_RETURN(result);
       }
 
-   static bool isHTTPRequestRedirected()
+   static bool isRequestRedirected()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestRedirected()")
+      U_TRACE(0, "UHTTP::isRequestRedirected()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C u_http_info.nResponseCode = %d", U_http_request_check, u_http_info.nResponseCode)
 
@@ -396,26 +395,26 @@ public:
       U_RETURN(result);
       }
 
-   static void setHTTPRequestInFileCache()
+   static void setRequestInFileCache()
       {
-      U_TRACE(0, "UHTTP::setHTTPRequestInFileCache()")
+      U_TRACE(0, "UHTTP::setRequestInFileCache()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
       U_http_request_check = U_HTTP_REQUEST_IS_IN_FILE_CACHE;
       }
 
-   static bool isHTTPRequestInFileCache()
+   static bool isRequestInFileCache()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestInFileCache()")
+      U_TRACE(0, "UHTTP::isRequestInFileCache()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
@@ -424,26 +423,26 @@ public:
       U_RETURN(result);
       }
 
-   static void setHTTPRequestNeedProcessing()
+   static void setRequestNeedProcessing()
       {
-      U_TRACE(0, "UHTTP::setHTTPRequestNeedProcessing()")
+      U_TRACE(0, "UHTTP::setRequestNeedProcessing()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
       U_http_request_check = U_HTTP_REQUEST_NEED_PROCESSING;
       }
 
-   static bool isHTTPRequestNeedProcessing()
+   static bool isRequestNeedProcessing()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestNeedProcessing()")
+      U_TRACE(0, "UHTTP::isRequestNeedProcessing()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
@@ -452,26 +451,26 @@ public:
       U_RETURN(result);
       }
 
-   static void setHTTPRequestNotFound()
+   static void setRequestNotFound()
       {
-      U_TRACE(0, "UHTTP::setHTTPRequestNotFound()")
+      U_TRACE(0, "UHTTP::setRequestNotFound()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
       U_http_request_check = U_HTTP_REQUEST_IS_NOT_FOUND;
       }
 
-   static bool isHTTPRequestNotFound()
+   static bool isRequestNotFound()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestNotFound()")
+      U_TRACE(0, "UHTTP::isRequestNotFound()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
@@ -480,26 +479,26 @@ public:
       U_RETURN(result);
       }
 
-   static void setHTTPRequestForbidden()
+   static void setRequestForbidden()
       {
-      U_TRACE(0, "UHTTP::setHTTPRequestForbidden()")
+      U_TRACE(0, "UHTTP::setRequestForbidden()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
       U_http_request_check = U_HTTP_REQUEST_IS_FORBIDDEN;
       }
 
-   static bool isHTTPRequestForbidden()
+   static bool isRequestForbidden()
       {
-      U_TRACE(0, "UHTTP::isHTTPRequestForbidden()")
+      U_TRACE(0, "UHTTP::isRequestForbidden()")
 
       U_INTERNAL_DUMP("method = %.*S method_type = %C uri = %.*S", U_HTTP_METHOD_TO_TRACE, U_http_method_type, U_HTTP_URI_TO_TRACE)
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("U_http_request_check = %C", U_http_request_check)
 
@@ -520,7 +519,7 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static uint32_t processHTTPForm();
+   static uint32_t processForm();
    static void     resetForm(bool brmdir);
 
    static void    getFormValue(UString& value, const char* name, uint32_t len);
@@ -533,7 +532,7 @@ public:
    static UString* set_cookie;
    static UString* cookie_option;
 
-   static bool getHTTPCookie(UString* cookie);
+   static bool getCookie(UString* cookie);
 
    static void addSetCookie(const UString& cookie);
 
@@ -548,7 +547,7 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------------------
    // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
 
-   static void setHTTPCookie(const UString& param);
+   static void setCookie(const UString& param);
 
    // HTTP SESSION
 
@@ -644,7 +643,7 @@ public:
       {
       U_TRACE(0, "UHTTP::isCompressable()")
 
-      U_INTERNAL_ASSERT(isHTTPRequest())
+      U_INTERNAL_ASSERT(isValidRequest())
 
       U_INTERNAL_DUMP("u_http_info.clength = %u U_http_is_accept_gzip = %C", u_http_info.clength, U_http_is_accept_gzip)
 
@@ -657,7 +656,7 @@ public:
 
    static bool processCGIOutput();
    static bool isGenCGIRequest() __pure;
-   static void setHTTPCgiResponse(bool header_content_type, bool bcompress, bool connection_close);
+   static void setCgiResponse(bool header_content_type, bool bcompress, bool connection_close);
    static bool processCGIRequest(UCommand& cmd, UString* environment, const char* cgi_dir, bool& async);
 
    // URI PROTECTED
@@ -1023,19 +1022,19 @@ private:
 
    static void deleteSession() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
-   static bool processHTTPAuthorization() U_NO_EXPORT;
+   static bool processAuthorization() U_NO_EXPORT;
+   static bool checkGetRequestIfModified() U_NO_EXPORT;
    static bool isAlias(UServletPage* usp_page) U_NO_EXPORT;
-   static bool checkHTTPGetRequestIfModified() U_NO_EXPORT;
-   static bool isHTTPRequestTooLarge(UString& buffer) U_NO_EXPORT;
+   static bool isRequestTooLarge(UString& buffer) U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static void checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static void checkIfAlias(UStringRep* key, void* value) U_NO_EXPORT;
-   static bool checkHTTPGetRequestIfRange(const UString& etag) U_NO_EXPORT;
+   static bool checkGetRequestIfRange(const UString& etag) U_NO_EXPORT;
+   static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void add_HTTP_Variables(UStringRep* key, void* value) U_NO_EXPORT;
-   static int  sortHTTPRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
-   static void processHTTPGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
-   static int  checkHTTPGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
+   static void processGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
+   static int  checkGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
    static void checkDataSession(const UString& token, time_t expire, bool check) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header, UString& ext) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;

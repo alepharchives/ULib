@@ -139,7 +139,7 @@ bool UGeoIPPlugIn::checkCountryForbidden()
       {
       U_SRV_LOG("COUNTRY_FORBIDDEN: request from %s denied by access list", country_name);
 
-      UHTTP::setHTTPForbidden();
+      UHTTP::setForbidden();
 
       U_RETURN(false);
       }

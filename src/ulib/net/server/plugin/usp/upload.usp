@@ -11,7 +11,7 @@ filepath;
   </form>
 
 <!--#code
-   if (UHTTP::isHttpPOST() &&
+   if (UHTTP::isPOST() &&
        UHTTP::form_name_value->size() == 2)
    {
    UString md5sum(33U), dump(10000U),

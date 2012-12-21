@@ -13,7 +13,7 @@ start_msg tsa_ssoap
 
 rm -rf tsa_ssoap.log TSA/log \
 		 out/userver_ssl.out err/userver_ssl.err \
-       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]*
+       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]*
 
 # usage: openssl s_client args
 # ----------------------------------------------------------------
@@ -61,7 +61,7 @@ $SLEEP
 
 rm -f TSA/response/response*
 
-TIMEOUT 5 $LCMD <TSA/request/soap.req >TSA/response/soap.res 2>>err/tsa_ssoap.err
+TIMEOUT 6 $LCMD <TSA/request/soap.req >TSA/response/soap.res 2>>err/tsa_ssoap.err
  tail -c +471 TSA/response/soap.res | cut -d'<' -f1 | $WINELOADER ../base/crypto_base64$SUFFIX -d > TSA/response/soap.tsr
 #tail -c +471 TSA/response/soap.res																					  > TSA/response/soap.tsr
 

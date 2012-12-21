@@ -13,7 +13,7 @@ start_msg tsa_http
 
 rm -rf tsa_http.log TSA/log \
 		 out/userver_tcp.out err/userver_tcp.err \
-       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]*
+       trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* mempool.*userver_tcp*.[0-9]*
 
 DIR_CMD="../../examples/userver"
 

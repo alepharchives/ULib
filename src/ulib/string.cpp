@@ -543,32 +543,22 @@ __pure bool UStringRep::isText(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isText(%u)", pos)
 
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos,_length)
+   U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-      bool result = u_isText((const unsigned char*)(str + pos), _length - pos);
+   bool result = u_isText((const unsigned char*)(str + pos), _length - pos);
 
-      U_RETURN(result);
-      }
-
-   U_RETURN(false);
+   U_RETURN(result);
 }
 
 __pure bool UStringRep::isBinary(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBinary(%u)", pos)
 
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos,_length)
+   U_INTERNAL_ASSERT_MINOR(pos,_length)
 
-      bool result = u_isBinary((const unsigned char*)(str + pos), _length - pos);
+   bool result = u_isBinary((const unsigned char*)(str + pos), _length - pos);
 
-      U_RETURN(result);
-      }
-
-   U_RETURN(false);
+   U_RETURN(result);
 }
 
 __pure bool UStringRep::isUTF8(uint32_t pos) const

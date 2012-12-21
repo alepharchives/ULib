@@ -235,7 +235,7 @@ public:
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("args"), n);
 
-            (void) output.append(U_CONSTANT_TO_PARAM("\n\tif (usp_as_service == false) (void) UHTTP::processHTTPForm();\n\t"));
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\tif (usp_as_service == false) (void) UHTTP::processForm();\n\t"));
 
             (void) output1.append(U_CONSTANT_TO_PARAM("\n\tif (UHTTP::form_name_value->size()) UHTTP::resetForm(true);\n\t"));
 

@@ -32,12 +32,12 @@ DIR_CMD="../../examples/IR"
 #  $DIR_CMD/gendoc 1000 0 /doc/
 
 # rm -rf $DOC_DIR/*
-  rm -rf trace.*gendoc*.[0-9]*   object.*gendoc*.[0-9]* \
-         trace.*index*.[0-9]*    object.*index*.[0-9]*    out/index*.out   err/index*.err \
-         trace.*update*.[0-9]*   object.*update*.[0-9]*   out/update.out   err/update.err \
-         trace.*db_dump*.[0-9]*  object.*db_dump*.[0-9]*  out/db_dump.out  err/db_dump.err \
-         trace.*db_check*.[0-9]* object.*db_check*.[0-9]* out/db_check.out err/db_check.err \
-         trace.*mquery*.[0-9]*   object.*mquery*.[0-9]*   out/mquery.out   err/mquery.err
+  rm -rf trace.*gendoc*.[0-9]*   object.*gendoc*.[0-9]*   stack.*gendoc*.[0-9]*   mempool.*gendoc*.[0-9]* \
+         trace.*index*.[0-9]*    object.*index*.[0-9]*    stack.*index*.[0-9]*    mempool.*index*.[0-9]*    out/index*.out   err/index*.err \
+         trace.*update*.[0-9]*   object.*update*.[0-9]*   stack.*update*.[0-9]*   mempool.*update*.[0-9]*   out/update.out   err/update.err \
+         trace.*db_dump*.[0-9]*  object.*db_dump*.[0-9]*  stack.*db_dump*.[0-9]*  mempool.*db_dump*.[0-9]*  out/db_dump.out  err/db_dump.err \
+         trace.*db_check*.[0-9]* object.*db_check*.[0-9]* stack.*db_check*.[0-9]* mempool.*db_check*.[0-9]* out/db_check.out err/db_check.err \
+         trace.*mquery*.[0-9]*   object.*mquery*.[0-9]*   stack.*mquery*.[0-9]*   mempool.*mquery*.[0-9]*   out/mquery.out   err/mquery.err
 
 if [ ! -d $DOC_DIR ]
 then

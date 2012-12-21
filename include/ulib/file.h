@@ -846,10 +846,10 @@ public:
 #endif
 
 protected:
-   char* map;
-   UString pathname;
-   const char* path_relativ;            // the string can be not writeable...
    uint32_t path_relativ_len, map_size; // size to mmap(), may be larger than the size of the file...
+   UString pathname;
+   char* map;
+   const char* path_relativ;            // the string can be not writeable...
    int fd;
 
    static bool _root;

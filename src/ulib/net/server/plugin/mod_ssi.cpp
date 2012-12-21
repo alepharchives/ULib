@@ -210,7 +210,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
    U_http_is_connection_close = U_YES;
    u_http_info.nResponseCode  = HTTP_OK;
 
-   UHTTP::setHTTPResponse(&buffer, 0);
+   UHTTP::setResponse(&buffer, 0);
 
    alternative_response = 1;
 }
@@ -227,13 +227,13 @@ void USSIPlugIn::setAlternativeResponse(const UString& _body)
       {
       u_http_info.nResponseCode = HTTP_NO_CONTENT;
 
-      UHTTP::setHTTPResponse(0, 0);
+      UHTTP::setResponse(0, 0);
       }
    else
       {
       u_http_info.nResponseCode = HTTP_OK;
 
-      UHTTP::setHTTPResponse(UHTTP::str_ctype_html, &_body);
+      UHTTP::setResponse(UHTTP::str_ctype_html, &_body);
       }
 }
 
@@ -343,7 +343,7 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
       U_ASSERT(name == *str_cgi ||
                name == *str_servlet)
 
-      if (UHTTP::isHttpPOST() &&
+      if (UHTTP::isPOST() &&
           name == *str_cgi)
          {
          *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
@@ -805,7 +805,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                {
                // NB: we check if we are near to the end of ssi processing (include of services output file)...
 
-               bool bfile = u_startsWith(U_STRING_TO_PARAM(pathname), U_CONSTANT_TO_PARAM("$SSI_FILE_")); // HEAD|BODY
+               bfile = u_startsWith(U_STRING_TO_PARAM(pathname), U_CONSTANT_TO_PARAM("$SSI_FILE_")); // HEAD|BODY
 
                if (bfile &&
                    alternative_include->empty() == false)
@@ -1059,7 +1059,7 @@ int USSIPlugIn::handlerRequest()
 
    if (bcache                           ||
        (UHTTP::file->isSuffix(".shtml") &&
-        UHTTP::isHTTPRequestNotFound() == false))
+        UHTTP::isRequestNotFound() == false))
       {
       // init
 
@@ -1069,7 +1069,7 @@ int USSIPlugIn::handlerRequest()
 
       if (UClientImage_Base::environment->empty())
          {
-         UHTTP::setHTTPBadRequest();
+         UHTTP::setBadRequest();
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
@@ -1101,9 +1101,9 @@ int USSIPlugIn::handlerRequest()
 
          (void) header->append(UHTTP::getDataFromCache(true, false)); // NB: after now 'file_data' can change...
 
-         *body = (UHTTP::isHttpGETorHEAD() && UClientImage_Base::body->empty() == false
-                                           ? *UClientImage_Base::body
-                                           : UHTTP::getDataFromCache(false, false));
+         *body = (UHTTP::isGETorHEAD() && UClientImage_Base::body->empty() == false
+                            ? *UClientImage_Base::body
+                            : UHTTP::getDataFromCache(false, false));
          }
 
       // process the SSI file
@@ -1133,7 +1133,7 @@ int USSIPlugIn::handlerRequest()
             {
             // NB: adjusting the size of response...
 
-            (void) UHTTP::checkHTTPContentLength(*header, output.size());
+            (void) UHTTP::checkContentLength(*header, output.size());
             }
          else
             { u_mime_index = U_ssi;
@@ -1143,7 +1143,7 @@ int USSIPlugIn::handlerRequest()
 
          u_http_info.nResponseCode = HTTP_OK;
 
-         *UClientImage_Base::wbuffer = UHTTP::getHTTPHeaderForResponse(*header, false);
+         *UClientImage_Base::wbuffer = UHTTP::getHeaderForResponse(*header, false);
          *UClientImage_Base::body    = output;
          }
       else if (alternative_response > 1)
@@ -1173,7 +1173,7 @@ int USSIPlugIn::handlerRequest()
          (void) UHTTP::processCGIOutput();
          }
 
-      UHTTP::setHTTPRequestProcessed();
+      UHTTP::setRequestProcessed();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

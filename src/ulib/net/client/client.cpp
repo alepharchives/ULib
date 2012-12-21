@@ -475,8 +475,8 @@ bool UClient_Base::readHTTPResponse()
 
    clearData();
 
-   if (UHTTP::readHTTPHeader(socket, buffer) &&
-       UHTTP::findEndHeader(         buffer))
+   if (UHTTP::readHeader(socket, buffer) &&
+       UHTTP::findEndHeader(     buffer))
       {
       uint32_t pos = buffer.find(*USocket::str_content_length, u_http_info.startHeader, u_http_info.szHeader);
 
@@ -484,7 +484,7 @@ bool UClient_Base::readHTTPResponse()
          {
          u_http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + USocket::str_content_length->size() + 2), 0, 0);
 
-         if (UHTTP::readHTTPBody(socket, &buffer, response))
+         if (UHTTP::readBody(socket, &buffer, response))
             {
             if (log) logResponse(buffer);
 

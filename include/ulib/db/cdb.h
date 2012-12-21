@@ -238,18 +238,18 @@ public:
 #endif
 
 protected:
+   datum key;                  // initialized in find()
+   datum data;                 // initialized if findNext() returns 1
+   cdb_record_header* hr;      // initialized if findNext() returns 1
+   cdb_hash_table_slot* slot;  // initialized in find()
+   cdb_hash_table_pointer* hp; // initialized in find()
+
    uint32_t loop,              // number of hash slots searched under key
             nslot,             // initialized in find()
             khash,             // initialized in find()
             nrecord,           // initialized in makeStart()
             offset,
             start_hash_table_slot;
-
-   datum key;                  // initialized in find()
-   datum data;                 // initialized if findNext() returns 1
-   cdb_record_header* hr;      // initialized if findNext() returns 1
-   cdb_hash_table_slot* slot;  // initialized in find()
-   cdb_hash_table_pointer* hp; // initialized in find()
 
    // when mmap not available we use this storage...
 

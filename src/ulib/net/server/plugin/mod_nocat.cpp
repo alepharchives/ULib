@@ -1757,7 +1757,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo(uint32_t index_AUTH)
 
    if (info_url->isQuery())
       {
-      UHTTP::setHTTPRedirectResponse(0, UString::getStringNull(), U_URL_TO_PARAM(*info_url));
+      UHTTP::setRedirectResponse(0, UString::getStringNull(), U_URL_TO_PARAM(*info_url));
 
       // NB: we assume that the redirect always have success...
 
@@ -1770,7 +1770,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo(uint32_t index_AUTH)
       U_http_is_connection_close = U_YES;
       u_http_info.nResponseCode  = (isPingAsyncPending() ? HTTP_NO_CONTENT : HTTP_NOT_MODIFIED);
 
-      UHTTP::setHTTPResponse(0, 0);
+      UHTTP::setResponse(0, 0);
       }
 }
 
@@ -1823,7 +1823,7 @@ void UNoCatPlugIn::setHTTPResponse(const UString& content)
    u_http_info.nResponseCode   = HTTP_OK;
    *UClientImage_Base::wbuffer = content;
 
-   UHTTP::setHTTPCgiResponse(false, UHTTP::isCompressable(), false);
+   UHTTP::setCgiResponse(false, UHTTP::isCompressable(), false);
 }
 
 __pure uint32_t UNoCatPlugIn::getIndexAUTH(const char* ip_address)
@@ -2233,7 +2233,11 @@ int UNoCatPlugIn::handlerFork()
 
       n = vtmp.size();
 
-      uint32_t UserDownloadRate, UserUploadRate, increment = (n % 3 ? 5 : (UserDownloadRate = 0, UserUploadRate = 0, 3));
+      uint32_t UserUploadRate,
+               UserDownloadRate,
+               increment = ((n % 3)
+                              ?                                            5
+                              : (UserDownloadRate = 0, UserUploadRate = 0, 3));
 
       for (i = 0; i < n; i += increment)
          {
@@ -2275,7 +2279,7 @@ int UNoCatPlugIn::handlerRequest()
 {
    U_TRACE(1, "UNoCatPlugIn::handlerRequest()")
 
-   if (UHTTP::isHTTPRequestNotFound())
+   if (UHTTP::isRequestNotFound())
       {
       Url url;
       int refresh = 0;
@@ -2333,7 +2337,7 @@ int UNoCatPlugIn::handlerRequest()
 
                if (peer == 0)
                   {
-                  UHTTP::setHTTPBadRequest();
+                  UHTTP::setBadRequest();
 
                   goto end;
                   }
@@ -2395,7 +2399,7 @@ int UNoCatPlugIn::handlerRequest()
                   }
                }
 
-            if (peer == 0) UHTTP::setHTTPBadRequest();
+            if (peer == 0) UHTTP::setBadRequest();
             else
                {
                if (U_peer_status(peer) != UModNoCatPeer::PEER_PERMIT)
@@ -2426,7 +2430,7 @@ int UNoCatPlugIn::handlerRequest()
             goto end;
             }
 
-         UHTTP::setHTTPBadRequest();
+         UHTTP::setBadRequest();
 
          goto end;
          }
@@ -2572,7 +2576,7 @@ int UNoCatPlugIn::handlerRequest()
          }
 
 set_redirection_url:
-      (void) buffer.reserve(7 + u_http_info.host_len + u_http_info.uri_len);
+      (void) buffer.reserve(7 + U_http_host_len + u_http_info.uri_len);
 
       buffer.snprintf("http://%.*s%.*s", U_STRING_TO_TRACE(_host), U_HTTP_URI_TO_TRACE);
 
@@ -2585,10 +2589,10 @@ set_redirect_to_AUTH:
       if (refresh == 0) refresh = 1;
 
 redirect:
-      UHTTP::setHTTPRedirectResponse(refresh, UString::getStringNull(), U_STRING_TO_PARAM(*location));
+      UHTTP::setRedirectResponse(refresh, UString::getStringNull(), U_STRING_TO_PARAM(*location));
       
 end:
-      UHTTP::setHTTPRequestProcessed();
+      UHTTP::setRequestProcessed();
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);

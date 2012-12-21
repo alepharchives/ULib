@@ -466,7 +466,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 {
    U_TRACE(0, "UHttpClient_Base::checkResponse(%d)", redirectCount)
 
-   U_DUMP("UHTTP::getHTTPStatus() = %S", UHTTP::getHTTPStatus())
+   U_DUMP("UHTTP::getStatus() = %S", UHTTP::getStatus())
 
    // check if you can use the same socket connection
 
@@ -586,7 +586,7 @@ void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
 
    U_INTERNAL_ASSERT(UClient_Base::uri)
 
-   UHTTP::setHTTPInfo(method, UClient_Base::uri);
+   UHTTP::setInfo(method, UClient_Base::uri);
 
    UString extension = U_STRING_FROM_CONSTANT("\r\n");
 
@@ -667,7 +667,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
       }
    else
       {
-      UHTTP::getHTTPInfo(data, method, UClient_Base::uri);
+      UHTTP::getInfo(data, method, UClient_Base::uri);
 
       startHeader = u_http_info.startHeader;
       }
@@ -720,7 +720,7 @@ bool UHttpClient_Base::sendRequest(UString& data)
 
          if ((u_http_info.clength == 0                                 &&
               (U_http_chunked = responseHeader->isChunked()) == false) ||
-              UHTTP::readHTTPBody(socket, &response, body))
+              UHTTP::readBody(socket, &response, body))
             {
             goto end;
             }

@@ -14,6 +14,8 @@
 #ifndef ULIB_MEMORY_POOL_H
 #define ULIB_MEMORY_POOL_H 1
 
+#include <iostream>
+
 // ---------------------------------------------------------------------------------------------------------------
 // U_MAX_SIZE_PREALLOCATE: richiesta massima soddisfatta con metodo di preallocazione altrimenti chiamata a malloc
 
@@ -142,7 +144,7 @@
   16 sizeof(UTokenizer)
   16 sizeof(UStringRep) <==
   16 sizeof(USOAPObject)
-  16 sizeof(UHashMapNode)
+  16 sizeof(UHashMapNode) <==
 -------------------------
    U_STACK_TYPE_1
 
@@ -198,7 +200,6 @@
 -------------------------
    U_STACK_TYPE_5
 
- 264 sizeof(USSHSocket)
  300 sizeof(UFtpClient)
  336 sizeof(URDB)
  512
@@ -290,7 +291,7 @@ struct U_EXPORT UMemoryPool {
 #endif
 
 #ifdef DEBUG
-   static void printInfo();
+   static void printInfo(std::ostream& os);
 #endif
 };
 

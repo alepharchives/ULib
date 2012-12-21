@@ -378,7 +378,7 @@ int UHttpPlugIn::handlerREAD()
 
       if (UServer_Base::expire >= u_now->tv_sec)
          {
-         result = UHTTP::checkHTTPRequestCache();
+         result = UHTTP::checkRequestCache();
 
          if (result != U_PLUGIN_HANDLER_FINISHED)
             {
@@ -388,18 +388,18 @@ int UHttpPlugIn::handlerREAD()
             }
          }
 
-      UHTTP::clearHTTPRequestCache();
+      UHTTP::clearRequestCache();
       }
 
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 #endif
 
-   if (UHTTP::manageHTTPRequest() == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (UHTTP::manageRequest() == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
    // NB: we check if we can shortcut the http request processing (only in the context of U_PLUGIN_HANDLER_FINISHED)...
 
-   UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off           == false &&
-                                           UHTTP::isHTTPRequestAlreadyProcessed() == false);
+   UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off       == false &&
+                                           UHTTP::isRequestAlreadyProcessed() == false);
 
    U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
 
@@ -422,41 +422,41 @@ int UHttpPlugIn::handlerRequest()
       {
       case U_HTTP_REQUEST_IS_FORBIDDEN:
          {
-         U_ASSERT(UHTTP::isHTTPRequestForbidden())
+         U_ASSERT(UHTTP::isRequestForbidden())
 
-         UHTTP::setHTTPForbidden(); // set forbidden error response...
+         UHTTP::setForbidden(); // set forbidden error response...
          }
       break;
 
       case U_HTTP_REQUEST_IS_NOT_FOUND:
          {
-         U_ASSERT(UHTTP::isHTTPRequestNotFound())
+         U_ASSERT(UHTTP::isRequestNotFound())
 
          if (U_http_method_type == HTTP_OPTIONS)
             {
             u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
 
-            UHTTP::setHTTPResponse(0, 0);
+            UHTTP::setResponse(0, 0);
 
             goto end;
             }
 
-         UHTTP::setHTTPNotFound(); // set not found error response...
+         UHTTP::setNotFound(); // set not found error response...
          }
       break;
 
       case U_HTTP_REQUEST_NEED_PROCESSING:
          {
-         U_ASSERT(UHTTP::isHTTPRequestNeedProcessing())
+         U_ASSERT(UHTTP::isRequestNeedProcessing())
          U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
-         if (UHTTP::isHttpGETorHEAD() == false)
+         if (UHTTP::isGETorHEAD() == false)
             {
             if (U_http_method_type == HTTP_OPTIONS)
                {
                u_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
 
-               UHTTP::setHTTPResponse(0, 0);
+               UHTTP::setResponse(0, 0);
 
                goto end;
                }
@@ -465,24 +465,24 @@ int UHttpPlugIn::handlerRequest()
 
             u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
 
-            UHTTP::setHTTPResponse(0, 0);
+            UHTTP::setResponse(0, 0);
 
             // NB: maybe there are other plugin after this...
 
             U_RETURN(U_PLUGIN_HANDLER_GO_ON);
             }
 
-         UHTTP::processHTTPGetRequest(); // GET,HEAD
+         UHTTP::processGetRequest(); // GET,HEAD
          }
       break;
 
 #  ifdef DEBUG
-      default: U_ASSERT(UHTTP::isHTTPRequestAlreadyProcessed()) break;
+      default: U_ASSERT(UHTTP::isRequestAlreadyProcessed()) break;
 #  endif
       }
 
 end:
-   UHTTP::endHTTPRequestProcessing();
+   UHTTP::endRequestProcessing();
 
    // check for "Connection: close" in headers
 

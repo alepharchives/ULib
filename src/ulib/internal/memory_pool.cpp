@@ -209,9 +209,9 @@ typedef struct ustackmemorypool {
    2 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
    1 |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx| |xx|
       --   --   --   --   --   --   --   --   --   -- 
-        8   24   56  128  232  256  512 1024 2048 4096 -> type
-        0    1    2    3    4    5    6    7    8    9 -> index
-        0    1    2    3    4    5    6    7    8    9 -> index_stack_mem_block
+       8   24   32   56  128  256  512  1024 2048 4096 -> type
+       0    1    2    3    4    5    6    7    8    9  -> index
+       0    1    2    3    4    5    6    7    8    9  -> index_stack_mem_block
 */
 
 class U_NO_EXPORT UStackMemoryPool {
@@ -352,19 +352,17 @@ public:
    static void* mem_pointer_block[U_NUM_STACK_TYPE * U_NUM_ENTRY_MEM_BLOCK * 2];
 
 #ifdef DEBUG
-
-   // paint info
-
-   static void paint()
+   static void paint(ostream& os) // paint info
       {
-      U_TRACE(0, "UStackMemoryPool::paint()")
+      U_TRACE(0, "UStackMemoryPool::paint(%p)", &os)
 
       int i;
+      char buffer[128];
       uint32_t max_space = 0;
 
       for (i = 0; i < U_NUM_STACK_TYPE; ++i) if (mem_stack[i].space > max_space) max_space = mem_stack[i].space;
 
-      printf("       %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n",
+      (void) snprintf(buffer, sizeof(buffer), "       %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n",
              (mem_stack[ 0].space == max_space ? "--" : "  "),
              (mem_stack[ 1].space == max_space ? "--" : "  "),
              (mem_stack[ 2].space == max_space ? "--" : "  "),
@@ -376,9 +374,11 @@ public:
              (mem_stack[ 8].space == max_space ? "--" : "  "),
              (mem_stack[ 9].space == max_space ? "--" : "  "));
 
+      os << buffer;
+
       for (i = max_space-1; i >= 0; --i)
          {
-         printf("%5u %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c\n", i+1,
+         (void) snprintf(buffer, sizeof(buffer), "%5u %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c\n", i+1,
              (mem_stack[ 0].space >  (uint32_t)i ?  '|' :  ' '),
              (mem_stack[ 0].space == (uint32_t)i ? "--" : (mem_stack[ 0].len > (uint32_t)i ? "xx" : "  ")),
              (mem_stack[ 0].space >  (uint32_t)i ?  '|' :  ' '),
@@ -409,12 +409,21 @@ public:
              (mem_stack[ 9].space >  (uint32_t)i ?  '|' :  ' '),
              (mem_stack[ 9].space == (uint32_t)i ? "--" : (mem_stack[ 9].len > (uint32_t)i ? "xx" : "  ")),
              (mem_stack[ 9].space >  (uint32_t)i ?  '|' :  ' '));
+
+         os << buffer;
          }
 
-      printf("       --   --   --   --   --   --   --   --   --   --\n"
-             "         8   24   56  128  232  256  512 1024 2048 4096\n");
-      }
+      (void) snprintf(buffer, sizeof(buffer),
+             "       --   --   --   --   --   --   --   --   --   --\n"
+#        ifdef HAVE_ARCH64
+             "        8   24   32   56  128  256  512  1024 2048 4096"
+#        else
+             "        4   16   36  128  196  256  512  1024 2048 4096"
+#        endif
+             "\n");
 
+      os << buffer;
+      }
 #endif
 };
 
@@ -501,14 +510,12 @@ void UMemoryPool::_free(void* ptr, size_t sz)
 }
 
 #ifdef DEBUG
-
-void UMemoryPool::printInfo()
+void UMemoryPool::printInfo(ostream& os)
 {
-   U_TRACE(0+256, "UMemoryPool::printInfo()")
+   U_TRACE(0+256, "UMemoryPool::printInfo(%p)", &os)
 
-   UStackMemoryPool::paint();
+   UStackMemoryPool::paint(os);
 }
-
 #endif
 
 #ifdef U_OVERLOAD_NEW_DELETE

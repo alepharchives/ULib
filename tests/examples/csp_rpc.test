@@ -13,7 +13,7 @@ start_msg cspclient_rpc
 
 rm -rf cspserver_rpc.log CSP/DB_CA/log CSP/DB_CA/CA* \
 		 out/userver_ssl.out err/userver_ssl.err \
-       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]*
+       trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]*
 
 # usage: openssl s_client args
 # ----------------------------------------------------------------

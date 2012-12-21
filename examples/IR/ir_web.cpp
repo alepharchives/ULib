@@ -78,7 +78,7 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
    uint32_t num_args   = UHTTP::form_name_value->size() / 2;
    bool form_with_help = false;
    
-   if (UHTTP::isHttpGET())
+   if (UHTTP::isGET())
       {
       if (num_args == 1)
          {
@@ -101,7 +101,7 @@ extern U_EXPORT int runDynamicPage(UClientImage_Base* client_image);
             }
          }
       }
-   else if (UHTTP::isHttpPOST())
+   else if (UHTTP::isPOST())
       {
       UString phrase = USP_FORM_VALUE(0);
    

@@ -126,7 +126,7 @@ int UWebSocketPlugIn::handlerRequest()
 
    if (U_http_websocket)
       {
-      U_INTERNAL_ASSERT_MAJOR(u_http_info.websocket_len, 0)
+      U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
 
       int sock = 0, fdmax = 0;
       fd_set fd_set_read, read_set;
@@ -203,7 +203,7 @@ handle_data:
 
       if (csocket->isOpen()) (void) UWebSocket::sendClose();
 
-      UHTTP::setHTTPRequestProcessed();
+      UHTTP::setRequestProcessed();
 
       U_http_is_connection_close = U_YES;
 

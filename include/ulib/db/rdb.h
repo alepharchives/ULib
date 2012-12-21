@@ -298,8 +298,8 @@ protected:
           char* parseLine(const char* ptr) { return parseLine(ptr, &key, &data); }
 
 private:
-   uint32_t   node; // RDB_node
    uint32_t* pnode;
+   uint32_t   node; // RDB_node
 
    static URDB* ptr_rdb;
    static UCDB::datum key1;

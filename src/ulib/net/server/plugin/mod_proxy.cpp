@@ -165,8 +165,8 @@ int UProxyPlugIn::handlerRequest()
 
       U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
 
-      if (                     UHTTP::isHTTPRequest(  ptr)                                      == false ||
-         (U_HTTP_INFO_INIT(0), UHTTP::scanfHTTPHeader(ptr, UClientImage_Base::wbuffer->size())) == false)
+      if (                     UHTTP::isValidRequest(ptr)                                   == false ||
+         (U_HTTP_INFO_INIT(0), UHTTP::scanfHeader(ptr, UClientImage_Base::wbuffer->size())) == false)
          {
          err = UModProxyService::INTERNAL_ERROR;
 
@@ -273,7 +273,7 @@ int UProxyPlugIn::handlerRequest()
 
 err: UModProxyService::setMsgError(err, *vmsg_error);
 
-end: UHTTP::setHTTPRequestProcessed();
+end: UHTTP::setRequestProcessed();
 
    // check for "Connection: close" in headers
 

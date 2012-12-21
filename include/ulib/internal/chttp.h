@@ -114,42 +114,51 @@
 // ----------------------------------------------------------------------------------------------------------------------------- */
 
 typedef struct uhttpinfo {
-   const char* method;
    const char* uri;
-   const char* query;
    const char* host;
+   const char* query;
    const char* range;
-   const char* accept;
    const char* cookie;
+   const char* method;
    const char* referer;
    const char* ip_client;
+   const char* websocket;
    const char* user_agent;
    const char* content_type;
+// const char* accept;
    const char* accept_language;
-   const char* websocket;
    time_t      if_modified_since;
-   uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength, method_len, uri_len, query_len, host_len, host_vlen,
-               range_len, accept_len, cookie_len, referer_len, ip_client_len, user_agent_len, content_type_len, accept_language_len, websocket_len;
-         char  flag[12];
+   uint32_t    nResponseCode, startHeader, endHeader, szHeader, clength,
+               uri_len, query_len, cookie_len, referer_len, user_agent_len, content_type_len, accept_len;
+         char  flag[18];
 } uhttpinfo;
 
-#define U_http_upgrade              u_http_info.flag[0]
-#define U_http_version              u_http_info.flag[1]
-#define U_http_keep_alive           u_http_info.flag[2]
-#define U_http_method_type          u_http_info.flag[3]
-#define U_http_request_check        u_http_info.flag[4]
-#define U_http_is_accept_gzip       u_http_info.flag[5]
-#define U_http_is_connection_close  u_http_info.flag[6]
-#define U_http_no_cache             u_http_info.flag[7]
-#define U_http_is_navigation        u_http_info.flag[8]
-#define U_http_chunked              u_http_info.flag[9]
-#define U_http_websocket            u_http_info.flag[10]
-#define U_http_unused               u_http_info.flag[11]
+// NB: sizeof(struct uhttpinfo) 64bit == 176
+
+#define U_http_method_len           u_http_info.flag[0]
+#define U_http_method_type          u_http_info.flag[1]
+#define U_http_version              u_http_info.flag[2]
+#define U_http_chunked              u_http_info.flag[3]
+#define U_http_upgrade              u_http_info.flag[4]
+#define U_http_no_cache             u_http_info.flag[5]
+#define U_http_host_len             u_http_info.flag[6]
+#define U_http_host_vlen            u_http_info.flag[7]
+#define U_http_range_len            u_http_info.flag[8]
+#define U_http_websocket            u_http_info.flag[9]
+#define U_http_keep_alive           u_http_info.flag[10]
+#define U_http_ip_client_len        u_http_info.flag[11]
+#define U_http_websocket_len        u_http_info.flag[12]
+#define U_http_is_navigation        u_http_info.flag[13]
+#define U_http_request_check        u_http_info.flag[14]
+#define U_http_is_accept_gzip       u_http_info.flag[15]
+#define U_http_accept_language_len  u_http_info.flag[16]
+#define U_http_is_connection_close  u_http_info.flag[17]
+//#define U_http_accept_len         u_http_info.flag[18]
 
 enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_GET = '4', HTTP_HEAD = '5', HTTP_OPTIONS = '6', HTTP_COPY = '7' };
 
-#define U_HTTP_METHOD_TO_PARAM          u_http_info.method, u_http_info.method_len
-#define U_HTTP_METHOD_TO_TRACE          u_http_info.method_len, u_http_info.method
+#define U_HTTP_METHOD_TO_PARAM          u_http_info.method, U_http_method_len
+#define U_HTTP_METHOD_TO_TRACE          U_http_method_len, u_http_info.method
 
 #define U_HTTP_URI_TO_TRACE             u_http_info.uri_len, u_http_info.uri
 #define U_HTTP_URI_TO_PARAM             u_http_info.uri, u_http_info.uri_len
@@ -165,11 +174,8 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 #define U_HTTP_CTYPE_TO_PARAM           u_http_info.content_type, u_http_info.content_type_len
 #define U_HTTP_CTYPE_TO_TRACE           u_http_info.content_type_len, u_http_info.content_type
 
-#define U_HTTP_RANGE_TO_PARAM           u_http_info.range, u_http_info.range_len
-#define U_HTTP_RANGE_TO_TRACE           u_http_info.range_len, u_http_info.range
-
-#define U_HTTP_ACCEPT_TO_PARAM          u_http_info.accept, u_http_info.accept_len
-#define U_HTTP_ACCEPT_TO_TRACE          u_http_info.accept_len, u_http_info.accept
+#define U_HTTP_RANGE_TO_PARAM           u_http_info.range, U_http_range_len
+#define U_HTTP_RANGE_TO_TRACE           U_http_range_len, u_http_info.range
 
 #define U_HTTP_COOKIE_TO_PARAM          u_http_info.cookie, u_http_info.cookie_len
 #define U_HTTP_COOKIE_TO_TRACE          u_http_info.cookie_len, u_http_info.cookie
@@ -177,31 +183,36 @@ enum HTTPMethodType { HTTP_POST = '1', HTTP_PUT = '2', HTTP_DELETE = '3', HTTP_G
 #define U_HTTP_REFERER_TO_PARAM         u_http_info.referer, u_http_info.referer_len
 #define U_HTTP_REFERER_TO_TRACE         u_http_info.referer_len, u_http_info.referer
 
-#define U_HTTP_WEBSOCKET_TO_PARAM       u_http_info.websocket, u_http_info.websocket_len
-#define U_HTTP_WEBSOCKET_TO_TRACE       u_http_info.websocket_len, u_http_info.websocket
+#define U_HTTP_WEBSOCKET_TO_PARAM       u_http_info.websocket, U_http_websocket_len
+#define U_HTTP_WEBSOCKET_TO_TRACE       U_http_websocket_len, u_http_info.websocket
 
-#define U_HTTP_IP_CLIENT_TO_PARAM       u_http_info.ip_client, u_http_info.ip_client_len
-#define U_HTTP_IP_CLIENT_TO_TRACE       u_http_info.ip_client_len, u_http_info.ip_client
+#define U_HTTP_IP_CLIENT_TO_PARAM       u_http_info.ip_client, U_http_ip_client_len
+#define U_HTTP_IP_CLIENT_TO_TRACE       U_http_ip_client_len, u_http_info.ip_client
 
 #define U_HTTP_USER_AGENT_TO_PARAM      u_http_info.user_agent, u_http_info.user_agent_len
 #define U_HTTP_USER_AGENT_TO_TRACE      u_http_info.user_agent_len, u_http_info.user_agent
 
-#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM u_http_info.accept_language, u_http_info.accept_language_len
-#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE u_http_info.accept_language_len, u_http_info.accept_language
+#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM u_http_info.accept_language, U_http_accept_language_len
+#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE U_http_accept_language_len, u_http_info.accept_language
+
+/*
+#define U_HTTP_ACCEPT_TO_PARAM          u_http_info.accept, U_http_accept_len
+#define U_HTTP_ACCEPT_TO_TRACE          U_http_accept_len, u_http_info.accept
+*/
 
 /* The hostname of your server from header's request.
  * The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
  * U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
  */
 
-#define U_HTTP_HOST_TO_PARAM       u_http_info.host, u_http_info.host_len
-#define U_HTTP_HOST_TO_TRACE       u_http_info.host_len, u_http_info.host
+#define U_HTTP_HOST_TO_PARAM       u_http_info.host, U_http_host_len
+#define U_HTTP_HOST_TO_TRACE       U_http_host_len, u_http_info.host
 
-#define U_HTTP_VHOST_TO_PARAM      u_http_info.host, u_http_info.host_vlen
-#define U_HTTP_VHOST_TO_TRACE      u_http_info.host_vlen, u_http_info.host
+#define U_HTTP_VHOST_TO_PARAM      u_http_info.host, U_http_host_vlen
+#define U_HTTP_VHOST_TO_TRACE      U_http_host_vlen, u_http_info.host
 
 #define U_HTTP_URI_STRNEQ(str)                                    U_STRNEQ(u_http_info.uri,          str)
-#define U_HTTP_HOST_STRNEQ(str)   (u_http_info.host_len         ? U_STRNEQ(u_http_info.host,         str) : false)
+#define U_HTTP_HOST_STRNEQ(str)   (U_http_host_len              ? U_STRNEQ(u_http_info.host,         str) : false)
 #define U_HTTP_QUERY_STRNEQ(str)  (u_http_info.query_len        ? U_STRNEQ(u_http_info.query,        str) : false)
 #define U_HTTP_CTYPE_STRNEQ(str)  (u_http_info.content_type_len ? U_STRNEQ(u_http_info.content_type, str) : false)
 

@@ -307,7 +307,7 @@ int UFCGIPlugIn::handlerRequest()
 
       if (environment.empty())
          {
-         UHTTP::setHTTPBadRequest();
+         UHTTP::setBadRequest();
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
@@ -372,7 +372,7 @@ int UFCGIPlugIn::handlerRequest()
 
       if (size)
          {
-         U_INTERNAL_ASSERT(UHTTP::isHttpPOST())
+         U_INTERNAL_ASSERT(UHTTP::isPOST())
 
          fill_FCGIBeginRequest(FCGI_PARAMS, 0);
 
@@ -495,8 +495,8 @@ int UFCGIPlugIn::handlerRequest()
 
       goto end; // skip error...
 
-err:  UHTTP::setHTTPInternalError();
-end:  UHTTP::setHTTPRequestProcessed();
+err:  UHTTP::setInternalError();
+end:  UHTTP::setRequestProcessed();
 
       // reset
 

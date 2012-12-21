@@ -30,6 +30,11 @@
 #  include <ulib/base/replace/sysexits.h>
 #endif
 
+#ifdef ENABLE_MEMPOOL
+#  include <ulib/internal/memory_pool.h>
+#endif
+
+#include <fstream>
 #include <errno.h>
 
 static const char* __restrict__ uid = "@(#) " PACKAGE_NAME " " ULIB_VERSION " " PLATFORM_VAR " (" __DATE__ ")";
@@ -42,7 +47,17 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
 
    if (u_recursion == false)
       {
+      char name[128];
+
       u_recursion = true;
+
+      (void) u__snprintf(name, sizeof(name), "mempool.%N.%P", 0);
+
+#  ifdef ENABLE_MEMPOOL
+      std::ofstream of(name);
+
+      UMemoryPool::printInfo(of);
+#  endif
 
       UError::stackDump();
 

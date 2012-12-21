@@ -1534,11 +1534,15 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    flag_loop = false;
 
-   uint32_t vsz, rss;
+   if (isLog())
+      {
+      uint32_t vsz, rss;
 
-   u_get_memusage(&rss, &vsz);
+      u_get_memusage(&rss, &vsz);
 
-   U_SRV_LOG("SIGTERM (Interrupt) - {address space usage: %u bytes/%uMB} {rss usage: %u bytes/%uMB}", vsz, vsz / (1024 * 1024), rss, rss / (1024 * 1024));
+      ULog::log("SIGTERM (Interrupt): address space usage: %.2f MBytes - rss usage: %.2f MBytes\n",
+                                 (double)vsz / (1024.0 * 1024.0), (double)rss / (1024.0 * 1024.0));
+      }
 
    if (proc->parent())
       {
@@ -1751,7 +1755,7 @@ retry:
          // and the forked child don't accept new client, but we need anyway the event manager because the forked
          // child feel the possibly timeout for request from the new client...
 
-         socket->close();
+         socket->USocket::_closesocket();
 
          if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
          }
