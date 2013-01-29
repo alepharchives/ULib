@@ -79,8 +79,6 @@ int UProxyPlugIn::handlerInit()
       goto end;
       }
 
-   if (UServer_Base::preforked_num_kids == 0) client_http->setLocalHost(UServer_Base::getHost());
-
 /*
 #ifdef LINUX_NETFILTER
 #endif
@@ -165,8 +163,7 @@ int UProxyPlugIn::handlerRequest()
 
       U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
 
-      if (                     UHTTP::isValidRequest(ptr)                                   == false ||
-         (U_HTTP_INFO_INIT(0), UHTTP::scanfHeader(ptr, UClientImage_Base::wbuffer->size())) == false)
+      if (UHTTP::scanfHeader(ptr, UClientImage_Base::wbuffer->size()) == false)
          {
          err = UModProxyService::INTERNAL_ERROR;
 

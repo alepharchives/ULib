@@ -14,4 +14,4 @@ start_msg file_config
 start_prg file_config 100 <inp/file_config.input
 
 # Test against expected output
-test_output_wc w file_config
+test_output_wc l file_config

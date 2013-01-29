@@ -21,7 +21,7 @@ int U_EXPORT main(int argc, char* argv[])
                                          U_STRING_FROM_CONSTANT("open sesame"));
 
    if (http.connectServer(url) &&
-       http.sendRequest(x))
+       http.sendRequest(0,0))
       {
       UString content = http.getContent();
 

@@ -115,8 +115,6 @@ public:
 
       U_INTERNAL_DUMP("screen_width = %d", screen_width)
 
-      buffer = U_MALLOC_N(screen_width + 2, char);
-
       count         = 0;
       howmuch       = 0;
       dl_total_time = 0;
@@ -313,8 +311,6 @@ no_eta:
       display();
 
       (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("\n")); 
-
-      U_FREE_N(buffer, screen_width + 2,char);
       }
 
    virtual int handlerTime()
@@ -368,7 +364,7 @@ no_eta:
 
 private:
    size_t count;                       /* total bytes downloaded so far */
-   char* buffer;                       /* buffer where the bar "image" is stored */
+   char* buffer[1024];                 /* buffer where the bar "image" is stored */
    long dl_total_time;                 /* time measured since the beginning of download */
    size_t total_length;                /* expected total byte count when the download finishes */
    off_t initial_length;               /* how many bytes have been downloaded previously */
@@ -900,9 +896,9 @@ public:
 
       U_INTERNAL_DUMP("num = %u", num)
 
-      size = num * sizeof(HostData);
+      map_size1 = num * sizeof(HostData);
 
-      place = (HostData*) UFile::mmap(size);
+      place = (HostData*) UFile::mmap(&map_size1);
 
       U_INTERNAL_ASSERT(place->bytes_read == 0)
 
@@ -911,7 +907,9 @@ public:
       U_INTERNAL_ASSERT(host == place)
       U_INTERNAL_ASSERT(host[num-1].server.invariant())
 
-      from = U_MALLOC_VECTOR(num, HostData);
+      map_size2 = num * sizeof(HostData*);
+
+      from = (HostData**) UFile::mmap(&map_size2);
       }
 
    void download()
@@ -1223,9 +1221,8 @@ public:
 
       file.close();
 
-      U_FREE_VECTOR(from, num, HostData);
-
-      UFile::munmap(place, size);
+      UFile::munmap(place, map_size1);
+      UFile::munmap(from,  map_size2);
 #  endif
       }
 
@@ -1235,7 +1232,8 @@ private:
    HostData** from;
    ProgressBar* pinfo;
    time_t delta_time;
-   unsigned i, num, numhosts, num_score, numproc, size;
+   uint32_t map_size1, map_size2;
+   unsigned i, num, numhosts, num_score, numproc;
    int max_ttl;
    UFile file;
    UProcess proc;

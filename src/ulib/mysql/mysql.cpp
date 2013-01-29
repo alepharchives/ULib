@@ -18,6 +18,8 @@
 
 const char* UMySQL::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "connPtr " << (void*)connPtr;
 
    if (reset)
@@ -32,6 +34,8 @@ const char* UMySQL::dump(bool reset) const
 
 const char* UMySQLRow::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "m_row     " << (void*)m_row << '\n'
                   << "m_nFields " << m_nFields;
 
@@ -47,6 +51,8 @@ const char* UMySQLRow::dump(bool reset) const
 
 const char* UMySQLSet::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "res        " << (void*)res << '\n'
                   << "m_nFields  " << m_nFields  << '\n'
                   << "m_rowCount " << m_rowCount;

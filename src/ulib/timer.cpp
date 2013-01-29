@@ -346,6 +346,8 @@ void UTimer::printInfo(ostream& os)
 
 const char* UTimer::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "timerval                 " << "{ { "  << timerval.it_interval.tv_sec
                                                  << " "     << timerval.it_interval.tv_usec
                                                  << " } { " << timerval.it_value.tv_sec
@@ -365,5 +367,4 @@ const char* UTimer::dump(bool reset) const
 
    return 0;
 }
-
 #endif

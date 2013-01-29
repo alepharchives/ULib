@@ -159,19 +159,17 @@ protected:
    // COSTRUTTORI
 
             UClientImage_Base();
-   virtual ~UClientImage_Base()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UClientImage_Base)
+   virtual ~UClientImage_Base();
 
-      handlerDelete();
-      }
+   virtual void set();
 
 private:
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
    UClientImage_Base& operator=(const UClientImage_Base&)   { return *this; }
 
-   friend class UHTTP;
-   friend class UServer_Base;
+                      friend class UHTTP;
+                      friend class UServer_Base;
+   template <class T> friend void u_delete_vector(T* _vec, uint32_t offset, uint32_t n);
 };
 
 template <class Socket> class U_EXPORT UClientImage : public UClientImage_Base {
@@ -181,18 +179,16 @@ public:
 
    UClientImage() : UClientImage_Base()
       {
-      U_TRACE_REGISTER_OBJECT(0, UClientImage, "")
+      U_TRACE_REGISTER_OBJECT(0, UClientImage<Socket>, "")
 
       socket = U_NEW(Socket(UClientImage_Base::bIPv6));
 
-      U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
+      set();
       }
 
    virtual ~UClientImage()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UClientImage)
-
-      U_INTERNAL_DUMP("this = %p", this)
+      U_TRACE_UNREGISTER_OBJECT(0, UClientImage<Socket>)
       }
 
    // DEBUG
@@ -216,13 +212,13 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "")
 
       socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6, UClientImage_Base::ctx, false));
+
+      set();
       }
 
    virtual ~UClientImage()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UClientImage<USSLSocket>)
-
-      U_INTERNAL_DUMP("this = %p", this)
       }
 
    // SERVICES

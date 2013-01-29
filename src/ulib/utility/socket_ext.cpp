@@ -236,9 +236,21 @@ int USocketExt::writev(USocket* s, struct iovec* _iov, int iovcnt, uint32_t ncou
 
    ssize_t value;
    int idx = 0, iBytesWrite = 0;
+#ifdef DEBUG
+   int i;
+   uint32_t sum;
+#endif
 
 loop:
    U_INTERNAL_DUMP("ncount = %u _iov[%d].iov_len = %d", ncount, idx, _iov[idx].iov_len)
+
+#ifdef DEBUG
+   for (i = sum = 0; i < iovcnt; ++i) sum += _iov[i].iov_len;
+
+   U_INTERNAL_DUMP("sum = %u", sum)
+
+   U_INTERNAL_ASSERT_EQUALS(sum, ncount)
+#endif
 
    value = s->writev(_iov, iovcnt, timeoutMS);
 
@@ -265,16 +277,6 @@ loop:
 
    _iov[idx].iov_len -= value;
    _iov[idx].iov_base = (char*)_iov[idx].iov_base + value;
-
-#ifdef DEBUG
-   uint32_t sum = 0;
-
-   for (int i = 0; i < iovcnt; ++i) sum += _iov[i].iov_len;
-
-   U_INTERNAL_DUMP("sum = %u", sum)
-
-   U_INTERNAL_ASSERT_EQUALS(sum, ncount)
-#endif
 
    int res = UNotifier::waitForWrite(s->iSockDesc, timeoutMS);
 

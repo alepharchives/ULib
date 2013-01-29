@@ -499,9 +499,11 @@ U_EXPORT main (int argc, char* argv[])
    tmp = U_STRING_FROM_CONSTANT("riga 4");
    y1.put(tmp);
 
+   /*
    U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 5")) == false )
    U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 6")) == false )
    U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 7")) == false )
+   */
 
    y1.get(tmp);
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 1") )

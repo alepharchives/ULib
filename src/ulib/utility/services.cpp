@@ -40,14 +40,15 @@ bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_l
 
    u_ftw_ctx.depth = true;
 
-   if (dir == 0)
+   if (dir) u_buffer_len = dir->size();
+
+   if (u_buffer_len == 0)
       {
       u_buffer[0]  = '.';
       u_buffer_len = 1;
       }
    else
       {
-      u_buffer_len    = dir->size();
       const char* ptr = dir->c_str();
 
       U_INTERNAL_DUMP("dir      = %S", ptr)
@@ -316,7 +317,7 @@ void UServices::setCApath(const char* _CApath)
 
    U_INTERNAL_ASSERT(_CApath && *_CApath)
 
-   if (CApath == 0) CApath = U_NEW(UString);
+   if (CApath == 0) U_NEW_ULIB_OBJECT(CApath, UString);
 
    *CApath = UFile::getRealPath(_CApath);
 }

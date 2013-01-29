@@ -22,10 +22,6 @@
 
 #include <errno.h>
 
-#if !defined(MAP_ANONYMOUS) && defined(MAP_ANON)
-#  define MAP_ANONYMOUS MAP_ANON /* Don't use a file */
-#endif
-
 #ifdef ENABLE_LFS
 #  define U_SEEK_BEGIN 0LL
 #else
@@ -62,6 +58,7 @@
 
 class URDB;
 class UHTTP;
+class UStringExt;
 
 template <class T> class UTree;
 template <class T> class UVector;
@@ -475,8 +472,8 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(st_size,0)
-      U_INTERNAL_ASSERT_DIFFERS(st_ino,0)
+      U_INTERNAL_ASSERT_MAJOR(st_size, 0)
+      U_INTERNAL_ASSERT_DIFFERS(st_ino, 0)
 
       UString _etag(100U);
 
@@ -493,8 +490,8 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(st_size,0)
-      U_INTERNAL_ASSERT_DIFFERS(st_ino,0)
+      U_INTERNAL_ASSERT_MAJOR(st_size, 0)
+      U_INTERNAL_ASSERT_DIFFERS(st_ino, 0)
 
       U_RETURN(st_ino);
       }
@@ -605,23 +602,6 @@ public:
 
    // MEMORY MAPPED I/O
 
-   static char* mmap(uint32_t length,
-                     int _fd = -1,
-                     int prot = PROT_READ | PROT_WRITE,
-                     int flags = MAP_SHARED | MAP_ANONYMOUS,
-                     uint32_t offset = 0)
-      {
-      U_TRACE(1, "UFile::mmap(%u,%d,%d,%d,%u)", length, _fd, prot, flags, offset)
-
-#  ifndef HAVE_ARCH64
-      U_INTERNAL_ASSERT_RANGE(1U,length,3U*1024U*1024U*1024U) // limit of linux system
-#  endif
-
-      char* _map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, flags, _fd, offset);
-
-      return _map;
-      }
-
    bool isMapped() const
       {
       U_TRACE(0, "UFile::isMapped()")
@@ -645,7 +625,7 @@ public:
 
    static void msync(char* ptr, char* page, int flags = MS_SYNC); // flushes changes made to memory mapped file back to disk
 
-   // mremap expands (or shrinks) an existing memory mapping, potentially moving it at the same time
+   // mremap() expands (or shrinks) an existing memory mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
 
    static void* mremap(void* old_address, uint32_t old_size, uint32_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
@@ -664,6 +644,8 @@ public:
 
           UString  getContent(                   bool brdonly = true,  bool bstat = false, bool bmap = false);
           UString _getContent(bool bsize = true, bool brdonly = false,                     bool bmap = false);
+
+   static char* mmap(uint32_t* plength, int _fd = -1, int prot = PROT_READ | PROT_WRITE, int flags = MAP_SHARED | MAP_ANONYMOUS, uint32_t offset = 0);
 
    // MIME TYPE
 
@@ -839,6 +821,46 @@ public:
    static uint32_t listContentOf(UVector<UString>& vec,         const UString* dir,     const char* filter,     uint32_t filter_len);
    static void     listRecursiveContentOf(UTree<UString>& tree, const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
 
+   // MEMORY POOL
+
+   static bool isAllocableFromPool(uint32_t sz)
+      {
+      U_TRACE(0, "UFile::isAllocableFromPool(%u)", sz)
+
+#  if defined(ENABLE_MEMPOOL) && defined(__linux__)
+      U_INTERNAL_DUMP("nfree = %u pfree = %p", nfree, pfree)
+
+      if (sz > U_CAPACITY &&
+          nfree > (sz + (16U * 1024U)))
+         {
+         U_RETURN(true);
+         }
+#  endif
+
+      U_RETURN(false);
+      }
+
+   static bool isLastAllocation(void* ptr, size_t sz)
+      {
+      U_TRACE(0, "UFile::isLastAllocation(%p,%lu)", ptr, sz)
+
+#  if defined(ENABLE_MEMPOOL) && defined(__linux__)
+      U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
+      U_INTERNAL_ASSERT(sz >= U_MAX_SIZE_PREALLOCATE)
+
+      U_INTERNAL_DUMP("nfree = %u pfree = %p", nfree, pfree)
+
+      if (pfree)
+         {
+         U_INTERNAL_ASSERT_MAJOR(nfree, (16U * 1024U))
+
+         if ((pfree - sz) == ptr) U_RETURN(true);
+         }
+#  endif
+
+      U_RETURN(false);
+      }
+
    // DEBUG
 
 #ifdef DEBUG
@@ -853,6 +875,8 @@ protected:
    int fd;
 
    static bool _root;
+   static char*    pfree;
+   static uint32_t nfree;
    static UTree<UString>* tree;
    static UVector<UString>* vector;
 
@@ -877,7 +901,10 @@ private:
 
    friend class URDB;
    friend class UHTTP;
+   friend class UString;
    friend class UStringRep;
+   friend class UStringExt;
+   friend struct UMemoryPool;
 };
 
 #endif

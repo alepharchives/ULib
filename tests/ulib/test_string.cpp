@@ -1751,7 +1751,7 @@ U_EXPORT main (int argc, char* argv[])
    u_cwd_len = U_CONSTANT_SIZE("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples"); // 69
 
    z.setBuffer(u_cwd_len + U_CONSTANT_SIZE( "/www.sito1.com/cgi-bin/redirect.sh")); // 34
-   z.snprintf("%w%.*s", U_CONSTANT_TO_TRACE("/www.sito1.com/cgi-bin/redirect.sh")); // 69 + 34 = 103 => (128 - (1 + U_SIZEOF_UStringRep))
+   z.snprintf("%w%.*s", U_CONSTANT_TO_TRACE("/www.sito1.com/cgi-bin/redirect.sh")); // 69 + 34 = 103 => (128 - (1 + sizeof(ustringrep)))
 
    U_ASSERT_DIFFERS( z.size(), u_cwd_len )
    U_ASSERT( z == U_STRING_FROM_CONSTANT("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples/www.sito1.com/cgi-bin/redirect.sh") )
@@ -2011,7 +2011,7 @@ U_EXPORT main (int argc, char* argv[])
 /*
    y = z = UFile::contentOf("inp/livevalidation_standalone.compressed.js");
 
-   UStringExt::minifyCssJs(z);
+   z = UStringExt::minifyCssJs(z);
 
    (void) UFile::writeToTmpl("tmp/livevalidation_standalone.compressed.js", z);
 

@@ -38,7 +38,7 @@ public:
 
    // Costruttori
 
-    URingBuffer(rbuf_data* _ptr, int _size);
+    URingBuffer(rbuf_data* _ptr, uint32_t map_size);
    ~URingBuffer();
 
    // SERVICES
@@ -154,7 +154,7 @@ protected:
    rbuf_data* ptr;
    ULock lock;
    int size;
-   bool bmmap;
+   uint32_t map_size;
 
 private:
    /**

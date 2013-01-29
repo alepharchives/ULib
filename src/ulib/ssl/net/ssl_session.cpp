@@ -15,8 +15,7 @@
 #include <ulib/net/server/server.h>
 #include <ulib/ssl/net/ssl_session.h>
 
-URDB*       USSLSession::db_ssl_session;
-UStringRep* USSLSession::pkey;
+URDB* USSLSession::db_ssl_session;
 
 /*
  * Forward secrecy
@@ -39,10 +38,7 @@ void USSLSession::deleteSessionCache()
 {
    U_TRACE(0, "USSLSession::deleteSessionCache()")
 
-   U_INTERNAL_ASSERT_POINTER(pkey)
    U_INTERNAL_ASSERT_POINTER(db_ssl_session)
-
-   delete pkey;
 
           db_ssl_session->close();
    delete db_ssl_session;
@@ -65,8 +61,6 @@ bool USSLSession::initSessionCache(SSL_CTX* ctx, const UString& pathdb, uint32_t
 
       U_RETURN(false);
       }
-
-   pkey = UStringRep::create(0U, 100U, 0);
 
    /* In order to allow external session caching, synchronization with the internal session cache is realized via callback functions.
     * Inside these callback functions, session can be saved to disk or put into a database using the d2i_SSL_SESSION(3) interface.
@@ -157,15 +151,16 @@ int USSLSession::newSession(SSL* ssl, SSL_SESSION* sess)
    UString value = toString(sess);
 
    U_INTERNAL_ASSERT(value)
+   U_INTERNAL_ASSERT_POINTER(UHashMap<void*>::pkey)
 
    if (value.size() <= 4096) // do not cache too big session
       {
-      pkey->str     = (const char*)sess->session_id;
-      pkey->_length =              sess->session_id_length;
+      UHashMap<void*>::pkey->str     = (const char*)sess->session_id;
+      UHashMap<void*>::pkey->_length =              sess->session_id_length;
 
-      U_INTERNAL_DUMP("pkey(%u) = %#.*S", pkey->size(), pkey->size(), pkey->data())
+      U_INTERNAL_DUMP("UHashMap<void*>::pkey(%u) = %#.*S", UHashMap<void*>::pkey->size(), UHashMap<void*>::pkey->size(), UHashMap<void*>::pkey->data())
 
-      int result = db_ssl_session->store(pkey, value, RDB_REPLACE);
+      int result = db_ssl_session->store(UHashMap<void*>::pkey, value, RDB_REPLACE);
 
       if (result) U_SRV_LOG("store of SSL session on db failed with error %d", result);
       }
@@ -177,14 +172,16 @@ SSL_SESSION* USSLSession::getCachedSession(SSL* ssl, unsigned char* id, int len,
 {
    U_TRACE(0, "USSLSession::getCachedSession(%p,%.*S,%d,%p)", ssl, len, id, len, copy)
 
+   U_INTERNAL_ASSERT_POINTER(UHashMap<void*>::pkey)
+
    *copy = 0;
 
-   pkey->str     = (const char*)id;
-   pkey->_length = len;
+   UHashMap<void*>::pkey->str     = (const char*)id;
+   UHashMap<void*>::pkey->_length = len;
 
-   U_INTERNAL_DUMP("pkey(%u) = %#.*S", pkey->size(), pkey->size(), pkey->data())
+   U_INTERNAL_DUMP("UHashMap<void*>::pkey(%u) = %#.*S", UHashMap<void*>::pkey->size(), UHashMap<void*>::pkey->size(), UHashMap<void*>::pkey->data())
 
-   UString value = (*db_ssl_session)[pkey];
+   UString value = (*db_ssl_session)[UHashMap<void*>::pkey];
 
    if (value.empty()) U_RETURN_POINTER(0,SSL_SESSION);
 

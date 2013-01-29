@@ -6,15 +6,12 @@ DOC_ROOT=benchmark/docroot
 
 rm -f err/benchmarking.err \
 		benchmark/benchmarking.log* \
-      out/userver_tcp.out err/userver_tcp.err \
-      out/userver_ssl.out err/userver_ssl.err \
-      trace.*userver_ssl*.[0-9]* object.*userver_ssl*.[0-9]* stack.*userver_ssl*.[0-9]* \
-      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* \
-      $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* \
-      $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
+      out/userver_*.out err/userver_*.err \
+					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-#UTRACE="0 50M 0"
-#UOBJDUMP="0 1M 100"
+#UTRACE="0 50M 1"
+#UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"
  export UTRACE UOBJDUMP USIMERR VALGRIND

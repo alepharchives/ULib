@@ -155,6 +155,8 @@ U_EXPORT ostream& operator<<(ostream& os, const UPKCS10& c)
 
 const char* UPKCS10::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "X509_REQ " << request;
 
    if (reset)
@@ -166,5 +168,4 @@ const char* UPKCS10::dump(bool reset) const
 
    return 0;
 }
-
 #endif

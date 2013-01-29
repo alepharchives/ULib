@@ -213,17 +213,10 @@ public:
 
    virtual void closesocket();
 
+   virtual int writev(const struct iovec* iov, int iovcnt);
+
    virtual int send(const char* pData,   uint32_t iDataLen);
    virtual int recv(      void* pBuffer, uint32_t iBufferLen);
-
-   virtual int writev(const struct iovec* iov, int iovcnt)
-      {
-      U_TRACE(0, "USSLSocket::writev(%p,%d)", iov, iovcnt)
-
-      int result = USocket::_writev(iov, iovcnt);
-
-      U_RETURN(result);
-      }
 
    virtual const char* getMsgError(char* buffer, uint32_t buffer_size);
 

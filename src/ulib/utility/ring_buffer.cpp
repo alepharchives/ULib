@@ -13,16 +13,16 @@
 
 #include <ulib/utility/ring_buffer.h>
 
-URingBuffer::URingBuffer(rbuf_data* _ptr, int _size)
+URingBuffer::URingBuffer(rbuf_data* _ptr, uint32_t sz)
 {
-   U_TRACE_REGISTER_OBJECT(0, URingBuffer, "%p,%d", _ptr, _size)
+   U_TRACE_REGISTER_OBJECT(0, URingBuffer, "%p,%u", _ptr, sz)
 
-       bmmap = ((ptr = _ptr) == 0);
-   if (bmmap)    ptr = (rbuf_data*) UFile::mmap(_size);
+   map_size = sz;
+   ptr      = (_ptr ? _ptr : (rbuf_data*) UFile::mmap(&map_size));
 
-   U_INTERNAL_ASSERT_DIFFERS(ptr,MAP_FAILED)
+   U_INTERNAL_ASSERT_DIFFERS(ptr, MAP_FAILED)
 
-   size = _size      - sizeof(rbuf_data);
+   size =   map_size - sizeof(rbuf_data);
    ptrd = (char*)ptr + sizeof(rbuf_data);
 }
 
@@ -30,7 +30,7 @@ URingBuffer::~URingBuffer()
 {
    U_TRACE_UNREGISTER_OBJECT(0, URingBuffer)
 
-   if (ptr && bmmap) UFile::munmap(ptr, size + sizeof(rbuf_data));
+   if (ptr && map_size) UFile::munmap(ptr, map_size);
 }
 
 U_NO_EXPORT void URingBuffer::checkLocking()
@@ -376,9 +376,11 @@ end:
 
 const char* URingBuffer::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "ptr         " << (void*)ptr   << '\n'
                   << "size        " << size         << '\n'
-                  << "bmmap       " << bmmap        << '\n'
+                  << "map_size    " << map_size     << '\n'
                   << "lock (ULock " << (void*)&lock << ')';
 
    if (reset)
@@ -390,5 +392,4 @@ const char* URingBuffer::dump(bool reset) const
 
    return 0;
 }
-
 #endif

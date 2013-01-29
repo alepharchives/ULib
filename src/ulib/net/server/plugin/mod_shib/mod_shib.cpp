@@ -614,8 +614,8 @@ int UShibPlugIn::handlerRequest()
 
    // find shib service for the HTTP request
 
-   UString host(U_HTTP_HOST_TO_PARAM),
-           method = UHTTP::getMethod();
+   UString   host(U_HTTP_HOST_TO_PARAM),
+           method(U_HTTP_METHOD_TO_PARAM);
 
    UModProxyService* service = UModProxyService::findService(host, method, vservice);
 

@@ -134,8 +134,8 @@ typedef struct arphdr {
 #define ICMP_ECHO      8
 #endif
 
-bool      UPing::bmmap;
 fd_set*   UPing::addrmask;
+uint32_t  UPing::map_size;
 UProcess* UPing::proc;
 
 UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
@@ -147,8 +147,8 @@ UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
    if (proc     == 0) proc = U_NEW(UProcess);
    if (addrmask == 0)
       {
-      bmmap    = true;
-      addrmask = (fd_set*) UFile::mmap(sizeof(fd_set) + sizeof(uint32_t));
+      map_size = sizeof(fd_set) + sizeof(uint32_t);
+      addrmask = (fd_set*) UFile::mmap(&map_size);
       }
 }
 
@@ -162,9 +162,10 @@ UPing::~UPing()
              proc= 0;
       }
 
-   if (addrmask && bmmap)
+   if (addrmask &&
+       map_size)
       {
-      UFile::munmap(addrmask, sizeof(fd_set) + sizeof(uint32_t));
+      UFile::munmap(addrmask, map_size);
                     addrmask = 0;
       }
 }
@@ -255,7 +256,7 @@ bool UPing::ping(UIPAddress& addr)
    unsigned char buf[4096];
    int iphdrlen, ret, iSourcePortNumber;
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", &req, 0, sizeof(req));
+   (void) U_SYSCALL(memset, "%p,%d,%u", &req, 0, sizeof(req));
 
    req.id   = htons((short)u_pid); //           identifier (16 bits)
    req.type = ICMP_ECHO;           // Type of ICMP message ( 8 bits) -> 8
@@ -529,8 +530,8 @@ void UPing::initArpPing(const char* device)
 
    struct ifreq ifr;
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", &arp, '\0', sizeof(arp));
-   (void) U_SYSCALL(memset, "%p,%C,%u", &ifr, '\0', sizeof(struct ifreq));
+   (void) U_SYSCALL(memset, "%p,%d,%u", &arp, '\0', sizeof(arp));
+   (void) U_SYSCALL(memset, "%p,%d,%u", &ifr, '\0', sizeof(struct ifreq));
 
    (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
@@ -544,7 +545,7 @@ void UPing::initArpPing(const char* device)
 #ifdef U_ARP_WITH_BROADCAST
    arp.h_proto = htons(ETH_P_ARP);        // protocol type (Ethernet)
 #else
-   (void) U_SYSCALL(memset, "%p,%C,%u", &he, '\0', sizeof(he));
+   (void) U_SYSCALL(memset, "%p,%d,%u", &he, '\0', sizeof(he));
 
    he.l.sll_protocol = htons(ETH_P_ARP); // protocol type (Ethernet)
    he.l.sll_family   = AF_PACKET;
@@ -563,7 +564,7 @@ void UPing::initArpPing(const char* device)
 
    U__MEMCPY(arp.sHaddr, he.l.sll_addr, 6); // source hardware address
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", he.l.sll_addr, 0xff, 6);
+   (void) U_SYSCALL(memset, "%p,%d,%u", he.l.sll_addr, 0xff, 6);
 #endif
 
    if (U_SYSCALL(ioctl, "%d,%d,%p", USocket::iSockDesc, SIOCGIFFLAGS, (char*)&ifr) == -1)
@@ -609,7 +610,7 @@ void UPing::initArpPing(const char* device)
       U_ERROR("ioctl(SIOCGIFHWADDR) failed for interface %S", device);
       }
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", arp.h_dest, 0xff, 6);                     // MAC DA
+   (void) U_SYSCALL(memset, "%p,%d,%u", arp.h_dest, 0xff, 6);                     // MAC DA
                               U__MEMCPY(arp.h_source, ifr.ifr_hwaddr.sa_data, 6); // MAC SA
                               U__MEMCPY(arp.sHaddr,   ifr.ifr_hwaddr.sa_data, 6); // source hardware address
 #endif
@@ -659,7 +660,7 @@ retry:
 #ifdef U_ARP_WITH_BROADCAST
    struct sockaddr _saddr;
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", &_saddr, '\0', sizeof(struct sockaddr));
+   (void) U_SYSCALL(memset, "%p,%d,%u", &_saddr, '\0', sizeof(struct sockaddr));
    (void) u__strncpy(_saddr.sa_data, device, sizeof(_saddr.sa_data));
 
    size_t len             = sizeof(arp);
@@ -779,6 +780,8 @@ fd_set* UPing::arpcache(UVector<UIPAddress*>** vaddr, uint32_t n)
 
 const char* UPing::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    USocket::dump(false);
 
    *UObjectIO::os << '\n'
@@ -795,5 +798,4 @@ const char* UPing::dump(bool reset) const
 
    return 0;
 }
-
 #endif

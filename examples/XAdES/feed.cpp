@@ -62,10 +62,8 @@ public:
 
       if (u_startsWith(U_STRING_TO_PARAM(uri), U_CONSTANT_TO_PARAM("http")))
          {
-         UString request;
-
          if (client.connectServer(uri) &&
-             client.sendRequest(request))
+             client.sendRequest(0,0))
             {
             output = client.getContent();
             }

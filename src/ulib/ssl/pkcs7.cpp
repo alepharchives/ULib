@@ -311,6 +311,8 @@ UString UPKCS7::writeMIME(PKCS7* _pkcs7)
 
 const char* UPKCS7::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "pkcs7    " << (void*)pkcs7 << '\n'
                   << "indata   " << (void*)indata;
 
@@ -323,5 +325,4 @@ const char* UPKCS7::dump(bool reset) const
 
    return 0;
 }
-
 #endif

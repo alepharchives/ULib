@@ -529,7 +529,7 @@ public:
    the recv() system call to receive the data, returning the number of bytes actually readden
    */
 
-   static int recv(int fd, void* buf, uint32_t len, int recv_flags = 0);
+   static int recv(int fd, void* buf, uint32_t len, int recv_flags);
 
    /**
    This method is called to read a 16-bit binary value from the remote connection.
@@ -660,7 +660,7 @@ public:
 protected:
    UIPAddress cLocalAddress, cRemoteAddress;
    int iSockDesc, iState, iLocalPort, iRemotePort, flags;
-   char flag[4];
+   unsigned char flag[4];
 #ifdef __MINGW32__
    SOCKET fh;
 #endif

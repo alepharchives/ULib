@@ -51,7 +51,7 @@ public:
 #ifdef HAVE_EPOLL_WAIT
    static struct epoll_event* pevents;
 #endif
-   static int min_connection, num_connection, max_connection;
+   static uint32_t min_connection, num_connection, max_connection;
 
    // SERVICES
 
@@ -115,7 +115,7 @@ protected:
 #ifdef USE_LIBEVENT
 #elif defined(HAVE_EPOLL_WAIT)
    static int epollfd;
-   static struct epoll_event*  events;
+   static struct epoll_event* events;
 #else
    static UEventFd* first;
    static fd_set fd_set_read, fd_set_write;

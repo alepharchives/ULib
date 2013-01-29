@@ -419,7 +419,7 @@ void URDB::reset()
 
    // Initialize the cache to contain no entries
 
-   (void) U_SYSCALL(memset, "%p,%C,%d", RDB_hashtab, 0, sizeof(RDB_hashtab));
+   (void) U_SYSCALL(memset, "%p,%d,%d", RDB_hashtab, 0, sizeof(RDB_hashtab));
 }
 
 bool URDB::beginTransaction()
@@ -857,8 +857,7 @@ U_NO_EXPORT void URDB::getKeys1(uint32_t offset) // entry presenti nella cache..
 
    if (RDB_cache_node(n,data.dptr))
       {
-      UStringRep* rep = UStringRep::create((const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) +
-                                                         (ptrdiff_t)ptr_rdb->journal.map), RDB_cache_node(n,key.dsize), 0U);
+      UStringRep* rep = U_NEW(UStringRep((const char*)((ptrdiff_t)ptr_rdb->journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)),RDB_cache_node(n,key.dsize)));
 
       kvec->UVector<void*>::push(rep);
       }
@@ -881,7 +880,7 @@ U_NO_EXPORT inline void URDB::getKeys2(char* src)
 
    if (ptr_rdb->htLookup() == false)
       {
-      UStringRep* rep = UStringRep::create((const char*)ptr_rdb->UCDB::key.dptr, ptr_rdb->UCDB::key.dsize, 0U);
+      UStringRep* rep = U_NEW(UStringRep((const char*)ptr_rdb->UCDB::key.dptr, ptr_rdb->UCDB::key.dsize));
 
       kvec->UVector<void*>::push(rep);
       }
@@ -898,10 +897,6 @@ void URDB::getKeys(UVector<UString>& vec)
    ptr_rdb = this;
 
    call(&URDB::getKeys1, &URDB::getKeys2);
-
-   U_DUMP("vec.size() = %u vec.capacity() = %u", vec.size(), vec.capacity())
-
-   U_ASSERT_EQUALS(vec.size(), vec.capacity())
 
    unlock();
 }
@@ -1460,6 +1455,8 @@ U_EXPORT ostream& operator<<(ostream& os, URDB& rdb)
 
 const char* URDB::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UCDB::dump(false);
 
    *UObjectIO::os << "\n"

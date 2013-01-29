@@ -35,6 +35,8 @@ UString URPCEncoder::encodeMethod(URPCMethod& method, const UString& nsName) // 
 
 const char* URPCEncoder::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "bIsResponse           " << bIsResponse          << '\n'
                   << "arg          (UVector " << (void*)&arg          << ")\n"
                   << "buffer       (UString " << (void*)&buffer       << ")\n"

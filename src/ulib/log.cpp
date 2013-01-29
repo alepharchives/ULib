@@ -14,11 +14,6 @@
 #include <ulib/log.h>
 #include <ulib/utility/lock.h>
 
-#ifdef USE_LIBZ // check for crc32
-#  include <ulib/utility/interrupt.h>
-#  include <zlib.h>
-#endif
-
 #ifndef __MINGW32__
 #  ifdef __clang__
 #  undef  NULL
@@ -29,12 +24,22 @@
 #  include <sys/utsname.h>
 #endif
 
+#ifdef USE_LIBZ // check for crc32
+#  include <ulib/utility/interrupt.h>
+#  include <ulib/utility/string_ext.h>
+#  include <zlib.h>
+void*           ULog::pthread;
+uint32_t        ULog::path_compress;
+UString*        ULog::buffer_path_compress;
+#endif
+
 vPF             ULog::backup_log_function;
 bool            ULog::bsyslog;
 bool            ULog::log_data_must_be_unmapped;
 ULog*           ULog::pthis;
-char*           ULog::file_limit;
+char*           ULog::LOG_FILE_SZ;
 ULock*          ULog::lock;
+uint32_t        ULog::map_size;
 const char*     ULog::fmt = "*** %s %N (%ubit, pid %P) [%U@%H] ***\n";
 const char*     ULog::prefix;
 const char*     ULog::dir_log_gz;
@@ -42,6 +47,30 @@ ULog::log_data* ULog::ptr_log_data;
 
 #define LOG_ptr  ptr_log_data->file_ptr
 #define LOG_page ptr_log_data->file_page
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+#  include <ulib/thread.h>
+
+class UBackupThread : public UThread {
+public:
+
+   UBackupThread() : UThread(true, false) {}
+
+   UString data_to_write;
+
+   virtual void run()
+      {
+      U_TRACE(0, "UBackupThread::run()")
+
+loop:
+      suspend();
+
+      if (data_to_write.empty() == false) ULog::backup_write(*ULog::buffer_path_compress, data_to_write);
+
+      goto loop;
+      }
+};
+#endif
 
 ULog::~ULog()
 {
@@ -52,6 +81,10 @@ ULog::~ULog()
    ULog::close();
 
    if (lock) delete lock;
+
+#ifdef USE_LIBZ
+   if (buffer_path_compress) delete buffer_path_compress;
+#endif
 }
 
 void ULog::startup()
@@ -117,7 +150,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
       ptr_log_data = U_MALLOC_TYPE(log_data);
 
       LOG_ptr = LOG_page = (_size ? (UFile::map + file_size)      : 0); // append mode...
-              file_limit = (_size ? (UFile::map + UFile::st_size) : 0);
+             LOG_FILE_SZ = (_size ? (UFile::map + UFile::st_size) : 0);
 
       U_INTERNAL_ASSERT_EQUALS(lock,0)
 
@@ -126,9 +159,58 @@ bool ULog::open(uint32_t _size, mode_t mode)
       U_INTERNAL_ASSERT_POINTER(lock)
 
 #  ifdef USE_LIBZ
-      backup_log_function = &ULog::backup;
+      char suffix[32];
+      uint32_t len_suffix = u__snprintf(suffix, sizeof(suffix), ".%4D.gz");
+
+      buffer_path_compress = U_NEW(UString(MAX_FILENAME_LEN));
+
+      char* ptr = buffer_path_compress->data();
 
       dir_log_gz = (const char*) U_SYSCALL(getenv, "%S", "DIR_LOG_GZ");
+
+      if (dir_log_gz == 0)
+         {
+         (void) UFile::setPathFromFile(*pthis, ptr, suffix, len_suffix);
+
+         buffer_path_compress->size_adjust();
+
+         path_compress = (buffer_path_compress->size() - len_suffix - 1);
+         }
+      else
+         {
+         UString name = pthis->UFile::getName();
+         uint32_t len = u__strlen(dir_log_gz), sz = name.size();
+
+         U__MEMCPY(ptr, dir_log_gz, len);
+
+          ptr  += len;
+         *ptr++ = '/';
+
+         buffer_path_compress->size_adjust(len + 1 + sz + len_suffix);
+
+         U__MEMCPY(ptr, name.data(), sz);
+                   ptr += sz;
+         U__MEMCPY(ptr, suffix, len_suffix);
+
+         path_compress = buffer_path_compress->distance(ptr) + 1;
+
+         buffer_path_compress->UString::setNullTerminated();
+         }
+
+      U_INTERNAL_DUMP("buffer_path_compress(%u) = %.*S path_compress = %u",
+                       buffer_path_compress->size(), U_STRING_TO_TRACE(*buffer_path_compress), path_compress)
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      U_INTERNAL_ASSERT_EQUALS(pthread, 0)
+
+      U_NEW_ULIB_OBJECT(pthread, UBackupThread);
+
+      U_INTERNAL_DUMP("pthread = %p", pthread)
+
+      ((UThread*)pthread)->start();
+#  endif
+
+      backup_log_function = &ULog::backup;
 
       UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
 #  endif
@@ -148,7 +230,7 @@ void ULog::setShared(log_data* ptr)
 {
    U_TRACE(0, "ULog::setShared(%p)", ptr)
 
-   if (file_limit &&
+   if (LOG_FILE_SZ &&
        bsyslog == false)
       {
       U_INTERNAL_ASSERT_POINTER(lock)
@@ -156,7 +238,9 @@ void ULog::setShared(log_data* ptr)
 
       if (ptr == 0)
          {
-         ptr = (log_data*) UFile::mmap(sizeof(log_data));
+         map_size = sizeof(log_data);
+
+         ptr = (log_data*) UFile::mmap(&map_size);
 
          U_INTERNAL_ASSERT_DIFFERS(ptr, MAP_FAILED)
 
@@ -202,7 +286,7 @@ void ULog::write(const struct iovec* iov, int n)
       return;
       }
 
-   if (file_limit == 0) (void) pthis->UFile::writev(iov, n);
+   if (LOG_FILE_SZ == 0) (void) pthis->UFile::writev(iov, n);
    else
       {
       lock->lock();
@@ -211,7 +295,7 @@ void ULog::write(const struct iovec* iov, int n)
 
       for (int i = 0; i < n; ++i)
          {
-         if ((LOG_ptr + iov[i].iov_len) > file_limit)
+         if ((LOG_ptr + iov[i].iov_len) > LOG_FILE_SZ)
             {
             if (backup_log_function) backup_log_function();
 
@@ -360,7 +444,7 @@ void ULog::close()
 
          if (fmt) log(fmt, "SHUTDOWN", sizeof(void*) * 8);
 
-         if (file_limit)
+         if (LOG_FILE_SZ)
             {
             uint32_t size = LOG_ptr - pthis->UFile::map;
 
@@ -383,71 +467,42 @@ void ULog::close()
             {
             U_ASSERT(lock->isShared())
 
-            UFile::munmap(ptr_log_data, sizeof(log_data));
+            UFile::munmap(ptr_log_data, map_size);
             }
          }
       }
 }
 
 #ifdef USE_LIBZ
+void ULog::backup_write(UString& pathfile, UString& data)
+{
+   U_TRACE(0, "ULog::backup_write(%.*S,%.*S)", U_STRING_TO_TRACE(pathfile), U_STRING_TO_TRACE(data))
+
+   (void) u__snprintf(pathfile.c_pointer(path_compress), 17, "%4D");
+
+   U_ASSERT_EQUALS(UFile::access(pathfile.data(), R_OK | W_OK), false)
+
+   (void) UFile::writeTo(pathfile, data);
+
+   data.clear();
+}
+
 void ULog::backup()
 {
-   U_TRACE(1, "ULog::backup()")
+   U_TRACE(0, "ULog::backup()")
 
    U_INTERNAL_DUMP("pthis = %p bsyslog = %b", pthis, bsyslog)
 
-   if (pthis == 0 || bsyslog) return;
-
-   uint32_t len_suffix;
-   char suffix[32], buffer_path[MAX_FILENAME_LEN];
-   char* path = buffer_path;
-
-   bool locked = lock->isLocked();
-
-   if (file_limit &&
-       locked == false)
-      {
-      lock->lock();
-      }
-
-   len_suffix = u__snprintf(suffix, sizeof(suffix), ".%4D.gz");
-
-   if (dir_log_gz)
-      {
-      UString name = pthis->UFile::getName();
-      uint32_t len = u__strlen(dir_log_gz), sz = name.size();
-
-      U__MEMCPY(path, dir_log_gz, len);
-
-       path  += len;
-      *path++ = '/';
-
-      len += 1 + sz + len_suffix;
-
-      U_INTERNAL_ASSERT_MINOR(len, (int32_t)MAX_FILENAME_LEN)
-
-      U__MEMCPY(path, name.data(), sz);
-      U__MEMCPY(path+sz,   suffix, len_suffix);
-
-      buffer_path[len] = '\0';
-
-      U_INTERNAL_DUMP("buffer_path(%u) = %S", len, buffer_path)
-      }
-   else
-      {
-      (void) UFile::setPathFromFile(*pthis, path, suffix, len_suffix);
-      }
-
-   U_ASSERT_EQUALS(UFile::access(buffer_path, R_OK | W_OK), false)
-
-   gzFile fp = (gzFile) U_SYSCALL(gzopen, "%S,%S", buffer_path, "wb");
-
-   if (fp)
+   if (pthis &&
+       bsyslog == false)
       {
       uint32_t size;
+      bool locked = lock->isLocked();
 
-      if (file_limit)
+      if (LOG_FILE_SZ)
          {
+         if (locked == false) lock->lock();
+
          size = LOG_ptr - pthis->UFile::map;
          }
       else
@@ -459,26 +514,35 @@ void ULog::backup()
 
       U_INTERNAL_ASSERT(size <= pthis->UFile::st_size)
 
-#  ifdef DEBUG
-      int value = U_SYSCALL(gzwrite, "%p,%p,%u", fp, pthis->UFile::map, size);
-      U_INTERNAL_ASSERT_EQUALS(value,(int)size)
+      UString data_to_write = UStringExt::deflate(pthis->UFile::map, size, true);
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      if (((UBackupThread*)pthread)->data_to_write.empty())
+         {
+         ((UBackupThread*)pthread)->data_to_write = data_to_write;
+
+         ((UBackupThread*)pthread)->resume();
+         }
+      else
+         {
+         UString x = buffer_path_compress->copy();
 #  else
-      (void) U_SYSCALL(gzwrite, "%p,%p,%u", fp, pthis->UFile::map, size);
+         {
+         UString x = *buffer_path_compress;
 #  endif
 
-      (void) U_SYSCALL(gzclose, "%p", fp);
+         ULog::backup_write(x, data_to_write);
+         }
 
-      if (file_limit == 0)
+      if (LOG_FILE_SZ)
+         {
+         if (locked == false) lock->unlock();
+         }
+      else
          {
                 pthis->UFile::munmap();
          (void) pthis->UFile::ftruncate(0);
          }
-      }
-
-   if (file_limit &&
-       locked == false)
-      {
-      lock->unlock();
       }
 }
 #endif
@@ -490,6 +554,8 @@ void ULog::backup()
 
 const char* ULog::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UFile::dump(false);
 
    *UObjectIO::os << '\n'
@@ -506,7 +572,7 @@ const char* ULog::dump(bool _reset) const
 
    *UObjectIO::os << '\n'
                   << "bsyslog                   " << bsyslog                    << '\n'
-                  << "file_limit                " << (void*)file_limit          << '\n'
+                  << "LOG_FILE_SZ               " << (void*)LOG_FILE_SZ         << '\n'
                   << "backup_log_function       " << (void*)backup_log_function << '\n'
                   << "lock        (ULock        " << (void*)lock                << ")\n"
                   << "pthis       (ULog         " << (void*)pthis               << ')';
@@ -524,5 +590,4 @@ const char* ULog::dump(bool _reset) const
 
    return 0;
 }
-
 #endif

@@ -123,6 +123,8 @@ loop:
 
 const char* UUnixSocket::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    USocket::dump(false);
 
    *UObjectIO::os << '\n'
@@ -139,5 +141,4 @@ const char* UUnixSocket::dump(bool reset) const
 
    return 0;
 }
-
 #endif

@@ -26,21 +26,17 @@ ULDAPEntry::ULDAPEntry(int num_names, const char** names, int num_entry)
 
    n_attr    = num_names;
    n_entry   = num_entry;
-   dn        = U_MALLOC_N(num_entry,             char*);
-   attr_val  = U_MALLOC_N(num_entry * num_names, UString*);
    attr_name = names;
 
-   (void) memset(dn,       0, (num_entry             * sizeof(char*)));
-   (void) memset(attr_val, 0, (num_entry * num_names * sizeof(UString*)));
+   dn       =    (char**) UMemoryPool::_malloc(num_entry,             sizeof(char*),    true);
+   attr_val = (UString**) UMemoryPool::_malloc(num_entry * num_names, sizeof(UString*), true);
 }
 
 ULDAPEntry::~ULDAPEntry()
 {
    U_TRACE_UNREGISTER_OBJECT(0, ULDAPEntry)
 
-   int i = 0, j, k = 0;
-
-   for (; i < n_entry; ++i)
+   for (int i = 0, j, k = 0; i < n_entry; ++i)
       {
       if (dn[i])
          {
@@ -60,8 +56,8 @@ ULDAPEntry::~ULDAPEntry()
          }
       }
 
-   U_FREE_N(dn,       n_entry,          char*);
-   U_FREE_N(attr_val, n_entry * n_attr, UString*);
+   UMemoryPool::_free(dn,       n_entry,          sizeof(char*));
+   UMemoryPool::_free(attr_val, n_entry * n_attr, sizeof(UString*));
 }
 
 void ULDAPEntry::set(char* attribute, char** values, int index_entry)
@@ -72,9 +68,7 @@ void ULDAPEntry::set(char* attribute, char** values, int index_entry)
 
    U_INTERNAL_ASSERT_MINOR(index_entry, n_entry)
 
-   int k = index_entry * n_attr;
-
-   for (int j = 0; j < n_attr; ++j, ++k)
+   for (int j = 0, k = index_entry * n_attr; j < n_attr; ++j, ++k)
       {
       if (strcmp(attr_name[j], attribute) == 0)
          {
@@ -101,9 +95,7 @@ void ULDAPEntry::set(char* attribute, char* value, uint32_t len, int index_entry
 
    U_INTERNAL_ASSERT_MINOR(index_entry, n_entry)
 
-   int k = index_entry * n_attr;
-
-   for (int j = 0; j < n_attr; ++j, ++k)
+   for (int j = 0, k = index_entry * n_attr; j < n_attr; ++j, ++k)
       {
       if (strcmp(attr_name[j], attribute) == 0)
          {
@@ -690,6 +682,8 @@ void ULDAP::get(ULDAPEntry& e)
 
 const char* ULDAPEntry::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "dn                 " << (void*)dn        << '\n'
                   << "n_attr             " << n_attr           << '\n'
                   << "n_entry            " << n_entry          << '\n'
@@ -708,6 +702,8 @@ const char* ULDAPEntry::dump(bool reset) const
 
 const char* ULDAP::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "ld                 " << (void*)ld           << '\n'
                   << "ludpp              " << (void*)ludpp        << '\n'
                   << "result             " << result              << '\n'

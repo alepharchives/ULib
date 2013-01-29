@@ -13,6 +13,7 @@
  
 #include <ulib/string.h>
 #include <ulib/utility/interrupt.h>
+#include <ulib/container/hash_map.h>
 
 #ifdef DEBUG
 #  include <ulib/internal/objectIO.h>
@@ -114,14 +115,14 @@ void ULib_init()
 #endif
 
 #if defined(SOLARIS) && (defined(SPARC) || defined(sparc))
-   // make this if there are pointer misalligned (because pointers must be always a multiple of 4
-   // (when running 32 bit applications))
+   // make this if there are pointer misalligned
+   // (because pointers must be always a multiple of 4 (when running 32 bit applications))
    asm("ta 6");
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), U_SIZEOF_UStringRep)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))
 
-   U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p", u_is_tty, UStringRep::string_rep_null)
+   U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p UString::string_null = %p", u_is_tty, UStringRep::string_rep_null, UString::string_null)
 
    U_INTERNAL_DUMP("sizeof(off_t) = %u SIZEOF_OFF_T = %u", sizeof(off_t), SIZEOF_OFF_T)
 
@@ -130,6 +131,18 @@ void ULib_init()
    U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
 #endif
 */
+
+   static ustringrep pkey = { U_STRINGREP_FROM_CONSTANT("") };
+         uustringrep    u = { &pkey };
+
+   U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
+
+   UHashMap<void*>::pkey               =                      u.p2;
+#ifdef DEBUG
+   UHashMap<void*>::pkey->memory._this = (const UMemoryError*)u.p2;
+#endif
+
+   U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
 
 #ifdef USE_LIBSSL
    ULib_init_openssl();

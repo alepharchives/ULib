@@ -43,7 +43,6 @@ public:
    static SSL_SESSION* getCachedSession(SSL* ssl, unsigned char* id, int len, int* copy);
 
 protected:
-   static UStringRep* pkey;
    static URDB* db_ssl_session;
    
 private:

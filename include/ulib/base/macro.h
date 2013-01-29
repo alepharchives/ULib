@@ -183,6 +183,8 @@
 #  define PAGESIZE 4096U
 #endif
 
+#define U_PAGEMASK (PAGESIZE-1)
+
 #ifndef   O_CLOEXEC
 #  define O_CLOEXEC 0
 #endif

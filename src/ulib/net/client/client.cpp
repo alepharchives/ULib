@@ -267,27 +267,28 @@ bool UClient_Base::setUrl(const UString& location)
 {
    U_TRACE(0, "UClient_Base::setUrl(%.*S)", U_STRING_TO_TRACE(location))
 
-   // Check we've been passed a absolute URL
+   // check we've been passed a absolute URL
 
    if (u_isUrlScheme(U_STRING_TO_PARAM(location)) == 0)
       {
-      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
-
       char* p;
+      char* ptr;
+      char* dest;
       uint32_t len;
-      const char* src  =       u_http_info.uri;
-      const char* _end = src + u_http_info.uri_len;
+      char _buffer[U_PATH_MAX];
 
-      static char _buffer[U_PATH_MAX];
+      const char*  src =       uri.data();
+      const char* _end = src + uri.size();
 
-      char* dest = _buffer;
-      char* ptr  = dest;
+      U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
+
+      ptr = dest = _buffer;
 
       while (src < _end)
          {
          p = (char*) memchr(src, '/', _end - src);
 
-         if (p == NULL) break;
+         if (p == 0) break;
 
          len = p - src + 1;
 
@@ -303,17 +304,12 @@ bool UClient_Base::setUrl(const UString& location)
 
       U__MEMCPY(dest, location.data(), len);
 
-      u_http_info.uri     = _buffer;
-      u_http_info.uri_len = dest - ptr + len;
+      (void) uri.replace(_buffer, dest - ptr + len);
 
-      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
+      U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
 
       U_RETURN(false);
       }
-
-#ifdef DEBUG
-   uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri is substr of url)
-#endif
 
    url.set(location);
 
@@ -323,57 +319,58 @@ bool UClient_Base::setUrl(const UString& location)
 
    uri = url.getPathAndQuery();
 
-   u_http_info.uri     = uri.data();
-   u_http_info.uri_len = uri.size();
-
-   U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
+   U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
 
    bool bchange = setHostPort(url.getHost(), url.getPort());
 
    U_RETURN(bchange);
 }
 
-void UClient_Base::wrapRequestWithHTTP(const char* extension, const char* content_type)
+UString UClient_Base::wrapRequestWithHTTP(UString* req,
+                                          const char* method, uint32_t method_len,
+                                          const char* _uri,   uint32_t uri_len,
+                                          const char* extension, const char* content_type)
 {
-   U_TRACE(0, "UClient_Base::wrapRequestWithHTTP(%S,%S)", extension, content_type)
+   U_TRACE(0, "UClient_Base::wrapRequestWithHTTP(%p,%.*S,%u,%.*S,%u,%S,%S)",req,method_len,method,method_len,uri_len,_uri,uri_len,extension,content_type)
 
    // Add the MIME-type headers to the request for HTTP server
 
-   UString tmp(800U + u_http_info.uri_len + u_http_info.query_len + request.size());
+   UString tmp(800U + uri_len + (req ? req->size() : 0));
 
-   tmp.snprintf("%.*s %.*s%s%.*s HTTP/1.1\r\n"
+   tmp.snprintf("%.*s %.*s HTTP/1.1\r\n"
                 "Host: %.*s\r\n"
                 "User-Agent: " PACKAGE_NAME "/" ULIB_VERSION "\r\n"
                 "%s",
-                U_HTTP_METHOD_TO_TRACE,
-                U_HTTP_URI_TO_TRACE,
-                (u_http_info.query ? "?" : ""),
-                U_HTTP_QUERY_TO_TRACE,
+                method_len, method, 
+                uri_len, _uri,
                 U_STRING_TO_TRACE(host_port),
                 extension);
 
-   if (request.empty() == false)
+   if (req)
       {
+      U_INTERNAL_ASSERT(*req)
       U_INTERNAL_ASSERT_POINTER(content_type)
 
       tmp.snprintf_add("Content-Type: %s\r\n"
                        "Content-Length: %u\r\n"
                        "\r\n",
                        content_type,
-                       request.size());
+                       req->size());
 
-      tmp += request;
+      (void) tmp.append(*req);
       }
 
-   request = tmp;
+   U_RETURN_STRING(tmp);
 }
 
-bool UClient_Base::sendRequest(bool bread_response)
+bool UClient_Base::sendRequest(struct iovec* iov, int iovcnt, bool bread_response)
 {
-   U_TRACE(0, "UClient_Base::sendRequest(%b)", bread_response)
+   U_TRACE(0, "UClient_Base::sendRequest(%p,%d,%b)", iov, iovcnt, bread_response)
 
    bool result;
-   int counter = 0;
+   int i, iov_len[128], counter = 0, ncount = 0;
+
+   for (i = 0; i < iovcnt; ++i) ncount += (iov_len[i] = iov[i].iov_len);
 
 send:
    result = false;
@@ -383,16 +380,19 @@ send:
       if (isConnected() ||
           UClient_Base::connect())
          {
-         result = USocketExt::write(socket, request);
+         result = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS) == ncount);
 
-         if (isConnected()) break;
+         if (result) break;
 
-         if (log)
+              if (isConnected()) close();
+         else if (log)
             {
             ULog::log("%sconnection to %.*s reset by peer%R\n",
-                     log_shared_with_server ? UServer_Base::mod_name->data() : "",
-                     U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
+                      log_shared_with_server ? UServer_Base::mod_name->data() : "",
+                      U_STRING_TO_TRACE(logbuf), 0); // NB: the last argument (0) is necessary...
             }
+
+         for (i = 0; i < iovcnt; ++i) iov[i].iov_len = iov_len[i]; // NB: we need to reset a partial write...
          }
       }
 
@@ -427,7 +427,7 @@ send:
          {
          ULog::log("%ssend request (%u bytes) %.*S to %.*s\n",
                      log_shared_with_server ? UServer_Base::mod_name->data() : "",
-                     request.size(), U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(logbuf));
+                     ncount, iov[0].iov_len, iov[0].iov_base, U_STRING_TO_TRACE(logbuf));
 
          if (bread_response) logResponse(response);
          }
@@ -528,6 +528,8 @@ bool UClient_Base::readRPCResponse()
 
 const char* UClient_Base::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "bIPv6                               " << bIPv6                   << '\n'
                   << "port                                " << port                    << '\n'
                   << "timeoutMS                           " << timeoutMS               << '\n'
@@ -544,7 +546,6 @@ const char* UClient_Base::dump(bool _reset) const
                   << "log_file       (UString             " << (void*)&log_file        << ")\n"
                   << "cert_file      (UString             " << (void*)&cert_file       << ")\n"
                   << "buffer         (UString             " << (void*)&buffer          << ")\n"
-                  << "request        (UString             " << (void*)&request         << ")\n"
                   << "response       (UString             " << (void*)&response        << ")\n"
                   << "host_port      (UString             " << (void*)&host_port       << ")\n"
                   << "socket         (USocket             " << (void*)socket           << ')';

@@ -153,14 +153,6 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([${enable_new_ldflags}])
 
-	AC_MSG_CHECKING(for use of our versions of the C++ memory operators)
-	AC_ARG_ENABLE(overload-new-delete,
-				[  --enable-overload-new-delete  enable use of our versions of the C++ memory operators [[default=no]]])
-	if test -z "$enable_overload_new_delete" ; then
-		enable_overload_new_delete="no"
-	fi
-	AC_MSG_RESULT([${enable_overload_new_delete}])
-
 	dnl check for GNUC visibility support
 
 	AC_CACHE_CHECK(whether ${CXX} supports -fvisibility-inlines-hidden,

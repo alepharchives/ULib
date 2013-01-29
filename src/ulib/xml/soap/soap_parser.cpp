@@ -247,6 +247,8 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
 const char* USOAPParser::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    URPCParser::dump(false);
 
    *UObjectIO::os << '\n';

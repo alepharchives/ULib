@@ -40,13 +40,13 @@ inline void Messaggio::allocDestinatari(int n)
 
    U_CHECK_MEMORY
 
-   vdestinatari_domini                 = U_MALLOC_N(n+1, char);
-   vdestinatari_certificati            = U_MALLOC_N(n+1, char);
-   vdestinatari_presa_in_carico        = U_MALLOC_N(n+1, char);
-   vdestinatari_mancata_consegna       = U_MALLOC_N(n+1, char);
-   vdestinatari_avvenuta_consegna      = U_MALLOC_N(n+1, char);
-   vdestinatari_rilevazione_virus      = U_MALLOC_N(n+1, char);
-   vdestinatari_mancata_consegna_virus = U_MALLOC_N(n+1, char);
+   vdestinatari_domini                 = (char*) malloc(n+1);
+   vdestinatari_certificati            = (char*) malloc(n+1);
+   vdestinatari_presa_in_carico        = (char*) malloc(n+1);
+   vdestinatari_mancata_consegna       = (char*) malloc(n+1);
+   vdestinatari_avvenuta_consegna      = (char*) malloc(n+1);
+   vdestinatari_rilevazione_virus      = (char*) malloc(n+1);
+   vdestinatari_mancata_consegna_virus = (char*) malloc(n+1);
 
    (void) memset(vdestinatari_presa_in_carico,        '0', n);
    (void) memset(vdestinatari_mancata_consegna,       '0', n);
@@ -90,8 +90,8 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
    UString elem;
    uint32_t n = vec.size();
 
-   char* vdestcert   = U_MALLOC_N(n+1, char);
-   char* vdestdomini = U_MALLOC_N(n+1, char);
+   char* vdestcert   = (char*) malloc(n+1);
+   char* vdestdomini = (char*) malloc(n+1);
 
    (void) memset(vdestcert,   '0', n);
    (void) memset(vdestdomini, '0', n);
@@ -121,8 +121,8 @@ Messaggio::Messaggio() : id(*PEC_report::id), mittente(*PEC_report::mittente), i
 
    n = vec.size() + 1;
 
-   U_FREE_N(vdestcert,   n, char);
-   U_FREE_N(vdestdomini, n, char);
+   free(vdestcert);
+   free(vdestdomini);
 
    U_INTERNAL_DUMP("vdestinatari_certificati = %S", vdestinatari_certificati)
    U_INTERNAL_DUMP("vdestinatari_domini      = %S", vdestinatari_domini)
@@ -132,15 +132,13 @@ Messaggio::~Messaggio()
 {
    U_TRACE_UNREGISTER_OBJECT(5, Messaggio)
 
-   int num_destinatari = vdestinatari.size();
-
-   U_FREE_N(vdestinatari_domini,                  num_destinatari+1, char);
-   U_FREE_N(vdestinatari_certificati,             num_destinatari+1, char);
-   U_FREE_N(vdestinatari_presa_in_carico,         num_destinatari+1, char);
-   U_FREE_N(vdestinatari_mancata_consegna,        num_destinatari+1, char);
-   U_FREE_N(vdestinatari_avvenuta_consegna,       num_destinatari+1, char);
-   U_FREE_N(vdestinatari_rilevazione_virus,       num_destinatari+1, char);
-   U_FREE_N(vdestinatari_mancata_consegna_virus,  num_destinatari+1, char);
+   free(vdestinatari_domini);
+   free(vdestinatari_certificati);
+   free(vdestinatari_presa_in_carico);
+   free(vdestinatari_mancata_consegna);
+   free(vdestinatari_avvenuta_consegna);
+   free(vdestinatari_rilevazione_virus);
+   free(vdestinatari_mancata_consegna_virus);
 }
 
 bool Messaggio::setRicezione(const UString& elem)

@@ -156,6 +156,8 @@ U_EXPORT ostream& operator<<(ostream& os, const UEventTime& t)
 
 const char* UEventTime::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UTimeVal::dump(false);
 
    *UObjectIO::os << '\n'

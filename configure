@@ -951,7 +951,6 @@ enable_gcc_optimized
 enable_mudflap
 enable_final
 enable_new_ldflags
-enable_overload_new_delete
 with_parser
 with_distcc
 with_libz
@@ -1637,7 +1636,6 @@ Optional Features:
   --enable-mudflap        build binaries with mudflap instrumentation [default=no]
   --enable-final          build size optimized apps (needs more amounts of memory) [default=yes]
   --enable-new-ldflags    enable the new linker flags (enable-new-dtags,as-needed,...) [default=yes]
-  --enable-overload-new-delete  enable use of our versions of the C++ memory operators [default=no]
   --enable-zip            enable build of ZIP support - require libz [default: use if present libz]
   --enable-thread         enable build of thread support - require libpthread [default: use if present libpthread]
   --enable-static-module=MODULES - mod_rpc mod_shib mod_stream mod_socket mod_scgi mod_fcgi mod_geoip mod_proxy mod_soap mod_ssi mod_tsa mod_nocat mod_http mod_echo
@@ -21071,19 +21069,6 @@ fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${enable_new_ldflags}" >&5
 $as_echo "${enable_new_ldflags}" >&6; }
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for use of our versions of the C++ memory operators" >&5
-$as_echo_n "checking for use of our versions of the C++ memory operators... " >&6; }
-	# Check whether --enable-overload-new-delete was given.
-if test "${enable_overload_new_delete+set}" = set; then :
-  enableval=$enable_overload_new_delete;
-fi
-
-	if test -z "$enable_overload_new_delete" ; then
-		enable_overload_new_delete="no"
-	fi
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${enable_overload_new_delete}" >&5
-$as_echo "${enable_overload_new_delete}" >&6; }
-
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether ${CXX} supports -fvisibility-inlines-hidden" >&5
 $as_echo_n "checking whether ${CXX} supports -fvisibility-inlines-hidden... " >&6; }
@@ -27337,11 +27322,6 @@ else
   MEMORY_POOL_FALSE=
 fi
 
-	if test "$enable_overload_new_delete" = "yes"; then
-
-$as_echo "#define U_OVERLOAD_NEW_DELETE 1" >>confdefs.h
-
-	fi
 else
 	 if false; then
   MEMORY_POOL_TRUE=
@@ -27499,6 +27479,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 
 	case "${gcc_version}" in
 		2*)
+			CPPFLAGS="${CPPFLAGS} -O0"
 		;;
 		3*)
 		;;
@@ -27516,7 +27497,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
 
 		if test "${enable_gcc_optimized}" = "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto" ## -ffunction-sections -fdata-sections
+			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto -ftree-partial-pre" ## -ffunction-sections -fdata-sections
 		fi
 		;;
 	esac
@@ -27532,7 +27513,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 # -------------------------------------------------------------------------------------
 
 	if test "$enable_debug" = "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -fsanitize=address -fsanitize=thread" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
 		if test "$USE_LIBSSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi
@@ -27551,7 +27532,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 
 	# -Wcast-qual
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition"
+						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
 

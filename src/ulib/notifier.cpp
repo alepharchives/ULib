@@ -51,9 +51,9 @@ void*                            UNotifier::pthread;
 #endif
 
 int                              UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
-int                              UNotifier::min_connection;
-int                              UNotifier::num_connection;
-int                              UNotifier::max_connection;
+uint32_t                         UNotifier::min_connection;
+uint32_t                         UNotifier::num_connection;
+uint32_t                         UNotifier::max_connection;
 UEventFd**                       UNotifier::lo_map_fd;
 UGenericHashMap<int,UEventFd*>*  UNotifier::hi_map_fd; // maps a fd to a node pointer
 
@@ -75,7 +75,7 @@ void UNotifier::init(bool bacquisition)
    epollfd = U_SYSCALL(epoll_create1, "%d", EPOLL_CLOEXEC);
    if (epollfd != -1 || errno != ENOSYS) goto next;
 #  endif
-   epollfd = U_SYSCALL(epoll_create, "%d", max_connection);
+   epollfd = U_SYSCALL(epoll_create, "%u", max_connection);
 next:
    U_INTERNAL_ASSERT_MAJOR(epollfd,0)
    U_INTERNAL_ASSERT_EQUALS(U_WRITE_OUT,(uint32_t)(EPOLLOUT|EPOLLET))
@@ -95,7 +95,7 @@ next:
          int fd;
          UEventFd* handler_event;
 
-         for (fd = 1; fd < max_connection; ++fd)
+         for (fd = 1; fd < (int32_t)max_connection; ++fd)
             {
             if ((handler_event = lo_map_fd[fd]))
                {
@@ -134,19 +134,19 @@ next:
 
    if (lo_map_fd == 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(hi_map_fd,0)
-      U_INTERNAL_ASSERT_MAJOR(max_connection,0)
+      U_INTERNAL_ASSERT_EQUALS(hi_map_fd, 0)
+      U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
 
-      lo_map_fd = U_CALLOC_VECTOR(max_connection, UEventFd);
+      lo_map_fd = (UEventFd**) UMemoryPool::_malloc(max_connection, sizeof(UEventFd*), true);
 
       hi_map_fd = U_NEW(UGenericHashMap<int,UEventFd*>);
 
       hi_map_fd->allocate(max_connection);
 
 #  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
-      U_INTERNAL_ASSERT_EQUALS(events,0)
+      U_INTERNAL_ASSERT_EQUALS(events, 0)
 
-      pevents = events = U_CALLOC_N(max_connection+1, struct epoll_event);
+      pevents = events = (struct epoll_event*) UMemoryPool::_malloc(max_connection + 1, sizeof(struct epoll_event), true);
 #  endif
       }
 }
@@ -158,7 +158,7 @@ UEventFd* UNotifier::find(int fd)
    U_INTERNAL_ASSERT_POINTER(lo_map_fd)
    U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
-   if (fd < max_connection) U_RETURN_POINTER(lo_map_fd[fd], UEventFd);
+   if (fd < (int32_t)max_connection) U_RETURN_POINTER(lo_map_fd[fd], UEventFd);
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (pthread) ((UThread*)pthread)->lock();
@@ -185,7 +185,7 @@ void UNotifier::insert(UEventFd* item)
 
    U_ASSERT_EQUALS(find(fd),0)
 
-   if (fd < max_connection) lo_map_fd[fd] = item;
+   if (fd < (int32_t)max_connection) lo_map_fd[fd] = item;
    else
       {
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -271,7 +271,7 @@ U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
 
    U_INTERNAL_ASSERT_EQUALS(item->fd,0)
 
-   if (fd < max_connection) lo_map_fd[fd] = 0;
+   if (fd < (int32_t)max_connection) lo_map_fd[fd] = 0;
    else
       {
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -421,7 +421,7 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
 #elif defined(HAVE_EPOLL_WAIT)
    int _timeout = (timeout ? timeout->getMilliSecond() : -1);
 loop:
-   result = U_SYSCALL(epoll_wait, "%d,%p,%d,%d", epollfd, events, max_connection, _timeout);
+   result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, _timeout);
 #else
    static struct timeval   tmp;
           struct timeval* ptmp = (timeout == 0 ? 0 : &tmp);
@@ -673,7 +673,7 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 
    UEventFd* item;
 
-   for (int fd = 1; fd < max_connection; ++fd)
+   for (int fd = 1; fd < (int32_t)max_connection; ++fd)
       {
       if ((item = lo_map_fd[fd]))
          {
@@ -710,7 +710,7 @@ void UNotifier::clear()
 
    if (num_connection)
       {
-      for (int fd = 1; fd < max_connection; ++fd)
+      for (int fd = 1; fd < (int32_t)max_connection; ++fd)
          {
          if ((item = lo_map_fd[fd]))
             {
@@ -737,7 +737,7 @@ void UNotifier::clear()
    if (pthread == 0)
 #endif
       {
-      U_FREE_VECTOR(lo_map_fd, max_connection, UEventFd);
+      UMemoryPool::_free(lo_map_fd, max_connection, sizeof(UEventFd*));
 
       hi_map_fd->deallocate();
 
@@ -750,7 +750,7 @@ void UNotifier::clear()
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (pthread == 0)
 #endif
-   U_FREE_N(events, max_connection+1, struct epoll_event);
+   UMemoryPool::_free(events, max_connection + 1, sizeof(struct epoll_event));
 
    (void) U_SYSCALL(close, "%d", epollfd);
 #endif

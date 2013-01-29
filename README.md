@@ -66,7 +66,9 @@ The current version offers the following features :
    * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
    * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video managed transparently.
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
+   * Preforking mode to improve concurrency.
    * Support for Windows (without preforking).
+   * Customizable builds (you can remove unneeded functionality).
    * Requests cut in phases for modular architecture (apache-like).
    * Configuration file with dedicated section.
    * Built-in modules :

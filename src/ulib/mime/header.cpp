@@ -399,8 +399,6 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 
    U_ASSERT(empty())
 
-   U_HTTP_INFO_INIT(0);
-
    bool result = (UHTTP::readHeader(socket, data) &&
                   UHTTP::findEndHeader(     data)
                      ? parse(data.c_pointer(u_http_info.startHeader), u_http_info.szHeader) > 0
@@ -446,6 +444,8 @@ U_EXPORT ostream& operator<<(ostream& os, UMimeHeader& h)
 
 const char* UMimeHeader::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "table     (UHashMap " << (void*)&table  << ")\n"
                   << "header    (UString  " << (void*)&header << ')';
 

@@ -200,12 +200,12 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp \
 	utility/socket_ext.cpp utility/uhttp.cpp \
 	utility/data_session.cpp utility/ring_buffer.cpp \
-	utility/websocket.cpp lemon/expression.cpp net/ipaddress.cpp \
-	net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
-	net/server/server.cpp net/server/client_image.cpp \
-	net/client/client_rdb.cpp net/server/client_image_rdb.cpp \
-	net/server/server_rdb.cpp net/rpc/rpc.cpp \
-	net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
+	utility/websocket.cpp utility/dir_walk.cpp \
+	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
+	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
+	net/server/client_image.cpp net/client/client_rdb.cpp \
+	net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
+	net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
 	net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
 	net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp \
 	net/rpc/rpc_parser.cpp net/client/smtp.cpp net/client/ftp.cpp \
@@ -317,26 +317,27 @@ am__objects_55 = common.lo objectIO.lo dialog.lo cdb.lo rdb.lo \
 	vector.lo hash_map.lo tree.lo interrupt.lo compress.lo \
 	services.lo semaphore.lo base64.lo hexdump.lo lock.lo \
 	string_ext.lo socket_ext.lo uhttp.lo data_session.lo \
-	ring_buffer.lo websocket.lo expression.lo ipaddress.lo \
-	socket.lo ping.lo tcpsocket.lo server.lo client_image.lo \
-	client_rdb.lo client_image_rdb.lo server_rdb.lo rpc.lo \
-	rpc_envelope.lo rpc_fault.lo rpc_method.lo rpc_encoder.lo \
-	rpc_object.lo rpc_gen_method.lo rpc_parser.lo smtp.lo ftp.lo \
-	pop3.lo imap.lo http.lo client.lo ipt_ACCOUNT.lo value.lo \
-	query_parser.lo event_time.lo timeval.lo timer.lo notifier.lo \
-	string.lo file.lo process.lo file_config.lo log.lo options.lo \
-	application.lo cache.lo date.lo url.lo tokenizer.lo command.lo \
-	$(am__objects_23) $(am__objects_24) $(am__objects_25) \
-	$(am__objects_26) $(am__objects_27) $(am__objects_28) \
-	$(am__objects_29) $(am__objects_30) $(am__objects_31) \
-	$(am__objects_32) $(am__objects_33) $(am__objects_34) \
-	$(am__objects_35) $(am__objects_36) $(am__objects_37) \
-	$(am__objects_38) $(am__objects_39) $(am__objects_40) \
-	$(am__objects_41) $(am__objects_42) $(am__objects_43) \
-	$(am__objects_44) $(am__objects_45) $(am__objects_46) \
-	$(am__objects_47) $(am__objects_48) $(am__objects_49) \
-	$(am__objects_50) $(am__objects_51) $(am__objects_52) \
-	$(am__objects_53) $(am__objects_54)
+	ring_buffer.lo websocket.lo dir_walk.lo expression.lo \
+	ipaddress.lo socket.lo ping.lo tcpsocket.lo server.lo \
+	client_image.lo client_rdb.lo client_image_rdb.lo \
+	server_rdb.lo rpc.lo rpc_envelope.lo rpc_fault.lo \
+	rpc_method.lo rpc_encoder.lo rpc_object.lo rpc_gen_method.lo \
+	rpc_parser.lo smtp.lo ftp.lo pop3.lo imap.lo http.lo client.lo \
+	ipt_ACCOUNT.lo value.lo query_parser.lo event_time.lo \
+	timeval.lo timer.lo notifier.lo string.lo file.lo process.lo \
+	file_config.lo log.lo options.lo application.lo cache.lo \
+	date.lo url.lo tokenizer.lo command.lo $(am__objects_23) \
+	$(am__objects_24) $(am__objects_25) $(am__objects_26) \
+	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
+	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
+	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
+	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
+	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
+	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
+	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
+	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
+	$(am__objects_51) $(am__objects_52) $(am__objects_53) \
+	$(am__objects_54)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_22) \
 @FINAL_FALSE@	$(am__objects_55)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
@@ -604,12 +605,12 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp ui/dialog.cpp \
 	utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp \
 	utility/socket_ext.cpp utility/uhttp.cpp \
 	utility/data_session.cpp utility/ring_buffer.cpp \
-	utility/websocket.cpp lemon/expression.cpp net/ipaddress.cpp \
-	net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
-	net/server/server.cpp net/server/client_image.cpp \
-	net/client/client_rdb.cpp net/server/client_image_rdb.cpp \
-	net/server/server_rdb.cpp net/rpc/rpc.cpp \
-	net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
+	utility/websocket.cpp utility/dir_walk.cpp \
+	lemon/expression.cpp net/ipaddress.cpp net/socket.cpp \
+	net/ping.cpp net/tcpsocket.cpp net/server/server.cpp \
+	net/server/client_image.cpp net/client/client_rdb.cpp \
+	net/server/client_image_rdb.cpp net/server/server_rdb.cpp \
+	net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp \
 	net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
 	net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp \
 	net/rpc/rpc_parser.cpp net/client/smtp.cpp net/client/ftp.cpp \
@@ -752,6 +753,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/des3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dgst.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dialog.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dir_walk.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/document.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dostime.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dynamic.Plo@am__quote@
@@ -1353,6 +1355,13 @@ websocket.lo: utility/websocket.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utility/websocket.cpp' object='websocket.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o websocket.lo `test -f 'utility/websocket.cpp' || echo '$(srcdir)/'`utility/websocket.cpp
+
+dir_walk.lo: utility/dir_walk.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT dir_walk.lo -MD -MP -MF $(DEPDIR)/dir_walk.Tpo -c -o dir_walk.lo `test -f 'utility/dir_walk.cpp' || echo '$(srcdir)/'`utility/dir_walk.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/dir_walk.Tpo $(DEPDIR)/dir_walk.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utility/dir_walk.cpp' object='dir_walk.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o dir_walk.lo `test -f 'utility/dir_walk.cpp' || echo '$(srcdir)/'`utility/dir_walk.cpp
 
 expression.lo: lemon/expression.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT expression.lo -MD -MP -MF $(DEPDIR)/expression.Tpo -c -o expression.lo `test -f 'lemon/expression.cpp' || echo '$(srcdir)/'`lemon/expression.cpp

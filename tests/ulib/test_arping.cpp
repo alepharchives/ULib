@@ -19,8 +19,8 @@ int U_EXPORT main(int argc, char** argv)
    UVector<UString> vInternalDevice;
    int i, j, num_radio = (argc - 1) / 3, nfds = num_radio * 2;
 
-   UPing** sockp                = U_MALLOC_VECTOR(num_radio, UPing);
-   UVector<UIPAddress*>** vaddr = U_MALLOC_VECTOR(num_radio, UVector<UIPAddress*>);
+   UPing* sockp[128];
+   UVector<UIPAddress*>* vaddr[128];
 
    // eth0 10.10.100.123 10.1.1.1 eth0 10.30.1.110 10.30.1.111 eth0 10.10.100.124 10.10.100.125
    // -----------------------------------------------------------------------------------------
@@ -77,7 +77,4 @@ int U_EXPORT main(int argc, char** argv)
       delete vaddr[i];
       delete sockp[i];
       }
-
-   U_FREE_VECTOR(sockp, num_radio, UPing);
-   U_FREE_VECTOR(vaddr, num_radio, UVector<UIPAddress*>);
 }

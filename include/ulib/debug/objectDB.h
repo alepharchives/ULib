@@ -118,7 +118,8 @@ public:
 
    static void     dumpObjects();
    static void     dumpObject(const UObjectDumpable* dumper);
-   static uint32_t dumpObject(char* buffer, uint32_t n, bPFpcpv check_object);
+   static uint32_t dumpObject(char* buffer, uint32_t buffer_size, bPFpcpv check_object);
+   static uint32_t dumpObject(char* buffer, uint32_t buffer_size, const void* ptr_object);
 
 private:
    static char*    file_ptr;
@@ -136,11 +137,14 @@ private:
    static char* lend;
    static iovec liov[7];
    static bPFpcpv checkObject;
+   static const char* _name_class;
+   static const void* _ptr_object;
 
    static void _write(const struct iovec* iov, int n) U_NO_EXPORT;
    static bool addObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
    static bool printObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;
    static int  compareDumper(const void* dumper1, const void* dumper2) __pure U_NO_EXPORT;
+   static bool checkIfObject(const char* name_class, const void* ptr_object) __pure U_NO_EXPORT;
 };
 
 #endif

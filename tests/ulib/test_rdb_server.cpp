@@ -1,5 +1,6 @@
 // test_rdb_server.cpp
 
+#include <ulib/db/rdb.h>
 #include <ulib/file_config.h>
 #include <ulib/net/server/server_rdb.h>
 

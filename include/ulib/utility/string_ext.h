@@ -64,8 +64,11 @@ public:
 
    // GZIP method
 
-   static UString deflate(const UString& s, bool bheader);         // .gz   compress
-   static UString gunzip( const UString& s, uint32_t sz_orig = 0); // .gz uncompress
+   static UString deflate(const char* s, uint32_t n, bool bheader);     // .gz   compress
+   static UString  gunzip(const char* s, uint32_t n, uint32_t sz_orig); // .gz uncompress
+
+   static UString deflate(const UString& s, bool bheader)         { return deflate(U_STRING_TO_PARAM(s), bheader); }
+   static UString  gunzip(const UString& s, uint32_t sz_orig = 0) { return  gunzip(U_STRING_TO_PARAM(s), sz_orig); }
 
    // Convert numeric to string
 
@@ -282,7 +285,8 @@ public:
 
    // Minifies CSS/JS by removing comments and whitespaces
 
-   static void minifyCssJs(UString& s);
+   static UString minifyCssJs(const char* s, uint32_t n);
+   static UString minifyCssJs(const UString& s) { return minifyCssJs(U_STRING_TO_PARAM(s)); }
 
    // Sort two version numbers, comparing equivalently seperated strings of digits numerically
    // ----------------------------------------------------------------------------------------

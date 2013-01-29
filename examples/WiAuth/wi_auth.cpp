@@ -48,6 +48,7 @@
    static UString* historical_log_dir;
    static UString* wiauth_card_basedn;
    static UString* wiauth_user_basedn;
+   static UString* max_time_no_traffic;
    static UString* content_policy_flat;
    static UString* content_policy_daily;
    static UString* message_page_template;
@@ -138,6 +139,8 @@
          {
          U_TRACE(5, "WiAuthAccessPoint::clear()")
    
+         U_CHECK_MEMORY
+         
                  value.clear();
                 _label.clear();
               mac_mask.clear();
@@ -147,6 +150,8 @@
       UString toString()
          {
          U_TRACE(5, "WiAuthAccessPoint::toString()")
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(_label)
    
@@ -162,6 +167,8 @@
       void fromVector(const UVector<UString>& _vec, uint32_t _index)
          {
          U_TRACE(5, "WiAuthAccessPoint::fromVector(%p,%u)", &_vec, _index)
+   
+         U_CHECK_MEMORY
    
          U_ASSERT_EQUALS(_vec.empty(), false)
    
@@ -288,6 +295,8 @@
          {
          U_TRACE(5, "WiAuthNodog::clear()")
    
+         U_CHECK_MEMORY
+   
                 value.clear();
             _hostname.clear();
          access_point.clear();
@@ -296,6 +305,8 @@
       void callForAllAccessPoint(bPF func)
          {
          U_TRACE(5, "WiAuthNodog::callForAllAccessPoint(%p)", func)
+   
+         U_CHECK_MEMORY
    
          U_ASSERT(access_point.size())
    
@@ -329,6 +340,8 @@
          {
          U_TRACE(5, "WiAuthNodog::findLabel()")
    
+         U_CHECK_MEMORY
+   
          U_INTERNAL_DUMP("label = %.*S", U_STRING_TO_TRACE(*label))
    
          U_INTERNAL_ASSERT(*label)
@@ -360,6 +373,8 @@
          {
          U_TRACE(5, "WiAuthNodog::findMAC()")
    
+         U_CHECK_MEMORY
+   
          U_INTERNAL_DUMP("mac = %.*S", U_STRING_TO_TRACE(*mac))
    
          U_INTERNAL_ASSERT(*mac)
@@ -387,6 +402,8 @@
          {
          U_TRACE(5, "WiAuthNodog::toString()")
    
+         U_CHECK_MEMORY
+   
          buffer->setBuffer(U_CAPACITY);
    
          buffer->snprintf("%u %10ld %10ld %u %.*s [",
@@ -406,6 +423,8 @@
       void fromString()
          {
          U_TRACE(5, "WiAuthNodog::fromString()")
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(value)
    
@@ -435,9 +454,13 @@
          {
          U_TRACE(5, "WiAuthNodog::setDown(%b)", bdown)
    
+         U_CHECK_MEMORY
+   
          char* _ptr = value.c_pointer(0);
    
          U_INTERNAL_DUMP("_ptr = %.40s", _ptr)
+   
+         if (u__isspace(_ptr[1]) == false) U_ERROR("DB record nodog not valid: %.40s", _ptr);
    
          U_INTERNAL_ASSERT(u__isspace(_ptr[1]))
    
@@ -468,6 +491,8 @@
          {
          U_TRACE(5, "WiAuthNodog::setValue(%.*S)", U_STRING_TO_TRACE(_address))
    
+         U_CHECK_MEMORY
+   
          U_INTERNAL_ASSERT(_address)
    
          value = (*db_ap)[_address];
@@ -487,6 +512,8 @@
       bool setRecord(uint32_t* pindex, int _port = 5280, bool bdown = false, bool bnoconsume = false, bool bgroup_account = false, UString* mac_mask = 0)
          {
          U_TRACE(5, "WiAuthNodog::setRecord(%p,%d,%b,%b,%b,%p)", pindex, _port, bdown, bnoconsume, bgroup_account, mac_mask)
+   
+         U_CHECK_MEMORY
    
          int op      = RDB_REPLACE;
          bool add_ap = false;
@@ -623,8 +650,16 @@
       if (content.empty()) user = U_STRING_FROM_CONSTANT("anonymous");
       else
          {
-         if (vec->split(content) > 2) user = (*vec)[0] + ' ' + (*vec)[1];
-             vec->clear();
+         if (vec->split(content) > 2)
+            {
+            user = (*vec)[0];
+   
+            user.push_back(' ');
+   
+            (void) user.append((*vec)[1]);
+            }
+   
+         vec->clear();
          }
    
       U_RETURN_STRING(user);
@@ -669,6 +704,8 @@
          {
          U_TRACE(5, "WiAuthUser::clear()")
    
+         U_CHECK_MEMORY
+   
                   _ip.clear();
                  _mac.clear();
                 _user.clear();
@@ -681,6 +718,8 @@
       UString toString()
          {
          U_TRACE(5, "WiAuthUser::toString()")
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(nodog)
    
@@ -709,6 +748,8 @@
       void setConnected(bool bconnected)
          {
          U_TRACE(5, "WiAuthUser::setConnected(%b)", bconnected)
+   
+         U_CHECK_MEMORY
    
          char c     = (bconnected ? '1' : '0');
          char* _ptr = value.c_pointer(_ip.size());
@@ -760,6 +801,8 @@
          {
          U_TRACE(5, "WiAuthUser::resetCounter()")
    
+         U_CHECK_MEMORY
+   
          // ip           c modified        login time_consume traff_consume  time_done time_avail traff_done  traff_avail x m agent     Dr Ur domain
          // 172.16.1.172 0 1355492583          0     2572         4378722          0          0      4378722    314572800 0 1 2161242255 0 0 PASS_AUTH
    
@@ -807,6 +850,8 @@
       void updateCounter(time_t _logout, time_t _connected, uint64_t _traffic)
          {
          U_TRACE(5, "WiAuthUser::updateCounter(%ld,%ld,%llu)", _logout, _connected, _traffic)
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(connected)
          U_INTERNAL_ASSERT(user_exist)
@@ -872,7 +917,7 @@
    
                   time_t time_diff = time_done - time_available;
    
-                  U_LOGGER("*** updateCounter() UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) EXCEED TIME AVAILABLE (%ld sec) ***",
+                  U_LOGGER("*** updateCounter() UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) EXCEED TIME_AVAILABLE (%ld sec) ***",
                            U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(_ip), U_STRING_TO_TRACE(_mac),
                            U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address), time_diff);
                   }
@@ -898,7 +943,7 @@
    
                   uint64_t traffic_diff = traffic_done - traffic_available;
    
-                  U_LOGGER("*** updateCounter() UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) EXCEED TRAFFIC AVAILABLE (%llu bytes) ***",
+                  U_LOGGER("*** updateCounter() UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) EXCEED TRAFFIC_AVAILABLE (%llu bytes) ***",
                            U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(_ip), U_STRING_TO_TRACE(_mac),
                            U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address), traffic_diff);
                   }
@@ -920,14 +965,15 @@
             {
             if (_traffic == 0)
                {
-               U_LOGGER("*** INFO PARAM: UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) NO TRAFFIC (%ld secs) ***",
-                        U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(_ip), U_STRING_TO_TRACE(_mac),
-                        U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address), _connected);
+               loadPolicy(_policy);
    
-               if (_connected >= 360 &&
-                   _policy != *policy_flat)
+               if (_connected > (max_time_no_traffic->strtol() * 60))
                   {
                   ask_logout = true;
+   
+                  U_LOGGER("*** updateCounter() UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s@%.*s) EXCEED MAX_TIME_NO_TRAFFIC (%ld secs) ***",
+                           U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(_ip), U_STRING_TO_TRACE(_mac),
+                           U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*address), _connected);
                   }
                }
             }
@@ -947,6 +993,8 @@
       void fromString()
          {
          U_TRACE(5, "WiAuthUser::fromString()")
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(value)
    
@@ -991,6 +1039,8 @@
          {
          U_TRACE(5, "WiAuthUser::setValue()")
    
+         U_CHECK_MEMORY
+   
          U_INTERNAL_ASSERT(*uid)
    
          value      = (*db_user)[*uid];
@@ -1008,6 +1058,8 @@
          {
          U_TRACE(5, "WiAuthUser::getLabelAP()")
    
+         U_CHECK_MEMORY
+   
          UString x = nodog_rec->access_point[index_access_point + 1];
    
          U_RETURN_STRING(x);
@@ -1016,6 +1068,8 @@
       UString getAP()
          {
          U_TRACE(5, "WiAuthUser::getAP()")
+   
+         U_CHECK_MEMORY
    
          UString x(100U), _label = getLabelAP();
    
@@ -1028,13 +1082,27 @@
          {
          U_TRACE(5, "WiAuthUser::setChunkValue()")
    
-            _time_chunk->snprintf("%ld",     time_available -    time_done);
-         _traffic_chunk->snprintf("%llu", traffic_available - traffic_done);
+         U_CHECK_MEMORY
+   
+         loadPolicy(_policy);
+   
+         if (consume)
+            {
+               _time_chunk->snprintf("%ld",     time_available -    time_done);
+            _traffic_chunk->snprintf("%llu", traffic_available - traffic_done);
+            }
+         else
+            {
+               _time_chunk->snprintf("%.*s", U_STRING_TO_TRACE(*_time_available));
+            _traffic_chunk->snprintf("%.*s", U_STRING_TO_TRACE(*_traffic_available));
+            }
          }
    
       void getCounter()
          {
          U_TRACE(5, "WiAuthUser::getCounter()")
+   
+         U_CHECK_MEMORY
    
             _time_chunk->snprintf("%ld",  (   time_available -    time_done) /              60L);
          _traffic_chunk->snprintf("%llu", (traffic_available - traffic_done) / (1024ULL * 1024ULL));
@@ -1044,6 +1112,8 @@
          {
          U_TRACE(5, "WiAuthUser::getConsumed()")
    
+         U_CHECK_MEMORY
+   
             _time_consumed->snprintf("%ld",     time_consumed /              60L);
          _traffic_consumed->snprintf("%llu", traffic_consumed / (1024ULL * 1024ULL));
          }
@@ -1051,6 +1121,8 @@
       bool setNodogReference()
          {
          U_TRACE(5, "WiAuthUser::setNodogReference()")
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(*uid)
          U_INTERNAL_ASSERT(nodog)
@@ -1084,6 +1156,8 @@
       bool setRecord() // NB: it is called only from the context of login validation...
          {
          U_TRACE(5, "WiAuthUser::setRecord()")
+   
+         U_CHECK_MEMORY
    
          U_INTERNAL_ASSERT(*uid)
    
@@ -1273,11 +1347,6 @@
       num_user = _num_user;
    }
    
-   #define VIRTUAL_HOST "auth.t-unwired.com"
-   /*
-   #define VIRTUAL_HOST "wifi-aaa.comune.fi.it"
-   */
-   
    static void usp_init()
    {
       U_TRACE(5, "::usp_init()")
@@ -1365,6 +1434,9 @@
       client_address     = U_NEW(UString);
       allowed_web_hosts  = U_NEW(UString);
    
+      user_UploadRate    = U_NEW(UString);
+      user_DownloadRate  = U_NEW(UString);
+   
       _time_chunk        = U_NEW(UString(20U));
       _time_consumed     = U_NEW(UString(20U));
       _time_available    = U_NEW(UString);
@@ -1372,15 +1444,17 @@
       _traffic_consumed  = U_NEW(UString(20U));
       _traffic_available = U_NEW(UString);
    
-      user_UploadRate    = U_NEW(UString);
-      user_DownloadRate  = U_NEW(UString);
+      environment        = U_NEW(UString(*USSIPlugIn::environment));
+      virtual_name       = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("VIRTUAL_NAME"), environment)));
    
-      environment        = U_NEW(UString(*USSIPlugIn::environment + "VIRTUAL_HOST=" + VIRTUAL_HOST));
+      // NB: we can assume that we not serve the admin user (wich is served by bash script)...
+   
+      (void) environment->append(U_CONSTANT_TO_PARAM("VIRTUAL_HOST="));
+      (void) environment->append(*virtual_name);
    
       dir_reg            = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"),            environment)));
       dir_root           = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_ROOT"),           environment)));
       dir_policy         = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_POLICY"),         environment)));
-      virtual_name       = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("VIRTUAL_NAME"),       environment)));
       title_default      = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"),      environment)));
       historical_log_dir = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
    
@@ -1407,16 +1481,21 @@
                               vec->clear();
          }
    
-      cache   = U_NEW(UCache);
-      content = U_STRING_FROM_CONSTANT("$DIR_ROOT/etc/" VIRTUAL_HOST "/cache.tmpl");
+      cache = U_NEW(UCache);
    
-      (void) cache->open(content, U_STRING_FROM_CONSTANT("$DIR_TEMPLATE"), environment);
+      UString x(U_CAPACITY);
+   
+      x.snprintf("$DIR_ROOT/etc/%s/cache.tmpl", virtual_name->data());
+   
+      (void) cache->open(x, U_STRING_FROM_CONSTANT("$DIR_TEMPLATE"), environment);
    
       message_page_template   = U_NEW(UString(cache->getContent(U_CONSTANT_TO_PARAM("message_page.tmpl"))));
       status_nodog_template   = U_NEW(UString(cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_body.tmpl"))));
       status_network_template = U_NEW(UString(cache->getContent(U_CONSTANT_TO_PARAM("status_network_body.tmpl"))));
    
-      content = UFile::contentOf("$DIR_ROOT/etc/" VIRTUAL_HOST "/script.conf", O_RDONLY, false, environment);
+      x.snprintf("$DIR_ROOT/etc/%s/script.conf", virtual_name->data());
+   
+      content = UFile::contentOf(x.data(), O_RDONLY, false, environment);
    
       table = U_NEW(UHashMap<UString>);
    
@@ -1436,13 +1515,11 @@
          wallet_url        = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["WALLET_URL"],        environment)));
          registrazione_url = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["REGISTRAZIONE_URL"], environment)));
    
-         UString x(U_CAPACITY);
-   
-         x.snprintf("$DIR_WEB/" VIRTUAL_HOST "%s/default", url_banner_ap->data());
+         x.snprintf("$DIR_WEB/%s/%s/default", virtual_name->data(), url_banner_ap->data());
    
          url_banner_ap_default = U_NEW(UFile(x, environment));
    
-         x.snprintf("$DIR_WEB/" VIRTUAL_HOST "%s/default", url_banner_comune->data());
+         x.snprintf("$DIR_WEB/%s/%s/default", virtual_name->data(), url_banner_comune->data());
    
          url_banner_comune_default = U_NEW(UFile(x, environment));
    
@@ -1465,8 +1542,6 @@
    
       client = U_NEW(UHttpClient<UTCPSocket>(0));
    
-      client->setSaveHttpInfo(true);
-   
       if (UServer_Base::isLog() &&
           client->UClient_Base::isLogSharedWithServer() == false)
          {
@@ -1486,6 +1561,8 @@
    
       policy_flat  = U_NEW(U_STRING_FROM_CONSTANT("FLAT"));
       policy_daily = U_NEW(U_STRING_FROM_CONSTANT("DAILY"));
+   
+      max_time_no_traffic = U_NEW(UString);
    
       UString pathname(U_CAPACITY);
    
@@ -1545,6 +1622,7 @@
          delete wiauth_card_basedn;
          delete wiauth_user_basedn;
          delete historical_log_dir;
+         delete max_time_no_traffic;
          delete content_policy_flat;
          delete content_policy_daily;
          delete message_page_template;
@@ -1907,7 +1985,7 @@
                           U_STRING_TO_TRACE(user_rec->_policy),
                           ptr1, ptr2,
                           ptr3, ptr4,
-                          VIRTUAL_HOST,
+                          virtual_name->data(),
                           U_STRING_TO_TRACE(_label), U_STRING_TO_TRACE(nodog_rec->_hostname),
                           U_STRING_TO_TRACE(user_rec->nodog), nodog_rec->port, U_STRING_TO_TRACE(x));
    
@@ -1938,7 +2016,7 @@
    
       riga.snprintf(status_nodog_template->data(),
                     size, ptr,
-                    VIRTUAL_HOST, size, ptr, U_STRING_TO_TRACE(nodog_rec->_hostname), U_STRING_TO_TRACE(*address), nodog_rec->port,
+                    virtual_name->data(), size, ptr, U_STRING_TO_TRACE(nodog_rec->_hostname), U_STRING_TO_TRACE(*address), nodog_rec->port,
                     U_STRING_TO_TRACE(*address),
                     U_STRING_TO_TRACE(nodog_rec->_hostname),
                     ptr1, ptr2,
@@ -1947,7 +2025,7 @@
                     ptr3, ptr4,
                     U_STRING_TO_TRACE(ap_rec->mac_mask),
                     U_STRING_TO_TRACE(ap_rec->group_account),
-                    VIRTUAL_HOST, size, ptr, U_STRING_TO_TRACE(nodog_rec->_hostname), U_STRING_TO_TRACE(*address), nodog_rec->port);
+                    virtual_name->data(), size, ptr, U_STRING_TO_TRACE(nodog_rec->_hostname), U_STRING_TO_TRACE(*address), nodog_rec->port);
    
       (void) output->append(riga);
    
@@ -1985,7 +2063,7 @@
       UString result;
    
       if (client->connectServer(url) &&
-          client->sendRequest(result))
+          client->sendRequest(0,0))
          {
          result = client->getContent();
    
@@ -2091,7 +2169,7 @@
          {
          U_ASSERT(url_banner_ap_default->dir())
    
-         x.snprintf("$DIR_WEB/" VIRTUAL_HOST "%s/%s", url_banner_ap->data(), ap_ref->data());
+         x.snprintf("$DIR_WEB/%s/%s/%s", virtual_name->data(), url_banner_ap->data(), ap_ref->data());
    
          banner = UStringExt::expandPath(x, environment);
          _ptr   = banner.data();
@@ -2111,7 +2189,7 @@
          {
          U_ASSERT(url_banner_comune_default->dir())
    
-         x.snprintf("$DIR_WEB/" VIRTUAL_HOST "%s/%s", url_banner_comune->data(), ap_ref->data());
+         x.snprintf("$DIR_WEB/%s/%s/%s", virtual_name->data(), url_banner_comune->data(), ap_ref->data());
    
          banner = UStringExt::expandPath(x, environment);
          _ptr   = banner.data();
@@ -2484,8 +2562,9 @@
    
       U_INTERNAL_ASSERT(name)
    
-      const char* key_time    = 0;
-      const char* key_traffic = 0;
+      const char* key_time            = 0;
+      const char* key_traffic         = 0;
+      const char* key_time_no_traffic = 0;
    
       if (table->empty() == false)
          {
@@ -2507,18 +2586,20 @@
             content = UFile::contentOf(pathname);
             }
    
-         if (UFileConfig::loadProperties(*table, content.data(), content.end()))
+         if (content.empty() == false &&
+             UFileConfig::loadProperties(*table, content.data(), content.end()))
             {
-            key_time    = "MAX_TIME";
-            key_traffic = "MAX_TRAFFIC";
+            key_time            = "MAX_TIME";
+            key_traffic         = "MAX_TRAFFIC";
+            key_time_no_traffic = "MAX_TIME_NO_TRAFFIC";
             }
          }
    
-      if (key_time &&
-          key_traffic)
+      if (key_time)
          {
-         *_time_available    = (*table)[key_time];
-         *_traffic_available = (*table)[key_traffic];
+                                  *_time_available     = (*table)[key_time];
+                                  *_traffic_available  = (*table)[key_traffic];
+         if (key_time_no_traffic) *max_time_no_traffic = (*table)[key_time_no_traffic];
          }
    
       table->clear();
@@ -3026,35 +3107,31 @@
    
       // redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
    
-      if (user_rec->consume) user_rec->setChunkValue();
-      else
-         {
-         loadPolicy(*policy_flat);
-   
-            _time_chunk->snprintf("%.*s", U_STRING_TO_TRACE(*_time_available));
-         _traffic_chunk->snprintf("%.*s", U_STRING_TO_TRACE(*_traffic_available));
-         }
+      user_rec->setChunkValue();
    
       UString signed_data = UDES3::signData("\n"
       // "Action Permit\n"
       // "Mode Login\n"
-         "Redirect http://" VIRTUAL_HOST "/postlogin?%.*s\n"
          "Mac %.*s\n"
          "Timeout %.*s\n"
          "Traffic %.*s\n"
          "Token %.*s\n"
          "User %.*s\n"
          "Policy %.*s\n"
+         "NoTraffic %.*s\n"
+         "UserUploadRate %.*s\n"
          "UserDownloadRate %.*s\n"
-         "UserUploadRate %.*s\n",
-         U_HTTP_QUERY_TO_TRACE,
+         "Redirect http://%s/postlogin?%.*s\n",
          U_STRING_TO_TRACE(*mac),
          U_STRING_TO_TRACE(*_time_chunk),
          U_STRING_TO_TRACE(*_traffic_chunk),
          U_STRING_TO_TRACE(*token),
          U_STRING_TO_TRACE(*uid),
          U_STRING_TO_TRACE(user_rec->_policy),
-         U_STRING_TO_TRACE(*user_DownloadRate), U_STRING_TO_TRACE(*user_UploadRate));
+         U_STRING_TO_TRACE(*max_time_no_traffic),
+         U_STRING_TO_TRACE(*user_DownloadRate),
+         U_STRING_TO_TRACE(*user_UploadRate),
+         virtual_name->data(), U_HTTP_QUERY_TO_TRACE);
    
       USSIPlugIn::setAlternativeRedirect("http://%.*s/ticket?ticket=%.*s", U_STRING_TO_TRACE(*gateway), U_STRING_TO_TRACE(signed_data));
    #endif
@@ -3380,7 +3457,7 @@
    
          callForAllAPSorted(setStatusNodog, 0);
    
-         _buffer.snprintf(_template.data(), num_ap, VIRTUAL_HOST);
+         _buffer.snprintf(_template.data(), num_ap, virtual_name->data());
    
          (void) output->insert(0, _buffer);
    
@@ -3547,7 +3624,7 @@
    
             (void) UFile::writeTo(dest, *address);
    
-            USSIPlugIn::setAlternativeRedirect("http://" VIRTUAL_HOST "/cgi-bin/webif/status-basic.sh?cat=Status", 0);
+            USSIPlugIn::setAlternativeRedirect("http://%s/cgi-bin/webif/status-basic.sh?cat=Status", virtual_name->data());
             }
          else
             {

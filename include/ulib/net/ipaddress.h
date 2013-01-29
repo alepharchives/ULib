@@ -323,7 +323,7 @@ public:
 protected:
    UString strHostName;
    int iAddressLength, iAddressType;
-   char flag[4];
+   unsigned char flag[4];
    union uupcAddress pcAddress;
    char pcStrAddress[U_INET_ADDRSTRLEN];
 

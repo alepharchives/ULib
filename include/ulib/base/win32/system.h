@@ -218,6 +218,10 @@ __declspec(dllexport) int fsync(int fd);
 #define MAP_ANONYMOUS 0x20 /* Don't use a file. */
 #define MAP_ANON      MAP_ANONYMOUS
 #define MAP_FAILED    ((void*)-1)
+/* These are Linux-specific.  */
+#define MAP_LOCKED    0x02000  /* Lock the mapping.  */
+#define MAP_NORESERVE 0x04000  /* Don't check for reservations.  */
+#define MAP_POPULATE  0x08000  /* Populate (prefault) pagetables.  */
 
 #define ENOTSUP       48 /* This is the value in Solaris */
 #define EBADRQC       54 /* "Invalid request code" */

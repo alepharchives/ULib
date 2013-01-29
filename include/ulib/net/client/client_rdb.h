@@ -34,8 +34,6 @@ public:
       U_TRACE(0, "URDBClient_Base::reset()")
 
       URPC::resetRPCInfo();
-
-      if (request.uniq()) request.setEmpty();
       }
 
    bool isOK()
@@ -124,8 +122,6 @@ protected:
       nResponseCode = 0;
 
       URPC::allocate();
-
-      request.setBuffer(U_CAPACITY);
       }
 
    ~URDBClient_Base()

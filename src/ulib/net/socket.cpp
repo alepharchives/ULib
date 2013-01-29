@@ -244,7 +244,7 @@ int USocket::recv(void* pBuffer, uint32_t iBufLength)
 
    U_INTERNAL_ASSERT(isOpen())
 
-   int iBytesRead = recv(getFd(), CAST(pBuffer), iBufLength, 0);
+   int iBytesRead = USocket::recv(getFd(), CAST(pBuffer), iBufLength, 0);
 
    U_RETURN(iBytesRead);
 }
@@ -1085,6 +1085,8 @@ loop:
 
 const char* USocket::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "flags                         " << flags                  << '\n'
                   << "iState                        " << iState                 << '\n'
                   << "iSockDesc                     " << iSockDesc              << '\n'
@@ -1102,5 +1104,4 @@ const char* USocket::dump(bool reset) const
 
    return 0;
 }
-
 #endif

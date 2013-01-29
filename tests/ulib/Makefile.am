@@ -202,4 +202,5 @@ check_PROGRAMS = $(PRG)
 TESTS = $(TST) ../reset.color
 
 clean-local:
-	-rm -rf out err tmp/* core .libs *.bb* *.da *.gcov trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* test_log.log*
+	-rm -rf out err core .libs *.bb* *.da *.gcov *.log test_log.log* tmp/* \
+           trace.*.[0-9]*  object.*.[0-9]* stack.*.[0-9]* mempool.*.[0-9]*

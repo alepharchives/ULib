@@ -87,8 +87,8 @@ void UQueryParser::clear()
             delete positives[i];
             }
 
-         U_FREE_VECTOR(negatives, sz, void);
-         U_FREE_VECTOR(positives, sz, void);
+         UMemoryPool::_free(negatives, sz, sizeof(void*));
+         UMemoryPool::_free(positives, sz, sizeof(void*));
 
          delete termRoots;
                 termRoots = 0;
@@ -835,8 +835,8 @@ void UQueryParser::startEvaluate(bPFpr func)
 
    uint32_t sz = termRoots->size();
 
-   negatives = (UVector<UString>**) U_MALLOC_VECTOR(sz, void);
-   positives = (UVector<UString>**) U_MALLOC_VECTOR(sz, void);
+   negatives = (UVector<UString>**) UMemoryPool::_malloc(sz, sizeof(void*));
+   positives = (UVector<UString>**) UMemoryPool::_malloc(sz, sizeof(void*));
 
    UQueryNode* term;
 
@@ -1022,6 +1022,8 @@ U_EXPORT ostream& operator<<(ostream& os, const UQueryNode& e)
 
 const char* UQueryNode::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "type           " << type          << '\n'
                   << "left           " << (void*)left   << '\n'
                   << "right          " << (void*)right  << '\n'
@@ -1039,6 +1041,8 @@ const char* UQueryNode::dump(bool reset) const
 
 const char* UQueryParser::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "tree              " << (void*)tree    << '\n'
                   << "word  (UString    " << (void*)&word   << ")\n"
                   << "s_p1  (UString    " << (void*)s_p1    << ")\n"
@@ -1057,5 +1061,4 @@ const char* UQueryParser::dump(bool reset) const
 
    return 0;
 }
-
 #endif

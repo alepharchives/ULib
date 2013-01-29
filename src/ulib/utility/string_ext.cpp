@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/url.h>
+#include <ulib/file.h>
 #include <ulib/tokenizer.h>
 #include <ulib/utility/compress.h>
 #include <ulib/utility/string_ext.h>
@@ -151,8 +152,6 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
    if (len) (void) x.append(s + start, len);
 
-   U_INTERNAL_ASSERT(x.invariant())
-
    U_RETURN_STRING(x);
 }
 
@@ -195,8 +194,6 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
    len = n - start;
 
    if (len) (void) x.append(s + start, len);
-
-   U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
 }
@@ -294,8 +291,6 @@ UString UStringExt::expandPath(const char* s, uint32_t n, const UString* environ
 
 end:
    if (n) (void) x.append(s, n);
-
-   U_INTERNAL_ASSERT(x.invariant())
 
    U_RETURN_STRING(x);
 }
@@ -419,8 +414,6 @@ end:
 
    U_INTERNAL_DUMP("result(%d) = %#.*S", sz, U_STRING_TO_TRACE(result))
 
-   U_INTERNAL_ASSERT(result.invariant())
-
    U_RETURN_STRING(result);
 }
 
@@ -503,8 +496,6 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
       }
 
    if (n) (void) result.append(s, n);
-
-   U_INTERNAL_ASSERT(result.invariant())
 
    U_RETURN_STRING(result);
 }
@@ -1065,8 +1056,6 @@ UString UStringExt::dirname(const UString& s)
       result = s.substr(0U, (uint32_t)(last_slash - path));
       }
 
-   U_INTERNAL_ASSERT(result.invariant())
-
    U_RETURN_STRING(result);
 }
 
@@ -1210,7 +1199,6 @@ UString UStringExt::compress(const char* s, uint32_t sz)
 
    r.rep->_length = U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::compress(s, sz, ptr + sizeof(uint32_t));
 
-   U_INTERNAL_ASSERT(r.invariant())
    U_INTERNAL_ASSERT(UStringExt::isCompress(r))
 
    U_RETURN_STRING(r);
@@ -1242,30 +1230,47 @@ UString UStringExt::decompress(const char* s, uint32_t n)
 
    r.rep->_length = UCompress::decompress(ptr + sizeof(uint32_t), n - U_CONSTANT_SIZE(U_LZOP_COMPRESS) - sizeof(uint32_t), r.rep->data());
 
-   U_INTERNAL_ASSERT(r.invariant())
-
    U_RETURN_STRING(r);
 }
 
-UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
+UString UStringExt::deflate(const char* s, uint32_t len, bool bheader) // .gz compress
 {
-   U_TRACE(0, "UStringExt::deflate(%.*S,%b)", U_STRING_TO_TRACE(s), bheader)
+   U_TRACE(0, "UStringExt::deflate(%.*S,%u,%b)", len, s, len, bheader)
 
-#ifdef USE_LIBZ // compress with zlib
-   uint32_t sz = s.size();
+#ifndef USE_LIBZ
+   U_RETURN_STRING(UString::getStringNull());
+#endif
 
-   U_INTERNAL_DUMP("size = %u", sz)
+   // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
 
-   UString r(sz + (sz / 10) + 12U); // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
+   uint32_t sz = len + (len / 10) + 12U;
 
-   r.rep->_length = u_gz_deflate(s.data(), sz, r.rep->data(), bheader);
+   if (UFile::isAllocableFromPool(sz))
+      {
+      len = u_gz_deflate(s, len, UFile::pfree, bheader);
+
+      U_INTERNAL_DUMP("u_gz_deflate() = %u", len)
+
+      sz = (len + U_PAGEMASK) & ~U_PAGEMASK;
+
+      UString result(len, sz, UFile::pfree);
+
+      UFile::pfree += sz;
+      UFile::nfree -= sz;
+
+      U_RETURN_STRING(result);
+      }
+
+   UString r(sz);
+
+   r.rep->_length = u_gz_deflate(s, len, r.rep->data(), bheader);
+
+   U_INTERNAL_DUMP("u_gz_deflate(%u) = %u", len, r.size())
 
 #ifdef DEBUG
-   U_INTERNAL_DUMP("u_gz_deflate() = %d", r.rep->_length)
-
    if (bheader)
       {
-      uint32_t* psize_original = (uint32_t*)r.c_pointer(r.rep->_length - 4);
+      uint32_t* psize_original = (uint32_t*)r.c_pointer(r.size() - 4);
 
 #  if __BYTE_ORDER == __LITTLE_ENDIAN
       U_INTERNAL_DUMP("size original = %u (le)",                 *psize_original)
@@ -1275,20 +1280,12 @@ UString UStringExt::deflate(const UString& s, bool bheader) // .gz compress
       }
 #endif
 
-   U_INTERNAL_ASSERT(r.invariant())
-
    U_RETURN_STRING(r);
-#else
-   U_RETURN_STRING(s);
-#endif
 }
 
-UString UStringExt::gunzip(const UString& s, uint32_t space) // .gz uncompress
+UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz uncompress
 {
-   U_TRACE(0, "UStringExt::gunzip(%.*S,%u)", U_STRING_TO_TRACE(s), space)
-
-   uint32_t sz     = s.size();
-   const char* ptr = s.data();
+   U_TRACE(0, "UStringExt::gunzip(%.*S,%u,%u)", sz, ptr, sz, space)
 
    if (space == 0)
       {
@@ -1318,8 +1315,6 @@ UString UStringExt::gunzip(const UString& s, uint32_t space) // .gz uncompress
    U_INTERNAL_DUMP("u_gz_inflate() = %d", result.rep->_length)
 #endif
 
-   U_INTERNAL_ASSERT(result.invariant())
-
    U_RETURN_STRING(result);
 }
 
@@ -1338,8 +1333,6 @@ UString UStringExt::tolower(const char* s, uint32_t n)
 
    while (s < end) *ptr++ = u__tolower(*s++);
 
-   U_INTERNAL_ASSERT(r.invariant())
-
    U_RETURN_STRING(r);
 }
 
@@ -1355,8 +1348,6 @@ UString UStringExt::toupper(const char* s, uint32_t n)
    const char* end = s + (r.rep->_length = n);
 
    while (s < end) *ptr++ = u__toupper(*s++);
-
-   U_INTERNAL_ASSERT(r.invariant())
 
    U_RETURN_STRING(r);
 }
@@ -1587,21 +1578,19 @@ static inline bool isExtendableOnLeft(char c)
    U_RETURN(result);
 }
 
-void UStringExt::minifyCssJs(UString& x)
+UString UStringExt::minifyCssJs(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::minifyCssJs(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "UStringExt::minifyCssJs(%.*S,%u)", n, s, n)
 
-   uint32_t n = x.size();
-
-// U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
+   U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    char quote;
-   const char* s;
+   UString r(n);
    const char* start;
-   const char* begin = x.data();
-   uint32_t capacity, sz1, sz = 0;
-   const char* _end  = (s = begin) + n;
-   char* str = (char*) UMemoryPool::_malloc_str(n + 128, capacity);
+   char* str = r.data();
+   uint32_t sz1, sz = 0;
+   const char* begin = s;
+   const char* _end  = s + n;
 
    // we have these tokens: comment, whitespace, single/double-quoted string, and other
 
@@ -1704,8 +1693,8 @@ void UStringExt::minifyCssJs(UString& x)
 
    U_INTERNAL_ASSERT(sz <= n)
 
-   (void) x.replace(str, sz);
-
 end:
-   UMemoryPool::_free_str(str, capacity);
+   r.size_adjust(sz);
+
+   U_RETURN_STRING(r);
 }

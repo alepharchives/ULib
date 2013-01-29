@@ -14,4 +14,4 @@ start_msg header
 start_prg header
 
 # Test against expected output
-test_output_diff header
+test_output_wc l header

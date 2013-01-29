@@ -132,9 +132,8 @@ UOptions::UOptions(uint32_t n)
    U_TRACE_REGISTER_OBJECT(0, UOptions, "%u", n)
 
    length   = 0;
+   item     = (option_item*) UMemoryPool::_malloc(&n, sizeof(option_item));
    capacity = n;
-
-   item = U_MALLOC_N(n, option_item);
 }
 
 UOptions::~UOptions()
@@ -155,7 +154,7 @@ UOptions::~UOptions()
       item[i].long_opt->release();
       }
 
-   U_FREE_N(item, capacity, option_item);
+   UMemoryPool::_free(item, capacity, sizeof(option_item));
 }
 
 // VALUE OF OPTION
@@ -216,18 +215,21 @@ void UOptions::add(const UString& desc,
 
    U_INTERNAL_ASSERT(has_arg != 2 || short_opt != '\0')
 
+   U_INTERNAL_DUMP("length = %u capacity = %u", length, capacity)
+
    if (length == capacity)
       {
       option_item* old_item = item;
-      uint32_t old_capacity = capacity;
+      uint32_t old_capacity =     capacity,
+               old_size     = old_capacity * sizeof(option_item);
 
-      capacity *= 2;
+                              capacity <<= 1; // x 2...
 
-      item = U_MALLOC_N(capacity, option_item);
+      item = (option_item*) UMemoryPool::_malloc(&capacity, sizeof(option_item));
 
-      U__MEMCPY(item, old_item, length * sizeof(option_item));
+      U__MEMCPY(item, old_item, old_size);
 
-      U_FREE_N(old_item, old_capacity, option_item);
+      UMemoryPool::_free(old_item, old_capacity, sizeof(option_item));
       }
 
    item[length].has_arg   = has_arg;
@@ -284,13 +286,13 @@ void UOptions::load(const UString& str)
             {
             if (vec[i].at(1) == 'a') // [package <PACKNAME>]
                {
-               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("package"))
+               U_ASSERT(vec[i] == "package")
 
                package = vec[++i];
                }
             else                    // [purpose <PURPOSE>]
                {
-               U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("purpose"))
+               U_ASSERT(vec[i] == "purpose")
 
                purpose = vec[++i];
                }
@@ -301,7 +303,7 @@ void UOptions::load(const UString& str)
             {
             // [version <VERSION>]
 
-            U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("version"))
+            U_ASSERT(vec[i] == "version")
 
             version = vec[++i];
             }
@@ -311,7 +313,7 @@ void UOptions::load(const UString& str)
             {
             // [report_bugs <REPORT_BUGS>]
 
-            U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("report_bugs"))
+            U_ASSERT(vec[i] == "report_bugs")
 
             report_bugs = vec[++i];
             }
@@ -321,7 +323,7 @@ void UOptions::load(const UString& str)
             {
             // option <SHORT> <LONG> <HAS_ARG> <DESC> <DEFAULT>
 
-            U_ASSERT(vec[i] == U_STRING_FROM_CONSTANT("option"))
+            U_ASSERT(vec[i] == "option")
 
             char short_opt = vec[i+1].at(0);
 
@@ -435,7 +437,7 @@ void UOptions::printHelp(vPF func)
       if (i < 2)
          {
          (void) u__strcpy(ptr, (i ? "Show version information"
-                                 : "Show help about options"));
+                                  : "Show help about options"));
 
          ptr += u__strlen(ptr);
          }
@@ -840,6 +842,8 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
 const char* UOptions::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "item                         " << (void*)item           << '\n'
                   << "length                       " << length                << '\n'
                   << "capacity                     " << capacity              << '\n'
@@ -877,5 +881,4 @@ const char* UOptions::dump(bool reset) const
 
    return 0;
 }
-
 #endif

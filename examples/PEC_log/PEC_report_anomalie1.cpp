@@ -81,7 +81,7 @@ public:
          {
          if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(0, msg);
 
-         UStringRep* rep = UStringRep::create((const char*)&(msg->start), sizeof(time_t), 0U);
+         UStringRep* rep = U_NEW(UStringRep((const char*)&(msg->start), sizeof(time_t)));
 
          delete msg;
 
@@ -233,7 +233,7 @@ public:
 
          pvPFpmpb func = Application::MessageToString;
 
-         if (rdb->writeTo(table, (pvPFpvpb)func) == false) U_ERROR("failed to write table on database, exit...");
+         if (rdb->UCDB::writeTo(table, (pvPFpvpb)func) == false) U_ERROR("failed to write table on database, exit...");
 
          rdbname->setEmpty();
 #     else
@@ -253,7 +253,7 @@ public:
 
             pvPFpmpb func = Application::FirstCheckForOldMessage;
 
-            if (rdb->writeTo(table, (pvPFpvpb)func) == false)
+            if (rdb->UCDB::writeTo(table, (pvPFpvpb)func) == false)
                {
                U_ERROR("write to database file %.*S failed...", U_STRING_TO_TRACE(*rdbname));
                }

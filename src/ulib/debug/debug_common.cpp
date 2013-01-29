@@ -47,13 +47,13 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
 
    if (u_recursion == false)
       {
-      char name[128];
-
       u_recursion = true;
+
+#if defined(ENABLE_MEMPOOL) && defined(__linux__)
+      char name[128];
 
       (void) u__snprintf(name, sizeof(name), "mempool.%N.%P", 0);
 
-#  ifdef ENABLE_MEMPOOL
       std::ofstream of(name);
 
       UMemoryPool::printInfo(of);

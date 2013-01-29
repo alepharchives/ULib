@@ -24,6 +24,7 @@ typedef bool     (*bPFprpv)(UStringRep* key, void* elem);
                    class UHTTP;
                    class UValue;
 template <class T> class UVector;
+                   class USSLSession;
                    class UDataSession;
 
 class U_NO_EXPORT UHashMapNode {
@@ -88,9 +89,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%b", _ignore_case)
 
-      ignore_case = _ignore_case;
-
       _length = _capacity = _space = 0;
+
+      ignore_case = _ignore_case;
       }
 
    ~UHashMap()
@@ -106,8 +107,8 @@ public:
 
       U_CHECK_MEMORY
 
+      table     = (UHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UHashMapNode*), true);
       _capacity = n;
-      table     = U_CALLOC_VECTOR(n, UHashMapNode);
       }
 
    void deallocate()
@@ -116,9 +117,9 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
-      U_FREE_VECTOR(table, _capacity, UHashMapNode);
+      UMemoryPool::_free(table, _capacity, sizeof(UHashMapNode*));
 
       _capacity = 0;
       }
@@ -169,7 +170,7 @@ public:
       ignore_case = flag;
       }
 
-   bool ignoreCase() const { return ignore_case; }
+   bool ignoreCase() const  { return ignore_case; }
 
    // Ricerche
 
@@ -184,9 +185,9 @@ public:
 
    // Set/get methods
 
-   void* operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr); }
-   void* operator[](UStringRep*    _key) {                        return at(_key); }
-   void* operator[](const UString& _key) {                        return at(_key.rep); }
+   void* operator[](const char*    _key);
+   void* operator[](UStringRep*    _key) { return at(_key); }
+   void* operator[](const UString& _key) { return at(_key.rep); }
 
    void*       elem() const { return node->elem; }
    UStringRep*  key() const { return node->key; }
@@ -224,9 +225,9 @@ public:
 
    void replaceKey(const UString& key);
 
-   void* erase(const char*    _key) { UStringRep keyr(_key); return erase(&keyr); }
+   void* erase(const char*    _key);
    void* erase(UStringRep*    _key);
-   void* erase(const UString& _key) {                        return erase(_key.rep); }
+   void* erase(const UString& _key) { return erase(_key.rep); }
 
    // Make room for a total of n element
 
@@ -268,6 +269,7 @@ protected:
    uint32_t _length, _capacity, _space, index, hash;
    bool ignore_case;
 
+   static UStringRep* pkey;
    static bool stop_call_for_all_entry;
 
    // Find a elem in the array with <key>
@@ -284,7 +286,11 @@ private:
    UHashMap<void*>& operator=(const UHashMap<void*>&) { return *this; }
 
    friend class UCDB;
+   friend class UHTTP;
    friend class UValue;
+   friend class USSLSession;
+
+   friend void ULib_init();
 };
 
 template <class T> class U_EXPORT UHashMap<T*> : public UHashMap<void*> {
@@ -368,17 +374,56 @@ public:
       insertAfterFind(_key, _elem);
       }
 
+#ifdef DEBUG
+   bool check_memory() // check all element
+      {
+      U_TRACE(0, "UHashMap<T*>::check_memory()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      T* _elem;
+      UHashMapNode* _next;
+      int sum = 0, max = 0, min = 1024, width;
+
+      for (index = 0; index < _capacity; ++index)
+         {
+         if (table[index])
+            {
+            node = table[index];
+
+            ++sum;
+            width = -1;
+
+            do {
+               ++width;
+
+               _next  =     node->next;
+               _elem = (T*) node->elem;
+
+               U_CHECK_MEMORY_CLASS(*(const UMemoryError*)_elem);
+               }
+            while ((node = _next));
+
+            if (max < width) max = width;
+            if (min > width) min = width;
+            }
+         }
+
+      U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (double)_length / (double)sum)
+
+      U_RETURN(true);
+      }
+#endif
+
    // Cancellazione tabella
 
    void clear()
       {
       U_TRACE(0, "UHashMap<T*>::clear()")
 
-      U_INTERNAL_DUMP("_length = %u", _length)
-
-#  ifdef DEBUG
-      int sum = 0, max = 0, min = 1024, width;
-#  endif
+      U_ASSERT(check_memory())
 
       T* _elem;
       UHashMapNode* _next;
@@ -389,16 +434,7 @@ public:
             {
             node = table[index];
 
-#        ifdef DEBUG
-            ++sum;
-            width = -1;
-#        endif
-
             do {
-#           ifdef DEBUG
-               ++width;
-#           endif
-
                _next  =     node->next;
                _elem = (T*) node->elem;
 
@@ -408,16 +444,9 @@ public:
                }
             while ((node = _next));
 
-#        ifdef DEBUG
-            if (max < width) max = width;
-            if (min > width) min = width;
-#        endif
-
             table[index] = 0;
             }
          }
-
-      U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (double)_length / (double)sum)
 
       _length = 0;
       }
@@ -593,9 +622,9 @@ public:
 
    // OPERATOR []
 
-   UString operator[](const char*    _key) { UStringRep keyr(_key); return at(&keyr);    }
-   UString operator[](UStringRep*    _key) {                        return at(_key);     }
-   UString operator[](const UString& _key) {                        return at(_key.rep); }
+   UString operator[](const char*    _key);
+   UString operator[](UStringRep*    _key) { return at(_key);     }
+   UString operator[](const UString& _key) { return at(_key.rep); }
 
    // STREAMS
 
@@ -603,16 +632,8 @@ public:
    friend U_EXPORT ostream& operator<<(ostream& os, const UHashMap<UString>& t) { return operator<<(os, (const UHashMap<UStringRep*>&)t); }
 
 protected:
-   UString at(const char* _key, uint32_t keylen)
-      {
-      U_TRACE(0, "UHashMap<UString>::at(%.*S,%u)", keylen, _key, keylen)
-
-      UStringRep keyr(_key, keylen);
-
-      return at(&keyr);
-      }
-
    UString at(UStringRep* keyr);
+   UString at(const char* _key, uint32_t keylen);
 
    // storage session
 

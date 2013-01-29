@@ -69,5 +69,6 @@ TESTS 			+= ../reset.color
 LDADD = $(HTTP_LIB) $(top_builddir)/src/ulib/lib@ULIB@.la
 
 clean-local:
-	-rm -rf out err core .libs *.bb* *.da *.gcov trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *.log \
-	IR/db* TSA/gSOAP/tsa_client
+	-rm -rf out err core .libs *.bb* *.da *.gcov *.log IR/db* TSA/gSOAP/tsa_client \
+	benchmark/docroot/trace.*.[0-9]* benchmark/docroot/object.*.[0-9]* benchmark/docroot/stack.*.[0-9]* benchmark/docroot/mempool.*.[0-9]* \ 
+							trace.*.[0-9]* 						object.*.[0-9]* 						 stack.*.[0-9]* 						 mempool.*.[0-9]*

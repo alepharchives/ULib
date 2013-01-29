@@ -100,16 +100,16 @@
 #  define U_SYSCALL_VOID_NO_PARAM(name)         {utr.trace_syscall("::"#name"()",NullPtr); \
                                                  name(); utr.trace_sysreturn(false,NullPtr);}
 
-#  define U_RETURN(r)                  return (utr.trace_return_type((r)))
-#  define U_RETURN_STRING(str)         return (utr.trace_return("%.*S",U_STRING_TO_TRACE((str))),(str))
-#  define U_RETURN_OBJECT(obj)         return (utr.trace_return(  "%O",U_OBJECT_TO_TRACE((obj))),(obj))
-#  define U_RETURN_POINTER(ptr,type)   return ((type*)utr.trace_return_type((void*)(ptr)))
-#  define U_RETURN_SUB_STRING(substr)  U_RETURN_STRING(substr)
+#  define U_RETURN(r)                                                 return (utr.trace_return_type((r)))
+#  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return("%.*S",U_STRING_TO_TRACE((str))),(str));}
+#  define U_RETURN_OBJECT(obj)                                        return (utr.trace_return(  "%O",U_OBJECT_TO_TRACE((obj))),(obj))
+#  define U_RETURN_POINTER(ptr,type)                                  return ((type*)utr.trace_return_type((void*)(ptr)))
+#  define U_RETURN_SUB_STRING(substr) U_RETURN_STRING(substr)
 
 #  define U__MEMCPY(a,b,n) (void) U_SYSCALL(u__memcpy, "%p,%p,%u,%S", (void* restrict)(a), (b), (n), __PRETTY_FUNCTION__)
 
-// A mechanism that allow all objects to be registered with a central in-memory "database"
-// that can dump the state of all live objects
+// A mechanism that allow all objects to be registered with a
+// central in-memory "database" that can dump the state of all live objects
 
 #  define U_REGISTER_OBJECT_PTR(level,CLASS,ptr)  \
             if (UObjectDB::fd > 0 && \
@@ -134,15 +134,27 @@
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)              U_UNREGISTER_OBJECT(level,this) \
                                                               UTrace utr(level, #CLASS"::~"#CLASS"()");
 
+#  define U_DUMP_OBJECT(msg,obj) \
+            if (UObjectDB::fd > 0) { \
+               char _buffer[4096]; \
+               uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), obj); \
+               if (utr.active) u_trace_dump(msg " = \n%.*s\n", U_min(_n,4000), _buffer); }
+
 // Manage location info for object allocation
 
-#  define U_NEW(args...)                  (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
-#  define U_NEW_VEC(n,args...)            (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args[n])
-#  define U_NEW_ULIB_OBJECT(obj,args...)  UObjectDB::flag_ulib_object = true, \
-                                          obj = U_NEW(args), \
-                                          UObjectDB::flag_ulib_object = false
+#  define U_ALLOCA(args...)                      U_SET_LOCATION_INFO; args
 
-#  define U_ALLOCA(args...)               U_SET_LOCATION_INFO; args
+#  define U_NEW(args...)                        (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
+#  define U_NEW_VECTOR(n,type)                  (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, u_new_vector<type>(n))
+
+#  define U_NEW_ULIB_OBJECT(obj,args...)        UObjectDB::flag_ulib_object = true, \
+                                                obj = U_NEW(args), \
+                                                UObjectDB::flag_ulib_object = false
+
+#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type)  UObjectDB::flag_ulib_object = true, \
+                                                obj = U_NEW_VECTOR(n,type), \
+                                                UObjectDB::flag_ulib_object = false
+
 
 // Dump argument for exec()...
 
@@ -203,6 +215,7 @@ if (envp) \
 
 #  define U__MEMCPY(a,b,n) (void) memcpy((a),(b),(n))
 
+#  define U_DUMP_OBJECT(msg,obj)
 #  define U_OBJECT_TO_TRACE(object)
 
 #  define U_RETURN(r)                  return (r)
@@ -217,10 +230,12 @@ if (envp) \
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
 #  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)
 
-#  define U_NEW(args...)                        new args
-#  define U_ALLOCA(args...)                         args
-#  define U_NEW_VEC(n,args...)                  new args[n]
-#  define U_NEW_ULIB_OBJECT(obj,args...)  obj = new args
+#  define U_NEW(args...)                       new args
+#  define U_ALLOCA(args...)                        args
+#  define U_NEW_VECTOR(n,type)                 u_new_vector<type>(n)
+
+#  define U_NEW_ULIB_OBJECT(obj,args...)       obj = new args
+#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type) obj = u_new_vector<type>(n)
 
 #  define U_DUMP_ATTRS(attrs)
 #  define U_DUMP_EXEC(argv, envp)

@@ -955,9 +955,6 @@ typedef unsigned long long uint64;
 /* install directory for plugins */
 #undef U_LIBEXECDIR
 
-/* enable use of our versions of the memory operators */
-#undef U_OVERLOAD_NEW_DELETE
-
 /* install directory */
 #undef U_PREFIXDIR
 

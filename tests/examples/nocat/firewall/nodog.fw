@@ -823,7 +823,7 @@ export RouteOnly MasqueradeDevice DNSAddr IncludePorts ExcludePorts AllowedWebHo
 RouteOnly=${RouteOnly:-0}
 MembersOnly=${MembersOnly:-1}
 GatewayPort=${GatewayPort:-5280}
-MaxSegmentSize=${MaxSegmentSize:-0}
+MaxSegmentSize=${MaxSegmentSize:-1}
 MasqueradeAuthServiceIP=${MasqueradeAuthServiceIP:-1}
 
 # ---------------------------------------------------------------------------------------------------------------------------------------------------

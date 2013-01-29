@@ -231,7 +231,7 @@ U_NO_EXPORT void UPosting::readPosting(UStringRep* word_rep, bool flag)
       {
       // check if add operation...
 
-      if (word_rep == 0) posting->duplicate(32); // NB: need duplicate string because we need space on string constant..
+      if (word_rep == 0) posting->duplicate(); // NB: need duplicate string because we need space on string constant..
       }
 
    U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()),false)

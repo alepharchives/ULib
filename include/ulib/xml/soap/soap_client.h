@@ -48,7 +48,7 @@ public:
       {
       U_TRACE(0, "USOAPClient::sendRequest()")
 
-      bool result = UClient_Base::sendRequest(); 
+      bool result = UClient_Base::sendRequest(request,false);
 
       U_RETURN(result);
       }
@@ -77,11 +77,8 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 
-      this->UClient_Base::request = URPCMethod::encoder->encodeMethodCall(method, *URPCMethod::str_ns);
-
-      UHTTP::setInfo(U_CONSTANT_TO_PARAM("POST"), U_CONSTANT_TO_PARAM("/soap"));
-
-      UClient_Base::wrapRequestWithHTTP("", "application/soap+xml; charset=\"utf-8\"");
+      request = URPCMethod::encoder->encodeMethodCall(method, *URPCMethod::str_ns);
+      request = UClient_Base::wrapRequestWithHTTP(&request, U_CONSTANT_TO_PARAM("POST"), U_CONSTANT_TO_PARAM("/soap"), "", "application/soap+xml; charset=\"utf-8\"");
 
       if (this->sendRequest() &&
           this->readResponse() &&
@@ -108,7 +105,8 @@ public:
       URPCClient<Socket>::dump(false);
 
       *UObjectIO::os << '\n'
-                     << "parser         (USOAPParser         " << (void*)&parser << ')';
+                     << "request        (UString             " << (void*)&request << ")\n"
+                     << "parser         (USOAPParser         " << (void*)&parser  << ')';
 
       if (_reset)
          {
@@ -122,6 +120,7 @@ public:
 #endif
 
 protected:
+   UString request;
    USOAPParser parser;
 
 private:

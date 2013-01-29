@@ -519,6 +519,8 @@ U_EXPORT ostream& operator<<(ostream& os, const UMimeMultipart& ml)
 
 const char* UMimeEntity::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "endHeader                 " << endHeader             << '\n'
                   << "startHeader               " << startHeader           << '\n'
                   << "parse_result              " << parse_result          << '\n'
@@ -539,6 +541,8 @@ const char* UMimeEntity::dump(bool reset) const
 
 const char* UMimeMessage::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    UMimeEntity::dump(false);
 
    *UObjectIO::os << '\n'
@@ -556,7 +560,9 @@ const char* UMimeMessage::dump(bool reset) const
 
 const char* UMimeMultipart::dump(bool reset) const
 {
-    UMimeEntity::dump(false);
+   U_CHECK_MEMORY
+
+   UMimeEntity::dump(false);
 
    *UObjectIO::os << '\n'
                   << "isFinal                   " << isFinal          << '\n'

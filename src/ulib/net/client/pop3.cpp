@@ -588,6 +588,8 @@ bool UPop3Client::quit()
 
 const char* UPop3Client::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    Socket::dump(false);
 
    *UObjectIO::os << '\n'

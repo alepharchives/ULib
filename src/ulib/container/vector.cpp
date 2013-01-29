@@ -25,9 +25,24 @@ void UVector<void*>::push(void* elem) // add to end
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_DUMP("_length = %u _capacity = %u", _length, _capacity)
+
+   U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
    U_INTERNAL_ASSERT(_length <= _capacity)
 
-   if (_length == _capacity) reserve(_capacity * 2);
+   if (_length == _capacity)
+      {
+      void**   old_vec      = vec;
+      uint32_t old_capacity = _capacity;
+
+      _capacity <<= 1; // x 2...
+
+      vec = (void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
+
+      if (_length) U__MEMCPY(vec, old_vec, _length * sizeof(void*));
+
+      UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
+      }
 
    vec[_length++] = elem;
 }
@@ -48,12 +63,14 @@ void UVector<void*>::insert(uint32_t pos, void* elem) // add elem before pos
       void**   old_vec      = vec;
       uint32_t old_capacity = _capacity;
 
-      allocate(_capacity * 2);
+      _capacity <<= 1; // x 2...
+
+      vec = (void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
 
       U__MEMCPY(vec,           old_vec,                  pos  * sizeof(void*));
       U__MEMCPY(vec + pos + 1, old_vec + pos, (_length - pos) * sizeof(void*));
 
-      U_FREE_VECTOR(old_vec, old_capacity, void);
+      UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
       }
    else
       {
@@ -82,12 +99,14 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, void* elem) // add n copy 
       void**   old_vec      = vec;
       uint32_t old_capacity = _capacity;
 
-      allocate(new_length * 2);
+      _capacity = new_length << 1; // x 2...
+
+      vec = (void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
 
       U__MEMCPY(vec,           old_vec,                  pos  * sizeof(void*));
       U__MEMCPY(vec + pos + n, old_vec + pos, (_length - pos) * sizeof(void*));
 
-      U_FREE_VECTOR(old_vec, old_capacity, void);
+      UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
       }
    else
       {
@@ -103,10 +122,9 @@ void UVector<void*>::reserve(uint32_t n)
 {
    U_TRACE(0, "UVector<void*>::reserve(%u)", n)
 
-        if (n == 0) allocate(64); // NB: the check n == 0 is specific for class UTree...
-   else if (n != _capacity)
+   if (n != _capacity)
       {
-      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
+      if (n == 0) n = 64; // NB: the check n == 0 is specific for class UTree...
 
       void**   old_vec      = vec;
       uint32_t old_capacity = _capacity;
@@ -115,7 +133,7 @@ void UVector<void*>::reserve(uint32_t n)
 
       if (_length) U__MEMCPY(vec, old_vec, _length * sizeof(void*));
 
-      U_FREE_VECTOR(old_vec, old_capacity, void);
+      if (old_capacity) UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
       }
 }
 
@@ -146,6 +164,8 @@ UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UString
 UVector<UString>::~UVector()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UVector<UString>)
+
+   U_ASSERT(check_memory())
 }
 
 void UVector<UString>::push(const UString& str) // add to end
@@ -1028,6 +1048,8 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
 const char* UVector<void*>::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "vec       " << (void*)vec << '\n'
                   << "_length   " << _length    << '\n'
                   << "_capacity " << _capacity;

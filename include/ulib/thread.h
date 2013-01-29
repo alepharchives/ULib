@@ -89,8 +89,8 @@ public:
     * @return false if execution fails.
     */
 
-   bool start();
    void stop();
+   bool start();
 
    /**
     * Start a new thread as "detached". This is an alternative

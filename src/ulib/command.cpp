@@ -19,10 +19,10 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 
-int   UCommand::status;
-int   UCommand::exit_value;
-int   UCommand::timeoutMS = -1;
-pid_t UCommand::pid;
+int      UCommand::status;
+int      UCommand::exit_value;
+int      UCommand::timeoutMS = -1;
+pid_t    UCommand::pid;
 
 void UCommand::freeCommand()
 {
@@ -39,9 +39,9 @@ void UCommand::freeCommand()
       {
       U_INTERNAL_ASSERT_MAJOR(ncmd, 0)
 
-      // NB: considera che u_splitCommand parte da 1 e null terminator...
+      // NB: considera che u_splitCommand() parte da 1 e null terminator...
 
-      U_FREE_VECTOR(argv_exec, 1+ncmd+1 + U_ADD_ARGS, char);
+      UMemoryPool::_free(argv_exec, 1+ncmd+1 + U_ADD_ARGS, sizeof(char*));
 
       argv_exec = 0;
       }
@@ -57,7 +57,7 @@ void UCommand::freeEnvironment()
 
       // NB: considera null terminator...
 
-      U_FREE_VECTOR(envp_exec, nenv+1, char);
+      UMemoryPool::_free(envp_exec, nenv + 1, sizeof(char*));
 
       envp_exec = 0;
       }
@@ -111,9 +111,11 @@ void UCommand::setCommand()
 
    // NB: allocazione e copia lista argomenti
 
-   argv_exec = U_MALLOC_VECTOR(1+ncmd+1 + U_ADD_ARGS, char); // U_ADD_ARGS -> space for addArgument()...
+   uint32_t n = 1+ncmd+1;
 
-   U__MEMCPY(argv_exec, argv, (1+ncmd+1) * sizeof(char*)); // NB: copia anche null terminator...
+   argv_exec = (char**) UMemoryPool::_malloc(n + U_ADD_ARGS, sizeof(char*)); // U_ADD_ARGS => space for addArgument()...
+
+   U__MEMCPY(argv_exec, argv, n * sizeof(char*)); // NB: copia anche null terminator...
 
    U_DUMP_ATTRS(argv_exec)
 }
@@ -132,13 +134,15 @@ U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
 
    U_INTERNAL_DUMP("nenv = %d", nenv)
 
-   U_INTERNAL_ASSERT_RANGE(1,nenv,U_MAX_ARGS)
+   U_INTERNAL_ASSERT_RANGE(1, nenv, U_MAX_ARGS)
 
    // NB: allocazione e copia lista argomenti
 
-   envp = envp_exec = U_MALLOC_VECTOR(nenv+1, char); // NB: considera anche null terminator...
+   uint32_t n = nenv + 1;  // NB: considera anche null terminator...
 
-   U__MEMCPY(envp_exec, argp, (nenv+1) * sizeof(char*)); // NB: copia anche null terminator...
+   envp = envp_exec = (char**) UMemoryPool::_malloc(n, sizeof(char*)); // NB: considera anche null terminator...
+
+   U__MEMCPY(envp_exec, argp, n * sizeof(char*)); // NB: copia anche null terminator...
 
    U_INTERNAL_DUMP("envp = %p", envp)
 
@@ -288,7 +292,7 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
          U_INTERNAL_ASSERT_RANGE(begin,envp[i],_end)
          }
 
-      U_INTERNAL_ASSERT_EQUALS(i,nenv)
+      U_INTERNAL_ASSERT_EQUALS(i, nenv)
       }
 #endif
 
@@ -529,6 +533,8 @@ UString UCommand::outputCommand(const UString& cmd, char** penv, int fd_stdin, i
 
 const char* UCommand::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "pid                     " << pid                  << '\n'
                   << "ncmd                    " << ncmd                 << '\n'
                   << "nfile                   " << nfile                << '\n'
@@ -545,5 +551,4 @@ const char* UCommand::dump(bool _reset) const
 
    return 0;
 }
-
 #endif

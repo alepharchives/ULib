@@ -121,15 +121,66 @@ UClientImage_Base::UClientImage_Base()
 {
    U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
+   U_INTERNAL_DUMP("this = %p UEventFd::fd = %d", this, UEventFd::fd)
+
    socket     = 0;
-   logbuf     = (UServer_Base::isLog() ? U_NEW(UString(4000U)) : 0);
-   last_event = 0;
+   logbuf     = (UServer_Base::isLog() ? U_NEW(UString(200U)) : 0);
+   last_event = u_now->tv_sec;
 
    start = count = 0;
    state = sfd = bclose = 0;
    client_address = 0;
+
+   U_INTERNAL_DUMP("socket = %p", socket)
+
+   U_INTERNAL_ASSERT_EQUALS(socket, 0)
 }
 
+UClientImage_Base::~UClientImage_Base()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UClientImage_Base)
+
+   // NB: array are not pointers (virtual table can shift the address of this)...
+
+   U_INTERNAL_DUMP("u_delete_vector<T>: elem %u of %u", (this - UServer_Base::vClientImage), UNotifier::max_connection)
+
+   U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
+
+               delete socket;
+   if (logbuf) delete logbuf;
+}
+
+void UClientImage_Base::set()
+{
+   U_TRACE(0, "UClientImage_Base::set()")
+
+   // NB: array are not pointers (virtual table can shift the address of this)...
+
+   if (UServer_Base::vClientImage == 0)
+      {
+      UServer_Base::pClientIndex = UServer_Base::vClientImage = this;
+                                   UServer_Base::eClientImage = this + UNotifier::max_connection;
+
+      U_INTERNAL_DUMP("UServer_Base::vClientImage = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
+                       UServer_Base::vClientImage,     UServer_Base::eClientImage,     UNotifier::max_connection)
+      }
+
+   U_INTERNAL_DUMP("u_new_vector<T>: elem %u of %u", (this - UServer_Base::vClientImage), UNotifier::max_connection)
+
+   U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
+
+   U_INTERNAL_ASSERT_POINTER(socket)
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::fd, 0)
+   U_INTERNAL_ASSERT_POINTER(UServer_Base::socket)
+
+   if (UServer_Base::socket->isLocalSet())
+      {
+      socket->cLocalAddress.set(UServer_Base::socket->cLocalAddress);
+      }
+
+                                               socket->flags |= O_CLOEXEC;
+   if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
+}
 // ------------------------------------------------------------------------
 
 void UClientImage_Base::init()
@@ -400,11 +451,16 @@ int UClientImage_Base::handlerResponse()
    U_ASSERT_EQUALS(isPendingWrite(), false)
    U_INTERNAL_ASSERT_EQUALS(write_off, false)
 
-   if (logbuf) logResponse();
+   if (UServer_Base::isLog())
+      {
+      U_INTERNAL_ASSERT_POINTER(logbuf)
 
-   size_t sz1      = wbuffer->size(),
-          sz2      =    body->size();
-   uint32_t ncount = sz1;
+      logResponse();
+      }
+
+   uint32_t sz1    = wbuffer->size(),
+            sz2    =    body->size(),
+            ncount = sz1;
    const char* ptr = wbuffer->data();
 
    struct iovec _iov[2] = { { (caddr_t)ptr,          sz1 },
@@ -428,9 +484,11 @@ int UClientImage_Base::handlerResponse()
    U_INTERNAL_ASSERT_EQUALS(_iov[0].iov_len + _iov[1].iov_len, ncount - iBytesWrite)
 
 #ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-   if (logbuf &&
-       socket->isOpen())
+   if (socket->isOpen() &&
+       UServer_Base::isLog())
       {
+      U_INTERNAL_ASSERT_POINTER(logbuf)
+
       resetPipeline();
 
       UServer_Base::log->log("%.*spartial write (%u bytes): count %u counter %u\n",
@@ -446,8 +504,13 @@ int UClientImage_Base::handlerResponse()
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
          U_INTERNAL_ASSERT_MAJOR(ncount, U_MIN_SIZE_FOR_PARTIAL_WRITE)
 
-         if (logbuf) UServer_Base::log->log("%.*spartial write (%u bytes): fd %d count %u counter %u\n",
-                                                U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, sfd, ncount, counter);
+         if (UServer_Base::isLog())
+            {
+            U_INTERNAL_ASSERT_POINTER(logbuf)
+
+            UServer_Base::log->log("%.*spartial write (%u bytes): fd %d count %u counter %u\n",
+                                       U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, sfd, ncount, counter);
+            }
 
          goto partial;
          }
@@ -460,7 +523,10 @@ int UClientImage_Base::handlerResponse()
          {
          char path[MAX_FILENAME_LEN];
 
-         uint32_t len = u__snprintf(path, sizeof(path), "%s/pwrite.%P.%4D", u_tmpdir);
+         // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
+         // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
+
+         uint32_t len = u__snprintf(path, sizeof(path), "/var/tmp/pwrite.%P.%4D", 0);
 
          sfd = UFile::creat(path);
 
@@ -469,10 +535,12 @@ int UClientImage_Base::handlerResponse()
             if (UFile::_unlink(path) &&
                 (ncount -= iBytesWrite, UFile::writev(sfd, _iov, 2) == (int)ncount))
                {
-               if (logbuf)
+               if (UServer_Base::isLog())
                   {
+                  U_INTERNAL_ASSERT_POINTER(logbuf)
+
                   UServer_Base::log->log("%.*spartial write (%u bytes): create temporary file %.*S\n",
-                                          U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, len, path);
+                                             U_STRING_TO_TRACE(*UServer_Base::mod_name), iBytesWrite, len, path);
                   }
 
                bclose = U_CLOSE;
@@ -536,8 +604,13 @@ int UClientImage_Base::handlerError(int sock_state)
       }
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT)
-   if (logbuf) UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s\n",
-                                       U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(*logbuf));
+   if (UServer_Base::isLog())
+      {
+      U_INTERNAL_ASSERT_POINTER(logbuf)
+
+      UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s\n",
+                                    U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(*logbuf));
+      }
 
    U_RETURN(U_NOTIFIER_OK);
 #endif
@@ -574,7 +647,12 @@ loop:
 
    U_INTERNAL_DUMP("counter = %u", counter)
 
-   if (logbuf) logRequest();
+   if (UServer_Base::isLog())
+      {
+      U_INTERNAL_ASSERT_POINTER(logbuf)
+
+      logRequest();
+      }
 
    sfd   = bclose = 0;
    state = UServer_Base::pluginsHandlerREAD(); // check request type...
@@ -605,7 +683,12 @@ loop:
             U_INTERNAL_ASSERT(*wbuffer)
             U_INTERNAL_ASSERT_EQUALS((bool)*body, false)
 
-            if (logbuf) logResponse();
+            if (UServer_Base::isLog())
+               {
+               U_INTERNAL_ASSERT_POINTER(logbuf)
+
+               logResponse();
+               }
 
 #        if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
             socket->setTcpCork(1U); // On Linux, sendfile() depends on the TCP_CORK socket option to avoid undesirable packet boundaries...
@@ -704,7 +787,7 @@ next:
       pbuffer->clear();
       }
 
-   if (logbuf == 0) U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+   if (UServer_Base::isLog() == false) U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
    last_event = u_now->tv_sec;
 
@@ -729,9 +812,9 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_DUMP("bwrite = %b", bwrite)
 
 #ifdef __MINGW32__
-   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
+   int32_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u", socket->getFd(), sfd, &offset, count);
 #else
-   ssize_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
+   int32_t value = U_SYSCALL(sendfile, "%d,%d,%p,%u",    UEventFd::fd, sfd, &offset, count);
 #endif
 
    if (value <= 0)
@@ -744,8 +827,13 @@ int UClientImage_Base::handlerWrite()
       {
       count -= value;
 
-      if (logbuf) UServer_Base::log->log("%.*ssendfile write (%u bytes): fd %d count %u counter %u\n",
-                                          U_STRING_TO_TRACE(*UServer_Base::mod_name), value, sfd, count, counter);
+      if (UServer_Base::isLog())
+         {
+         U_INTERNAL_ASSERT_POINTER(logbuf)
+
+         UServer_Base::log->log("%.*ssendfile write (%u bytes): fd %d count %u counter %u\n",
+                                    U_STRING_TO_TRACE(*UServer_Base::mod_name), value, sfd, count, counter);
+         }
 
       if (isPendingWrite())
          {
@@ -761,9 +849,11 @@ int UClientImage_Base::handlerWrite()
       else
          {
 #     ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-         if (logbuf &&
-             bwrite)
+         if (bwrite &&
+             UServer_Base::isLog())
             {
+            U_INTERNAL_ASSERT_POINTER(logbuf)
+
             UServer_Base::log->log("%.*spartial write completed: fd %d bclose %B\n", U_STRING_TO_TRACE(*UServer_Base::mod_name), sfd, bclose);
             }
 #     endif
@@ -790,58 +880,47 @@ void UClientImage_Base::handlerDelete()
 
    U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
 
-   if (UNotifier::num_connection > UNotifier::min_connection)
+   U_INTERNAL_ASSERT_MAJOR(UNotifier::num_connection, UNotifier::min_connection)
+
+   UServer_Base::handlerCloseConnection(this);
+
+   if (socket->isOpen()) socket->closesocket();
+
+   --UNotifier::num_connection;
+
+   if (UServer_Base::isLog() &&
+       UNotifier::num_connection == UNotifier::min_connection)
       {
-      UServer_Base::handlerCloseConnection(this);
-
-      if (socket->isOpen()) socket->closesocket();
-
-      --UNotifier::num_connection;
-
-      U_INTERNAL_DUMP("UNotifier::num_connection = %d UNotifier::min_connection = %d", UNotifier::num_connection, UNotifier::min_connection)
-
-      if (UServer_Base::isLog() &&
-          UNotifier::num_connection == UNotifier::min_connection)
-         {
-         ULog::log("Waiting for connection\n");
-         }
-
-      if (isPendingWrite())
-         {
-         // NB: pending sendfile...
-
-         U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B bclose = %B", sfd, count, UEventFd::op_mask, bclose)
-
-         U_INTERNAL_ASSERT_MAJOR(sfd, 0)
-
-         if ((bclose & U_CLOSE) != 0) UFile::close(sfd);
-
-         // reset
-
-         count             = 0;
-         UEventFd::op_mask = U_READ_IN;
-
-      // if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
-         }
-
-      // NB: to reuse object...
-
-      UEventFd::fd   = 0;
-      client_address = 0;
-
-      U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
-#  ifdef HAVE_ACCEPT4
-      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
-      U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
-#  endif
+      ULog::log("Waiting for connection\n");
       }
-#ifdef DEBUG
-   else
+
+   if (isPendingWrite())
       {
-      delete socket;
+      // NB: pending sendfile...
 
-      if (logbuf) delete logbuf;
+      U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B bclose = %B", sfd, count, UEventFd::op_mask, bclose)
+
+      U_INTERNAL_ASSERT_MAJOR(sfd, 0)
+
+      if ((bclose & U_CLOSE) != 0) UFile::close(sfd);
+
+      // reset
+
+      count             = 0;
+      UEventFd::op_mask = U_READ_IN;
+
+   // if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
       }
+
+   // NB: to reuse object...
+
+   UEventFd::fd   = 0;
+   client_address = 0;
+
+   U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
+#ifdef HAVE_ACCEPT4
+   U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
+   U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
 #endif
 }
 
@@ -852,6 +931,8 @@ void UClientImage_Base::handlerDelete()
 
 const char* UClientImage_Base::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "sfd                                " << sfd                << '\n'
                   << "state                              " << state              << '\n'
                   << "start                              " << start              << '\n'

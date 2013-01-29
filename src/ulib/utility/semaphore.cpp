@@ -37,13 +37,13 @@ void USemaphore::init(sem_t* ptr, unsigned resource)
 #else
    if (ptr)
       {
-      sem   = ptr;
-      bmmap = false;
+      sem      = ptr;
+      map_size = 0;
       }
    else
       {
-      bmmap = true;
-      sem   = (sem_t*) UFile::mmap(sizeof(sem_t));
+      map_size = sizeof(sem_t);
+      sem      = (sem_t*) UFile::mmap(&map_size);
       }
 
    /* initialize semaphore object sem to value, share it with other processes */
@@ -90,7 +90,7 @@ USemaphore::~USemaphore()
    /* Free resources associated with semaphore object sem */
    (void) U_SYSCALL(sem_destroy, "%p", sem);
 
-   if (bmmap) UFile::munmap(sem, sizeof(sem_t));
+   if (map_size) UFile::munmap(sem, map_size);
 #endif
 }
 
@@ -219,6 +219,8 @@ void USemaphore::post()
 
 const char* USemaphore::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
 #ifdef __MINGW32__
    *UObjectIO::os << "sem        " << (void*)sem;
 #elif defined(U_LOCKFILE)
@@ -229,7 +231,7 @@ const char* USemaphore::dump(bool reset) const
    *UObjectIO::os << "mutex      " << (void*)&mutex << '\n'
                   << "mutex_attr " << (void*)&mutex_attr;
 #  endif
-   *UObjectIO::os << "bmmap      " << bmmap         << '\n'
+   *UObjectIO::os << "map_size   " << map_size      << '\n'
                   << "broken     " << broken;
 #endif
 
@@ -242,5 +244,4 @@ const char* USemaphore::dump(bool reset) const
 
    return 0;
 }
-
 #endif

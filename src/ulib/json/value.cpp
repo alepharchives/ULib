@@ -372,7 +372,6 @@ void UValue::output(UString& result, UValue& _value)
                   }
                }
             }
-
 end:
          (void) result.append(buffer, n);
 
@@ -391,11 +390,20 @@ end:
          {
          (void) result.append(1, '[');
 
-         for (uint32_t index = 0, size = _value.size(); index < size; ++index)
-            {
-            if (index) (void) result.append(1, ',');
+         uint32_t sz = _value.size();
 
-            output(result, _value[index]);
+         if (sz)
+            {
+            uint32_t index = 0;
+
+            while (true)
+               {
+               output(result, _value[index]);
+
+               if (++index == sz) break;
+
+               (void) result.append(1, ',');
+               }
             }
 
          (void) result.append(1, ']');
@@ -406,26 +414,31 @@ end:
          {
          (void) result.append(1, '{');
 
-         UString name;
          uint32_t sz = _value.size();
-         UVector<UString> members(sz);
-         (void) _value.getMemberNames(members);
 
-      // if (sz > 1) members.sort();
-
-         for (uint32_t index = 0; index < sz; ++index)
+         if (sz)
             {
-            if (index) (void) result.append(1, ',');
+            UString name;
+            UVector<UString> members(sz);
 
-            name = members[index];
+            (void) _value.getMemberNames(members);
 
-            (void) result.reserve(result.size() + name.size() * 6);
+         // if (sz > 1) members.sort();
 
-            UEscape::encode(name, result, true);
+            for (uint32_t index = 0; index < sz; ++index)
+               {
+               if (index) (void) result.append(1, ',');
 
-            (void) result.append(1, ':');
+               name = members[index];
 
-            output(result, _value[name]);
+               (void) result.reserve(result.size() + name.size() * 6);
+
+               UEscape::encode(name, result, true);
+
+               (void) result.append(1, ':');
+
+               output(result, _value[name]);
+               }
             }
 
          (void) result.append(1, '}');
@@ -699,6 +712,8 @@ U_EXPORT ostream& operator<<(ostream& os, UValue& v)
 
 const char* UValue::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "type_ " << type_ << '\n';
 
    if (reset)

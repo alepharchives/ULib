@@ -48,10 +48,10 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 
-      this->UClient_Base::request = URPCMethod::encoder->encodeMethodCall(method, UString::getStringNull());
+      UString request = URPCMethod::encoder->encodeMethodCall(method, UString::getStringNull());
 
-      bool result = (this->UClient_Base::sendRequest() &&
-                     this->UClient_Base::readRPCResponse() &&
+      bool result = (this->UClient_Base::sendRequest(request,false) &&
+                     this->UClient_Base::readRPCResponse()          &&
                      this->UClient_Base::buffer == *URPCMethod::str_done); 
 
       U_RETURN(result);

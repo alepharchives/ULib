@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/file_config.h>
+#include <ulib/utility/uhttp.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/client_image.h>
@@ -46,6 +47,8 @@ int UEchoPlugIn::handlerRequest()
 #endif
 
    UClientImage_Base::body->clear();
+
+   UHTTP::endRequestProcessing();
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }

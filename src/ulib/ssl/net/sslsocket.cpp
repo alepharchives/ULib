@@ -904,6 +904,39 @@ end:
    U_RETURN(iBytesWrite);
 }
 
+int USSLSocket::writev(const struct iovec* iov, int iovcnt)
+{
+   U_TRACE(0, "USSLSocket::writev(%p,%d)", iov, iovcnt)
+
+   int result;
+
+   if (active == false) result = USocket::writev(iov, iovcnt);
+   else
+      {
+      if (iovcnt == 1) result = send((const char*)iov[0].iov_base, iov[0].iov_len);
+      else
+         {
+         UString buffer(U_CAPACITY);
+
+         for (int i = 0; i < iovcnt; ++i)
+            {
+            if (iov[i].iov_len > U_CAPACITY)
+               {
+               result = USocket::_writev(iov, iovcnt);
+
+               U_RETURN(result);
+               }
+
+            (void) buffer.append((const char*)iov[i].iov_base, iov[i].iov_len);
+            }
+
+         result = send(U_STRING_TO_PARAM(buffer));
+         }
+      }
+
+   U_RETURN(result);
+}
+
 // DEBUG
 
 #ifdef DEBUG
@@ -911,6 +944,8 @@ end:
 
 const char* USSLSocket::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    USocket::dump(false);
 
    *UObjectIO::os << '\n'
@@ -929,5 +964,4 @@ const char* USSLSocket::dump(bool reset) const
 
    return 0;
 }
-
 #endif

@@ -69,11 +69,11 @@ bool URDBClient_Base::processRequest(const char* token)
 
    for (uint32_t i = 0, n = URPC::rpc_info->size(); i < n; ++i) size += U_TOKEN_LN + (*URPC::rpc_info)[i].size();
 
-   request.setBuffer(size);
+   UString request(size);
 
-   UStringExt::buildTokenVector(token, *URPC::rpc_info, this->UClient_Base::request);
+   UStringExt::buildTokenVector(token, *URPC::rpc_info, request);
 
-   bool result = this->UClient_Base::sendRequest() &&
+   bool result = this->UClient_Base::sendRequest(request,false) &&
                  this->readResponse();
 
    U_RETURN(result);
@@ -258,8 +258,8 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
          U_INTERNAL_ASSERT_MAJOR(_key.dsize,0)
          U_INTERNAL_ASSERT_MAJOR(_data.dsize,0)
 
-         key  = UStringRep::create((const char*) _key.dptr,  _key.dsize, 0U);
-         data = UStringRep::create((const char*)_data.dptr, _data.dsize, 0U);
+         key  = U_NEW(UStringRep((const char*) _key.dptr,  _key.dsize));
+         data = U_NEW(UStringRep((const char*)_data.dptr, _data.dsize));
 
          function(key, data);
 
@@ -276,6 +276,8 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
 
 const char* URDBClient_Base::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UClient_Base::dump(false);
 
    *UObjectIO::os << '\n'

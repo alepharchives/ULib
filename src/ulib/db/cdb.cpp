@@ -133,10 +133,10 @@ inline bool UCDB::match(uint32_t pos)
          len  -= n;
          }
 
-      if (data.dptr) U_FREE_N(data.dptr,data.dsize,char); // free old data...
+      if (data.dptr) U_SYSCALL_VOID(free, "%p", data.dptr); // free old data...
 
       data.dsize = u_get_unaligned(hr->dlen);
-      data.dptr  = U_MALLOC_N(data.dsize,char);
+      data.dptr  = U_SYSCALL(malloc, "%lu", data.dsize);
 
       (void) UFile::pread(data.dptr, data.dsize, pos);
 
@@ -307,7 +307,7 @@ uint32_t UCDB::makeFinish(bool _reset)
 
    if (nrecord > 0)
       {
-      uint32_t klen; // key length
+      uint32_t i, klen; // key length
 
       struct cdb_tmp {
          uint32_t hash;
@@ -315,7 +315,7 @@ uint32_t UCDB::makeFinish(bool _reset)
          uint32_t index;
       };
 
-      cdb_tmp*  tmp = U_MALLOC_N(nrecord, cdb_tmp);
+      cdb_tmp*  tmp = (cdb_tmp*) UMemoryPool::_malloc(nrecord, sizeof(cdb_tmp));
       cdb_tmp* ptmp = tmp;
 
       cdb_hash_table_slot* pslot;
@@ -349,8 +349,6 @@ uint32_t UCDB::makeFinish(bool _reset)
 
          ptr += klen + u_get_unaligned(hr->dlen);
          }
-
-      uint32_t i;
 
       for (i = 0; i < CDB_NUM_HASH_TABLE_POINTER; ++i)
          {
@@ -406,7 +404,7 @@ uint32_t UCDB::makeFinish(bool _reset)
          */
          }
 
-      U_FREE_N(tmp, nrecord, cdb_tmp);
+      UMemoryPool::_free(tmp, nrecord, sizeof(cdb_tmp));
 
       U_ASSERT(invariant())
       }
@@ -519,7 +517,7 @@ void UCDB::getKeys(UVector<UString>& vec)
 
       ptr += sizeof(UCDB::cdb_record_header);
 
-      rep = UStringRep::create(ptr, klen, 0U);
+      rep = U_NEW(UStringRep(ptr, klen));
 
       vec.UVector<void*>::push(rep);
 
@@ -586,8 +584,8 @@ void UCDB::call(const char*  key_ptr, uint32_t  key_size,
    UObjectDB::flag_ulib_object = true;
 #endif
 
-   UStringRep* skey  = UStringRep::create( key_ptr,  key_size, 0U);
-   UStringRep* sdata = UStringRep::create(data_ptr, data_size, 0U);
+   UStringRep* skey  = U_NEW(UStringRep( key_ptr,  key_size));
+   UStringRep* sdata = U_NEW(UStringRep(data_ptr, data_size));
 
 #ifdef DEBUG
    UObjectDB::flag_ulib_object = false;
@@ -745,7 +743,7 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
          {
          U_INTERNAL_DUMP("key = %#.*S data = %#.*S)", klen, ptr + sizeof(UCDB::cdb_record_header), dlen, tmp - dlen)
 
-         r = UStringRep::create(tmp - dlen, dlen, 0U);
+         r = U_NEW(UStringRep(tmp - dlen, dlen));
 
          if (_size) *_size += dlen;
 
@@ -813,6 +811,7 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
 
    cdb.nrecord = (func ? 0
                        : table->size());
+
    bool result = cdb.creat(O_RDWR) &&
                  cdb.ftruncate(sizeFor(cdb.nrecord) + table->space());
 
@@ -1061,6 +1060,8 @@ bool UCDB::invariant()
 
 const char* UCDB::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UFile::dump(false);
 
    *UObjectIO::os << '\n'

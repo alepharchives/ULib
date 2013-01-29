@@ -42,10 +42,6 @@ public:
    static void str_allocate();
 
    void reset();
-   void setLocalHost(const UString& host) { localhost = host; }
-
-   bool getSaveHttpInfo() const            { return bSaveHttpInfo; }
-   void setSaveHttpInfo(bool saveHttpInfo) { bSaveHttpInfo = saveHttpInfo; }
 
    // Returns a modifiable sequence of MIME-type headers that will be used to form a request to the HTTP server
 
@@ -119,7 +115,9 @@ public:
    // We do not process Location headers when accompanying a 200 OK response.
    //=============================================================================
 
-   bool sendRequest(UString& data);
+   bool sendRequest(const UString& req);
+   bool sendRequest(struct iovec* iov, int iovcnt);
+
    bool upload(const UString& url, UFile& file);
    bool sendPost(const UString& url, const UString& pbody, const char* content_type = "application/x-www-form-urlencoded");
 
@@ -136,14 +134,12 @@ public:
 protected:
    UMimeHeader* requestHeader;
    UMimeHeader* responseHeader;
-   UString body, localhost, user, password, method, setcookie;
+   UString method, body, user, password, setcookie;
    int nResponseCode;
-   bool bFollowRedirects, bproxy, bSaveHttpInfo;
+   bool bFollowRedirects, bproxy;
 
     UHttpClient_Base(UFileConfig* cfg);
    ~UHttpClient_Base();
-
-   void composeRequest(UString& data, uint32_t& startHeader);
 
    // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt
    // to generate an Authentication header to satisfy the server.

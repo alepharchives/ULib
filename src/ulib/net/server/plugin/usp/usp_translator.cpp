@@ -172,9 +172,9 @@ public:
 
             for (i = 0, n = vec.size(); i < n; ++i)
                {
-#           ifdef DEBUG
+   #           ifdef DEBUG
                name.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#           endif
+   #           endif
                tmp = UStringExt::trim(vec[i]);
                ptr = tmp.data();
 
@@ -208,9 +208,9 @@ public:
 
             for (i = 0, n = vec.size(); i < n; ++i)
                {
-#           ifdef DEBUG
+   #           ifdef DEBUG
                name.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#           endif
+   #           endif
                tmp = UStringExt::trim(vec[i]);
                ptr = tmp.data();
 
@@ -246,9 +246,9 @@ public:
 
             for (i = 0, n = vec.size(); i < n; ++i)
                {
-#           ifdef DEBUG
+   #           ifdef DEBUG
                name.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#           endif
+   #           endif
                tmp  = UStringExt::trim(vec[i]);
                pos  = tmp.find('(');
                name = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
@@ -368,7 +368,7 @@ public:
 
          UEscape::encode(header, tmp, false);
 
-         http_header.setBuffer(tmp.size() + 100U);
+         http_header.setBuffer(tmp.size() + 200U);
 
          http_header.snprintf("\n\tif (usp_as_service == false) (void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%.*s)\n\t);\n\t",
                               U_STRING_TO_TRACE(tmp));

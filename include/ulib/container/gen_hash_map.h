@@ -120,8 +120,8 @@ public:
 
       U_CHECK_MEMORY
 
+      table     = (UGenericHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UGenericHashMapNode*), true);
       _capacity = n;
-      table     = U_CALLOC_VECTOR(n, UGenericHashMapNode);
       }
 
    void deallocate()
@@ -132,7 +132,7 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(_capacity,0)
 
-      U_FREE_VECTOR(table, _capacity, UGenericHashMapNode);
+      UMemoryPool::_free(table, _capacity, sizeof(UGenericHashMapNode*));
 
       _capacity = 0;
       }
@@ -339,7 +339,7 @@ public:
             }
          }
 
-      U_FREE_VECTOR(old_table, old_capacity, UGenericHashMapNode);
+      UMemoryPool::_free(old_table, old_capacity, sizeof(UGenericHashMapNode*));
       }
 
    // Cancellazione tabella

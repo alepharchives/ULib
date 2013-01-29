@@ -23,6 +23,8 @@
 
 bool              UFile::_root;
 char              UFile::cwd_save[U_PATH_MAX];
+char*             UFile::pfree;
+uint32_t          UFile::nfree;
 uint32_t          UFile::cwd_len_save;
 UTree<UString>*   UFile::tree;
 UVector<UString>* UFile::vector;
@@ -318,8 +320,6 @@ UString UFile::getName() const
 
    result = pathname.substr(pos);
 
-   U_INTERNAL_ASSERT(result.invariant())
-
    U_RETURN_STRING(result);
 }
 
@@ -357,6 +357,74 @@ off_t UFile::size(bool bstat)
    U_RETURN(st_size);
 }
 
+// MEMORY MAPPED I/O
+
+char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offset)
+{
+   U_TRACE(1, "UFile::mmap(%p,%d,%d,%d,%u)", plength, _fd, prot, flags, offset)
+
+   U_INTERNAL_ASSERT_POINTER(plength)
+
+#ifndef __MINGW32__
+#  ifndef HAVE_ARCH64
+      U_INTERNAL_ASSERT_RANGE(1U, *plength, 3U * 1024U * 1024U  *1024U) // limit of linux system on 32bit
+#  endif
+   if (_fd != -1)
+#endif
+   return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, flags, _fd, offset);
+
+   *plength = (*plength + U_PAGEMASK) & ~U_PAGEMASK;
+
+   U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
+
+   if ((flags & MAP_SHARED) != 0) return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, flags, -1, 0);
+
+   char* _ptr;
+
+   if (*plength >= (256U * 1024U * 1024U))
+      {
+      // NB: to save some swap pressure...
+
+      UFile tmp;
+
+      _ptr = (char*)MAP_FAILED;
+
+      if (tmp.mkTemp() &&
+          tmp.fallocate(*plength))
+         {
+         _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, prot, MAP_PRIVATE | MAP_NORESERVE, tmp.fd, 0);
+         }
+
+      tmp.close();
+
+      if (_ptr != (char*)MAP_FAILED) return _ptr;
+      }
+
+   U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
+
+   if (pfree == 0)
+      {
+      nfree = (256U * 1024U * 1024U);
+      pfree = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, nfree, prot, U_MAP_ANON, -1, 0);
+      }
+
+   if (*plength > nfree) return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, U_MAP_ANON, -1, 0);
+
+   _ptr   = pfree;
+   nfree -= *plength;
+
+   if (nfree > (16U * 1024U)) pfree += *plength;
+   else
+      {
+      pfree     = 0;
+      *plength += nfree;
+      }
+
+   U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
+
+   return _ptr;
+}
+
 bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 {
    U_TRACE(0, "UFile::memmap(%d,%p,%u,%u)", prot, str, offset, length)
@@ -369,8 +437,9 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    U_INTERNAL_ASSERT_DIFFERS(fd,-1)
    U_INTERNAL_ASSERT_MAJOR(st_size,0)
+
 #ifdef __MINGW32__
-   U_INTERNAL_ASSERT((off_t)length <= st_size) // Don't allow mappings beyond EOF since Windows can't handle that POSIX like
+   U_INTERNAL_ASSERT((off_t)length <= st_size) // NB: don't allow mappings beyond EOF since Windows can't handle that POSIX like...
 #endif
 
    if (length == 0) length = st_size;
@@ -393,24 +462,20 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE),0) // offset should be a multiple of the page size as returned by getpagesize(2)
 
-   if (map != MAP_FAILED)
+   if (map != (char*)MAP_FAILED)
       {
       munmap(map, map_size);
 
       map_size = 0;
       }
 
-   map = UFile::mmap(length, fd, prot, MAP_SHARED | MAP_POPULATE, offset);
+   map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, MAP_SHARED | MAP_POPULATE, fd, offset);
 
-   if (map != MAP_FAILED)
+   if (map != (char*)MAP_FAILED)
       {
       map_size = length;
 
       if (str) str->mmap(map + resto, length - resto);
-
-#  ifdef MADV_SEQUENTIAL
-   // if (map_size > (128 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", map, map_size, MADV_SEQUENTIAL);
-#  endif
 
       U_RETURN(true);
       }
@@ -429,7 +494,7 @@ void UFile::munmap()
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
    U_INTERNAL_ASSERT_MAJOR(map_size,0UL)
-   U_INTERNAL_ASSERT_DIFFERS(map,MAP_FAILED)
+   U_INTERNAL_ASSERT_DIFFERS(map,(char*)MAP_FAILED)
 
    UFile::munmap(map, map_size);
 
@@ -464,7 +529,7 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
    if (bsize) readSize();
 
    if (bmap ||
-       st_size > (off_t)(16L * 1024L))
+       st_size > (off_t)(4L * PAGESIZE))
       {
       int                   prot  = PROT_READ;
       if (brdonly == false) prot |= PROT_WRITE;
@@ -481,7 +546,7 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
 
       if (value < 0L) value = 0L;
 
-      ptr[value] = '\0'; // NB: in this way we can use string function data()...
+      ptr[value] = '\0'; // NB: in this way we can use the UString method data()...
 
       tmp.size_adjust(value);
 
@@ -701,16 +766,16 @@ bool UFile::ftruncate(uint32_t n)
 
    U_INTERNAL_ASSERT_DIFFERS(fd,-1)
 #if defined(__CYGWIN__) || defined(__MINGW32__)
-   U_INTERNAL_ASSERT_EQUALS(map,MAP_FAILED)
+   U_INTERNAL_ASSERT_EQUALS(map,(char*)MAP_FAILED)
 #endif
 
-   if (map != MAP_FAILED &&
+   if (map != (char*)MAP_FAILED &&
        map_size < (uint32_t)n)
       {
       uint32_t _map_size = n * 2;
       char* _map         = (char*) mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
 
-      if (_map == MAP_FAILED) U_RETURN(false);
+      if (_map == (char*)MAP_FAILED) U_RETURN(false);
 
       map      = _map;
       map_size = _map_size;
@@ -945,7 +1010,10 @@ bool UFile::mkTemp(const char* name)
 
    UString path(U_PATH_MAX);
 
-   path.snprintf("%s/%s", u_tmpdir, name);
+   // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
+   // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
+
+   path.snprintf("/var/tmp/%s", name);
 
    setPath(path);
 
@@ -1141,7 +1209,7 @@ void UFile::substitute(UFile& file)
       UFile::close();
       }
 
-   if (map != MAP_FAILED) munmap();
+   if (map != (char*)MAP_FAILED) munmap();
 
    fd       = file.fd;
    map      = file.map;
@@ -1351,7 +1419,7 @@ const char* UFile::getMimeType(bool bmagic)
        u_is_ssi() == false &&
        u_is_usp() == false)
       {
-      U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
+      U_INTERNAL_ASSERT_DIFFERS(map, (char*)MAP_FAILED)
 
       const char* ctype = UMagic::getType(map, map_size).data();
 
@@ -1362,7 +1430,7 @@ const char* UFile::getMimeType(bool bmagic)
    if (content_type == 0)
       {
 #  ifdef USE_LIBMAGIC
-      if (map != MAP_FAILED) content_type = UMagic::getType(map, map_size).data();
+      if (map != (char*)MAP_FAILED) content_type = UMagic::getType(map, map_size).data();
 
       if (content_type == 0)
 #  endif
@@ -1382,6 +1450,8 @@ const char* UFile::getMimeType(bool bmagic)
 
 const char* UFile::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "fd                        " << fd                  << '\n'
                   << "map                       " << (void*)map          << '\n'
                   << "st_size                   " << st_size             << '\n'
@@ -1405,5 +1475,4 @@ const char* UFile::dump(bool _reset) const
 
    return 0;
 }
-
 #endif

@@ -72,6 +72,8 @@ UString URPCParser::processMessage(const UString& msg, URPCObject& object, bool&
 
 const char* URPCParser::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "envelope        (URPCEnvelope                     " << (void*)&envelope << ')';
 
    if (reset)

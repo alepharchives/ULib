@@ -79,6 +79,8 @@ __pure UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* _obj)
 
 const char* UPlugIn<void*>::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "obj      " << obj          << '\n'
                   << "first    " << (void*)first << '\n'
                   << "next     " << (void*)next  << '\n'

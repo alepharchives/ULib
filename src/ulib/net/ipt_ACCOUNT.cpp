@@ -42,7 +42,7 @@ UIptAccount::UIptAccount(bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    handle = U_MALLOC_TYPE(struct ipt_acc_handle_sockopt);
 
-   (void) U_SYSCALL(memset, "%p,%C,%u", handle, '\0', sizeof(struct ipt_acc_handle_sockopt));
+   (void) U_SYSCALL(memset, "%p,%d,%u", handle, '\0', sizeof(struct ipt_acc_handle_sockopt));
 
    handle->handle_nr = (uint32_t)-1;
 
@@ -247,6 +247,8 @@ const char* UIptAccount::getNextName()
 
 const char* UIptAccount::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    USocket::dump(false);
 
    *UObjectIO::os << '\n'
@@ -264,5 +266,4 @@ const char* UIptAccount::dump(bool reset) const
 
    return 0;
 }
-
 #endif

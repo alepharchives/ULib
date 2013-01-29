@@ -75,11 +75,9 @@ public:
       U_TRACE(0, "UClient_Base::reset()")
 
 #  ifdef DEBUG
-      uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri is substr of url)
+      uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri can be a substr of url)
 #  endif
-
-          url.clear();
-      request.clear();
+      url.clear();
       }
 
    void reserve(uint32_t n)
@@ -109,6 +107,8 @@ public:
       U_RETURN(result);
       }
 
+   void setTimeOut(uint32_t t) { timeoutMS = t; }
+
    // LOG 
 
    static void setLogShared();
@@ -130,22 +130,29 @@ public:
    void loadConfigParam(UFileConfig& file);
    bool setHostPort(const UString& host, int port);
 
-   void setTimeOut(uint32_t t) { timeoutMS = t; }
-
-   // Add the MIME-type headers to the request for HTTP server
-
-   void wrapRequestWithHTTP(const char* extension, const char* content_type = 0);
-
-   // method to redefine
-
    bool connect();
    void clearData();
    bool readHTTPResponse();
    bool readResponse(int count = U_SINGLE_READ);
+   bool sendRequest(struct iovec* iov, int iovcnt, bool bread_response);
 
-   bool sendRequest(                                bool bread_response = false);
-   bool sendRequest(const UString& data,            bool bread_response = false)  { request =         data;       return sendRequest(bread_response); }
-   bool sendRequest(const char* data, uint32_t len, bool bread_response = false)  { request = UString(data, len); return sendRequest(bread_response); }
+   bool sendRequest(const UString& req, bool bread_response)
+      {
+      U_TRACE(0, "UClient_Base::sendRequest(%.*S,%b)", U_STRING_TO_TRACE(req), bread_response)
+
+      struct iovec iov[1] = { { (caddr_t)req.data(), req.size() } };
+
+      bool result = sendRequest(iov, 1, bread_response);
+
+      U_RETURN(result);
+      }
+
+   // Add the MIME-type headers to the request for HTTP server
+
+   UString wrapRequestWithHTTP(UString* req,
+                               const char* method, uint32_t method_len,
+                               const char* _uri,   uint32_t uri_len,
+                               const char* extension, const char* content_type = 0);
 
    // -----------------------------------------------------------------------------------------------------------------------
    // Very simple RPC-like layer
@@ -179,7 +186,6 @@ public:
 
 protected:
    USocket* socket;
-   Url url;
    UString server,      // host name or ip address for server
            cert_file,   // locations for certificate of client
            key_file,    // locations for private key of client
@@ -188,11 +194,11 @@ protected:
            ca_path,     // locations of trusted CA certificates used in the verification
            log_file,    // locations for file log
            uri,
-           request,
            response,
            buffer,
            host_port,
            logbuf;
+   Url url;
    int port,            // the port number to connect to
        timeoutMS,       // the time-out value in milliseconds
        verify_mode;     // mode of verification of connection

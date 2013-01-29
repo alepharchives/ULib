@@ -881,9 +881,6 @@ AC_SUBST(ULIB)
 if test "$enable_memory_pool" = "yes"; then
    ulib_memp_msg="enabled"
 	AM_CONDITIONAL(MEMORY_POOL, true)
-	if test "$enable_overload_new_delete" = "yes"; then
-		AC_DEFINE(U_OVERLOAD_NEW_DELETE, 1, [enable use of our versions of the memory operators])
-	fi
 else
 	AM_CONDITIONAL(MEMORY_POOL, false)
 fi
@@ -943,6 +940,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	case "${gcc_version}" in
 		2*)
+			CPPFLAGS="${CPPFLAGS} -O0"
 		;;
 		3*)
 		;;
@@ -960,7 +958,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
 
 		if test "${enable_gcc_optimized}" = "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto" ## -ffunction-sections -fdata-sections
+			MAYBE_FLAGS="$MAYBE_FLAGS -Ofast -flto -ftree-partial-pre" ## -ffunction-sections -fdata-sections
 		fi
 		;;
 	esac
@@ -976,7 +974,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 # -------------------------------------------------------------------------------------
 
 	if test "$enable_debug" = "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -fsanitize=address -fsanitize=thread" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
 		if test "$USE_LIBSSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi
@@ -995,7 +993,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 
 	# -Wcast-qual
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition"
+						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
 
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -Wdelete-non-virtual-dtor"
 

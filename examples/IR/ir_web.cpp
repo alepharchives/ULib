@@ -50,6 +50,12 @@
    delete query;
    delete crono;
    delete footer;
+   
+   if (UHTTP::data_session)
+      {
+      delete UHTTP::data_session;
+             UHTTP::data_session = 0;
+      }
    #endif
    }  
    

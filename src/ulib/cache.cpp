@@ -487,6 +487,8 @@ U_EXPORT ostream& operator<<(ostream& os, const UCache& c)
 
 const char* UCache::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "x      " << (void*)x       << '\n'
                   << "fd     " << fd             << '\n'
                   << "ttl    " << ttl            << '\n'
@@ -506,5 +508,4 @@ const char* UCache::dump(bool _reset) const
 
    return 0;
 }
-
 #endif

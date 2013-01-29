@@ -114,6 +114,8 @@ void UXml2Txt::endElement(const XML_Char* name)
 
 const char* UXml2Txt::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "tag_pos                   " << tag_pos         << '\n'
                   << "tag_match                 " << tag_match       << '\n'
                   << "tag_to_exclude            " << tag_to_exclude  << '\n'
@@ -130,5 +132,4 @@ const char* UXml2Txt::dump(bool reset) const
 
    return 0;
 }
-
 #endif

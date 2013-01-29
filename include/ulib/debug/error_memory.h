@@ -27,7 +27,7 @@ struct U_EXPORT UMemoryError {
    // CONSTRUCTOR
 
     UMemoryError() {                             _this = this; }
-   ~UMemoryError() { U_CHECK_MEMORY_CLASS(*this) _this = NullPtr; }
+   ~UMemoryError() { U_CHECK_MEMORY_CLASS(*this) _this = 0; }
 
    // ASSIGNMENT
 

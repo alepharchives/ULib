@@ -63,6 +63,8 @@ public:
 #  ifdef USE_LIBEVENT
       pevent = 0;
 #  endif
+
+      U_INTERNAL_DUMP("this = %p fd = %d", this, fd)
       }
 
    virtual ~UEventFd()

@@ -266,6 +266,8 @@ U_EXPORT ostream& operator<<(ostream& os, const UCrl& c)
 
 const char* UCrl::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "X509_CRL  " << crl;
 
    if (reset)
@@ -277,5 +279,4 @@ const char* UCrl::dump(bool reset) const
 
    return 0;
 }
-
 #endif

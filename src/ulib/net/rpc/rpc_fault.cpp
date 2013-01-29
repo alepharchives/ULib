@@ -107,6 +107,8 @@ UString URPCFault::getFaultCode()
 
 const char* URPCFault::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "faultCode              " << faultCode           << '\n'
                   << "detail        (UString " << (void*)&detail      << ")\n"
                   << "faultReason   (UString " << (void*)&faultReason << ')';

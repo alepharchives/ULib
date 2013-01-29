@@ -99,7 +99,7 @@ UStringRep* UObjectIO::create()
 
    UObjectIO::output();
 
-   UStringRep* rep = UStringRep::create(buffer_output, buffer_output_len, 0U);
+   UStringRep* rep = U_NEW(UStringRep(buffer_output, buffer_output_len));
 
    U_INTERNAL_PRINT("rep = %.*S", U_STRING_TO_TRACE(*rep))
 

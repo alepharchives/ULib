@@ -101,7 +101,9 @@ time_t                            UServer_Base::expire;
 time_t                            UServer_Base::last_event;
 uint32_t                          UServer_Base::start;
 uint32_t                          UServer_Base::count;
+uint32_t                          UServer_Base::map_size;
 uint32_t                          UServer_Base::vplugin_size;
+uint32_t                          UServer_Base::oClientImage;
 uint32_t                          UServer_Base::shared_data_add;
 UString*                          UServer_Base::mod_name;
 UString*                          UServer_Base::host;
@@ -125,7 +127,6 @@ UProcess*                         UServer_Base::proc;
 UEventFd*                         UServer_Base::handler_inotify;
 UEventTime*                       UServer_Base::ptime;
 UServer_Base*                     UServer_Base::pthis;
-//struct linger                   UServer_Base::lng = { 1, 0 };
 UVector<UString>*                 UServer_Base::vplugin_name;
 UVector<UString>*                 UServer_Base::vplugin_name_static;
 UClientImage_Base*                UServer_Base::pClientIndex;
@@ -180,12 +181,17 @@ const UString* UServer_Base::str_SET_REALTIME_PRIORITY;
 const UString* UServer_Base::str_ENABLE_RFC1918_FILTER;
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-#  include "ulib/thread.h"
+#  include <ulib/thread.h>
 
 class UTimeThread : public UThread {
 public:
 
-   UTimeThread() : UThread(false, false) {}
+   UTimeThread() : UThread(true, false) {}
+
+#ifdef DEBUG
+   UTimeVal before;
+#endif
+   int watch_counter;
 
    virtual void run()
       {
@@ -193,13 +199,12 @@ public:
 
 #  ifdef DEBUG
       long delta;
-      bool check = false;
-      UTimeVal before, after;
+      UTimeVal after;
 #  endif
 
       U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (pid %u)", UThread::getTID());
 
-      int watch_counter  = 1;
+      watch_counter      = 1;
       struct timespec ts = { 1L, 0L };
 
       while (UServer_Base::flag_loop)
@@ -208,11 +213,11 @@ public:
 
          U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
 
-         if (--watch_counter) u_now->tv_sec += 1L;
+         if (--watch_counter > 0) u_now->tv_sec += 1L;
          else
             {
 #        ifdef DEBUG
-            if (check)
+            if (watch_counter == 0)
                {
                u_now->tv_sec += 1L;
 
@@ -225,19 +230,15 @@ public:
             (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
 #        ifdef DEBUG
-            if (check == false) check = true;
-            else
+            after.set(*u_now);
+
+            after -= before;
+            delta  = after.getMilliSecond();
+
+            if (delta >=  1000L ||
+                delta <= -1000L)
                {
-               after.set(*u_now);
-
-               after -= before;
-               delta  = after.getMilliSecond();
-
-               if (delta >=  1000L ||
-                   delta <= -1000L)
-                  {
-                  U_SRV_LOG("UTimeThread delta time exceed 1 sec: counter(%d) diff(%ld ms)", watch_counter, delta);
-                  }
+               U_SRV_LOG("UTimeThread delta time exceed 1 sec: diff(%ld ms) counter(%d)", delta, watch_counter);
                }
 #        endif
             }
@@ -248,7 +249,7 @@ public:
 class UClientThread : public UThread {
 public:
 
-   UClientThread() : UThread(false, false) {}
+   UClientThread() : UThread(true, false) {}
 
    virtual void run()
       {
@@ -470,20 +471,9 @@ UServer_Base::~UServer_Base()
    UPlugIn<void*>::clear();
 #endif
 
+   UClientImage_Base::clear();
+
    U_INTERNAL_ASSERT_EQUALS(handler_inotify,0)
-
-   UClientImage_Base::clear(); // NB: must be here, after UHTTP::ctor()...
-
-   UEventFd::fd = 0; // NB: to avoid delete itself...
-
-   UNotifier::clear();
-
-   if (vClientImage)
-      {
-      if (isClassic()) UNotifier::num_connection = UNotifier::min_connection;
-
-      delete[] vClientImage;
-      }
 
    U_INTERNAL_ASSERT_POINTER(senvironment)
 
@@ -545,11 +535,7 @@ UServer_Base::~UServer_Base()
 
    if (proc) delete proc;
 
-   if (ptr_shared_data) UFile::munmap(ptr_shared_data, sizeof(shared_data) + shared_data_add);
-
-#ifdef USE_LIBSSL
-   if (UServices::CApath) delete UServices::CApath;
-#endif
+   if (ptr_shared_data) UFile::munmap(ptr_shared_data, map_size);
 
    delete server;
    delete as_user;
@@ -565,6 +551,12 @@ UServer_Base::~UServer_Base()
    delete allow_IP;
    delete allow_IP_prv;
    delete document_root;
+
+   UEventFd::fd = 0; // NB: to avoid delete itself...
+
+   UNotifier::num_connection = 0;
+
+   UNotifier::clear();
 }
 
 void UServer_Base::loadConfigParam(UFileConfig& cfg)
@@ -663,9 +655,24 @@ void UServer_Base::loadConfigParam(UFileConfig& cfg)
 #ifndef __MINGW32__
    UString x = cfg[*str_PREFORK_CHILD];
 
-   if (x.empty() == false) preforked_num_kids = x.strtol();
+   if (x.empty() == false)
+      {
+      preforked_num_kids = x.strtol();
+
+#  if !defined(HAVE_PTHREAD_H) || !defined(ENABLE_THREAD) || !defined(HAVE_EPOLL_WAIT) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+      if (preforked_num_kids == -1)
+         {
+         U_WARNING("Sorry, I was compiled without server thread approach so I can't accept PREFORK_CHILD == -1");
+
+         goto next;
+         }
+#  endif
+      }
    else
       {
+#if !defined(HAVE_PTHREAD_H) || !defined(ENABLE_THREAD) || !defined(HAVE_EPOLL_WAIT) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+next:
+#endif
       preforked_num_kids = u_get_num_cpu();
 
       U_INTERNAL_DUMP("num_cpu = %d", preforked_num_kids)
@@ -1270,8 +1277,6 @@ void UServer_Base::init()
 
    USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
 
-   if (UNotifier::max_connection == 0) UNotifier::max_connection  = 1020;
-
    // init plugin modules...
 
    if (pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
@@ -1290,7 +1295,8 @@ void UServer_Base::init()
 
       U_INTERNAL_ASSERT_EQUALS(ptr_shared_data, 0)
 
-      ptr_shared_data = (shared_data*) UFile::mmap(sizeof(shared_data) + shared_data_add);
+      map_size        = sizeof(shared_data) + shared_data_add;
+      ptr_shared_data = (shared_data*) UFile::mmap(&map_size);
 
       U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION, 0)
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
@@ -1334,7 +1340,7 @@ void UServer_Base::init()
       bool shared;
 
 #  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      shared = true; // NB: is always shared cause of possibility of fork() by parallelization...
+      shared = true;                     // NB: is always shared cause of possibility of fork() by parallelization...
 #  else
       shared = (preforked_num_kids > 1); // NB: for nodog it is not shared...
 #  endif
@@ -1343,54 +1349,43 @@ void UServer_Base::init()
          {
          ULog::setShared((ptr_shared_data ? U_LOG_DATA_SHARED : 0));
 
-         uint32_t size_shared_data = sizeof(shared_data) + shared_data_add;
-
-         U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d process", size_shared_data, size_shared_data / 1024, preforked_num_kids);
+         U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d process", sizeof(shared_data) + shared_data_add, map_size / 1024, preforked_num_kids);
          }
       }
 
    // init notifier event manager...
 
-   UNotifier::min_connection  = (isClassic() == false) + (handler_inotify != 0);
-   UNotifier::max_connection += (UNotifier::num_connection = UNotifier::min_connection);
+   UNotifier::min_connection = (isClassic() == false) + (handler_inotify != 0);
+   UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : 1020) + (UNotifier::num_connection = UNotifier::min_connection);
 
-   UNotifier::init(false);
+   uint32_t n = (((UNotifier::max_connection * sizeof(UClientImage_Base)) + U_PAGEMASK) & ~U_PAGEMASK) / sizeof(UClientImage_Base);
 
-   pthis->preallocate();
+   U_INTERNAL_DUMP("n = %u UNotifier::max_connection = %u", n, UNotifier::max_connection)
 
-   U_INTERNAL_ASSERT_POINTER(vClientImage)
+   // preallocation object...
 
-   eClientImage = vClientImage + UNotifier::max_connection;
+   int stack_index[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-   U_INTERNAL_DUMP("vClientImage = %p eClientImage = %p UNotifier::max_connection = %u", vClientImage, eClientImage, UNotifier::max_connection)
-
-#ifdef DEBUG
-   UTrace::suspend();
-#endif
-
-   USocket* csocket;
-
-   pClientIndex = vClientImage;
-
-   for (UIPAddress* addr = (socket->isLocalSet() ? &(socket->cLocalAddress) : 0); pClientIndex < eClientImage; ++pClientIndex)
+   if (isLog())
       {
-      csocket = pClientIndex->socket;
-
-                                                  csocket->flags |= O_CLOEXEC;
-      if (USocket::accept4_flags & SOCK_NONBLOCK) csocket->flags |= O_NONBLOCK;
-
-   // U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (pClientIndex - vClientImage), csocket->flags, csocket->flags)
-
-      if (addr) csocket->cLocalAddress.set(*addr);
-
-      pClientIndex->last_event = u_now->tv_sec;
+      stack_index[5]                                      = n; // logbuf => UString(200U)
+      stack_index[U_SIZE_TO_STACK_INDEX(sizeof(UString))] = n;
       }
 
-   pClientIndex = vClientImage;
+   stack_index[U_SIZE_TO_STACK_INDEX(sizeof(UClientImage_Base))] += n;
 
-#ifdef DEBUG
-   UTrace::resume();
-#endif
+#if defined(USE_LIBSSL)
+   if (bssl) stack_index[U_SIZE_TO_STACK_INDEX(sizeof(USSLSocket))] += n;
+   else
+#  endif
+             stack_index[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
+
+   for (uint32_t i = 0; i < U_NUM_STACK_TYPE; ++i)
+      {
+      if (stack_index[i]) UMemoryPool::allocateMemoryBlocks(i, stack_index[i] + 32);
+      }
+
+   pthis->preallocate();
 
 #if defined(USE_LIBSSL)
    if (bssl)
@@ -1423,6 +1418,8 @@ void UServer_Base::init()
 #endif
 
    socket->flags |= O_CLOEXEC;
+
+   UNotifier::init(false);
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1) goto next; 
@@ -1493,6 +1490,23 @@ void UServer_Base::reopenLog()
       }
 }
 
+U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
+{
+   U_TRACE(0, "UServer_Base::logMemUsage(%S)", signame)
+
+   U_INTERNAL_ASSERT(isLog)
+
+   unsigned long vsz, rss;
+
+   u_get_memusage(&vsz, &rss);
+
+   ULog::log("%s (Interrupt): "
+             "address space usage: %.2f MBytes - "
+                       "rss usage: %.2f MBytes\n", signame,
+             (double)vsz / (1024.0 * 1024.0),
+             (double)rss / (1024.0 * 1024.0));
+}
+
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 {
    U_TRACE(0, "[SIGHUP] UServer_Base::handlerForSigHUP(%d)", signo)
@@ -1501,21 +1515,27 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    U_INTERNAL_ASSERT(proc->parent())
 
-   uint32_t vsz, rss;
+   // NB: for logrotate...
 
-   u_get_memusage(&rss, &vsz);
+   if (isLog())
+      {
+      logMemUsage("SIGHUP");
 
-   U_SRV_LOG("SIGHUP (Interrupt) - {address space usage: %u bytes/%uMB} {rss usage: %u bytes/%uMB}", vsz, vsz / (1024 * 1024), rss, rss / (1024 * 1024));
+      ULog::reopen();
+      }
+
+   if (isOtherLog()) reopenLog();
+
+   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+#endif
 
    pthis->handlerSignal(); // manage before regenering preforked pool of children...
 
    // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
-
-   // NB: for logrotate...
-
-   if (isLog())      ULog::reopen();
-   if (isOtherLog())       reopenLog();
 
    sendSigTERM();
 
@@ -1526,6 +1546,20 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 #endif
 
    if (isPreForked()) U_TOT_CONNECTION = 0;
+
+#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+   if (u_pthread_time)
+      {
+#  ifdef DEBUG
+      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+      ((UTimeThread*)u_pthread_time)->before.set(*u_now);
+#  endif
+      ((UTimeThread*)u_pthread_time)->watch_counter = 0;
+
+      ((UTimeThread*)u_pthread_time)->resume();
+      }
+#endif
 }
 
 RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
@@ -1534,15 +1568,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    flag_loop = false;
 
-   if (isLog())
-      {
-      uint32_t vsz, rss;
+   if (isLog()) logMemUsage("SIGTERM");
 
-      u_get_memusage(&rss, &vsz);
-
-      ULog::log("SIGTERM (Interrupt): address space usage: %.2f MBytes - rss usage: %.2f MBytes\n",
-                                 (double)vsz / (1024.0 * 1024.0), (double)rss / (1024.0 * 1024.0));
-      }
+   U_INTERNAL_ASSERT_POINTER(proc)
 
    if (proc->parent())
       {
@@ -1550,6 +1578,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
 
       sendSigTERM();
+
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+#  endif
       }
    else
       {
@@ -1557,18 +1589,15 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       (void) UDispatcher::exit(0);
 #  else
       UInterrupt::erase(SIGTERM); // async signal
+
+#     if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+      if (preforked_num_kids == -1) ((UThread*)UNotifier::pthread)->suspend();
+
+#     if defined(DEBUG) && defined(HAVE_SYS_SYSCALL_H)
+      if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
+#     endif
+#     endif
 #  endif
-
-      /*
-      if (isPreForked())
-         {
-         uint32_t num_conn = UNotifier::num_connection - UNotifier::min_connection - 1;
-
-         U_INTERNAL_DUMP("num_conn = %u", num_conn)
-
-         if (num_conn) U_TOT_CONNECTION -= num_conn;
-         }
-      */
 
       U_EXIT(0);
       }
@@ -1585,10 +1614,19 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 loop:
    U_INTERNAL_ASSERT_MINOR(pClientIndex, eClientImage)
 
-   U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (pClientIndex - vClientImage), pClientIndex->sfd)
-   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd  = %d",    (pClientIndex - vClientImage), pClientIndex->UEventFd::fd)
-   U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (pClientIndex - vClientImage), pClientIndex->socket->flags, pClientIndex->socket->flags)
-   U_INTERNAL_DUMP("vClientImage[%d].last_event    = %#3D",  (pClientIndex - vClientImage), pClientIndex->last_event)
+   U_INTERNAL_DUMP("----------------------------------------", 0)
+   U_INTERNAL_DUMP("vClientImage[%d].last_event    = %#3D",  (pClientIndex - vClientImage),
+                                                              pClientIndex->last_event)
+   U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (pClientIndex - vClientImage),
+                                                              pClientIndex->sfd)
+   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd  = %d",    (pClientIndex - vClientImage),
+                                                              pClientIndex->UEventFd::fd)
+   U_INTERNAL_DUMP("vClientImage[%u].socket        = %p",    (pClientIndex - vClientImage),
+                                                              pClientIndex->socket)
+   U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (pClientIndex - vClientImage),
+                                                              pClientIndex->socket->flags,
+                                                              pClientIndex->socket->flags)
+   U_INTERNAL_DUMP("----------------------------------------", 0)
 
    if (pClientIndex->UEventFd::fd)
       {
@@ -1604,7 +1642,7 @@ loop:
             {
             (void) handlerTimeoutConnection(0);
 
-            UNotifier::erase(pClientIndex);
+            UNotifier::erase((UEventFd*)pClientIndex);
 
             goto try_accept;
             }
@@ -1763,10 +1801,10 @@ retry:
 
    if (pClientIndex->newConnection()) // NB: newConnection() can return false only if fail about sending message welcome...
       {
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (UNotifier::pthread)
          {
-         UNotifier::insert(pClientIndex);
+         UNotifier::insert((UEventFd*)pClientIndex);
 
          U_RETURN(U_NOTIFIER_OK);
          }
@@ -1779,11 +1817,13 @@ retry:
          // ---------------------------------------------------------------------------------------------------------------------------
          // NB: for non-keepalive connection we have chance to drop small last part of large file while sending to a slow client...
          // ---------------------------------------------------------------------------------------------------------------------------
+         // struct linger lng = { 1, 0 };
+         //
          // if (pClientIndex->bclose != U_YES) (void)csocket->setSockOpt(SOL_SOCKET,SO_LINGER,(const void*)&lng,sizeof(struct linger)); //send RST-ECONNRESET
          // ---------------------------------------------------------------------------------------------------------------------------
 #     endif
 
-         UNotifier::insert(pClientIndex);
+         UNotifier::insert((UEventFd*)pClientIndex);
          }
       }
 
@@ -2135,6 +2175,18 @@ void UServer_Base::run()
                   }
 
                if (isPreForked() == false) pid_to_wait = pid;
+
+#           if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+               if (u_pthread_time)
+                  {
+#              ifdef DEBUG
+                  (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+                  ((UTimeThread*)u_pthread_time)->before.set(*u_now);
+#              endif
+                  ((UTimeThread*)u_pthread_time)->watch_counter = 0;
+                  }
+#           endif
                }
 
             if (proc->child())
@@ -2211,6 +2263,10 @@ void UServer_Base::run()
       {
       U_WARNING("Plugins stop FAILED...");
       }
+
+#ifdef DEBUG
+   pthis->deallocate();
+#endif
 }
 
 // it creates a copy of itself, return true if parent...
@@ -2244,12 +2300,7 @@ bool UServer_Base::parallelization()
          if (ULog::isMemoryMapped() &&
              ULog::isShared() == false)
             {
-            // NB: we need locking to write log...
-
-            log = 0;
-
-            delete pClientImage->logbuf;
-                   pClientImage->logbuf = 0;
+            log = 0; // NB: we need locking to write on the log...
             }
          }
       }
@@ -2313,8 +2364,11 @@ void UServer_Base::logCommandMsgError(const char* cmd, bool balways)
 
 const char* UServer_Base::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "port                      " << port                       << '\n'
                   << "iBackLog                  " << iBackLog                   << '\n'
+                  << "map_size                  " << map_size                   << '\n'
                   << "flag_loop                 " << flag_loop                  << '\n'
                   << "timeoutMS                 " << timeoutMS                  << '\n'
                   << "last_event                " << last_event                 << '\n'
@@ -2353,5 +2407,4 @@ const char* UServer_Base::dump(bool reset) const
 
    return 0;
 }
-
 #endif

@@ -516,6 +516,7 @@ do_cmd() {
 			/admin_status_network)
 				TMPFILE=/tmp/status_network.$$
 
+				# export UTRACE="0 5M"
 				$CLIENT_HTTP "http://$VIRTUAL_NAME/status_network?outfile=$TMPFILE.out" >/dev/null 2>>/tmp/CLIENT_HTTP.err
 
 				if [ $? -eq 0 ]; then

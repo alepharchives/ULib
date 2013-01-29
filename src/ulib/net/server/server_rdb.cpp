@@ -11,9 +11,67 @@
 //
 // ============================================================================
 
+#include <ulib/db/rdb.h>
+#include <ulib/net/rpc/rpc.h>
 #include <ulib/net/server/server_rdb.h>
+#include <ulib/net/server/client_image_rdb.h>
 
 URDB* URDBServer::rdb;
+
+URDBServer::URDBServer(UFileConfig* cfg, bool ignore_case) : UServer<UTCPSocket>(cfg)
+{
+   U_TRACE_REGISTER_OBJECT(0, URDBServer, "%p,%b", cfg, ignore_case)
+
+   rdb = U_NEW(URDB(ignore_case));
+
+   URPC::allocate();
+}
+
+URDBServer::~URDBServer()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, URDBServer)
+
+   delete rdb;
+   delete URPC::rpc_info;
+}
+
+// Open a reliable database
+
+bool URDBServer::open(const UString& pathdb, uint32_t log_size)
+{
+   U_TRACE(0, "URDBServer::open(%.*S,%u)", U_STRING_TO_TRACE(pathdb), log_size)
+
+   URDBClientImage::rdb = rdb;
+
+   bool result = rdb->open(pathdb, log_size);
+
+   U_RETURN(result);
+}
+
+// method VIRTUAL to redefine
+
+void URDBServer::preallocate()
+{
+   U_TRACE(0, "URDBServer::preallocate()")
+
+   if (UServer_Base::isPreForked())
+      {
+      U_INTERNAL_ASSERT_POINTER(U_LOCK_RDB_SERVER)
+
+      rdb->setShared(U_LOCK_RDB_SERVER);
+      }
+
+   UServer_Base::setClientImageOffset(U_NEW_VECTOR(UNotifier::max_connection, URDBClientImage));
+}
+
+void URDBServer::deallocate()
+{
+   U_TRACE(0, "URDBServer::deallocate()")
+
+   // NB: array are not pointers (virtual table can shift the address of this)...
+
+   u_delete_vector<URDBClientImage>((URDBClientImage*)UServer_Base::vClientImage, UServer_Base::oClientImage, UNotifier::max_connection);
+}
 
 // DEBUG
 
@@ -22,6 +80,8 @@ URDB* URDBServer::rdb;
 
 const char* URDBServer::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    UServer<UTCPSocket>::dump(false);
 
    *UObjectIO::os << '\n'
@@ -36,5 +96,4 @@ const char* URDBServer::dump(bool reset) const
 
    return 0;
 }
-
 #endif

@@ -1,20 +1,10 @@
-GET /images/btn_signin.png HTTP/1.1
-Host: wifi-aaa.comune.fi.it
-Accept-Encoding: gzip
-Accept-Language: it-IT, en-US
-x-wap-profile: http://wap.sonyericsson.com/UAprof/X10iR201.xml
-Accept-Charset: utf-8, iso-8859-1, utf-16, *;q=0.7
-Referer: http://wifi-aaa.comune.fi.it/login?mac=6c%3A23%3Ab9%3A8f%3Abc%3Aa5&ip=172.16.18.124&redirect=http%3A%2F%2Fm.facebook.com%2Fhome.php&gateway=172.16.18.254%3A5280&timeout=0&token=3091911094&ap=ap@10.8.0.18
-User-Agent: Mozilla/5.0 (Linux; U; Android 2.1-update1; it-it; X10i Build/2.0.A.0.504) AppleWebKit/530.17 (KHTML, like Gecko) Version/4.0 Mobile Safari/530.17 [FBAN/FB4A;FBAV/1.9.5;FBDM/{density=1.5,width=480,height=854};FBLC/it_IT;FB_FW/2;FBCR/3 ITA;FBPN/com.facebook.katana;FBDV/X10i;FBSV/2.1-update1;]
-Accept: text/xml, text/html, application/xhtml+xml, image/png, text/plain, */*;q=0.8
-Cache-Control: no-cache
-Pragma: no-cache
-
-GET /images/btn_login.png HTTP/1.1
-Host: wifi-aaa.comune.fi.it
-Accept-Encoding: gzip
-Accept-Language: it-IT, en-US
-x-wap-profile: http://wap.sonyericsson.com/UAprof/X10iR201.xml
-Accept-Charset: utf-8, iso-8859-1, utf-16, *;q=0.7
-Referer: http://wifi-aaa.comune.fi.it/login?mac=6c%3A23%3Ab9%3A8f%3Abc%3Aa5&ip=172.16.18.124&redirect=http%3A%2F%2Fm.facebook.com%2Fhome.php&gate
+GET /ajax/notifications/mark_read.php?seen=1&alert_ids%5B0%5D=49763164&alert_ids%5B1%5D=49762331&asyncSignal=7736&__user=1273353000&__a=1&fb_dtsg=AQATS-N6 HTTP/1.1
+Accept: */*
+Referer: http://www.facebook.com/
+Accept-Language: it-IT
+User-Agent: Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.1; Trident/4.0; SLCC2; .NET CLR 2.0.50727; .NET CLR 3.5.30729; .NET CLR 3.0.30729; Media Center PC 6.0; Tablet PC 2.0)
+Accept-Encoding: gzip, deflate
+Host: www.facebook.com
+Connection: Keep-Alive
+Cookie: datr=iFDYUM517r-7aXpj0qQSi0ci; c_user=1273353000; fr=0URTOvNumRSl4YMeP.AWV_8BAtsX_14smwcThsWaqEdZo.BQ2FDk.da.AWU3fh_p; lu=Rgn_cI8t2naRlP2BwS9XHRNw; xs=67%3ApS9IWN_prGmMVA%3A0%3A1356353764; sub=16; x-referer=http%3A%2F%2Fwww.facebook.com%2F%23%2F; p=62; presence=EM356354198EuserFA21273353BA2EstateFDsb2F0Et2F_5b_5dElm2FnullEuct2F1356353166002EtrFA2close_5fviewA2EtwF3730275828EatF1356354198046G356354198171CEchFDp_5f1273353BF2CC; wd=1259x839; act=1356354215550%2F18%3A2; _e_0wke_0=%5B%220wke%22%2C1356354067100%2C%22act%22%2C1356354067100%2C4%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22home_stream%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%22tn%22%3A%22%3E%3D%22%2C%22type%22%3A20%2C%22qid%22%3A%225825495064457641946%22%2C%22mf_story_key%22%3A%22536371140772038187%22%2C%22has_expanded_ufi%22%3A%221%22%7D%2C%22gt%22%3A%7B%22ref%22%3A%22nf%22%7D%7D%2C323%2C3247%2C0%2C981%2C16%5D; x-src=%2F%7Cpagelet_bluebar; _e_0wke_1=%5B%220wke%22%2C1356354183101%2C%22act%22%2C1356354183101%2C5%2C%22http%3A%2F%2Fwww.facebook.com%2Fmessages%2F1814892593%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1208%2C749%2C0%2C981%2C16%5D; _e_0wke_2=%5B%220wke%22%2C1356354191962%2C%22act%22%2C1356354191962%2C8%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1224%2C827%2C0%2C981%2C16%5D; _e_0wke_3=%5B%220wke%22%2C1356354195223%2C%22act%22%2C1356354195223%2C9%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1120%2C797%2C0%2C981%2C16%5D; _e_0wke_4=%5B%220wke%22%2C1356354202836%2C%22act%22%2C1356354202836%2C12%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1217%2C827%2C0%2C981%2C16%5D; _e_0wke_5=%5B%220wke%22%2C1356354205597%2C%22act%22%2C1356354205597%2C13%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1141%2C798%2C0%2C981%2C16%5D; _e_0wke_6=%5B%220wke%22%2C1356354210838%2C%22act%22%2C1356354210838%2C15%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1245%2C954%2C0%2C981%2C16%5D; _e_0wke_7=%5B%220wke%22%2C1356354211026%2C%22act%22%2C1356354211026%2C16%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22sidebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%7D%7D%2C1245%2C954%2C0%2C981%2C16%5D; _e_0wke_8=%5B%220wke%22%2C1356354215550%2C%22act%22%2C1356354215550%2C18%2C%22http%3A%2F%2Fwww.facebook.com%2F%23%22%2C%22click%22%2C%22click%22%2C%22bluebar%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%22ua_id%22%3A%22jewel%3Anotifications%22%7D%7D%2C302%2C139%2C0%2C981%2C16%5D; _e_0wke_9=%5B%220wke%22%2C1356354215581%2C%22act%22%2C1356354215581%2C19%2C%22-%22%2C%22jewel_click%22%2C%22-%22%2C%22-%22%2C%22r%22%2C%22%2F%22%2C%7B%22ft%22%3A%7B%7D%2C%22gt%22%3A%7B%22count%22%3A2%2C%22initial%22%3A%7B%22jewel%22%3A%22notifications%22%2C%22count%22%3A2%7D%2C%22jewel%22%3A%22notifications%22%7D%7D%2C0%2
 

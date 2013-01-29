@@ -276,6 +276,8 @@ void UModProxyService::setMsgError(int err, UVector<UString>& vmsg_error)
 
 const char* UModProxyService::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "port                                 " << port                       << '\n'
                   << "websocket                            " << websocket                  << '\n'
                   << "request_cert                         " << request_cert               << '\n'

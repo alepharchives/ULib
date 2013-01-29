@@ -14,6 +14,7 @@
 #ifndef ULIB_MEMORY_POOL_H
 #define ULIB_MEMORY_POOL_H 1
 
+#include <memory>
 #include <iostream>
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -264,106 +265,76 @@ struct U_EXPORT UMemoryPool {
 
 #if defined(DEBUG) || defined(U_TEST)
    static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
+#  ifdef DEBUG
+   static void printInfo(std::ostream& os);
+#  endif
 #endif
 
-// static uint32_t findStackIndex(uint32_t sz);
+   static void deallocate(void* ptr, uint32_t length);
+   static void      _free(void* ptr, uint32_t num, uint32_t type_size = 1);
 
-   // allocazione area di memoria <= U_MAX_SIZE_PREALLOCATE
-   // ritorna area di memoria preallocata su stack predefiniti
-   // (non garantito azzerata a meno di azzerare le deallocazioni...)
+   static void allocateMemoryBlocks(int stack_index, uint32_t n);
 
+   static void* _malloc(uint32_t   num, uint32_t type_size = 1, bool bzero = false);
+   static void* _malloc(uint32_t* pnum, uint32_t type_size = 1, bool bzero = false);
+
+   // -------------------------------------------------------------------
+   // NB: allocazione area di memoria <= U_MAX_SIZE_PREALLOCATE
+   //     ritorna area di memoria preallocata su stack predefiniti
+   //     (non garantito azzerata a meno di azzerare le deallocazioni...)
+   // -------------------------------------------------------------------
    static void* pop(            int stack_index);
    static void  push(void* ptr, int stack_index);
-
-   static void* _malloc(size_t sz);
-   static void _free(void* ptr, size_t sz);
-
-   // special for class UString
-
-   static void* _malloc_str(           size_t sz, uint32_t& capacity);
-   static void    _free_str(void* ptr, size_t sz);
-
-#ifdef U_OVERLOAD_NEW_DELETE
-   // funzioni allocazione e deallocazione sostitutive a new() e delete()
-
-   static void  _delete(void* ptr);
-   static void* _new(int stack_index);
-#endif
-
-#ifdef DEBUG
-   static void printInfo(std::ostream& os);
-#endif
+   // -------------------------------------------------------------------
 };
 
-#ifdef U_OVERLOAD_NEW_DELETE // A macro for requiring the use of our versions of the C++ operators.
+template <class T> T* u_new_vector(uint32_t& n)
+{
+   U_TRACE(0, "u_new_vector<T>(%u)", n)
 
-// The inlined new e delete operator (used by applications)
+#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+   T* _vec = new T[n];
+#else
+   T* _vec = (T*) UMemoryPool::_malloc(&n, sizeof(T));
 
-#include <new>
+   (void) new(_vec) T[n]; // NB: Initializers cannot be specified for arrays...
+#endif
 
-extern "C++" {
-   inline void* operator new(std::size_t sz) throw(std::bad_alloc)
-      {
-      U_TRACE(0, "::new(%lu)", sz)
-
-      U_INTERNAL_ASSERT_MAJOR(sz, 0)
-
-      void* ptr = (sz <= U_MAX_SIZE_PREALLOCATE
-                     ? UMemoryPool::_new(U_SIZE_TO_STACK_INDEX(sz + sizeof(int)))
-                     : U_SYSCALL(malloc, "%u", sz));
-
-      U_RETURN(ptr);
-      }
-
-   inline void* operator new(std::size_t sz, const std::nothrow_t& nothrow) throw()
-      {
-      U_TRACE(0, "::new(%lu,%p)", sz, &nothrow)
-
-      return ::operator new(sz);
-      }
-
-   inline void* operator new[](std::size_t sz) throw (std::bad_alloc)
-      {
-      U_TRACE(0, "::new[](%lu)", sz)
-
-      return ::operator new(sz);
-      }
-
-   inline void* operator new[](std::size_t sz, const std::nothrow_t& nothrow) throw()
-      {
-      U_TRACE(0, "::new[](%lu,%p)", sz, &nothrow)
-
-      return ::operator new(sz);
-      }
-
-   inline void operator delete(void* ptr) throw()
-      {
-      U_TRACE(0, "::delete(%p)", ptr)
-
-      UMemoryPool::_delete(ptr);
-      }
-
-   inline void operator delete(void* ptr, const std::nothrow_t& nothrow) throw()
-      {
-      U_TRACE(0, "::delete(%p,%p)", ptr, &nothrow)
-
-      UMemoryPool::_delete(ptr);
-      }
-
-   inline void operator delete[](void* ptr) throw()
-      {
-      U_TRACE(0, "::delete[](%p)", ptr)
-
-      UMemoryPool::_delete(ptr);
-      }
-
-   inline void operator delete[](void* ptr, const std::nothrow_t& nothrow) throw()
-      {
-      U_TRACE(0, "::delete[](%p,%p)", ptr, &nothrow)
-
-      UMemoryPool::_delete(ptr);
-      }
+   U_RETURN_POINTER(_vec, T);
 }
+
+template <class T> void u_delete_vector(T* _vec, uint32_t offset, uint32_t n)
+{
+   U_TRACE(0, "u_delete_vector<T>(%p,%u,%u)", _vec, offset, n)
+
+#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+   delete[] _vec;
+#else
+   for (uint32_t i = 0; i < n; ++i) _vec[i].~T();
+
+   UMemoryPool::_free((char*)_vec - offset, n, sizeof(T));
+#endif
+}
+
+#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#  define U_MEMORY_ALLOCATOR
+#  define U_MEMORY_DEALLOCATOR
+#  define U_MALLOC(  sz)               malloc(sz);
+#  define U_MALLOC_TYPE(  type) (type*)malloc(sizeof(type));
+#  define U_FREE(ptr,sz)               free(ptr);
+#  define U_FREE_TYPE(ptr,type)        free(ptr);
+#else
+#  define U_MEMORY_ALLOCATOR \
+ void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
+ void* operator new[](size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
+ void* operator new[](size_t sz, void* p) { return p; }
+#  define U_MEMORY_DEALLOCATOR \
+ void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
+ void  operator delete[](void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); }
+#  define U_MALLOC(  sz)               UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);
+#  define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);
+#  define U_FREE(ptr,sz)              {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);}
+#  define U_FREE_TYPE(ptr,type)       {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);}
 #endif
 
 #endif

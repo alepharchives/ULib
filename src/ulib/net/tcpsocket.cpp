@@ -75,7 +75,7 @@ void UTCPSocket::closesocket()
 
             if (count == 2 && USocket::isTimeout() == false) (void) UFile::setBlocking(iSockDesc, flags, true);
             }
-         while ((USocket::recv(getFd(), _buf, sizeof(_buf)) > 0) ||
+         while ((USocket::recv(getFd(), _buf, sizeof(_buf), 0) > 0) ||
                 (errno == EAGAIN && UNotifier::waitForRead(iSockDesc, 500) > 0));
          }
       }

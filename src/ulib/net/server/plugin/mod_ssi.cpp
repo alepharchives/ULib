@@ -349,12 +349,16 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
          *UClientImage_Base::body = U_HTTP_BODY(*UClientImage_Base::request);
          }
 
-      if (UHTTP::callService(value) == false ||
+      bool result = UHTTP::callService(value);
+
+#  ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+      UHTTP::file->getPath().clear();
+#  endif
+
+      if (result == false ||
           alternative_response)
          {
-         // 1 => response already complete (nothing to do)
-
-         alternative_response = 1;
+         alternative_response = 1; // 1 => response already complete (nothing to do)
 
          U_RETURN(false);
          }
@@ -530,17 +534,17 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
          i += U_CONSTANT_SIZE("set ");
          }
 
-      U_INTERNAL_DUMP("op = %d", op)
-
       n = token.size() - i;
+
+      U_INTERNAL_DUMP("op = %d n = %u", op, n)
+
+#  ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+       name.clear();
+      value.clear();
+#  endif
 
       if (n)
          {
-#     ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-          name.clear();
-         value.clear();
-#     endif
-
          name_value.clear();
 
          tmp = UStringExt::simplifyWhiteSpace(token.substr(i, n));
@@ -897,10 +901,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
             if (bvar == false)
                {
-               name  = name_value[0];
-               value = name_value[1];
+               name = name_value[0];
 
-               if (callService(name, value) == false) U_RETURN_STRING(UString::getStringNull());
+               if (callService(name, name_value[1]) == false) U_RETURN_STRING(UString::getStringNull());
 
                if (name != *str_servlet)
                   {

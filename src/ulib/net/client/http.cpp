@@ -237,7 +237,6 @@ UHttpClient_Base::UHttpClient_Base(UFileConfig* cfg) : UClient_Base(cfg)
    requestHeader    = U_NEW(UMimeHeader);
    responseHeader   = U_NEW(UMimeHeader);
    nResponseCode    = 0;
-   bSaveHttpInfo    = false;
    bFollowRedirects = true;
 
    if (str_www_authenticate == 0) str_allocate();
@@ -255,11 +254,11 @@ void UHttpClient_Base::reset()
 {
    U_TRACE(0, "UHttpClient_Base::reset()")
 
-    requestHeader->clear();
-   responseHeader->clear();
-
      body.clear();
    method.clear();
+
+    requestHeader->clear();
+   responseHeader->clear();
 
    UClient_Base::reset();
    UClient_Base::server.clear();
@@ -563,9 +562,12 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
             U_RETURN(2); // no redirection, read body
             }
 
-         // Combine the new location with our URL
-
+#     ifdef DEBUG
+         uri.clear();             // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri can be a substr of url)
          newLocation.duplicate(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#     endif
+
+         // Combine the new location with our URL
 
          if (UClient_Base::setUrl(newLocation) == false &&
              U_http_is_connection_close        != U_YES)
@@ -577,40 +579,14 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
          }
       }
 
-   U_RETURN(2); // indicates an success, no redirects, ok to read body
-}
-
-void UHttpClient_Base::composeRequest(UString& data, uint32_t& startHeader)
-{
-   U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%u)", U_STRING_TO_TRACE(data), startHeader)
-
-   U_INTERNAL_ASSERT(UClient_Base::uri)
-
-   UHTTP::setInfo(method, UClient_Base::uri);
-
-   UString extension = U_STRING_FROM_CONSTANT("\r\n");
-
-   if (requestHeader->empty() == false)
-      {
-      UString headers = requestHeader->getHeaders();
-
-      extension.insert(0, headers);
-
-      requestHeader->clear();
-      }
-
-   UClient_Base::request.clear();
-
-   UClient_Base::wrapRequestWithHTTP(extension.c_str());
-
-   data = UClient_Base::request;
-
-   startHeader = data.find(U_CRLF, 0, 2) + 2;
+   U_RETURN(2); // indicates success, no redirects, ok to read body
 }
 
 bool UHttpClient_Base::connectServer(const UString& _url)
 {
    U_TRACE(0, "UHttpClient_Base::connectServer(%.*S)", U_STRING_TO_TRACE(_url))
+
+   UClient_Base::uri.clear();
 
    if (UClient_Base::setUrl(_url))
       {
@@ -647,181 +623,276 @@ bool UHttpClient_Base::connectServer(const UString& _url)
 // We do not process Location headers when accompanying a 200 OK response.
 //=============================================================================
 
-bool UHttpClient_Base::sendRequest(UString& data)
+bool UHttpClient_Base::sendRequest(const UString& req)
 {
-   U_TRACE(0, "UHttpClient_Base::sendRequest(%.*S)", U_STRING_TO_TRACE(data))
+   U_TRACE(0, "UHttpClient_Base::sendRequest(%.*S)", U_STRING_TO_TRACE(req))
 
-   bool esito = true;
+   U_INTERNAL_ASSERT(req)
+
+   uint32_t startHeader = req.find(U_CRLF, 0, 2) + 2;
+
+   U_INTERNAL_ASSERT_RANGE(11, startHeader, 8192)
+
+   const char* ptr = req.data();
+
+   struct iovec iov[3] = { { (caddr_t)ptr,                        startHeader },
+                           { 0, 0 },
+                           { (caddr_t)ptr+startHeader, req.size()-startHeader } };
+
+   bool result = sendRequest(iov, 3);
+
+   U_RETURN(result);
+}
+
+bool UHttpClient_Base::sendRequest(struct iovec* iov, int iovcnt)
+{
+   U_TRACE(0, "UHttpClient_Base::sendRequest(%p,%d)", iov, iovcnt)
+
+   const char* ptr;
    uint32_t startHeader;
-   int result = -1, redirectCount = 0, send_count = 0;
+   UString req, headers;
+   struct uhttpinfo u_http_info_save;
+   int result = -1, redirectCount = 0, sendCount = 0;
+   bool esito = true, bSaveHttpInfo = UHTTP::isValidRequest();
 
-   if (bSaveHttpInfo) U_HTTP_INFO_SAVE;
+   if (bSaveHttpInfo) u_http_info_save = u_http_info;
 
-   // check if we need to compose the request to the HTTP server...
-
-   if (data.empty())
+   if (iov)
       {
-      method = U_STRING_FROM_CONSTANT("GET");
+      // NB: we check if there is already a parsing of the HTTP request made by UClient_Base::setUrl()...
 
-      composeRequest(data, startHeader);
+      U_INTERNAL_DUMP("UClient_Base::uri = %.*S", U_STRING_TO_TRACE(UClient_Base::uri))
+
+      if (UClient_Base::uri.empty())
+         {
+         if (UHTTP::scanfHeader((const char*)iov[0].iov_base, iov[0].iov_len) == false) U_RETURN(false);
+
+         (void)            method.assign(U_HTTP_METHOD_TO_PARAM);
+         (void) UClient_Base::uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
+         }
       }
    else
       {
-      UHTTP::getInfo(data, method, UClient_Base::uri);
+      // we need to compose the request to the HTTP server...
 
-      startHeader = u_http_info.startHeader;
+      static struct iovec _iov[3];
+
+      method = U_STRING_FROM_CONSTANT("GET");
+compose:
+      req = UClient_Base::wrapRequestWithHTTP(0, U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
+
+      startHeader = req.find(U_CRLF, 0, 2) + 2;
+
+      U_INTERNAL_ASSERT_RANGE(11, startHeader, 8192)
+
+      iov    = _iov;
+      iovcnt = 3;
+
+      ptr = req.data();
+
+      iov[0].iov_base = (caddr_t)ptr;
+      iov[0].iov_len  = startHeader;
+      iov[1].iov_base = 0;
+      iov[1].iov_len  = 0;
+      iov[2].iov_base = (caddr_t)ptr + startHeader;
+      iov[2].iov_len  = req.size()   - startHeader;
       }
 
-   U_INTERNAL_DUMP("startHeader = %u", startHeader)
-
-   U_INTERNAL_ASSERT_RANGE(11, startHeader, U_NOT_FOUND)
-
-   while (true)
+loop:
+   if (result == 0 || // redirects the client to another URL with another socket
+       result == 1)   // you can use the same socket connection for the redirect
       {
-      if (result == 0 || // redirects the client to another URL with another socket
-          result == 1)   // you can use the same socket connection for the redirect
-         {
-         composeRequest(data, startHeader);
-         }
-      else
-         {
-         UClient_Base::request = data;
+      result = -1;
 
-         // check if there are some headers (Ex. Authentication) to insert in the request...
-
-         if (requestHeader->empty() == false)
-            {
-            UString headers = requestHeader->getHeaders();
-
-            (void) UClient_Base::request.insert(startHeader, headers);
-            }
-         }
-
-                 body.clear();
-      responseHeader->clear();
-
-      UClient_Base::response.setEmpty();
-
-      // write the request to the HTTP server and
-      // read the response header of the HTTP server
-
-      result = (UClient_Base::sendRequest(true) &&
-                responseHeader->readHeader(socket, UClient_Base::response)
-                     ? checkResponse(redirectCount)
-                     : -1);
-
-      if (result ==  1) continue; // redirection, use the same socket connection...
-      if (result == -2) goto end; // pass HTTP_UNAUTHORISED response to the HTTP client...
-      if (result ==  2)           // no redirection, read body...
-         {
-         U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
-
-         u_http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
-
-         if ((u_http_info.clength == 0                                 &&
-              (U_http_chunked = responseHeader->isChunked()) == false) ||
-              UHTTP::readBody(socket, &response, body))
-            {
-            goto end;
-            }
-
-         if (u_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
-             u_http_info.nResponseCode == HTTP_ENTITY_TOO_LARGE)
-            {
-            break;
-            }
-         }
-
-      if (result < 0        &&
-          (++send_count > 5 ||
-           UClient_Base::socket->isConnected() == false))
-         {
-         break; // NB: same error or may be we are in a loop...
-         }
-
-      UClient_Base::socket->close();
+      goto compose;
       }
 
-   esito = false;
+   // check if there are some headers (Ex. Authentication) to insert in the request...
+
+   if (requestHeader->empty() == false)
+      {
+      headers = requestHeader->getHeaders();
+
+      iov[1].iov_base = (caddr_t)headers.data();
+      iov[1].iov_len  =          headers.size();
+      }
+
+              body.clear();
+   responseHeader->clear();
+
+   UClient_Base::response.setEmpty();
+
+   // write the request to the HTTP server and
+   // read the response header of the HTTP server
+
+   result = (UClient_Base::sendRequest(iov, iovcnt, true) &&
+             responseHeader->readHeader(socket, UClient_Base::response)
+                  ? checkResponse(redirectCount)
+                  : -1);
+
+   if (result ==  1) goto loop; // redirection, use the same socket connection...
+   if (result == -2) goto end;  // pass HTTP_UNAUTHORISED response to the HTTP client...
+   if (result ==  2)            // no redirection, read body...
+      {
+      U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
+
+      u_http_info.clength = responseHeader->getHeader(*USocket::str_content_length).strtol();
+
+      if ((u_http_info.clength == 0                                 &&
+           (U_http_chunked = responseHeader->isChunked()) == false) ||
+           UHTTP::readBody(socket, &response, body))
+         {
+         goto end;
+         }
+
+      if (u_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
+          u_http_info.nResponseCode == HTTP_ENTITY_TOO_LARGE)
+         {
+         esito = false;
+
+         goto end;
+         }
+      }
+
+   if (result < 0       &&
+       (++sendCount > 5 ||
+        UClient_Base::socket->isConnected() == false))
+      {
+      // NB: same error or may be we are in a loop...
+
+      esito = false;
+
+      goto end;
+      }
+
+   UClient_Base::socket->close();
+
+   goto loop;
 
 end:
    nResponseCode = u_http_info.nResponseCode;
 
-   if (bSaveHttpInfo) U_HTTP_INFO_RESTORE;
+   if (bSaveHttpInfo) u_http_info = u_http_info_save;
+   else               U_HTTP_INFO_INIT(0);
 
    U_RETURN(esito);
 }
 
-#define U_HTTP_POST_REQUEST \
-"POST %.*s HTTP/1.1\r\n" \
-"Host: %.*s:%d\r\n" \
-"User-Agent: ULib/1.0\r\n" \
-"Content-Length: %d\r\n" \
-"Content-Type: %s\r\n" \
-"\r\n" \
-"%.*s"
-
-bool UHttpClient_Base::sendPost(const UString& _url, const UString& pbody, const char* content_type)
+bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const char* content_type)
 {
-   U_TRACE(0, "UHttpClient_Base::sendPost(%.*S,%.*S,%S)", U_STRING_TO_TRACE(_url), U_STRING_TO_TRACE(pbody), content_type)
+   U_TRACE(0, "UHttpClient_Base::sendPost(%.*S,%.*S,%S)", U_STRING_TO_TRACE(_url), U_STRING_TO_TRACE(_body), content_type)
 
-   bool ok = connectServer(_url);
-
-   U_HTTP_INFO_INIT(0);
-
-   if (ok == false) body = UClient_Base::response;
-   else
+   if (connectServer(_url) == false)
       {
-      UString path(UClient_Base::url.getPath()),
-              post(path.size() + UClient_Base::server.size() + pbody.size() + 300U);
+      body = UClient_Base::response;
 
-      post.snprintf(U_HTTP_POST_REQUEST, U_STRING_TO_TRACE(path),
-                                         U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
-                                         pbody.size(),
-                                         content_type,
-                                         U_STRING_TO_TRACE(pbody));
-
-      // send request to server and get response
-
-      ok = sendRequest(post);
+      U_RETURN(false);
       }
 
-   U_RETURN(ok);
-}
+   U_INTERNAL_ASSERT(UClient_Base::uri)
 
-#define U_HTTP_UPLOAD_REQUEST_BODY \
-"------------------------------b34551106891\r\n" \
-"Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n" \
-"Content-Type: %s\r\n" \
-"\r\n" \
-"%.*s" \
-"\r\n" \
-"------------------------------b34551106891--\r\n"
+   uint32_t sz = _body.size();
+   UString post(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
+
+   post.snprintf("POST %.*s HTTP/1.1\r\n"
+                 "Host: %.*s:%d\r\n"
+                 "User-Agent: ULib/1.0\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: %s\r\n"
+                 "\r\n",
+                 U_STRING_TO_TRACE(UClient_Base::uri),
+                 U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
+                 sz,
+                 content_type);
+
+   // send request to server and get response
+
+   uint32_t startHeader = post.find(U_CRLF, 0, 2) + 2;
+
+   U_INTERNAL_ASSERT_RANGE(11, startHeader, 8192)
+
+   const char* ptr = post.data();
+
+   struct iovec iov[4] = { { (caddr_t)ptr,                         startHeader },
+                           { 0, 0 },
+                           { (caddr_t)ptr+startHeader, post.size()-startHeader },
+                           { (caddr_t)_body.data(), sz } };
+
+   method = U_STRING_FROM_CONSTANT("POST");
+
+   if (sendRequest(iov, 4)) U_RETURN(true);
+
+   U_RETURN(false);
+}
 
 bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 {
    U_TRACE(0, "UHttpClient_Base::upload(%.*S,%.*S)", U_STRING_TO_TRACE(_url), U_FILE_TO_TRACE(file))
 
+   if (connectServer(_url) == false)
+      {
+      body = UClient_Base::response;
+
+      U_RETURN(false);
+      }
+
    UString content = file.getContent();
 
    if (content.empty()) U_RETURN(false);
 
-   UString pbody(content.size() + 800U);
+   U_INTERNAL_ASSERT(UClient_Base::uri)
 
 #ifdef USE_LIBMAGIC
    if (UMagic::magic == 0) (void) UMagic::init();
 #endif
 
-   pbody.snprintf(U_HTTP_UPLOAD_REQUEST_BODY,
-                     U_FILE_TO_TRACE(file),
-                     file.getMimeType(false),
-                     U_STRING_TO_TRACE(content));
+   uint32_t sz = content.size();
+   UString _body(file.getPathRelativLen() + 300U),
+           post(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
+
+   _body.snprintf("------------------------------b34551106891\r\n"
+                  "Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n"
+                  "Content-Type: %s\r\n"
+                  "\r\n",
+                  U_FILE_TO_TRACE(file),
+                  file.getMimeType(false));
+
+   struct iovec iov[6] = { { 0, 0 },
+                           { 0, 0 },
+                           { 0, 0 },
+                           { (caddr_t)_body.data(), _body.size() },
+                           { (caddr_t)content.data(), sz },
+                           { (caddr_t) U_CONSTANT_TO_PARAM("\r\n"
+                                                           "------------------------------b34551106891--\r\n") } };
+
+   post.snprintf("POST %.*s HTTP/1.1\r\n"
+                 "Host: %.*s:%d\r\n"
+                 "User-Agent: ULib/1.0\r\n"
+                 "Content-Length: %d\r\n"
+                 "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
+                 "\r\n",
+                 U_STRING_TO_TRACE(UClient_Base::uri),
+                 U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
+                 _body.size() + sz + iov[5].iov_len);
 
    // send upload request to server and get response
 
-   bool ok = sendPost(_url, pbody, "multipart/form-data; boundary=----------------------------b34551106891");
+   uint32_t startHeader = post.find(U_CRLF, 0, 2) + 2;
 
-   U_RETURN(ok);
+   U_INTERNAL_ASSERT_RANGE(11, startHeader, 8192)
+
+   const char* ptr = post.data();
+
+   iov[0].iov_base = (caddr_t)ptr;
+   iov[0].iov_len  =          startHeader;
+   iov[2].iov_base = (caddr_t)ptr+startHeader;
+   iov[2].iov_len  =          post.size()-startHeader;
+
+   method = U_STRING_FROM_CONSTANT("POST");
+
+   if (sendRequest(iov, 6)) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 // DEBUG
@@ -831,19 +902,21 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 
 const char* UHttpClient_Base::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UClient_Base::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "bproxy                              " << bproxy                  << '\n'
-                  << "bSaveHttpInfo                       " << bSaveHttpInfo           << '\n'
-                  << "nResponseCode                       " << nResponseCode           << '\n'
-                  << "bFollowRedirects                    " << bFollowRedirects        << '\n'
-                  << "body           (UString             " << (void*)&body            << ")\n"
-                  << "user           (UString             " << (void*)&user            << ")\n"
-                  << "method         (UString             " << (void*)&method          << ")\n"
-                  << "password       (UString             " << (void*)&password        << ")\n"
-                  << "requestHeader  (UMimeHeader         " << (void*)requestHeader    << ")\n"
-                  << "responseHeader (UMimeHeader         " << (void*)responseHeader   << ')';
+                  << "bproxy                              " << bproxy                << '\n'
+                  << "nResponseCode                       " << nResponseCode         << '\n'
+                  << "bFollowRedirects                    " << bFollowRedirects      << '\n'
+                  << "body           (UString             " << (void*)&body          << ")\n"
+                  << "user           (UString             " << (void*)&user          << ")\n"
+                  << "method         (UString             " << (void*)&method        << ")\n"
+                  << "password       (UString             " << (void*)&password      << ")\n"
+                  << "setcookie      (UString             " << (void*)&setcookie     << ")\n"
+                  << "requestHeader  (UMimeHeader         " << (void*)requestHeader  << ")\n"
+                  << "responseHeader (UMimeHeader         " << (void*)responseHeader << ')';
 
    if (_reset)
       {

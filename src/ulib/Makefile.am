@@ -25,7 +25,7 @@ SRC_CPP = internal/common.cpp internal/objectIO.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
 			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
 			 utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp \
-			 utility/data_session.cpp utility/ring_buffer.cpp utility/websocket.cpp \
+			 utility/data_session.cpp utility/ring_buffer.cpp utility/websocket.cpp utility/dir_walk.cpp \
 			 lemon/expression.cpp \
 			 net/ipaddress.cpp net/socket.cpp net/ping.cpp net/tcpsocket.cpp \
 			 net/server/server.cpp net/server/client_image.cpp \

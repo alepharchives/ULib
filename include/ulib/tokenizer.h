@@ -73,7 +73,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%.*S,%S", U_STRING_TO_TRACE(data), d)
 
       s     = data.data();
-      end   = s + data.size();
+      end   = data.end();
       delim = d;
       }
 
@@ -143,7 +143,7 @@ public:
       {
       U_TRACE(0, "UTokenizer::getDistance()")
 
-      uint32_t pos = str.distance(s);
+      uint32_t pos = (s < end ? str.distance(s) : str.size());
 
       U_RETURN(pos);
       }

@@ -72,6 +72,7 @@
 #include "utility/uhttp.cpp"
 #include "utility/base64.cpp"
 #include "utility/hexdump.cpp"
+#include "utility/dir_walk.cpp"
 #include "utility/interrupt.cpp"
 #include "utility/compress.cpp"
 #include "utility/services.cpp"

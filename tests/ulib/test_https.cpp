@@ -9,14 +9,14 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   UString x, url(argv[1], strlen(argv[1])); 
+   UString url(argv[1], strlen(argv[1])); 
 
    UHttpClient<USSLSocket> http(0);
    http.setRequestPasswordAuthentication(U_STRING_FROM_CONSTANT("Aladdin"),
                                          U_STRING_FROM_CONSTANT("open sesame"));
 
    if (http.connectServer(url) &&
-       http.sendRequest(x))
+       http.sendRequest(0,0))
       {
       UString content = http.getContent();
 

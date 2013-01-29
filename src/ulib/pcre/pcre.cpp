@@ -178,8 +178,8 @@ void UPCRE::clear()
 
    if (sub_vec)
       {
-      U_FREE_N(sub_vec, sub_len, int);
-               sub_vec = 0;
+      UMemoryPool::_free(sub_vec, sub_len, sizeof(int));
+                         sub_vec = 0;
       }
 
    if (stringlist)
@@ -279,8 +279,8 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
    reset();
 
-   if (sub_vec)  U_FREE_N(sub_vec, sub_len, int);
-       sub_vec = U_MALLOC_N(       sub_len, int);
+   if (sub_vec)         UMemoryPool::_free(sub_vec,      sub_len, sizeof(int));
+       sub_vec = (int*) UMemoryPool::_malloc((uint32_t*)&sub_len, sizeof(int));
 
    if (stuff_len == 0) stuff_len = u__strlen(stuff);
 
@@ -661,6 +661,8 @@ bool UPCRE::isValidURL(const UString& url)
 
 const char* UPCRE::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "p_pcre                        " << (void*)p_pcre       << '\n'
                   << "_flags                        " << _flags              << '\n'
                   << "sub_len                       " << sub_len             << '\n'
@@ -683,5 +685,4 @@ const char* UPCRE::dump(bool _reset) const
 
    return 0;
 }
-
 #endif

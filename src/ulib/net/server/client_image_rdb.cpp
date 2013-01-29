@@ -45,7 +45,12 @@ int URDBClientImage::handlerRead()
 
    if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
 
-   if (UClientImage_Base::logbuf) UClientImage_Base::logRequest();
+   if (UServer_Base::isLog())
+      {
+      U_INTERNAL_ASSERT_POINTER(UClientImage_Base::logbuf)
+
+      UClientImage_Base::logRequest();
+      }
 
    // check for RPC request
 
@@ -215,6 +220,8 @@ int URDBClientImage::handlerRead()
 
 const char* URDBClientImage::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    UClientImage<UTCPSocket>::dump(false);
 
    *UObjectIO::os << '\n'
@@ -229,5 +236,4 @@ const char* URDBClientImage::dump(bool _reset) const
 
    return 0;
 }
-
 #endif

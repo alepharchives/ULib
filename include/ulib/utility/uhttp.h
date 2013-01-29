@@ -46,6 +46,7 @@ class UFile;
 class UEventFd;
 class UCommand;
 class UPageSpeed;
+class UHttpPlugIn;
 class UMimeMultipart;
 
 template <class T> class UHashMap;
@@ -85,98 +86,7 @@ public:
    static void ctor();
    static void dtor();
 
-   static void setMethod(const char* method, uint32_t method_len)
-      {
-      U_TRACE(0, "UHTTP::setMethod(%.*S,%u)", method_len, method, method_len)
-
-      U_http_method_len  = method_len;
-      u_http_info.method = method;
-
-      U_INTERNAL_DUMP("method = %.*S", U_HTTP_METHOD_TO_TRACE)
-      }
-
-   static void setMethodType(char c)
-      {
-      U_TRACE(0, "UHTTP::setMethodType(%C)", c)
-
-      if (c == 'G') // GET
-         {
-         U_http_method_type = HTTP_GET;
-
-         U_INTERNAL_ASSERT_EQUALS(U_http_method_len, 3)
-         U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "GET"))
-         }
-      else if (c == 'P') // POST
-         {
-         U_http_method_type = HTTP_POST;
-
-         U_INTERNAL_ASSERT_EQUALS(U_http_method_len, 4)
-         U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "POST"))
-         }
-      else // HEAD
-         {
-         U_http_method_type = HTTP_HEAD;
-
-         U_INTERNAL_ASSERT_EQUALS(U_http_method_len, 4)
-         U_INTERNAL_ASSERT(U_STRNEQ(u_http_info.method, "HEAD"))
-         }
-
-      U_INTERNAL_DUMP("method_type = %C", U_http_method_type)
-      }
-
-   static UString getMethod()
-      {
-      U_TRACE(0, "UHTTP::getMethod()")
-
-      if (U_http_method_len)
-         {
-         UString method((void*)u_http_info.method, U_http_method_len);
-
-         U_RETURN_STRING(method);
-         }
-
-      U_RETURN_STRING(UString::getStringNull());
-      }
-
-   static void setUri(const char* uri, uint32_t uri_len)
-      {
-      U_TRACE(0, "UHTTP::setUri(%.*S,%u)", uri_len, uri, uri_len)
-
-      U_INTERNAL_ASSERT_POINTER(uri)
-      U_INTERNAL_ASSERT_EQUALS(uri[0],'/')
-
-      u_http_info.uri     = uri;
-      u_http_info.uri_len = uri_len;
-
-      U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
-      }
-
-   static void setQuery(const char* query, uint32_t query_len)
-      {
-      U_TRACE(0, "UHTTP::setQuery(%.*S,%u)", query_len, query, query_len)
-
-      u_http_info.query     = query;
-      u_http_info.query_len = query_len;
-
-      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
-      }
-
-   static void setInfo(const char* method, uint32_t method_len, const char* uri, uint32_t uri_len)
-      {
-      U_TRACE(0, "UHTTP::setInfo(%.*S,%u,%.*S,%u)", method_len, method, method_len, uri_len, uri, uri_len)
-
-      U_HTTP_INFO_INIT(0);
-
-      setMethod(     method, method_len);
-      setMethodType(*method);
-      setUri(           uri,    uri_len);
-      setQuery(           0,          0);
-      }
-
-   static void setInfo(                  const UString& method, const UString& uri) { setInfo(U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(uri)); }
-   static void getInfo(const UString& request, UString& method,       UString& uri);
-
-   static bool isValidRequest(const char* ptr) __pure;
+   static int  isValidRequest(const char* ptr) __pure;
    static bool scanfHeader(const char* ptr, uint32_t size);
 
    static const char* getStatus();
@@ -255,14 +165,13 @@ public:
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
 
-   static bool isValidRequest() { return (U_http_method_type); }
+   static bool isValidRequest() { return (U_http_method_type != 0); }
 
    // SERVICES
 
    static UString* uri;
    static UString* alias;
    static UString* cbuffer;
-   static UStringRep* pkey;
    static UString* pathname;
    static UString* request_uri;
    static UString* global_alias;
@@ -278,7 +187,7 @@ public:
    static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
-   static bool manageRequest();
+   static int  manageRequest();
    static void writeApacheLikeLog();
    static void processGetRequest();
    static bool callService(const UString& path);
@@ -299,7 +208,7 @@ public:
 
       if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
 
-      u_http_info.method = 0; // NB: this mark the end of http request processing...
+      U_http_method_len = 0; // NB: this mark the end of http request processing...
       }
 
    static const char* getHeaderValuePtr(                        const UString& name, bool nocase) __pure;
@@ -755,7 +664,7 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UCServletPage)
 
-      if (relocated) UMemoryPool::_free(relocated, size);
+      if (relocated) UMemoryPool::_free(relocated, size, 1);
       }
 
    bool compile(const UString& program);
@@ -1000,6 +909,11 @@ public:
 private:
    static UString getHTMLDirectoryList() U_NO_EXPORT;
 
+#ifdef DEBUG
+   static bool cache_file_check_memory();
+   static void check_memory(UStringRep* key, void* value) U_NO_EXPORT;
+#endif
+
 #ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
    static bool   initUploadProgress(int byte_read) U_NO_EXPORT;
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
@@ -1041,6 +955,8 @@ private:
 
    UHTTP(const UHTTP&)            {}
    UHTTP& operator=(const UHTTP&) { return *this; }
+
+   friend class UHttpPlugIn;
 };
 
 #endif

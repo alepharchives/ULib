@@ -33,6 +33,14 @@ UApplication::~UApplication()
 
 #ifdef DEBUG
    for (int i = 0; i < u_fns_index; ++i) { U_INTERNAL_DUMP("u_fns[%2u] = %p", i, u_fns[i]) }
+
+#  ifdef USE_LIBSSL
+   if (UServices::CApath) 
+      {
+      delete UServices::CApath;
+             UServices::CApath = 0;
+      }
+#  endif
 #endif
 }
 
@@ -43,6 +51,8 @@ UApplication::~UApplication()
 
 const char* UApplication::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "num_args                       " << num_args    << '\n'
                   << "exit_value                     " << exit_value  << '\n'
                   << "is_options                     " << is_options  << '\n'

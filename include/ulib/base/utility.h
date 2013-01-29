@@ -267,7 +267,7 @@ U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
 
 /* Get address space and rss (resident set size) usage */
 
-U_EXPORT void u_get_memusage(uint32_t* vsz, uint32_t* rss);
+U_EXPORT void u_get_memusage(unsigned long* vsz, unsigned long* rss);
 
 /* Get the number of the processors including offline CPUs */
 

@@ -73,11 +73,10 @@ bPFpcupcud u_pfn_match = u_dosmatch_with_OR;
 int              u_num_cpu       = -1;
 const char*      u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 struct uhttpinfo u_http_info;
-struct uhttpinfo u_http_info_save;
 
 bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
 {
-   U_INTERNAL_TRACE("u_is_overlap(%p,%p,%ld)", dst, src, n)
+   U_INTERNAL_TRACE("u_is_overlap(%p,%p,%lu)", dst, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
 
@@ -110,7 +109,7 @@ char* u__strcpy(char* restrict dest, const char* restrict src)
 {
    size_t n = u__strlen(src);
 
-   U_INTERNAL_TRACE("u__strcpy(%p,%p,%ld)", dest, src, n)
+   U_INTERNAL_TRACE("u__strcpy(%p,%p,%lu)", dest, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -124,7 +123,7 @@ char* u__strcpy(char* restrict dest, const char* restrict src)
 
 char* u__strncpy(char* restrict dest, const char* restrict src, size_t n)
 {
-   U_INTERNAL_TRACE("u__strncpy(%p,%p,%ld)", dest, src, n)
+   U_INTERNAL_TRACE("u__strncpy(%p,%p,%lu)", dest, src, n)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -138,7 +137,7 @@ char* u__strncpy(char* restrict dest, const char* restrict src, size_t n)
 
 void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const char* called_by_function)
 {
-   U_INTERNAL_TRACE("u__memcpy(%p,%p,%ld,%s)", dst, src, n, called_by_function)
+   U_INTERNAL_TRACE("u__memcpy(%p,%p,%lu,%s)", dst, src, n, called_by_function)
 
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_POINTER(src)
@@ -938,7 +937,7 @@ bool u_switch_to_realtime_priority(pid_t pid)
    return result;
 }
 
-void u_get_memusage(uint32_t* vsz, uint32_t* rss)
+void u_get_memusage(unsigned long* vsz, unsigned long* rss)
 {
    FILE* fp = fopen("/proc/self/stat", "r");
 
@@ -946,7 +945,39 @@ void u_get_memusage(uint32_t* vsz, uint32_t* rss)
 
    if (fp)
       {
-      (void) fscanf(fp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %u %u", vsz, rss);
+      /* The fields, in order, with their proper scanf(3) format specifiers, are:
+       * -----------------------------------------------------------------------------------------------------------------------------
+       * pid %d          The process ID.
+       * comm %s         The filename of the executable, in parentheses.  This is visible whether or not the executable is swapped out.
+       * state %c        R is running, S is sleeping, D is waiting, Z is zombie, T is traced or stopped (on a signal), and W is paging.
+       * ppid %d         The PID of the parent.
+       * pgrp %d         The process group ID of the process.
+       * session %d      The session ID of the process.
+       * tty_nr %d       The controlling terminal of the process.
+       * tpgid %d        The ID of the foreground process group of the controlling terminal of the process.
+       * flags %u        The kernel flags word of the process.
+       * minflt %lu      The number of minor faults the process has made which have not required loading a memory page from disk.
+       * cminflt %lu     The number of minor faults that the process's waited-for children have made.
+       * majflt %lu      The number of major faults the process has made which have required loading a memory page from disk.
+       * cmajflt %lu     The number of major faults that the process's waited-for children have made.
+       * utime %lu       Amount of time that this process has been scheduled in   user mode, measured in clock ticks.
+       * stime %lu       Amount of time that this process has been scheduled in kernel mode, measured in clock ticks.
+       * cutime %ld      Amount of time that this process's waited-for children have been scheduled in   user mode, measured in clock ticks.
+       * cstime %ld      Amount of time that this process's waited-for children have been scheduled in kernel mode, measured in clock ticks.
+       * priority %ld    For processes running a real-time scheduling policy , this is the negated scheduling priority, minus one. 
+       * nice %ld        The nice value (see setpriority(2)), a value in the range 19 (low priority) to -20 (high priority).
+       * num_threads %ld Number of threads in this process.
+       * itrealvalue %ld The time in jiffies before the next SIGALRM is sent to the process due to an interval timer.
+       * starttime %llu  The time in jiffies the process started after system boot.
+       * -----------------------------------------------------------------------------------------------------------------------------
+       * vsize %lu Virtual memory size in bytes.
+       * rss %ld   Resident Set Size: number of pages the process has in real memory.
+       *           This is just the pages which count toward text, data, or stack space.
+       *           This does not include pages which have not been demand-loaded in, or which are swapped out.
+       * -----------------------------------------------------------------------------------------------------------------------------
+       */
+
+      (void) fscanf(fp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %lu %ld", vsz, rss);
 
       (void) fclose(fp);
 

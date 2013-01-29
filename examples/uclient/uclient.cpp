@@ -26,8 +26,6 @@ public:
       {
       U_TRACE(5, "Application::~Application()")
 
-      result.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-
       delete client;
       }
 
@@ -104,13 +102,13 @@ public:
          if (client->upload(url, file)) UApplication::exit_value = 0;
          }
       else if (client->connectServer(url) &&
-               client->sendRequest(result))
+               client->sendRequest(0,0))
          {
          UApplication::exit_value = 0;
          }
 
-      result = (include ? client->getResponse()
-                        : client->getContent());
+      UString result = (include ? client->getResponse()
+                                : client->getContent());
 
       if (result.empty() == false) std::cout.write(U_STRING_TO_PARAM(result));
       }
@@ -118,7 +116,7 @@ public:
 private:
    UHttpClient<USSLSocket>* client;
    UFileConfig cfg;
-   UString cfg_str, upload, user, password, result;
+   UString cfg_str, upload, user, password;
    bool follow_redirects;
 };
 

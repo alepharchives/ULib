@@ -334,6 +334,7 @@ int UHttpPlugIn::handlerRun()
    U_TRACE(0, "UHttpPlugIn::handlerRun()")
 
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
+   U_ASSERT(UHTTP::cache_file_check_memory())
 
    // NB: we use this method because now we have the shared data allocated by UServer...
 
@@ -363,49 +364,19 @@ int UHttpPlugIn::handlerREAD()
 {
    U_TRACE(0, "UHttpPlugIn::handlerREAD()")
 
-   int result;
+   int result = UHTTP::manageRequest();
 
-#ifdef U_HTTP_CACHE_REQUEST
-   U_INTERNAL_DUMP("cbuffer(%u) = %.*S",             UHTTP::cbuffer->size(), U_STRING_TO_TRACE(*UHTTP::cbuffer))
-   U_INTERNAL_DUMP("rbuffer(%u) = %.*S", UClientImage_Base::rbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::rbuffer))
-
-   if (UHTTP::cbuffer->isNull() == false)
+   if (result == U_PLUGIN_HANDLER_FINISHED)
       {
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      // NB: we check if we can shortcut the http request processing (only in the context of U_PLUGIN_HANDLER_FINISHED)...
 
-      U_INTERNAL_DUMP("expire        = %ld", UServer_Base::expire)
-      U_INTERNAL_DUMP("u_now->tv_sec = %ld", u_now->tv_sec)
+      UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off       == false &&
+                                              UHTTP::isRequestAlreadyProcessed() == false);
 
-      if (UServer_Base::expire >= u_now->tv_sec)
-         {
-         result = UHTTP::checkRequestCache();
+      U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
 
-         if (result != U_PLUGIN_HANDLER_FINISHED)
-            {
-            if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
-
-            U_RETURN(result);
-            }
-         }
-
-      UHTTP::clearRequestCache();
+      if (UServer_Base::bpluginsHandlerRequest == false) result = handlerRequest();
       }
-
-   if (UClientImage_Base::isPipeline() == false) UClientImage_Base::initAfterGenericRead();
-#endif
-
-   if (UHTTP::manageRequest() == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-
-   // NB: we check if we can shortcut the http request processing (only in the context of U_PLUGIN_HANDLER_FINISHED)...
-
-   UServer_Base::bpluginsHandlerRequest = (UClientImage_Base::write_off       == false &&
-                                           UHTTP::isRequestAlreadyProcessed() == false);
-
-   U_INTERNAL_DUMP("UServer_Base::bpluginsHandlerRequest = %b", UServer_Base::bpluginsHandlerRequest)
-
-   if (UServer_Base::bpluginsHandlerRequest) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-
-   result = handlerRequest();
 
    U_RETURN(result);
 }

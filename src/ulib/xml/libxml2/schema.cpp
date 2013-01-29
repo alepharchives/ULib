@@ -97,6 +97,8 @@ bool UXML2Schema::validate(UXML2Document& doc)
 
 const char* UXML2Schema::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "ctxt  " << (void*)ctxt << '\n'
                   << "impl_ " << (void*)impl_;
 
@@ -109,5 +111,4 @@ const char* UXML2Schema::dump(bool reset) const
 
    return 0;
 }
-
 #endif

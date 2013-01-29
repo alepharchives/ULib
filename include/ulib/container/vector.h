@@ -46,11 +46,10 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MINOR(n, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
+      U_INTERNAL_ASSERT_RANGE(1, n, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
 
-      // NB: we need the check for UTree management...
-
-      if ((_capacity = n)) vec = U_MALLOC_VECTOR(n, void);
+      vec       = (void**) UMemoryPool::_malloc(&n, sizeof(void*));
+      _capacity = n;
       }
 
    void deallocate()
@@ -59,11 +58,9 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MINOR(_capacity, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
+      U_INTERNAL_ASSERT_RANGE(1, _capacity, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
 
-      // NB: we need the check for UTree management...
-
-      if (_capacity) U_FREE_VECTOR(vec, _capacity, void);
+      UMemoryPool::_free(vec, _capacity, sizeof(void*));
       }
 
    // Costruttori e distruttore
@@ -380,7 +377,7 @@ protected:
    void** vec;
    uint32_t _length, _capacity;
 #ifdef U_RING_BUFFER
-   volatile uint32_t tail; // input index
+   volatile uint32_t tail; //  input index
    volatile uint32_t head; // output index
 #endif
 
@@ -391,6 +388,26 @@ private:
 
 template <class T> class U_EXPORT UVector<T*> : public UVector<void*> {
 public:
+
+#ifdef DEBUG
+   bool check_memory() // check all element
+      {
+      U_TRACE(0, "UVector<T*>::check_memory()")
+
+      U_CHECK_MEMORY
+
+      T* elem;
+
+      for (uint32_t i = 0; i < _length; ++i)
+         {
+         elem = at(i);
+
+         U_CHECK_MEMORY_CLASS(*(const UMemoryError*)elem);
+         }
+
+      U_RETURN(true);
+      }
+#endif
 
    void clear() // erase all element
       {
@@ -885,8 +902,8 @@ public:
    void push(     UStringRep* rep)               { UVector<UStringRep*>::push(rep); }
    void push_back(UStringRep* rep)               { UVector<UStringRep*>::push(rep); }
 
-   void push(     const char* str, uint32_t len) { push(UStringRep::create(str, len, 0)); }
-   void push_back(const char* str, uint32_t len) { push(UStringRep::create(str, len, 0)); }
+   void push(     const char* str, uint32_t len) { push(U_NEW(UStringRep(str, len))); }
+   void push_back(const char* str, uint32_t len) { push(U_NEW(UStringRep(str, len))); }
 
    void push(     const UString& str);
    void push_back(const UString& str) { push(str); } // add to end

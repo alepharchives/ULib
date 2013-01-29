@@ -550,6 +550,8 @@ bool UDBI::fetch(UDBISet& rset)
 
 const char* UDBI::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "conn                   " << (void*)conn           << '\n'
                   << "complete               " << complete              << '\n'
                   << "pos_read               " << pos_read              << '\n'  
@@ -571,6 +573,8 @@ const char* UDBI::dump(bool reset) const
 
 const char* UDBIRow::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "res     " << (void*)res << '\n'
                   << "owner   " << owner      << '\n'
                   << "current " << current;
@@ -587,6 +591,8 @@ const char* UDBIRow::dump(bool reset) const
 
 const char* UDBISet::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "res " << (void*)res;
 
    if (reset)
@@ -601,6 +607,8 @@ const char* UDBISet::dump(bool reset) const
 
 const char* UDBITransaction::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "commited " << commited;
 
    if (reset)

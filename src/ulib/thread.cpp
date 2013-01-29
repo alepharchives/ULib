@@ -50,7 +50,7 @@ public:
       _suspendCount  = 0;
       _suspendEnable = suspendEnable;
 
-      (void) U_SYSCALL(pthread_attr_init, "%p", &_attr);
+      (void) U_SYSCALL(pthread_attr_init,           "%p",    &_attr);
       (void) U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &_attr, (joinEnable ? PTHREAD_CREATE_JOINABLE : PTHREAD_CREATE_DETACHED));
       }
 
@@ -544,6 +544,8 @@ void UThread::sleep(time_t timeoutMS)
 
 const char* UThreadImpl::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "_tid           " << _tid           << '\n'
                   << "_cancel        " << _cancel        << '\n'
                   << "_signal        " << _signal        << '\n'
@@ -562,6 +564,8 @@ const char* UThreadImpl::dump(bool reset) const
 
 const char* UThread::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "next  (UThread " << (void*)next  << ")\n"
                   << "first (UThread " << (void*)first << ')';
 
@@ -574,5 +578,4 @@ const char* UThread::dump(bool reset) const
 
    return 0;
 }
-
 #endif

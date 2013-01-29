@@ -23,7 +23,7 @@ public:
 
    // Costruttori e distruttore
 
-   UTree(void* __elem = 0, void* __parent = 0, uint32_t n = 0) : UVector<void*>(n)
+   UTree(void* __elem = 0, void* __parent = 0, uint32_t n = 1) : UVector<void*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<void*>, "%p,%p,%u", __elem, __parent, n)
 
@@ -226,7 +226,7 @@ public:
 
    // Costruttori e distruttore
 
-   UTree(T* __elem = 0, T* __parent = 0, uint32_t n = 0) : UTree<void*>(__elem, __parent, n)
+   UTree(T* __elem = 0, T* __parent = 0, uint32_t n = 1) : UTree<void*>(__elem, __parent, n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<T*>, "%p,%p,%u", __elem, __parent, n)
       }

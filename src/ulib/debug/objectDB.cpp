@@ -260,24 +260,27 @@ U_NO_EXPORT uint32_t     UHashMapObjectDumpable::table_size;
 UHashMapObjectDumpable*  UHashMapObjectDumpable::node;
 UHashMapObjectDumpable** UHashMapObjectDumpable::table;
 
-U_EXPORT    int      UObjectDB::fd;
-U_EXPORT    int      UObjectDB::level_active;
-U_EXPORT    bool     UObjectDB::flag_new_object;
-U_EXPORT    bool     UObjectDB::flag_ulib_object;
+U_EXPORT    int         UObjectDB::fd;
+U_EXPORT    int         UObjectDB::level_active;
+U_EXPORT    bool        UObjectDB::flag_new_object;
+U_EXPORT    bool        UObjectDB::flag_ulib_object;
 
-U_NO_EXPORT char*    UObjectDB::file_ptr;
-U_NO_EXPORT char*    UObjectDB::file_mem;
-U_NO_EXPORT char*    UObjectDB::file_limit;
-U_NO_EXPORT uint32_t UObjectDB::file_size;
+U_NO_EXPORT char*       UObjectDB::file_ptr;
+U_NO_EXPORT char*       UObjectDB::file_mem;
+U_NO_EXPORT char*       UObjectDB::file_limit;
+U_NO_EXPORT uint32_t    UObjectDB::file_size;
 
-U_NO_EXPORT char     UObjectDB::buffer1[64];
-U_NO_EXPORT char     UObjectDB::buffer2[256];
+U_NO_EXPORT char        UObjectDB::buffer1[64];
+U_NO_EXPORT char        UObjectDB::buffer2[256];
 
-U_NO_EXPORT char*    UObjectDB::lbuf;
-U_NO_EXPORT char*    UObjectDB::lend;
-U_NO_EXPORT bPFpcpv  UObjectDB::checkObject;
+U_NO_EXPORT char*       UObjectDB::lbuf;
+U_NO_EXPORT char*       UObjectDB::lend;
+U_NO_EXPORT bPFpcpv     UObjectDB::checkObject;
 
-U_NO_EXPORT iovec    UObjectDB::liov[7] = {
+U_NO_EXPORT const char* UObjectDB::_name_class;
+U_NO_EXPORT const void* UObjectDB::_ptr_object;
+
+U_NO_EXPORT iovec       UObjectDB::liov[7] = {
    { 0, 0 },
    { (caddr_t) UObjectDB::buffer1, 0 },
    { (caddr_t) UObjectDB::buffer2, 0 },
@@ -483,6 +486,14 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
 
 // dump single object...
 
+U_NO_EXPORT bool __pure UObjectDB::checkIfObject(const char* name_class, const void* ptr_object)
+{
+   U_INTERNAL_TRACE("UObjectDB::checkIfObject(%S,%p)", name_class, ptr_object)
+
+   if (ptr_object == _ptr_object) return true;
+                                  return false;
+}
+
 U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
 {
    U_INTERNAL_TRACE("UObjectDB::printObjLive(%p)", dumper)
@@ -516,6 +527,26 @@ uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, bPFpcpv check
    UHashMapObjectDumpable::callForAllEntry(UObjectDB::printObjLive);
 
    U_INTERNAL_ASSERT(lbuf >= buffer)
+   U_INTERNAL_ASSERT_MINOR(lbuf, lend)
+
+   uint32_t result = (lbuf - buffer);
+
+   return result;
+}
+
+uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, const void* ptr_object)
+{
+   U_INTERNAL_TRACE("UObjectDB::dumpObject(%p,%u,%p)", buffer, buffer_size, ptr_object)
+
+   lbuf        = buffer;
+   lend        = buffer + buffer_size;
+   _ptr_object = ptr_object;
+   checkObject = UObjectDB::checkIfObject;
+
+   UHashMapObjectDumpable::callForAllEntry(UObjectDB::printObjLive);
+
+   U_INTERNAL_ASSERT(lbuf >= buffer)
+   U_INTERNAL_ASSERT_MINOR(lbuf, lend)
 
    uint32_t result = (lbuf - buffer);
 

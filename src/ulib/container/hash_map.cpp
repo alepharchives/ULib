@@ -14,8 +14,9 @@
 #include <ulib/container/vector.h>
 #include <ulib/container/hash_map.h>
 
-bool   UHashMap<void*>::stop_call_for_all_entry;
-uPFpcu UHashMap<void*>::gperf;
+bool        UHashMap<void*>::stop_call_for_all_entry;
+uPFpcu      UHashMap<void*>::gperf;
+UStringRep* UHashMap<void*>::pkey;
 
 void UHashMap<void*>::lookup(UStringRep* keyr)
 {
@@ -234,7 +235,7 @@ void UHashMap<void*>::reserve(uint32_t n)
          }
       }
 
-   U_FREE_VECTOR(old_table, old_capacity, UHashMapNode);
+   UMemoryPool::_free(old_table, old_capacity, sizeof(UHashMapNode*));
 
    U_INTERNAL_DUMP("OLD: collision(min,max) = (%3d,%3d) - distribution = %3f", min, max, (double)_length / (double)sum)
 
@@ -458,6 +459,54 @@ UString UHashMap<UString>::at(UStringRep* _key)
    U_RETURN_STRING(UString::getStringNull());
 }
 
+UString UHashMap<UString>::at(const char* _key, uint32_t keylen)
+{
+   U_TRACE(0, "UHashMap<UString>::at(%.*S,%u)", keylen, _key, keylen)
+
+   U_INTERNAL_ASSERT_POINTER(pkey)
+
+   pkey->str     = _key;
+   pkey->_length = keylen;
+
+   return at(pkey);
+}
+
+void* UHashMap<void*>::operator[](const char* _key)
+{
+   U_TRACE(0, "UHashMap<void*>::operator[](%S)", _key)
+
+   U_INTERNAL_ASSERT_POINTER(pkey)
+
+   pkey->str     =           _key;
+   pkey->_length = u__strlen(_key);
+
+   return at(pkey);
+}
+
+UString UHashMap<UString>::operator[](const char* _key)
+{
+   U_TRACE(0, "UHashMap<UString>::operator[](%S)", _key)
+
+   U_INTERNAL_ASSERT_POINTER(pkey)
+
+   pkey->str     =           _key;
+   pkey->_length = u__strlen(_key);
+
+   return at(pkey);
+}
+
+void* UHashMap<void*>::erase(const char* _key)
+{
+   U_TRACE(0, "UHashMap<void*>::erase(%S)", _key)
+
+   U_INTERNAL_ASSERT_POINTER(pkey)
+
+   pkey->str     =           _key;
+   pkey->_length = u__strlen(_key);
+
+   return erase(pkey);
+}
+
 // storage session
 
 UHashMap<UString>* UHashMap<UString>::fromStream(istream& is)
@@ -610,6 +659,8 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
 const char* UHashMapNode::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "elem               " << elem        << '\n'
                   << "hash               " << hash        << '\n'
                   << "key  (UStringRep   " << (void*)key  << ")\n"
@@ -627,6 +678,8 @@ const char* UHashMapNode::dump(bool reset) const
 
 const char* UHashMap<void*>::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "hash               " << hash         << '\n'
                   << "index              " << index        << '\n'
                   << "table              " << (void*)table << '\n'

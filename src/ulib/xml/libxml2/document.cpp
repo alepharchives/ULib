@@ -392,6 +392,8 @@ char* UXML2Document::convString(const char* string, const char* in_charset, cons
 
 const char* UXML2Document::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "impl_ " << (void*)impl_;
 
    if (reset)
@@ -403,5 +405,4 @@ const char* UXML2Document::dump(bool reset) const
 
    return 0;
 }
-
 #endif

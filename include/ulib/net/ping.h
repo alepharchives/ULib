@@ -165,9 +165,9 @@ protected:
    int recvArpPing();
 #endif
 
-   static bool bmmap;
    static UProcess* proc;
    static fd_set* addrmask;
+   static uint32_t map_size;
 
    void pingAsync(uint32_t nfd, UIPAddress* paddr, vPF unatexit, const char* device);
 

@@ -440,6 +440,8 @@ int UFtpClient::download(const UString& path, off_t offset)
 
 const char* UFtpClient::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    Socket::dump(false);
 
    *UObjectIO::os << '\n'

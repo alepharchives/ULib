@@ -18,6 +18,7 @@
 #include <ulib/utility/lock.h>
 
 class ULog;
+class UBackupThread;
 
 typedef void (*vPFpf)(const ULog*);
 
@@ -33,7 +34,8 @@ public:
    static ULog* pthis;
    static ULock* lock;
    static const char* fmt;
-   static char* file_limit;
+   static char* LOG_FILE_SZ;
+   static uint32_t map_size;
    static const char* prefix;
    static const char* dir_log_gz;
    static log_data* ptr_log_data;
@@ -70,7 +72,7 @@ public:
 
       if (pthis            &&
           bsyslog == false &&
-          file_limit == 0)
+          LOG_FILE_SZ == 0)
          {
          pthis->UFile::reopen(O_CREAT | O_RDWR | O_APPEND);
          }
@@ -95,11 +97,12 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(pthis)
 
-      bool result = (file_limit != 0);
+      bool result = (LOG_FILE_SZ != 0);
 
       U_RETURN(result);
       }
 
+   static void msync(); // flushes changes made to memory mapped log file back to disk
    static void startup();
    static void setShared(log_data* ptr);
 
@@ -118,10 +121,6 @@ public:
 
    static void logger(const char* ident, int priority, const char* format, ...); // (buffer write == 4096)
 
-   // flushes changes made to memory mapped log file back to disk
-
-   static void msync();
-
 #ifdef DEBUG
    const char* dump(bool reset) const;
 #endif
@@ -130,7 +129,14 @@ protected:
    bool open(uint32_t size, mode_t mode = 0664);
 
 #ifdef USE_LIBZ
-   static void backup(); // if overwrite log file compress it with gzip...
+   static void* pthread;
+   static uint32_t path_compress;
+   static UString* buffer_path_compress;
+
+   // if overwrite log file compress it as gzip...
+
+   static void backup();
+   static void backup_write(UString& pathfile, UString& data);
 
    static RETSIGTYPE handlerSIGUSR1(int signo) // manage signal SIGUSR1
       {
@@ -145,6 +151,8 @@ private:
 
    ULog(const ULog&) : UFile()  {}
    ULog& operator=(const ULog&) { return *this; }
+
+   friend class UBackupThread;
 };
 
 #endif

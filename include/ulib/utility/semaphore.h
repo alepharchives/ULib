@@ -166,7 +166,8 @@ protected:
    pthread_mutex_t     mutex;
    pthread_mutexattr_t mutex_attr;
 #  endif
-   bool bmmap, broken;
+   uint32_t map_size;
+   bool broken;
 #endif
 
    static USemaphore* first;

@@ -179,6 +179,8 @@ UString URPCObject::processMessage(URPCEnvelope& envelope, bool& bContainsFault)
 
 const char* URPCObject::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "dispatcher (URPCObject           " << (void*)dispatcher  << ")\n"
                   << "methodList (UVector<URPCMethod*> " << (void*)&methodList << ')';
 

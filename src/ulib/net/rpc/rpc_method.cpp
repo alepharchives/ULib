@@ -51,6 +51,8 @@ URPCMethod::URPCMethod()
 
 const char* URPCMethod::dump(bool reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "pFault      (URPCFault   " << (void*)pFault        << ")\n"
                   << "encoder     (URPCEncoder " << (void*)encoder       << ")\n"
                   << "ns          (UString     " << (void*)&ns           << ")\n"

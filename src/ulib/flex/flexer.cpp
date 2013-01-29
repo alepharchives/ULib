@@ -33,6 +33,8 @@ void UFlexer::test()
 
 const char* UFlexer::dump(bool _reset) const
 {
+   U_CHECK_MEMORY
+
    *UObjectIO::os << "parsed_chars         " << parsed_chars   << '\n'
                   << "write_position       " << write_position << '\n'
                   << "data        (UString " << (void*)&data   << ')';

@@ -54,7 +54,7 @@ public:
 
 protected:
    UCommand fw;
-   char flag[8];
+   unsigned char flag[8];
    UString ip, mac, token, user, ifname, label, gateway;
    uint64_t traffic_done, traffic_available, traffic_remain;
    time_t connected, expire, logout, ctime, time_no_traffic, time_remain;
@@ -69,14 +69,14 @@ private:
    friend class UNoCatPlugIn;
 };
 
-#define U_peer_status(peer)        (peer)->UModNoCatPeer::flag[0]
-#define U_peer_allowed(peer)       (peer)->UModNoCatPeer::flag[1]
-#define U_peer_index_AUTH(peer)    (peer)->UModNoCatPeer::flag[2]
-#define U_peer_policy_flat(peer)   (peer)->UModNoCatPeer::flag[3]
-#define U_peer_index_device(peer)  (peer)->UModNoCatPeer::flag[4]
-#define U_peer_index_network(peer) (peer)->UModNoCatPeer::flag[5]
-#define U_peer_unused1             (peer)->UModNoCatPeer::flag[6]
-#define U_peer_unused2             (peer)->UModNoCatPeer::flag[7]
+#define U_peer_status(peer)              (peer)->UModNoCatPeer::flag[0]
+#define U_peer_allowed(peer)             (peer)->UModNoCatPeer::flag[1]
+#define U_peer_index_AUTH(peer)          (peer)->UModNoCatPeer::flag[2]
+#define U_peer_policy_flat(peer)         (peer)->UModNoCatPeer::flag[3]
+#define U_peer_index_device(peer)        (peer)->UModNoCatPeer::flag[4]
+#define U_peer_index_network(peer)       (peer)->UModNoCatPeer::flag[5]
+#define U_peer_max_time_no_traffic(peer) (peer)->UModNoCatPeer::flag[6]
+#define U_peer_unused1                   (peer)->UModNoCatPeer::flag[7]
 
 // NB: sizeof(UModNoCatPeer) 32bit == 196 (=> U_STACK_TYPE_4)
 // NB: sizeof(UModNoCatPeer) 64bit == 304 (not optimized)
@@ -129,6 +129,7 @@ public:
    static const UString* str_without_mac;
    static const UString* str_without_label;
    static const UString* str_allowed_members_default;
+   static const UString* str_NoTraffic;
 
    static const UString* str_UserDownloadRate;
    static const UString* str_UserUploadRate;
@@ -175,6 +176,7 @@ protected:
    static UString* host;
    static UString* input;
    static UString* label;
+   static UString* ifname;
    static UString* fw_cmd;
    static UString* extdev;
    static UString* intdev;

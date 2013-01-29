@@ -46,45 +46,24 @@
 //typedef struct timespec  __gthread_time_t;
 #endif
 
-// Manage memory pool
-
 #include <cstdlib>
+#include <ulib/internal/macro.h>
 #include <ulib/internal/memory_pool.h>
 
-#define U_MEMORY_ALLOCATOR \
-   void* operator new(  size_t sz)  { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
-   void* operator new[](size_t sz)  { return UMemoryPool::_malloc(sz); }
-#define U_MEMORY_DEALLOCATOR \
-   void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push(_ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
-   void  operator delete[](void* _ptr, size_t sz) { UMemoryPool::_free(_ptr, sz); }
-
-#define U_MALLOC(  sz)               UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);
-#define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);
-#define U_FREE(ptr,sz)              {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);}
-#define U_FREE_TYPE(ptr,type)       {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);}
-
-#define U_MALLOC_N(  n,type)      (type*)         UMemoryPool::_malloc(  (n) * sizeof(type))
-#define U_CALLOC_N(  n,type)      (type*)  memset(UMemoryPool::_malloc(  (n) * sizeof(type)),  0, (n) * sizeof(type))
-#define U_FREE_N(ptr,n,type)                      UMemoryPool::_free(ptr,(n) * sizeof(type))
-
-#define U_MALLOC_VECTOR(  n,type) (type**)        UMemoryPool::_malloc(  (n) * sizeof(void*))
-#define U_CALLOC_VECTOR(  n,type) (type**) memset(UMemoryPool::_malloc(  (n) * sizeof(void*)), 0, (n) * sizeof(void*))
-#define U_FREE_VECTOR(ptr,n,type)                 UMemoryPool::_free(ptr,(n) * sizeof(void*))
-
-/* in this way we don't capture the event 'dead of source string with child alive'...
-#define U_SUBSTR_INC_REF
-*/
-
-// for gcc compiler strict aliasing problem...
-
+// -------------------------------------------
+// for gcc compiler strict aliasing behaviour
+// -------------------------------------------
 class UStringRep;
 
 union uustringrep {
    ustringrep* p1;
    UStringRep* p2;
 };
+// -------------------------------------------
 
-#include <ulib/internal/macro.h>
+/* NB: in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
+#define U_SUBSTR_INC_REF
+*/
 
 USING(std) // Common C++
 
