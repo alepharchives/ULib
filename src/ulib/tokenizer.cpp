@@ -540,8 +540,6 @@ end:
 
 const char* UTokenizer::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "s                           " << (void*)s   << '\n'
                   << "end                         " << (void*)end << '\n'
                   << "group                       ";

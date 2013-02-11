@@ -34,56 +34,6 @@ int UServices::getDevNull(const char* file) /* return open(/dev/null) */
    U_RETURN(fd_stderr);
 }
 
-bool UServices::setFtw(const UString* dir, const char* filter, uint32_t filter_len)
-{
-   U_TRACE(0, "UServices::setFtw(%p,%.*S,%u)", dir, filter_len, filter, filter_len)
-
-   u_ftw_ctx.depth = true;
-
-   if (dir) u_buffer_len = dir->size();
-
-   if (u_buffer_len == 0)
-      {
-      u_buffer[0]  = '.';
-      u_buffer_len = 1;
-      }
-   else
-      {
-      const char* ptr = dir->c_str();
-
-      U_INTERNAL_DUMP("dir      = %S", ptr)
-
-      ptr = u_getPathRelativ(ptr, &u_buffer_len);
-
-      U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
-
-      if (UFile::access(ptr) == false)
-         {
-         u_buffer_len = 0;
-
-         U_RETURN(false);
-         }
-
-      U__MEMCPY(u_buffer, ptr, u_buffer_len);
-      }
-
-   u_buffer[u_buffer_len] = '\0';
-
-   u_ftw_ctx.filter     = filter;
-   u_ftw_ctx.filter_len = filter_len;
-
-   if (filter_len)
-      {
-      u_pfn_flags = 0;
-      u_pfn_match = u_dosmatch_with_OR;
-      }
-
-   U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
-   U_INTERNAL_DUMP("u_buffer = %S", u_buffer)
-
-   U_RETURN(true);
-}
-
 /* UID handling: are we setuid-root...? */
 
 bool UServices::isSetuidRoot()

@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/cache.h>
+#include <ulib/utility/dir_walk.h>
 #include <ulib/utility/string_ext.h>
 
 #define U_NO_TTL (uint32_t)-1
@@ -92,13 +93,14 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
    if (_y.stat() &&
        _x.creat(O_RDWR))
       {
+      UDirWalk dirwalk;
       bool exist = true;
-      UVector<UString> vec1, vec2;
       uint32_t i, n, size = 0, hsize;
+      UVector<UString> vec1(256), vec2;
 
       if (( _x.size() == 0                          ||
            (_x.fstat(), _x.st_mtime < _y.st_mtime)) &&
-          (n = _y.listContentOf(vec1, 0, 0)))
+          (n = dirwalk.walk(vec1)))
          {
          exist = false;
 
@@ -361,10 +363,11 @@ void UCache::loadContentOf(const UString& dir, const char* filter, uint32_t filt
 {
    U_TRACE(1, "UCache::loadContentOf(%.*S,%.*S,%u)", U_STRING_TO_TRACE(dir), filter_len, filter, filter_len)
 
-   UVector<UString> vec;
    UString item, content;
+   UVector<UString> vec(128);
+   UDirWalk dirwalk(&dir, filter, filter_len);
 
-   for (uint32_t i = 0, n = UFile::listContentOf(vec, &dir, filter, filter_len); i < n; ++i)
+   for (uint32_t i = 0, n = dirwalk.walk(vec); i < n; ++i)
       {
       item    = vec[i];
       content = UFile::contentOf(item);
@@ -487,8 +490,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UCache& c)
 
 const char* UCache::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "x      " << (void*)x       << '\n'
                   << "fd     " << fd             << '\n'
                   << "ttl    " << ttl            << '\n'

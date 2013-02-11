@@ -36,6 +36,8 @@ const UString* UHttpPlugIn::str_URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK;
 const UString* UHttpPlugIn::str_SESSION_COOKIE_OPTION;
 const UString* UHttpPlugIn::str_MAINTENANCE_MODE;
 const UString* UHttpPlugIn::str_APACHE_LIKE_LOG;
+const UString* UHttpPlugIn::str_USP_AUTOMATIC_ALIASING;
+const UString* UHttpPlugIn::str_CACHE_FILE_STORE;
 
 void UHttpPlugIn::str_allocate()
 {
@@ -55,6 +57,8 @@ void UHttpPlugIn::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_SESSION_COOKIE_OPTION,0)
    U_INTERNAL_ASSERT_EQUALS(str_MAINTENANCE_MODE,0)
    U_INTERNAL_ASSERT_EQUALS(str_APACHE_LIKE_LOG,0)
+   U_INTERNAL_ASSERT_EQUALS(str_USP_AUTOMATIC_ALIASING,0)
+   U_INTERNAL_ASSERT_EQUALS(str_CACHE_FILE_STORE,0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_MASK") },
@@ -70,7 +74,9 @@ void UHttpPlugIn::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK") },
       { U_STRINGREP_FROM_CONSTANT("SESSION_COOKIE_OPTION") },
       { U_STRINGREP_FROM_CONSTANT("MAINTENANCE_MODE") },
-      { U_STRINGREP_FROM_CONSTANT("APACHE_LIKE_LOG") }
+      { U_STRINGREP_FROM_CONSTANT("APACHE_LIKE_LOG") },
+      { U_STRINGREP_FROM_CONSTANT("USP_AUTOMATIC_ALIASING") },
+      { U_STRINGREP_FROM_CONSTANT("CACHE_FILE_STORE") }
    };
 
    U_NEW_ULIB_OBJECT(str_CACHE_FILE_MASK,                            U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -87,6 +93,8 @@ void UHttpPlugIn::str_allocate()
    U_NEW_ULIB_OBJECT(str_SESSION_COOKIE_OPTION,                      U_STRING_FROM_STRINGREP_STORAGE(11));
    U_NEW_ULIB_OBJECT(str_MAINTENANCE_MODE,                           U_STRING_FROM_STRINGREP_STORAGE(12));
    U_NEW_ULIB_OBJECT(str_APACHE_LIKE_LOG,                            U_STRING_FROM_STRINGREP_STORAGE(13));
+   U_NEW_ULIB_OBJECT(str_USP_AUTOMATIC_ALIASING,                     U_STRING_FROM_STRINGREP_STORAGE(14));
+   U_NEW_ULIB_OBJECT(str_CACHE_FILE_STORE,                           U_STRING_FROM_STRINGREP_STORAGE(15));
 }
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -125,6 +133,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ------------------------------------------------------------------------------------------------------------------------------------------------
    // ALIAS                        vector of URI redirection (request -> alias)
    // REWRITE_RULE_NF              vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
+   // USP_AUTOMATIC_ALIASING       USP page that is recognized automatically as alias of all uri request without suffix
    //
    // MAINTENANCE_MODE             to switch the site to a maintenance page only
    //
@@ -133,6 +142,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // ENABLE_INOTIFY               enable automatic update of document root image with inotify
    // TELNET_ENABLE                accept fragmentation of header request (as happen with telnet)
    // CACHE_FILE_MASK              mask (DOS regexp) of pathfile that be cached in memory
+   // CACHE_FILE_STORE             pathfile of memory cache stored on filesystem
    //
    // MIN_SIZE_FOR_SENDFILE        for major size it is better to use sendfile() to serve static content
    //
@@ -198,6 +208,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cookie_option,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_mask,0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::cache_file_store,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_protected_mask,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::uri_request_cert_mask,0)
       U_INTERNAL_ASSERT_EQUALS(UHTTP::maintenance_mode_page,0)
@@ -244,6 +255,15 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          UHTTP::cache_file_mask = U_NEW(UString(x));
          }
 
+      x = cfg[*str_CACHE_FILE_STORE];
+
+      if (x.empty() == false)
+         {
+         if (x.someWhiteSpace()) x = UStringExt::removeWhiteSpace(x);
+
+         UHTTP::cache_file_store = U_NEW(UString(x));
+         }
+
       x = cfg[*str_URI_PROTECTED_MASK];
 
       if (x.empty() == false)
@@ -260,6 +280,17 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       x = cfg[*str_MAINTENANCE_MODE];
 
       if (x.empty() == false) UHTTP::maintenance_mode_page = U_NEW(UString(x));
+
+      x = cfg[*str_USP_AUTOMATIC_ALIASING];
+
+      if (x.empty() == false)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::global_alias, 0)
+
+         if (x.first_char() != '/') (void) x.insert(0, '/');
+
+         UHTTP::global_alias = U_NEW(UString(x));
+         }
 
 #  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
       if (cfg.readBoolean(*str_ENABLE_INOTIFY))

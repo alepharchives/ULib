@@ -659,8 +659,6 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
 
 const char* UHashMapNode::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "elem               " << elem        << '\n'
                   << "hash               " << hash        << '\n'
                   << "key  (UStringRep   " << (void*)key  << ")\n"
@@ -678,8 +676,6 @@ const char* UHashMapNode::dump(bool reset) const
 
 const char* UHashMap<void*>::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "hash               " << hash         << '\n'
                   << "index              " << index        << '\n'
                   << "table              " << (void*)table << '\n'

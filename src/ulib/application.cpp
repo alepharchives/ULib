@@ -51,8 +51,6 @@ UApplication::~UApplication()
 
 const char* UApplication::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "num_args                       " << num_args    << '\n'
                   << "exit_value                     " << exit_value  << '\n'
                   << "is_options                     " << is_options  << '\n'

@@ -376,8 +376,6 @@ end:
 
 const char* URingBuffer::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "ptr         " << (void*)ptr   << '\n'
                   << "size        " << size         << '\n'
                   << "map_size    " << map_size     << '\n'

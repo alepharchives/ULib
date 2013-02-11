@@ -18,8 +18,6 @@
 
 const char* URPCEnvelope::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "mustUnderstand                              " << (void*)mustUnderstand << '\n'
                   << "arg                (UVector                 " << (void*)arg            << ")\n"
                   << "nsName             (UString                 " << (void*)&nsName        << ")\n"

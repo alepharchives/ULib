@@ -4,6 +4,7 @@
 #include <ulib/container/vector.h>
 #include <ulib/file.h>
 #include <ulib/base/hash.h>
+#include <ulib/utility/dir_walk.h>
 
 #ifdef HAVE_STRSTREAM_H
 #  include <strstream.h>
@@ -278,15 +279,21 @@ U_EXPORT main (int argc, char* argv[])
 
    // EXTENSION
 
-   UString filter = U_STRING_FROM_CONSTANT("?db.*");
-   n = UFile::listContentOf(y, 0, U_STRING_TO_PARAM(filter));
+   {
+   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*"));
+
+   n = dirwalk.walk(y);
+   }
 
    U_ASSERT( n == 2 )
 
-   U_ASSERT( y[0] == U_STRING_FROM_CONSTANT("cdb.test") ||
-             y[0] == U_STRING_FROM_CONSTANT("rdb.test"))
-   U_ASSERT( y[1] == U_STRING_FROM_CONSTANT("rdb.test") ||
-             y[1] == U_STRING_FROM_CONSTANT("cdb.test"))
+   y.sort();
+
+   U_DUMP("y[0] = %.*S", U_STRING_TO_TRACE(y[0]))
+   U_DUMP("y[1] = %.*S", U_STRING_TO_TRACE(y[1]))
+
+   U_ASSERT( y[0] == U_STRING_FROM_CONSTANT("cdb.test") )
+   U_ASSERT( y[1] == U_STRING_FROM_CONSTANT("rdb.test") )
 
    y.clear();
    bool res = y.empty();

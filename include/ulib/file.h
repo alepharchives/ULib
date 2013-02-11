@@ -58,10 +58,8 @@
 
 class URDB;
 class UHTTP;
+class UDirWalk;
 class UStringExt;
-
-template <class T> class UTree;
-template <class T> class UVector;
 
 class U_EXPORT UFile : public stat {
 public:
@@ -78,14 +76,14 @@ public:
    // check for op chdir()
 
 #ifdef DEBUG
-   static int num_file_object;
-   static void inc_num_file_object();
-   static void dec_num_file_object();
+   static int      num_file_object;
+   static void inc_num_file_object(UFile* pthis);
+   static void dec_num_file_object(UFile* pthis, int fd);
    static void chk_num_file_object();
 #else
-#  define inc_num_file_object()
-#  define dec_num_file_object()
-#  define chk_num_file_object()
+#  define      inc_num_file_object(pthis)
+#  define      dec_num_file_object(pthis,fd)
+#  define      chk_num_file_object()
 #endif
 
    void reset()
@@ -104,31 +102,26 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UFile, "")
 
-      fd = -1;
-
+      fd           = -1;
       path_relativ = 0;
 
-      inc_num_file_object();
+      inc_num_file_object(this);
       }
 
    UFile(const UString& path, const UString* environment = 0) : pathname(path) 
       {
       U_TRACE_REGISTER_OBJECT(0, UFile, "%.*S,%p", U_STRING_TO_TRACE(path), environment)
 
-      setPathRelativ(environment);
+      inc_num_file_object(this);
 
-      inc_num_file_object();
+      setPathRelativ(environment);
       }
 
    ~UFile()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UFile)
 
-      dec_num_file_object();
-
-#  ifdef DEBUG
-      if (fd != -1) U_WARNING("file descriptor %d not closed...", fd);
-#  endif
+      dec_num_file_object(this, fd);
       }
 
    // PATH
@@ -553,6 +546,7 @@ public:
       U_TRACE(0, "UFile::_unlink()")
 
       U_CHECK_MEMORY
+
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
@@ -813,14 +807,6 @@ public:
 
    static bool rmdirs(const char* path, bool remove_all = false);
 
-   // LS
-
-   static uint32_t buildFilenameListFrom(UVector<UString>& vec, const UString& arg, char sep = ',');
-
-          uint32_t listContentOf(UVector<UString>& vec,                                 const char* filter,     uint32_t filter_len);
-   static uint32_t listContentOf(UVector<UString>& vec,         const UString* dir,     const char* filter,     uint32_t filter_len);
-   static void     listRecursiveContentOf(UTree<UString>& tree, const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
-
    // MEMORY POOL
 
    static bool isAllocableFromPool(uint32_t sz)
@@ -874,14 +860,11 @@ protected:
    const char* path_relativ;            // the string can be not writeable...
    int fd;
 
-   static bool _root;
    static char*    pfree;
    static uint32_t nfree;
-   static UTree<UString>* tree;
-   static UVector<UString>* vector;
 
    static char     cwd_save[U_PATH_MAX];
-   static uint32_t cwd_len_save;
+   static uint32_t cwd_save_len;
 
    void substitute(UFile& file);
    void setPathRelativ(const UString* environment = 0);
@@ -902,9 +885,10 @@ private:
    friend class URDB;
    friend class UHTTP;
    friend class UString;
+   friend class UDirWalk;
    friend class UStringRep;
    friend class UStringExt;
-   friend struct UMemoryPool;
+   friend class UMemoryPool;
 };
 
 #endif

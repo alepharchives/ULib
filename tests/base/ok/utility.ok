@@ -11,9 +11,3 @@ libpng-1.0.10.tar.gz
 libpng-1.0.11.tar.gz
 libpng-1.0.12.tar.gz
 libpng-1.2.0.tar.gz
-ftw_push() = "tmp" 3 1
-ftw_push() = "tmp/tmp1" 8 1
-ftw_push() = "tmp/tmp1/bbb" 12 0
-ftw_up()
-ftw_push() = "tmp/aaa" 7 0
-ftw_up()

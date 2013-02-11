@@ -30,10 +30,11 @@
 #  include <zlib.h>
 void*           ULog::pthread;
 uint32_t        ULog::path_compress;
+UString*        ULog::data_to_write;
 UString*        ULog::buffer_path_compress;
 #endif
 
-vPF             ULog::backup_log_function;
+vPF             ULog::log_rotate_function;
 bool            ULog::bsyslog;
 bool            ULog::log_data_must_be_unmapped;
 ULog*           ULog::pthis;
@@ -48,30 +49,6 @@ ULog::log_data* ULog::ptr_log_data;
 #define LOG_ptr  ptr_log_data->file_ptr
 #define LOG_page ptr_log_data->file_page
 
-#if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-#  include <ulib/thread.h>
-
-class UBackupThread : public UThread {
-public:
-
-   UBackupThread() : UThread(true, false) {}
-
-   UString data_to_write;
-
-   virtual void run()
-      {
-      U_TRACE(0, "UBackupThread::run()")
-
-loop:
-      suspend();
-
-      if (data_to_write.empty() == false) ULog::backup_write(*ULog::buffer_path_compress, data_to_write);
-
-      goto loop;
-      }
-};
-#endif
-
 ULog::~ULog()
 {
    U_TRACE_UNREGISTER_OBJECT(0, ULog)
@@ -83,7 +60,13 @@ ULog::~ULog()
    if (lock) delete lock;
 
 #ifdef USE_LIBZ
-   if (buffer_path_compress) delete buffer_path_compress;
+   if (data_to_write)
+      {
+      U_ASSERT(data_to_write->empty())
+
+      delete data_to_write;
+      delete buffer_path_compress;
+      }
 #endif
 }
 
@@ -162,6 +145,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
       char suffix[32];
       uint32_t len_suffix = u__snprintf(suffix, sizeof(suffix), ".%4D.gz");
 
+      data_to_write        = U_NEW(UString);
       buffer_path_compress = U_NEW(UString(MAX_FILENAME_LEN));
 
       char* ptr = buffer_path_compress->data();
@@ -200,17 +184,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
       U_INTERNAL_DUMP("buffer_path_compress(%u) = %.*S path_compress = %u",
                        buffer_path_compress->size(), U_STRING_TO_TRACE(*buffer_path_compress), path_compress)
 
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      U_INTERNAL_ASSERT_EQUALS(pthread, 0)
-
-      U_NEW_ULIB_OBJECT(pthread, UBackupThread);
-
-      U_INTERNAL_DUMP("pthread = %p", pthread)
-
-      ((UThread*)pthread)->start();
-#  endif
-
-      backup_log_function = &ULog::backup;
+      log_rotate_function = ULog::logRotate;
 
       UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
 #  endif
@@ -297,13 +271,13 @@ void ULog::write(const struct iovec* iov, int n)
          {
          if ((LOG_ptr + iov[i].iov_len) > LOG_FILE_SZ)
             {
-            if (backup_log_function) backup_log_function();
+            if (log_rotate_function) log_rotate_function();
 
             LOG_ptr = LOG_page = pthis->UFile::map;
             }
 
          U__MEMCPY(LOG_ptr, iov[i].iov_base, iov[i].iov_len);
-                          LOG_ptr +=                iov[i].iov_len;
+                   LOG_ptr +=                iov[i].iov_len;
 
          U_INTERNAL_DUMP("memcpy() -> %.*S", iov[i].iov_len, LOG_ptr - iov[i].iov_len)
          }
@@ -381,10 +355,7 @@ __pure U_NO_EXPORT int ULog::decode(const char* name, uint32_t len, bool bfacili
    U_TRACE(0, "ULog::decode(%.*S,%u,%b)", len, name, len, bfacility)
 
 #ifndef __MINGW32__
-   for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c)
-      {
-      if (strncasecmp(name, c->c_name, len) == 0) U_RETURN(c->c_val);
-      }
+   for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c) if (strncasecmp(name, c->c_name, len) == 0) U_RETURN(c->c_val);
 #endif
 
    U_RETURN(-1);
@@ -469,27 +440,29 @@ void ULog::close()
 
             UFile::munmap(ptr_log_data, map_size);
             }
+
+         if (data_to_write->empty() == false) ULog::logRotateWrite();
          }
       }
 }
 
 #ifdef USE_LIBZ
-void ULog::backup_write(UString& pathfile, UString& data)
+void ULog::logRotateWrite()
 {
-   U_TRACE(0, "ULog::backup_write(%.*S,%.*S)", U_STRING_TO_TRACE(pathfile), U_STRING_TO_TRACE(data))
+   U_TRACE(0, "ULog::logRotateWrite()")
 
-   (void) u__snprintf(pathfile.c_pointer(path_compress), 17, "%4D");
+   (void) u__snprintf(buffer_path_compress->c_pointer(path_compress), 17, "%4D");
 
-   U_ASSERT_EQUALS(UFile::access(pathfile.data(), R_OK | W_OK), false)
+   U_ASSERT_EQUALS(UFile::access(buffer_path_compress->data(), R_OK | W_OK), false)
 
-   (void) UFile::writeTo(pathfile, data);
+   (void) UFile::writeTo(*buffer_path_compress, *data_to_write);
 
-   data.clear();
+   data_to_write->clear();
 }
 
-void ULog::backup()
+void ULog::logRotate()
 {
-   U_TRACE(0, "ULog::backup()")
+   U_TRACE(0, "ULog::logRotate()")
 
    U_INTERNAL_DUMP("pthis = %p bsyslog = %b", pthis, bsyslog)
 
@@ -514,25 +487,9 @@ void ULog::backup()
 
       U_INTERNAL_ASSERT(size <= pthis->UFile::st_size)
 
-      UString data_to_write = UStringExt::deflate(pthis->UFile::map, size, true);
+      if (data_to_write->empty() == false) ULog::logRotateWrite();
 
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      if (((UBackupThread*)pthread)->data_to_write.empty())
-         {
-         ((UBackupThread*)pthread)->data_to_write = data_to_write;
-
-         ((UBackupThread*)pthread)->resume();
-         }
-      else
-         {
-         UString x = buffer_path_compress->copy();
-#  else
-         {
-         UString x = *buffer_path_compress;
-#  endif
-
-         ULog::backup_write(x, data_to_write);
-         }
+      *data_to_write = UStringExt::deflate(pthis->UFile::map, size, true);
 
       if (LOG_FILE_SZ)
          {
@@ -554,8 +511,6 @@ void ULog::backup()
 
 const char* ULog::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UFile::dump(false);
 
    *UObjectIO::os << '\n'
@@ -573,7 +528,6 @@ const char* ULog::dump(bool _reset) const
    *UObjectIO::os << '\n'
                   << "bsyslog                   " << bsyslog                    << '\n'
                   << "LOG_FILE_SZ               " << (void*)LOG_FILE_SZ         << '\n'
-                  << "backup_log_function       " << (void*)backup_log_function << '\n'
                   << "lock        (ULock        " << (void*)lock                << ")\n"
                   << "pthis       (ULog         " << (void*)pthis               << ')';
                   /*

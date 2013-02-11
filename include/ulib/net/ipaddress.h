@@ -177,6 +177,8 @@ public:
    UIPAddress()
       {
       U_TRACE_REGISTER_OBJECT(0, UIPAddress, "")
+
+      U_INTERNAL_DUMP("this = %p memory._this = %p", this, memory._this)
       }
 
    ~UIPAddress()
@@ -278,8 +280,6 @@ public:
    bool operator==(const UIPAddress& cOtherAddr) const
       {
       U_TRACE(0, "UIPAddress::operator==(%p)", &cOtherAddr)
-
-      U_CHECK_MEMORY
 
       bool result = (iAddressType   == cOtherAddr.iAddressType) &&
                     (iAddressLength == cOtherAddr.iAddressLength) &&

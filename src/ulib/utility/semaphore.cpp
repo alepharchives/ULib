@@ -98,7 +98,7 @@ USemaphore::~USemaphore()
 
 bool USemaphore::checkForDeadLock(UTimeVal& time)
 {
-   U_TRACE(1, "USemaphore::wait(%p)", &time)
+   U_TRACE(1, "USemaphore::checkForDeadLock(%p)", &time)
 
    bool sleeped = false;
 
@@ -219,8 +219,6 @@ void USemaphore::post()
 
 const char* USemaphore::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
 #ifdef __MINGW32__
    *UObjectIO::os << "sem        " << (void*)sem;
 #elif defined(U_LOCKFILE)

@@ -76,8 +76,6 @@ void ULock::unlock()
 
 const char* ULock::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "locked          " << locked     << '\n'
                   << "sem (USemaphore " << (void*)sem << ')';
 

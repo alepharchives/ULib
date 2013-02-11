@@ -68,7 +68,7 @@ RETSIGTYPE UStreamPlugIn::handlerForSigTERM(int signo)
 
 UStreamPlugIn::UStreamPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UStreamPlugIn, "")
 
    uri_path     = U_NEW(UString);
    metadata     = U_NEW(UString);

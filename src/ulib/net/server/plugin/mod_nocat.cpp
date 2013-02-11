@@ -20,6 +20,7 @@
 #include <ulib/utility/escape.h>
 #include <ulib/net/ipt_ACCOUNT.h>
 #include <ulib/utility/services.h>
+#include <ulib/utility/dir_walk.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/net/server/client_image.h>
@@ -174,7 +175,7 @@ const UString* UNoCatPlugIn::str_NoTraffic;
 "</body>\n" \
 "</html>"
 
-UModNoCatPeer::UModNoCatPeer() : token(100U), gateway(100U)
+UModNoCatPeer::UModNoCatPeer() : UEventTime(0L,0L), token(100U), gateway(100U)
 {
    U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "")
 
@@ -396,7 +397,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
    U_TRACE_UNREGISTER_OBJECT(0, UNoCatPlugIn)
 
    if (login_timeout ||
-       UEventTime::notZero())
+       UTimeVal::notZero())
       {
       UTimer::stop();
       UTimer::clear(true);
@@ -755,7 +756,7 @@ int UNoCatPlugIn::handlerTime()
 
       U_INTERNAL_ASSERT_MAJOR(next_event_time, 0)
 
-      UEventTime::setSecond(next_event_time);
+      UTimeVal::setSecond(next_event_time);
       }
 
    // return value:
@@ -876,10 +877,11 @@ void UNoCatPlugIn::checkSystem(bool blog)
 
    UFile file;
    const char* ptr;
-   UVector<UString> vec;
-   UString dir(ULog::dir_log_gz), log_file, log_file_basename, log_file_name(U_CAPACITY), log_file_renamed(U_CAPACITY);
+   UVector<UString> vec(64);
+   UString log_file, log_file_basename, log_file_name(U_CAPACITY), log_file_renamed(U_CAPACITY), dir(ULog::dir_log_gz);
+   UDirWalk dirwalk(&dir, U_CONSTANT_TO_PARAM("*.gz"));
 
-   for (i = 0, n = UFile::listContentOf(vec, &dir, U_CONSTANT_TO_PARAM("*.gz")); i < n; ++i)
+   for (i = 0, n = dirwalk.walk(vec); i < n; ++i)
       {
       log_file = vec[i];
 
@@ -1057,19 +1059,13 @@ void UNoCatPlugIn::deny(UModNoCatPeer* peer, bool disconnected)
       return;
       }
 
-   if (peer->logout) 
+   if (peer->logout == 0) peer->logout = u_now->tv_sec; // NB: request of logout or user disconnected...
+#ifdef DEBUG
+   else // NB: user with no more time or no more traffic...
       {
-      // NB: user with no more time or no more traffic...
-
       U_INTERNAL_ASSERT_EQUALS(peer->logout, peer->expire)
-      U_INTERNAL_ASSERT(peer->time_remain == 0 || peer->traffic_remain == 0)
       }
-   else
-      {
-      // NB: request of logout or user disconnected...
-
-      peer->logout = u_now->tv_sec;
-      }
+#endif
 
    addPeerInfo(peer, disconnected ? -1 : peer->logout); // -1 => disconnected (logout implicito)
 
@@ -1125,7 +1121,7 @@ void UNoCatPlugIn::permit(UModNoCatPeer* peer, uint32_t UserDownloadRate, uint32
 
       if (login_timeout)
          {
-         peer->UEventTime::setSecond(peer->time_remain);
+         peer->UTimeVal::setSecond(peer->time_remain);
 
          UTimer::insert(peer, true);
          }
@@ -1924,7 +1920,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          U_INTERNAL_DUMP("time_available = %ld traffic_available = %llu", time_available, traffic_available)
          }
 
-      if (check_expire) UEventTime::setSecond(check_expire);
+      if (check_expire) UTimeVal::setSecond(check_expire);
 
       U_INTERNAL_DUMP("check_expire = %ld time_available = %ld check_type = %B", check_expire, time_available, check_type)
 
@@ -2201,17 +2197,17 @@ int UNoCatPlugIn::handlerFork()
    // manage internal timer...
 
    if (login_timeout ||
-       UEventTime::notZero())
+       UTimeVal::notZero())
       {
       UTimer::init(true); // async...
 
       U_SRV_LOG("Initialization of timer success");
 
-      if (UEventTime::notZero())
+      if (UTimeVal::notZero())
          {
          UTimer::insert(this, true);
 
-         U_SRV_LOG("Monitoring set for every %d secs", UEventTime::getSecond());
+         U_SRV_LOG("Monitoring set for every %d secs", UTimeVal::getSecond());
          }
       }
 

@@ -54,6 +54,13 @@ public:
    UTimeVal()
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeVal, "")
+
+      U_INTERNAL_DUMP("this         = %p", this)
+      U_INTERNAL_DUMP("&tv_sec      = %p", &tv_sec)
+      U_INTERNAL_DUMP("&tv_usec     = %p", &tv_usec)
+      U_INTERNAL_DUMP("memory._this = %p", memory._this)
+
+      U_INTERNAL_ASSERT_EQUALS((void*)this, (void*)&tv_sec)
       }
 
    UTimeVal(long sec, long micro_sec = 0L)
@@ -114,7 +121,8 @@ public:
       {
       U_TRACE(0, "UTimeVal::isZero()")
 
-      bool result = (!tv_sec && !tv_usec);
+      bool result = (tv_sec  == 0L &&
+                     tv_usec == 0L);
 
       U_RETURN(result);
       }
@@ -128,8 +136,8 @@ public:
       U_RETURN(result);
       }
 
-   bool notZero() const    { return !isZero(); }
-   bool notNegativ() const { return !isNegativ(); }
+   bool notZero() const    { return (isZero()    == false); }
+   bool notNegativ() const { return (isNegativ() == false); }
 
    void add(long sec, long micro_sec)
       {

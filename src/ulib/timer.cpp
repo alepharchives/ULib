@@ -23,6 +23,8 @@ UTimer::~UTimer()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UTimer)
 
+   U_INTERNAL_DUMP("this = %p memory._this = %p", this, memory._this)
+
    U_INTERNAL_DUMP("next = %p, alarm = %p", next, alarm)
 
    if (next)  delete next;
@@ -346,8 +348,6 @@ void UTimer::printInfo(ostream& os)
 
 const char* UTimer::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "timerval                 " << "{ { "  << timerval.it_interval.tv_sec
                                                  << " "     << timerval.it_interval.tv_usec
                                                  << " } { " << timerval.it_value.tv_sec

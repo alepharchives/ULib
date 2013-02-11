@@ -27,7 +27,7 @@ URPCParser* URpcPlugIn::rpc_parser;
 
 URpcPlugIn::URpcPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, URpcPlugIn, "")
 }
 
 URpcPlugIn::~URpcPlugIn()

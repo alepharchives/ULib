@@ -53,8 +53,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UMimePKCS7& mp7)
 
 const char* UMimePKCS7::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UMimeEntity::dump(false);
 
    *UObjectIO::os << "\n"

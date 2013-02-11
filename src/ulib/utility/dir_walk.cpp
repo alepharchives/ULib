@@ -12,10 +12,11 @@
 // ============================================================================
 
 #include <ulib/file.h>
+#include <ulib/container/tree.h>
 #include <ulib/utility/dir_walk.h>
 
 /* FTW - walks through the directory tree starting from the indicated directory.
- *       For each found entry in the tree, it calls fn() with the full pathname of the entry, his length and if it is a directory
+ *       For each found entry in the tree, it calls foundFile()
  *
  * struct dirent {
  *    ino_t          d_ino;       // inode number
@@ -26,66 +27,415 @@
  * };
  */
 
-struct u_dirent_s {
-   ino_t         d_ino;
-   uint32_t      d_name, d_namlen;
-   unsigned char d_type;
-};
+#ifndef DT_DIR
+#define DT_DIR      4
+#endif
+#ifndef DT_REG
+#define DT_REG      8
+#endif
+#ifndef DT_LNK
+#define DT_LNK     10
+#endif
+#ifndef DT_UNKNOWN
+#define DT_UNKNOWN  0
+#endif
 
-struct u_dir_s {
-   char* restrict free;
-   struct u_dirent_s* dp;
-   uint32_t num, max, pfree, nfree, szfree;
-};
+#ifdef _DIRENT_HAVE_D_TYPE
+#define U_DT_TYPE dp->d_type
+#else
+#define U_DT_TYPE DT_UNKNOWN
+#endif
 
-#define U_DIRENT_ALLOCATE   (128U * 1024U)
-#define U_FILENAME_ALLOCATE ( 32U * U_DIRENT_ALLOCATE)
+vPF               UDirWalk::call_if_up;
+vPF               UDirWalk::call_internal;
+char              UDirWalk::filetype;
+bool              UDirWalk::brecurse; // recurse subdirectories ?
+bool              UDirWalk::tree_root;
+bool              UDirWalk::call_if_directory;
+qcompare          UDirWalk::sort_by;
+uint32_t          UDirWalk::max;
+uint32_t          UDirWalk::filter_len;
+UDirWalk*         UDirWalk::pthis;
+const char*       UDirWalk::filter;
+UTree<UString>*   UDirWalk::ptree;
+UVector<UString>* UDirWalk::pvector;
 
 UDirWalk::UDirWalk(const UString* dir, const char* _filter, uint32_t _filter_len)
 {
    U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u", dir, _filter_len, _filter, _filter_len)
 
-   depth = true;
+   max               = 128 * 1024;
+   depth             = -1; // starting recursion depth
+   pthis             = this;
+   sort_by           = 0;
+   pathlen           = (dir ? dir->size() : 0);
+   filetype          = '.';
+   call_if_up        = 0;
+   call_internal     = 0;
+   call_if_directory = brecurse = is_directory = false;
 
-   if (dir == 0)
+   if (pathlen == 0)
       {
-      u_buffer[0]  = '.';
-      u_buffer_len = 1;
+      pathlen     = 1;
+      pathname[0] = '.';
       }
    else
       {
-      u_buffer_len    = dir->size();
       const char* ptr = dir->c_str();
 
       U_INTERNAL_DUMP("dir      = %S", ptr)
 
-      ptr = u_getPathRelativ(ptr, &u_buffer_len);
+      ptr = u_getPathRelativ(ptr, &pathlen);
 
-      U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
+      U_INTERNAL_ASSERT_MAJOR(pathlen, 0)
 
       if (UFile::access(ptr) == false)
          {
-         u_buffer_len = 0;
+         pathlen = 0;
 
          return;
          }
 
-      U__MEMCPY(u_buffer, ptr, u_buffer_len);
+      U__MEMCPY(pathname, ptr, pathlen);
       }
 
-   u_buffer[u_buffer_len] = '\0';
+   pathname[pathlen] = '\0';
 
-   filter     = _filter;
-   filter_len = _filter_len;
-
-   if (_filter_len)
+   if ((filter_len = _filter_len))
       {
+      filter      = _filter;
       u_pfn_flags = 0;
       u_pfn_match = u_dosmatch_with_OR;
       }
+}
+
+U_NO_EXPORT void UDirWalk::prepareForCallingRecurse(char* d_name, uint32_t d_namlen, unsigned char d_type)
+{
+   U_TRACE(0, "UDirWalk::prepareForCallingRecurse(%.*S,%u,%d)", d_namlen, d_name, d_namlen, d_type)
+
+   if (d_type == DT_REG ||
+       d_type == DT_DIR ||
+       d_type == DT_LNK ||
+       d_type == DT_UNKNOWN)
+      {
+      u__memcpy(pathname + pathlen, d_name, d_namlen, __PRETTY_FUNCTION__);
+
+      pathlen += d_namlen;
+
+      U_INTERNAL_ASSERT_MINOR(pathlen, sizeof(pathname))
+
+      pathname[pathlen] = '\0';
+
+      is_directory = (d_type == DT_DIR);
+
+      if (brecurse &&
+          (is_directory     ||
+           d_type == DT_LNK ||
+           d_type == DT_UNKNOWN))
+         {
+         recurse();
+
+         goto end;
+         }
+
+      foundFile();
+
+end:
+      pathlen -= d_namlen;
+      }
+}
+
+void UDirWalk::recurse()
+{
+   U_TRACE(1+256, "UDirWalk::recurse()")
+
+   DIR* dirp;
+
+   ++depth; // if this has been called, then we're one level lower
+
+   U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S", depth, pathlen, u__strlen(pathname), pathname)
+
+   U_INTERNAL_ASSERT_EQUALS(u__strlen(pathname), pathlen)
+
+   if (depth == 0) dirp = (DIR*) U_SYSCALL(opendir, "%S", "."); // NB: if pathname it is not '.' we have already make chdir()... 
+   else
+      {
+      // NB: if it is present the char 'filetype' we check if this
+      //     item isn't a directory so we don't need to try opendir()...
+
+      if (filetype)
+         {
+         const char* ptr = (const char*) memrchr(pathname+1, filetype, pathlen); // NB: we don't use the macro U_SYSCALL to avoid warning on stderr...
+
+         if (ptr++                &&
+             (u_get_mimetype(ptr) ||
+              U_STRNEQ(ptr, U_LIB_SUFFIX)))
+            {
+            is_directory = false;
+
+            foundFile();
+
+            goto end;
+            }
+         }
+
+      dirp = (DIR*) U_SYSCALL(opendir, "%S", U_PATH_CONV(pathname));
+      }
+
+   is_directory = (dirp != 0);
+
+   if (is_directory == false ||
+       call_if_directory)
+      {
+      foundFile();
+      }
+
+   if (is_directory)
+      {
+      dir_s qdir;
+      dirent_s* ds;
+      uint32_t d_namlen;
+      struct dirent* dp;
+
+      qdir.num            = 0;
+      pathname[pathlen++] = '/';
+
+      if (sort_by)
+         {
+         U_INTERNAL_ASSERT_MAJOR(max, 0)
+
+         qdir.max   = max;
+         qdir.dp    = (dirent_s*) UMemoryPool::_malloc(&qdir.max, sizeof(dirent_s));
+
+         qdir.szfree = qdir.max * 128;
+         qdir.free   = (char*) UMemoryPool::_malloc(&qdir.szfree);
+         qdir.nfree  =                               qdir.szfree;
+         qdir.pfree  = 0;
+         }
+
+      // -----------------------------------------
+      // NB: NON sono sempre le prime due entry !!
+      // -----------------------------------------
+      // (void) readdir(dirp); // skip '.'
+      // (void) readdir(dirp); // skip '..'
+      // -----------------------------------------
+
+      while ((dp = readdir(dirp))) // NB: we don't use the macro U_SYSCALL to avoid warning on stderr...
+         {
+         d_namlen = NAMLEN(dp);
+
+         U_INTERNAL_DUMP("d_namlen = %u d_name = %.*s", d_namlen, d_namlen, dp->d_name)
+
+         if (U_ISDOTS(dp->d_name)) continue;
+
+         if (filter_len == 0 ||
+             u_pfn_match(dp->d_name, d_namlen, filter, filter_len, u_pfn_flags))
+            {
+            if (sort_by == 0) prepareForCallingRecurse(dp->d_name, d_namlen, U_DT_TYPE);
+            else
+               {
+               // NB: check if we must do reallocation...
+
+               if (qdir.num >= qdir.max)
+                  {
+                  uint32_t  old_max   = qdir.max;
+                  dirent_s* old_block = qdir.dp;
+
+                  qdir.max <<= 1;
+
+                  U_INTERNAL_DUMP("Reallocating dirent (%u => %u)", old_max, qdir.max)
+
+                  qdir.dp = (dirent_s*) UMemoryPool::_malloc(&qdir.max, sizeof(dirent_s));
+
+                  U__MEMCPY(qdir.dp, old_block, old_max * sizeof(dirent_s));
+
+                  UMemoryPool::_free(old_block, old_max, sizeof(dirent_s));
+                  }
+
+               if (d_namlen > qdir.nfree)
+                  {
+                  char*    old_block = qdir.free;
+                  uint32_t old_free  = qdir.szfree;
+
+                  qdir.szfree <<= 1;
+
+                  qdir.free  = (char*) UMemoryPool::_malloc(&qdir.szfree);
+                  qdir.nfree = (qdir.szfree - qdir.pfree);
+
+                  U_INTERNAL_DUMP("Reallocating dirname (%u => %u) nfree = %u", old_free, qdir.szfree, qdir.nfree)
+
+                  U__MEMCPY(qdir.free, old_block, qdir.pfree);
+
+                  UMemoryPool::_free(old_block, old_free);
+                  }
+
+               ds         = qdir.dp + qdir.num++;
+               ds->d_ino  = dp->d_ino;
+               ds->d_type = U_DT_TYPE;
+
+               u__memcpy(qdir.free + (ds->d_name = qdir.pfree), dp->d_name, (ds->d_namlen = d_namlen), __PRETTY_FUNCTION__);
+
+               qdir.pfree += d_namlen;
+               qdir.nfree -= d_namlen;
+
+               U_INTERNAL_DUMP("readdir: %lu %.*s %d", ds->d_ino, ds->d_namlen, qdir.free + ds->d_name, ds->d_type);
+               }
+            }
+         }
+
+      (void) U_SYSCALL(closedir, "%p", dirp);
+
+      U_INTERNAL_DUMP("qdir.num = %u", qdir.num)
+
+      if (qdir.num)
+         {
+         U_SYSCALL_VOID(qsort, "%p,%u,%d,%p", qdir.dp, qdir.num, sizeof(dirent_s), sort_by);
+
+         for (uint32_t i = 0; i < qdir.num; ++i)
+            {
+            ds = qdir.dp + i;
+
+            prepareForCallingRecurse(qdir.free + ds->d_name, ds->d_namlen, ds->d_type);
+            }
+         }
+
+      if (sort_by)
+         {
+         UMemoryPool::_free(qdir.free, qdir.szfree);
+         UMemoryPool::_free(qdir.dp,   qdir.max, sizeof(dirent_s));
+         }
+
+      --pathlen;
+
+      if (call_if_up) call_if_up(); // for UTree<UString>::load() ...
+      }
+
+end:
+   --depth; // we're returning to the parent's depth now
+
+   U_INTERNAL_DUMP("depth = %d", depth)
+}
+
+void UDirWalk::walk()
+{
+   U_TRACE(0, "UDirWalk::walk()")
 
    U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
-   U_INTERNAL_DUMP("u_buffer = %S", u_buffer)
+   U_INTERNAL_DUMP("pathname = %S", pathname)
+
+   if (pathlen == 1)
+      {
+      U_INTERNAL_ASSERT_EQUALS(pathname[0], '.')
+
+      recurse();
+      }
+   else
+      {
+      // NB: we need our own backup of current directory (see IR)...
+
+      char cwd_save[U_PATH_MAX];
+
+      (void) u__strcpy(cwd_save, u_cwd);
+
+      if (UFile::chdir(pathname, false))
+         {
+         recurse();
+
+         (void) UFile::chdir(cwd_save, false);
+         }
+      }
+}
+
+U_NO_EXPORT void UDirWalk::vectorPush()
+{
+   U_TRACE(0, "UDirWalk::vectorPush()")
+
+   U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT_POINTER(pvector)
+
+   U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S", pthis->depth, pthis->pathlen, u__strlen(pthis->pathname), pthis->pathname)
+
+   uint32_t len    = pthis->pathlen;
+   const char* ptr = pthis->pathname;
+
+   if (                 ptr[0] == '.' &&
+       IS_DIR_SEPARATOR(ptr[1]))
+      {
+      U_INTERNAL_ASSERT_MAJOR(len, 2)
+
+      ptr += 2;
+      len -= 2;
+      }
+
+   UString str((void*)ptr, len);
+
+   pvector->push(str);
+}
+
+uint32_t UDirWalk::walk(UVector<UString>& vec)
+{
+   U_TRACE(0, "UDirWalk::walk(%p)", &vec)
+
+   pvector = &vec;
+
+   call_internal = vectorPush;
+
+   walk();
+
+   uint32_t result = vec.size();
+
+   U_RETURN(result);
+}
+
+U_NO_EXPORT void UDirWalk::treePush()
+{
+   U_TRACE(0, "UDirWalk::treePush()")
+
+   U_INTERNAL_DUMP("is_directory = %b", pthis->is_directory)
+
+   U_INTERNAL_ASSERT_POINTER(ptree)
+
+   if (tree_root) tree_root = false;
+   else
+      {
+      UString str((void*)pthis->pathname, pthis->pathlen);
+
+      UTree<UString>* _ptree = ptree->push(str);
+
+      if (pthis->is_directory) ptree = _ptree;
+      }
+}
+
+U_NO_EXPORT void UDirWalk::treeUp()
+{
+   U_TRACE(0, "UDirWalk::treeUp()")
+
+   U_INTERNAL_ASSERT_POINTER(ptree)
+
+   ptree = ptree->parent();
+}
+
+uint32_t UDirWalk::walk(UTree<UString>& tree)
+{
+   U_TRACE(0, "UDirWalk::walk(%p)", &tree)
+
+   ptree     = &tree;
+   tree_root = true;
+
+   setRecurseSubDirs();
+
+   call_if_up    = treeUp;
+   call_internal = treePush;
+
+   UString str((void*)pathname, pathlen);
+
+   tree.setRoot(str);
+
+   walk();
+
+   uint32_t result = tree.size();
+
+   U_RETURN(result);
 }
 
 #ifdef DEBUG
@@ -93,9 +443,12 @@ UDirWalk::UDirWalk(const UString* dir, const char* _filter, uint32_t _filter_len
 
 const char* UDirWalk::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
-   *UObjectIO::os << "depth             " << depth                << '\n'
+   *UObjectIO::os << "max               " << max                  << '\n'
+                  << "pathlen           " << pathlen              << '\n'
+                  << "sort_by           " << (void*)sort_by       << '\n'
+                  << "brecurse          " << brecurse             << '\n'
+                  << "filetype          " << filetype             << '\n'
+                  << "call_if_up        " << (void*)call_if_up    << '\n'
                   << "filter_len        " << filter_len           << '\n'
                   << "is_directory      " << is_directory         << '\n'
                   << "call_if_directory " << call_if_directory;
@@ -111,206 +464,3 @@ const char* UDirWalk::dump(bool reset) const
 }
 
 #endif
-
-/*
-static inline void u_ftw_allocate(struct u_dir_s* restrict u_dir)
-{
-   U_INTERNAL_TRACE("u_ftw_allocate(%p)", u_dir)
-
-   if (u_ftw_ctx.sort_by)
-      {
-      u_dir->free  = (char* restrict)     malloc((u_dir->nfree = u_dir->szfree = U_FILENAME_ALLOCATE));
-      u_dir->dp    = (struct u_dirent_s*) malloc((u_dir->max                   = U_DIRENT_ALLOCATE) * sizeof(struct u_dirent_s));
-      u_dir->pfree = 0U;
-      }
-   else
-      {
-      (void) memset(u_dir, 0, sizeof(struct u_dir_s));
-      }
-
-   u_dir->num = 0U;
-}
-
-static inline void u_ftw_deallocate(struct u_dir_s* restrict u_dir)
-{
-   U_INTERNAL_TRACE("u_ftw_deallocate(%p)", u_dir)
-
-   if (u_ftw_ctx.sort_by)
-      {
-      free(u_dir->free);
-      free(u_dir->dp);
-      }
-}
-
-static inline void u_ftw_reallocate(struct u_dir_s* restrict u_dir, uint32_t d_namlen)
-{
-   U_INTERNAL_TRACE("u_ftw_reallocate(%p,%u)", u_dir, d_namlen)
-
-   U_INTERNAL_ASSERT_DIFFERS(u_ftw_ctx.sort_by,0)
-
-   if (u_dir->num >= u_dir->max)
-      {
-      u_dir->max += U_DIRENT_ALLOCATE;
-
-      U_INTERNAL_PRINT("Reallocating u_dir->dp to size %u", u_dir->max)
-
-      u_dir->dp = (struct u_dirent_s* restrict) realloc(u_dir->dp, u_dir->max * sizeof(struct u_dirent_s));
-
-      U_INTERNAL_ASSERT_POINTER(u_dir->dp)
-      }
-
-   if (d_namlen > u_dir->nfree)
-      {
-      u_dir->nfree  += U_FILENAME_ALLOCATE;
-      u_dir->szfree += U_FILENAME_ALLOCATE;
-
-      U_INTERNAL_PRINT("Reallocating u_dir->free to size %u", u_dir->szfree)
-
-      u_dir->free = (char* restrict) realloc(u_dir->free, u_dir->szfree);
-
-      U_INTERNAL_ASSERT_POINTER(u_dir->free)
-      }
-}
-
-static void u_ftw_call(char* restrict d_name, uint32_t d_namlen, unsigned char d_type)
-{
-   U_INTERNAL_TRACE("u_ftw_call(%.*s,%u,%d)", d_namlen, d_name, d_namlen, d_type)
-
-   if (d_type != DT_REG &&
-       d_type != DT_DIR &&
-       d_type != DT_LNK &&
-       d_type != DT_UNKNOWN) return;
-
-   u__memcpy(u_buffer + u_buffer_len, d_name, d_namlen, __PRETTY_FUNCTION__);
-
-   u_buffer_len += d_namlen;
-
-   U_INTERNAL_ASSERT_MINOR(u_buffer_len,4096)
-
-   u_buffer[u_buffer_len] = '\0';
-
-   u_ftw_ctx.is_directory = (d_type == DT_DIR);
-
-   if ( u_ftw_ctx.depth &&
-       (u_ftw_ctx.is_directory ||
-        d_type == DT_LNK       ||
-        d_type == DT_UNKNOWN))
-      {
-      u_ftw();
-
-      goto end;
-      }
-
-   u_ftw_ctx.call();
-
-end:
-   u_buffer_len -= d_namlen;
-}
-
-__pure int u_ftw_ino_cmp(const void* restrict a, const void* restrict b)
-{ return (((const struct u_dirent_s* restrict)a)->d_ino - ((const struct u_dirent_s* restrict)b)->d_ino); }
-
-static void u_ftw_readdir(DIR* restrict dirp)
-{
-   uint32_t i, d_namlen;
-   struct u_dir_s u_dir;
-   struct dirent* restrict dp;
-   struct u_dirent_s* restrict ds;
-
-   U_INTERNAL_TRACE("u_ftw_readdir(%p)", dirp)
-
-   u_ftw_allocate(&u_dir);
-
-   // -----------------------------------------
-   // NB: NON sono sempre le prime due entry !!
-   // -----------------------------------------
-   // (void) readdir(dirp);         // skip '.'
-   // (void) readdir(dirp);         // skip '..'
-   // -----------------------------------------
-   //
-
-   while ((dp = (struct dirent* restrict) readdir(dirp)))
-      {
-      d_namlen = NAMLEN(dp);
-
-      U_INTERNAL_PRINT("d_namlen = %u d_name = %.*s", d_namlen, d_namlen, dp->d_name)
-
-      if (U_ISDOTS(dp->d_name)) continue;
-
-      if (u_ftw_ctx.filter_len == 0 ||
-          u_pfn_match(dp->d_name, d_namlen, u_ftw_ctx.filter, u_ftw_ctx.filter_len, u_pfn_flags))
-         {
-         if (u_ftw_ctx.sort_by)
-            {
-            u_ftw_reallocate(&u_dir, d_namlen); // check se necessarie nuove allocazioni
-
-            ds = u_dir.dp + u_dir.num++;
-
-            ds->d_ino  = dp->d_ino;
-            ds->d_type = U_DT_TYPE;
-
-            u__memcpy(u_dir.free + (ds->d_name = u_dir.pfree), dp->d_name, (ds->d_namlen = d_namlen), __PRETTY_FUNCTION__);
-
-            u_dir.pfree += d_namlen;
-            u_dir.nfree -= d_namlen;
-
-            U_INTERNAL_PRINT("readdir: %lu %.*s %d", ds->d_ino, ds->d_namlen, u_dir.free + ds->d_name, ds->d_type);
-            }
-         else
-            {
-            u_ftw_call(dp->d_name, d_namlen, U_DT_TYPE);
-            }
-         }
-      }
-
-   (void) closedir(dirp);
-
-   U_INTERNAL_PRINT("u_dir.num = %u", u_dir.num)
-
-   if (u_dir.num)
-      {
-      qsort(u_dir.dp, u_dir.num, sizeof(struct u_dirent_s), u_ftw_ctx.sort_by);
-
-      for (i = 0; i < u_dir.num; ++i)
-         {
-         ds = u_dir.dp + i;
-
-         u_ftw_call(u_dir.free + ds->d_name, ds->d_namlen, ds->d_type);
-         }
-      }
-
-   u_ftw_deallocate(&u_dir);
-}
-
-void u_ftw(void)
-{
-   DIR* restrict dirp;
-
-   U_INTERNAL_TRACE("u_ftw()")
-
-   U_INTERNAL_ASSERT_EQUALS(u__strlen(u_buffer), u_buffer_len)
-
-   // NB: if is present the char 'filetype' this item isn't a directory and we don't need to try opendir()...
-   //
-   // dirp = (DIR*) (u_ftw_ctx.filetype && strchr(u_buffer+1, u_ftw_ctx.filetype) ? 0 : opendir(u_buffer));
-
-   u_ftw_ctx.is_directory = ((dirp = (DIR* restrict) opendir(U_PATH_CONV(u_buffer))) != 0);
-
-   if (u_ftw_ctx.is_directory == false ||
-       u_ftw_ctx.call_if_directory)
-      {
-      u_ftw_ctx.call();
-      }
-
-   if (u_ftw_ctx.is_directory)
-      {
-      u_buffer[u_buffer_len++] = '/';
-
-      u_ftw_readdir(dirp);
-
-      --u_buffer_len;
-
-      if (u_ftw_ctx.call_if_up) u_ftw_ctx.call_if_up(); // for UTree<UString>::load() ...
-      }
-}
-*/

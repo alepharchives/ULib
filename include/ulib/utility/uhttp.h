@@ -188,9 +188,9 @@ public:
    static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
    static int  manageRequest();
-   static void writeApacheLikeLog();
    static void processGetRequest();
    static bool callService(const UString& path);
+   static void writeApacheLikeLog(bool prepare);
    static void manageServletRequest(bool as_service);
    static bool checkRequestForHeader(const UString& request);
    static bool checkContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
@@ -206,7 +206,7 @@ public:
       {
       U_TRACE(0, "UHTTP::endRequestProcessing()")
 
-      if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog();
+      if (UHTTP::apache_like_log) UHTTP::writeApacheLikeLog(false);
 
       U_http_method_len = 0; // NB: this mark the end of http request processing...
       }
@@ -226,6 +226,7 @@ public:
 
    // set HTTP response message
 
+   static void setNoResponse();
    static void setResponse(const UString* content_type, const UString* body);
    static void setRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
 
@@ -867,6 +868,7 @@ public:
 
    static int inotify_wd;
    static UString* cache_file_mask;
+   static UString* cache_file_store;
    static UFileCacheData* file_data;
    static UHashMap<UFileCacheData*>* cache_file;
 

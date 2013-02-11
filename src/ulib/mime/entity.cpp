@@ -560,8 +560,6 @@ const char* UMimeMessage::dump(bool reset) const
 
 const char* UMimeMultipart::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UMimeEntity::dump(false);
 
    *UObjectIO::os << '\n'

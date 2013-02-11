@@ -38,6 +38,8 @@ public:
    static const UString* str_SESSION_COOKIE_OPTION;
    static const UString* str_MAINTENANCE_MODE;
    static const UString* str_APACHE_LIKE_LOG;
+   static const UString* str_USP_AUTOMATIC_ALIASING;
+   static const UString* str_CACHE_FILE_STORE;
 
    static void str_allocate();
 

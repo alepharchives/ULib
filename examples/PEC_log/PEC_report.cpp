@@ -2,6 +2,7 @@
 
 #include "PEC_report.h"
 
+#include <ulib/utility/dir_walk.h>
 #include <ulib/utility/string_ext.h>
 
 vPF                PEC_report::parse;
@@ -1061,17 +1062,15 @@ void PEC_report::processFiles()
 {
    U_TRACE(5, "PEC_report::processFiles()")
 
-   U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
+   U_INTERNAL_ASSERT_EQUALS(UDirWalk::isDirectory(), false)
 
    ++nfiles;
 
-   U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
-   U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
-   U_INTERNAL_ASSERT_EQUALS(u_ftw_ctx.is_directory,false)
-
    // NB: need duplicate string because depends on buffer content of filename...
 
-   UString _filename((void*)(u_buffer+2), u_buffer_len-2);
+   UString _filename;
+
+   UDirWalk::setFoundFile(_filename);
 
    const char* ptr      = _filename.c_str();
    const char* basename = u_basename(ptr);
@@ -1204,15 +1203,13 @@ void PEC_report::loadFiles()
 {
    U_TRACE(5, "PEC_report::loadFiles()")
 
-   (void) UServices::setFtw(0);
+   UDirWalk dirwalk(0);
 
-   u_ftw_ctx.call              = PEC_report::processFiles;
-   u_ftw_ctx.sort_by           = 0;
-   u_ftw_ctx.call_if_directory = false;
+   UDirWalk::setRecurseSubDirs(false);
 
-   u_ftw();
+   dirwalk.call_internal = PEC_report::processFiles;
 
-   u_buffer_len = 0;
+   dirwalk.walk();
 
    u_printSize(buffer, bytes);
 

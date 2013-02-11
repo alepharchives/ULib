@@ -13,27 +13,47 @@
 
 #include <ulib/file.h>
 #include <ulib/tokenizer.h>
-#include <ulib/container/tree.h>
+#include <ulib/container/vector.h>
 #include <ulib/utility/services.h>
+#include <ulib/utility/dir_walk.h>
 #include <ulib/utility/string_ext.h>
 
 #ifdef USE_LIBMAGIC
 #  include <ulib/magic/magic.h>
 #endif
 
-bool              UFile::_root;
-char              UFile::cwd_save[U_PATH_MAX];
-char*             UFile::pfree;
-uint32_t          UFile::nfree;
-uint32_t          UFile::cwd_len_save;
-UTree<UString>*   UFile::tree;
-UVector<UString>* UFile::vector;
+char     UFile::cwd_save[U_PATH_MAX];
+char*    UFile::pfree;
+uint32_t UFile::nfree;
+uint32_t UFile::cwd_save_len;
 #ifdef DEBUG
-int               UFile::num_file_object;
+int      UFile::num_file_object;
 
-void UFile::inc_num_file_object() { ++num_file_object; }
-void UFile::dec_num_file_object() { --num_file_object; }
-void UFile::chk_num_file_object() { if (num_file_object) U_WARNING("UFile::chdir() with num file object = %d", num_file_object); }
+void UFile::inc_num_file_object(UFile* pthis)
+{
+   U_TRACE(0+256, "UFile::inc_num_file_object(%p)", pthis)
+
+   ++num_file_object;
+
+   U_INTERNAL_DUMP("this         = %p", pthis)
+   U_INTERNAL_DUMP("&st_dev      = %p", &(pthis->st_dev))
+   U_INTERNAL_DUMP("&st_ctime    = %p", &(pthis->st_ctime))
+   U_INTERNAL_DUMP("memory._this = %p", pthis->memory._this)
+
+   U_INTERNAL_ASSERT_EQUALS((void*)pthis, (void*)&(pthis->st_dev))
+}
+
+void UFile::dec_num_file_object(UFile* pthis, int fd)
+{
+   --num_file_object;
+
+   if (fd != -1) U_WARNING("file descriptor %d not closed...", fd);
+}
+
+void UFile::chk_num_file_object()
+{
+   if (num_file_object) U_WARNING("UFile::chdir() with num file object = %d", num_file_object);
+}
 #endif
 
 #ifndef MAP_POPULATE // (since Linux 2.5.46)
@@ -204,7 +224,7 @@ bool UFile::chdir(const char* path, bool flag_save)
 
       if (flag_save)
          {
-         cwd_len_save = u_cwd_len;
+         cwd_save_len = u_cwd_len;
 
          (void) u__strcpy(cwd_save, u_cwd);
          }
@@ -212,7 +232,7 @@ bool UFile::chdir(const char* path, bool flag_save)
    else
       {
       U_INTERNAL_ASSERT(flag_save)
-      U_INTERNAL_ASSERT_MAJOR(cwd_len_save,0)
+      U_INTERNAL_ASSERT_MAJOR(cwd_save_len, 0)
 
       path = cwd_save;
       }
@@ -225,16 +245,18 @@ bool UFile::chdir(const char* path, bool flag_save)
          {
          U_INTERNAL_ASSERT(flag_save)
 
-         u_cwd_len = cwd_len_save;
+         u_cwd_len = cwd_save_len;
 
          (void) u__strcpy(u_cwd, cwd_save);
+
+         cwd_save_len = 0;
          }
       else if (IS_DIR_SEPARATOR(path[0]) == false) u_getcwd();
       else
          {
          u_cwd_len = u__strlen(path);
 
-         U_INTERNAL_ASSERT_MINOR(u_cwd_len,U_PATH_MAX)
+         U_INTERNAL_ASSERT_MINOR(u_cwd_len, U_PATH_MAX)
 
          (void) u__strcpy(u_cwd, path);
          }
@@ -271,11 +293,11 @@ void UFile::setPath(const UFile& file, char* buffer_path, const char* suffix, ui
    U_TRACE(1, "UFile::setPath(%p,%p,%.*S,%u)", &file, buffer_path, len, suffix, len)
 
    U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
-   U_INTERNAL_DUMP("cwd_save = %.*S", cwd_len_save, cwd_save)
+   U_INTERNAL_DUMP("cwd_save = %.*S", cwd_save_len, cwd_save)
 
    reset();
 
-   if (IS_DIR_SEPARATOR(file.path_relativ[0]) == false && cwd_len_save) (void) U_SYSCALL(chdir, "%S", U_PATH_CONV(cwd_save)); // for IR...
+   if (IS_DIR_SEPARATOR(file.path_relativ[0]) == false && cwd_save_len) (void) U_SYSCALL(chdir, "%S", U_PATH_CONV(cwd_save)); // for IR...
 
    path_relativ_len = file.path_relativ_len + len;
 
@@ -1097,10 +1119,10 @@ bool UFile::rmdir(const char* path, bool remove_all)
          {
          const char* file;
          UString tmp(path);
-         UVector<UString> vec;
-         uint32_t n = listContentOf(vec, &tmp, 0, 0);
+         UDirWalk dirwalk(&tmp);
+         UVector<UString> vec(256);
 
-         for (uint32_t i = 0; i < n; ++i)
+         for (uint32_t i = 0, n = dirwalk.walk(vec); i < n; ++i)
             {
             U_INTERNAL_ASSERT(vec[i].isNullTerminated())
 
@@ -1195,13 +1217,13 @@ void UFile::substitute(UFile& file)
    U_TRACE(1, "UFile::substitute(%p)", &file)
 
    U_INTERNAL_DUMP("u_cwd             = %S",   u_cwd)
-   U_INTERNAL_DUMP("cwd_save          = %.*S", cwd_len_save, cwd_save)
+   U_INTERNAL_DUMP("cwd_save          = %.*S", cwd_save_len, cwd_save)
    U_INTERNAL_DUMP("path_relativ(%u)  = %.*S", path_relativ_len, path_relativ_len, path_relativ)
    U_INTERNAL_DUMP("file.path_relativ = %.*S", file.path_relativ_len, file.path_relativ)
 
    U_INTERNAL_ASSERT_EQUALS(strcmp(path_relativ, file.path_relativ), 0)
 
-   if (cwd_len_save) (void) U_SYSCALL(chdir, "%S", U_PATH_CONV(u_cwd));
+   if (cwd_save_len) (void) U_SYSCALL(chdir, "%S", U_PATH_CONV(u_cwd));
 
    if (fd != -1)
       {
@@ -1221,176 +1243,6 @@ void UFile::substitute(UFile& file)
    U_INTERNAL_DUMP("fd = %d map = %p map_size = %u st_size = %I", fd, map, map_size, st_size)
 
    if (fd != -1) UFile::fsync();
-}
-
-// LS
-
-void UFile::ftw_vector_push()
-{
-   U_TRACE(0, "UFile::ftw_vector_push()")
-
-   uint32_t len;
-   const char* ptr;
-
-   if (                 u_buffer[0] == '.' &&
-       IS_DIR_SEPARATOR(u_buffer[1]))
-      {
-      U_INTERNAL_ASSERT_MAJOR(u_buffer_len,2)
-
-      ptr = u_buffer    +2;
-      len = u_buffer_len-2;
-      }
-   else
-      {
-      ptr = u_buffer;
-      len = u_buffer_len;
-      }
-
-   UString str((void*)ptr, len);
-
-   vector->push(str);
-}
-
-uint32_t UFile::listContentOf(UVector<UString>& vec, const char* filter, uint32_t filter_len)
-{
-   U_TRACE(0, "UFile::listContentOf(%p,%.*S,%u)", &vec, filter_len, filter, filter_len)
-
-   uint32_t n = vec.size();
-
-   if (chdir(path_relativ, true) &&
-       UServices::setFtw(0, filter, filter_len))
-      {
-      vector = &vec;
-
-      u_ftw_ctx.call              = ftw_vector_push;
-      u_ftw_ctx.depth             = false;
-      u_ftw_ctx.sort_by           = 0;
-      u_ftw_ctx.call_if_directory = false;
-
-      u_ftw();
-
-      u_buffer_len = 0;
-
-      (void) chdir(0, true);
-      }
-
-   uint32_t result = (vec.size() - n);
-
-   U_RETURN(result);
-}
-
-uint32_t UFile::listContentOf(UVector<UString>& vec, const UString* dir, const char* filter, uint32_t filter_len)
-{
-   U_TRACE(0, "UFile::listContentOf(%p,%p,%.*S,%u)", &vec, dir, filter_len, filter, filter_len)
-
-   if (UServices::setFtw(dir, filter, filter_len) == false) U_RETURN(0);
-
-   uint32_t n = vec.size();
-
-   vector = &vec;
-
-   u_ftw_ctx.call              = ftw_vector_push;
-   u_ftw_ctx.depth             = false;
-   u_ftw_ctx.sort_by           = 0;
-   u_ftw_ctx.call_if_directory = false;
-
-   u_ftw();
-
-   u_buffer_len    = 0;
-   uint32_t result = (vec.size() - n);
-
-   U_RETURN(result);
-}
-
-void UFile::ftw_tree_push()
-{
-   U_TRACE(0, "UFile::ftw_tree_push()")
-
-   U_INTERNAL_DUMP("u_ftw_ctx.is_directory = %b", u_ftw_ctx.is_directory)
-
-   if (_root) _root = false;
-   else
-      {
-      UString str((void*)u_buffer, u_buffer_len);
-
-      UTree<UString>* ptree = tree->push(str);
-
-      if (u_ftw_ctx.is_directory) tree = ptree;
-      }
-}
-
-void UFile::ftw_tree_up()
-{
-   U_TRACE(0, "UFile::ftw_tree_up()")
-
-   tree = tree->parent();
-}
-
-void UFile::listRecursiveContentOf(UTree<UString>& t, const UString* dir, const char* filter, uint32_t filter_len)
-{
-   U_TRACE(0, "UFile::listRecursiveContentOf(%p,%p,%.*S,%u)", &t, dir, filter_len, filter, filter_len)
-
-   if (UServices::setFtw(dir, filter, filter_len) == false) return;
-
-   if (dir == 0)
-      {
-      static UString* current;
-
-      if (current == 0) U_NEW_ULIB_OBJECT(current, UString("."));
-
-      dir = current;
-      }
-
-   tree  = &t;
-   _root = true;
-
-   t.setRoot(*dir);
-
-   u_ftw_ctx.call              = ftw_tree_push;
-   u_ftw_ctx.call_if_up        = ftw_tree_up;
-   u_ftw_ctx.sort_by           = 0;
-   u_ftw_ctx.call_if_directory = true;
-
-   u_ftw();
-
-   u_buffer_len         = 0;
-   u_ftw_ctx.call_if_up = 0;
-}
-
-uint32_t UFile::buildFilenameListFrom(UVector<UString>& vec, const UString& arg, char sep)
-{
-   U_TRACE(0, "UFile::buildFilenameListFrom(%p,%.*S,%C)", &vec, U_STRING_TO_TRACE(arg), sep)
-
-   UTokenizer t(arg);
-   uint32_t pos, n = vec.size();
-   UString dir, filename, filter;
-
-   while (t.next(filename, sep))
-      {
-      if (filename.find_first_of("?*", 0, 2) == U_NOT_FOUND) vec.push(filename);
-      else
-         {
-         pos = filename.find_last_of('/');
-
-         U_INTERNAL_DUMP("pos = %u", pos)
-
-         if (pos == U_NOT_FOUND)
-            {
-            (void) listContentOf(vec, 0, U_STRING_TO_PARAM(filename));
-            }
-         else
-            {
-            dir    = filename.substr(0U, pos);
-            filter = filename.substr(pos + 1);
-
-            (void) listContentOf(vec, &dir, U_STRING_TO_PARAM(filter));
-            }
-         }
-      }
-
-   uint32_t result = (vec.size() - n);
-
-   U_RETURN(result);
 }
 
 // MIME TYPE
@@ -1450,8 +1302,6 @@ const char* UFile::getMimeType(bool bmagic)
 
 const char* UFile::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "fd                        " << fd                  << '\n'
                   << "map                       " << (void*)map          << '\n'
                   << "st_size                   " << st_size             << '\n'

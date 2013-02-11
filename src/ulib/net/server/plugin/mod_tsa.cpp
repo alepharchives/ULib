@@ -25,7 +25,7 @@ UCommand* UTsaPlugIn::command;
 
 UTsaPlugIn::UTsaPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UTsaPlugIn, "")
 }
 
 UTsaPlugIn::~UTsaPlugIn()

@@ -407,8 +407,6 @@ int UDialog::tree(const char* text, const char* items[], uint32_t items_depth[],
 
 const char* UDialog::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "width              " << width               << '\n'
                   << "height             " << height              << '\n'
                   << "path_dialog        " << path_dialog         << '\n'

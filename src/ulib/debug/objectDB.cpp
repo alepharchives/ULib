@@ -15,6 +15,7 @@
 #include <ulib/base/utility.h>
 
 #include <ulib/debug/objectDB.h>
+#include <ulib/debug/error_memory.h>
 
 #ifndef __MINGW32__
 #  include <sys/uio.h>
@@ -272,6 +273,7 @@ U_NO_EXPORT uint32_t    UObjectDB::file_size;
 
 U_NO_EXPORT char        UObjectDB::buffer1[64];
 U_NO_EXPORT char        UObjectDB::buffer2[256];
+U_NO_EXPORT char        UObjectDB::buffer3[64];
 
 U_NO_EXPORT char*       UObjectDB::lbuf;
 U_NO_EXPORT char*       UObjectDB::lend;
@@ -280,12 +282,13 @@ U_NO_EXPORT bPFpcpv     UObjectDB::checkObject;
 U_NO_EXPORT const char* UObjectDB::_name_class;
 U_NO_EXPORT const void* UObjectDB::_ptr_object;
 
-U_NO_EXPORT iovec       UObjectDB::liov[7] = {
+U_NO_EXPORT iovec       UObjectDB::liov[8] = {
    { 0, 0 },
    { (caddr_t) UObjectDB::buffer1, 0 },
    { (caddr_t) UObjectDB::buffer2, 0 },
    { 0, 0 },
-   { (caddr_t)  U_CONSTANT_TO_PARAM(U_LF2) },
+   { (caddr_t) UObjectDB::buffer3, 0 },
+   { (caddr_t) U_CONSTANT_TO_PARAM(U_LF2) },
    { 0, 0 },
    { (caddr_t) "\n---------------------------------------"
                "-----------------------------------------\n", 82 }
@@ -380,13 +383,16 @@ U_NO_EXPORT void UObjectDB::_write(const struct iovec* iov, int _n)
       {
       for (int i = 0; i < _n; ++i)
          {
-         U_INTERNAL_ASSERT_RANGE(1,iov[i].iov_len,file_size)
+         if (iov[i].iov_len)
+            {
+            U_INTERNAL_ASSERT_RANGE(1,iov[i].iov_len,file_size)
 
-         if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
+            if ((file_ptr + iov[i].iov_len) > file_limit) file_ptr = file_mem;
 
-         u__memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len, __PRETTY_FUNCTION__);
+            u__memcpy(file_ptr, iov[i].iov_base, iov[i].iov_len, __PRETTY_FUNCTION__);
 
-         file_ptr += iov[i].iov_len;
+            file_ptr += iov[i].iov_len;
+            }
          }
       }
 }
@@ -470,18 +476,29 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
    liov[0].iov_base = (caddr_t) dumper->name_class;
 
    (void) sprintf(buffer1, " %p size %d level %d", // cnt %09d",
-                  dumper->ptr_object, dumper->size_object, dumper->level); //, dumper->cnt);
+                  dumper->ptr_object, dumper->sz_obj, dumper->level); //, dumper->cnt);
 
    (void) sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
 
-   liov[1].iov_len = u__strlen(buffer1);
-   liov[2].iov_len = u__strlen(buffer2);
+   liov[1].iov_len  = u__strlen(buffer1);
+   liov[2].iov_len  = u__strlen(buffer2);
 
    liov[3].iov_len  = u__strlen(dumper->name_function);
    liov[3].iov_base = (caddr_t) dumper->name_function;
 
-   liov[5].iov_base = (caddr_t) dumper->dump();
-   liov[5].iov_len  = u__strlen((const char*)liov[5].iov_base);
+   const void* _this = (dumper->psentinel ? *(dumper->psentinel)
+                                          : (void*)U_CHECK_MEMORY_SENTINEL);
+
+   if (_this == (void*)U_CHECK_MEMORY_SENTINEL) liov[4].iov_len = 0;
+   else
+      {
+      (void) sprintf(buffer3, "\nERROR ON MEMORY [sentinel = " U_CHECK_MEMORY_SENTINEL_STR " _this = %p - %s]\n", _this, (_this ? "ABW" : "FMR"));
+
+      liov[4].iov_len = u__strlen(buffer3);
+      }
+
+   liov[6].iov_base = (caddr_t) dumper->dump();
+   liov[6].iov_len  = u__strlen((const char*)liov[6].iov_base);
 }
 
 // dump single object...
@@ -503,7 +520,7 @@ U_NO_EXPORT bool UObjectDB::printObjLive(const UObjectDumpable* dumper)
       {
       dumpObject(dumper);
 
-      for (int i = 0; i < 7; ++i)
+      for (int i = 0; i < 8; ++i)
          {
          if ((lbuf + liov[i].iov_len) > lend) return false;
 
@@ -606,7 +623,7 @@ void UObjectDB::dumpObjects()
          {
          dumpObject(dumper);
 
-         _write(liov, 7);
+         _write(liov, 8);
          }
       }
 }

@@ -31,6 +31,7 @@ dist-hook:
 		$(distdir)/cdb/softlimit \
 		$(distdir)/examples/*/*.spec \
 		$(distdir)/tests/ulib/tmp/* \
+		$(distdir)/tests/ulib/private/* \
 		$(distdir)/tests/ulib/CApath/*.*0 \
 		$(distdir)/tests/ulib/ok/timer.ok \
 		$(distdir)/tests/ulib/ok/interrupt.ok \
@@ -68,7 +69,7 @@ dist-hook:
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.so \
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.usp \
 		$(distdir)/tests/examples/benchmark/libraries/libcaptcha.o
-
+		
 README.html: README.md
 	@Markdown.pl README.md > README.html
 

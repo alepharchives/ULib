@@ -544,8 +544,6 @@ void UThread::sleep(time_t timeoutMS)
 
 const char* UThreadImpl::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "_tid           " << _tid           << '\n'
                   << "_cancel        " << _cancel        << '\n'
                   << "_signal        " << _signal        << '\n'
@@ -564,8 +562,6 @@ const char* UThreadImpl::dump(bool reset) const
 
 const char* UThread::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "next  (UThread " << (void*)next  << ")\n"
                   << "first (UThread " << (void*)first << ')';
 

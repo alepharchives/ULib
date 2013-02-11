@@ -522,8 +522,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UTimeDate& d)
 
 const char* UTimeDate::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "_day    " << _day   << '\n'
                   << "_month  " << _month << '\n'
                   << "_year   " << _year  << '\n'

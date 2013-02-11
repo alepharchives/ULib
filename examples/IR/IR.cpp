@@ -1,6 +1,7 @@
 // IR.cpp
 
 #include "IR.h"
+#include <ulib/utility/dir_walk.h>
 #include <ulib/utility/string_ext.h>
 
 /*
@@ -126,14 +127,19 @@ void IR::parse()
 
    t->setAvoidPunctuation(true);
 
-   bool bad_words_active = bad_words && (suffix_bad_words == 0 || (suffix_bad_words->find(suffix) != U_NOT_FOUND));
+   bool bad_words_active = bad_words &&
+                           (suffix_bad_words == 0 ||
+                            (suffix_bad_words->find(suffix) != U_NOT_FOUND));
 
    if (suffix_skip_tag_xml) t->setSkipTagXML(suffix_skip_tag_xml->find(suffix) != U_NOT_FOUND);
 
    while (t->next(*UPosting::word, (bool*)0))
       {
       if (bad_words_active &&
-          UServices::match(*UPosting::word, *bad_words)) continue;
+          UServices::match(*UPosting::word, *bad_words))
+         {
+         continue;
+         }
 
       UPosting::processWord(operation);
       }
@@ -145,13 +151,9 @@ void IR::processFile()
 {
    U_TRACE(5, "IR::processFile()")
 
-   U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
+   U_INTERNAL_ASSERT_EQUALS(UDirWalk::isDirectory(), false)
 
-   U_INTERNAL_ASSERT_EQUALS(u_buffer[0],'.')
-   U_INTERNAL_ASSERT(IS_DIR_SEPARATOR(u_buffer[1]))
-   U_INTERNAL_ASSERT_EQUALS(u_ftw_ctx.is_directory,false)
-
-   UPosting::filename->replace(u_buffer+2, u_buffer_len-2);
+   UDirWalk::setFoundFile(*UPosting::filename);
 
    IR::parse();
 
@@ -174,25 +176,21 @@ void IR::loadFiles()
 {
    U_TRACE(5, "IR::loadFiles()")
 
+   UDirWalk dirwalk(0);
+
+   UDirWalk::setSortingForInode();
+   UDirWalk::setRecurseSubDirs(false);
+
+                                     dirwalk.call_internal = IR::processFile;
+   if (UPosting::dir_content_as_doc) dirwalk.call_if_up    = IR::processDirectory;
+
    if (operation == 3) (void) write(1, U_CONSTANT_TO_PARAM("CHECK_1")); // check
 
-   (void) UServices::setFtw(0);
-
-   u_ftw_ctx.call              = IR::processFile;
-   u_ftw_ctx.sort_by           = u_ftw_ino_cmp;
-   u_ftw_ctx.call_if_directory = false;
-
-   if (UPosting::dir_content_as_doc) u_ftw_ctx.call_if_up = IR::processDirectory;
-
-   u_ftw();
-
-   if (UPosting::dir_content_as_doc) u_ftw_ctx.call_if_up = 0;
-
-   u_buffer_len = 0;
-
-   (void) UFile::chdir(0, true);
+   dirwalk.walk();
 
    if (operation == 3) (void) write(1, U_CONSTANT_TO_PARAM("OK")); // check
+
+   (void) UFile::chdir(0, true);
 }
 
 void IR::loadFilters()

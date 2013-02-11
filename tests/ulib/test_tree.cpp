@@ -2,6 +2,7 @@
 
 #include <ulib/file.h>
 #include <ulib/container/tree.h>
+#include <ulib/utility/dir_walk.h>
 
 #ifdef HAVE_STRSTREAM_H
 #  include <strstream.h>
@@ -127,11 +128,14 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT( y.empty() == true )
 
-   UString filter = U_STRING_FROM_CONSTANT("?db.*");
+   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*"));
 
-   UFile::listRecursiveContentOf(y, 0, U_STRING_TO_PARAM(filter));
+   uint32_t n = dirwalk.walk(y);
 
-   U_ASSERT( y.size() == 2 )
+   U_ASSERT( n == 2 )
+
+   U_DUMP("y[0] = %.*S", U_STRING_TO_TRACE(y[0]))
+   U_DUMP("y[1] = %.*S", U_STRING_TO_TRACE(y[1]))
 
    U_ASSERT( y[0] == U_STRING_FROM_CONSTANT("./cdb.test") ||
              y[0] == U_STRING_FROM_CONSTANT("./rdb.test"))

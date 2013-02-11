@@ -1048,8 +1048,6 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
 const char* UVector<void*>::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "vec       " << (void*)vec << '\n'
                   << "_length   " << _length    << '\n'
                   << "_capacity " << _capacity;

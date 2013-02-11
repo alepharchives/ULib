@@ -99,11 +99,11 @@ ULog*                             UServer_Base::log;
 pid_t                             UServer_Base::pid;
 time_t                            UServer_Base::expire;
 time_t                            UServer_Base::last_event;
+int32_t                           UServer_Base::oClientImage;
 uint32_t                          UServer_Base::start;
 uint32_t                          UServer_Base::count;
 uint32_t                          UServer_Base::map_size;
 uint32_t                          UServer_Base::vplugin_size;
-uint32_t                          UServer_Base::oClientImage;
 uint32_t                          UServer_Base::shared_data_add;
 UString*                          UServer_Base::mod_name;
 UString*                          UServer_Base::host;
@@ -211,6 +211,14 @@ public:
          {
          (void) nanosleep(&ts, 0);
 
+         if (ULog::data_to_write &&
+             ULog::data_to_write->empty() == false)
+            {
+            ULog::logRotateWrite();
+
+            watch_counter = 1;
+            }
+
          U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
 
          if (--watch_counter > 0) u_now->tv_sec += 1L;
@@ -266,7 +274,7 @@ static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_
 
 void UServer_Base::str_allocate()
 {
-   U_TRACE(0, "UServer_Base::str_allocate()")
+   U_TRACE(0+256, "UServer_Base::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_ENABLE_IPV6,0)
    U_INTERNAL_ASSERT_EQUALS(str_PORT,0)
@@ -400,6 +408,17 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    U_INTERNAL_ASSERT_EQUALS(pthis,0)
    U_INTERNAL_ASSERT_EQUALS(senvironment,0)
+
+#if defined(ENABLE_MEMPOOL) && defined(__linux__) && !defined(DEBUG)
+   // the value are based on uclient.test
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1),          608);
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2),         3718);
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_3),         3677);
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4),         7776);
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),         3680);
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_6),           96);
+   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE),  606);
+#endif
 
    server        = U_NEW(UString);
    as_user       = U_NEW(UString);
@@ -1362,28 +1381,20 @@ void UServer_Base::init()
 
    U_INTERNAL_DUMP("n = %u UNotifier::max_connection = %u", n, UNotifier::max_connection)
 
-   // preallocation object...
+#if defined(ENABLE_MEMPOOL) && defined(__linux__) && !defined(DEBUG)
+   int stack_obj[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-   int stack_index[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+   if (isLog()) stack_obj[U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5)]             = n; // logbuf => UString(200U)
+                stack_obj[U_SIZE_TO_STACK_INDEX(sizeof(UClientImage_Base))] += n;
 
-   if (isLog())
-      {
-      stack_index[5]                                      = n; // logbuf => UString(200U)
-      stack_index[U_SIZE_TO_STACK_INDEX(sizeof(UString))] = n;
-      }
-
-   stack_index[U_SIZE_TO_STACK_INDEX(sizeof(UClientImage_Base))] += n;
-
-#if defined(USE_LIBSSL)
-   if (bssl) stack_index[U_SIZE_TO_STACK_INDEX(sizeof(USSLSocket))] += n;
+#  ifdef USE_LIBSSL
+   if (bssl) stack_obj[U_SIZE_TO_STACK_INDEX(sizeof(USSLSocket))] += n;
    else
 #  endif
-             stack_index[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
+             stack_obj[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
 
-   for (uint32_t i = 0; i < U_NUM_STACK_TYPE; ++i)
-      {
-      if (stack_index[i]) UMemoryPool::allocateMemoryBlocks(i, stack_index[i] + 32);
-      }
+   for (uint32_t i = 1; i < U_NUM_STACK_TYPE; ++i) if (stack_obj[i]) UMemoryPool::allocateMemoryBlocks(i, stack_obj[i]);
+#endif
 
    pthis->preallocate();
 
@@ -1809,6 +1820,8 @@ retry:
          U_RETURN(U_NOTIFIER_OK);
          }
 #  endif
+
+      U_INTERNAL_ASSERT_POINTER(pClientIndex->client_address)
 
       if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE) pClientIndex->handlerDelete();
       else
@@ -2364,8 +2377,6 @@ void UServer_Base::logCommandMsgError(const char* cmd, bool balways)
 
 const char* UServer_Base::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "port                      " << port                       << '\n'
                   << "iBackLog                  " << iBackLog                   << '\n'
                   << "map_size                  " << map_size                   << '\n'

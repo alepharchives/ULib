@@ -26,7 +26,7 @@ USOAPParser* USoapPlugIn::soap_parser;
 
 USoapPlugIn::USoapPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, USoapPlugIn, "")
 }
 
 USoapPlugIn::~USoapPlugIn()

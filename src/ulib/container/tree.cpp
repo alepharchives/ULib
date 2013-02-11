@@ -161,8 +161,6 @@ U_EXPORT istream& operator>>(istream& is, UTree<UString>& t)
 
 const char* UTree<void*>::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "vec       " << (void*)vec << '\n'
                   << "_elem     " << _elem      << '\n'
                   << "_parent   " << _parent    << '\n'

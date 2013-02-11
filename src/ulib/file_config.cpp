@@ -29,7 +29,7 @@ const UString* UFileConfig::str_string;
 
 void UFileConfig::str_allocate()
 {
-   U_TRACE(0, "UFileConfig::str_allocate()")
+   U_TRACE(0+256, "UFileConfig::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_FILE,0)
    U_INTERNAL_ASSERT_EQUALS(str_string,0)
@@ -619,8 +619,6 @@ bool UFileConfig::loadProperties()
 
 const char* UFileConfig::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UFile::dump(false);
 
    *UObjectIO::os << '\n'

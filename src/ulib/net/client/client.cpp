@@ -22,7 +22,7 @@ const UString* UClient_Base::str_RES_TIMEOUT;
 
 void UClient_Base::str_allocate()
 {
-   U_TRACE(0, "UClient_Base::str_allocate()")
+   U_TRACE(0+256, "UClient_Base::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_RES_TIMEOUT,0)
 
@@ -528,8 +528,6 @@ bool UClient_Base::readRPCResponse()
 
 const char* UClient_Base::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "bIPv6                               " << bIPv6                   << '\n'
                   << "port                                " << port                    << '\n'
                   << "timeoutMS                           " << timeoutMS               << '\n'

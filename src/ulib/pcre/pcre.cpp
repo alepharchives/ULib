@@ -661,8 +661,6 @@ bool UPCRE::isValidURL(const UString& url)
 
 const char* UPCRE::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "p_pcre                        " << (void*)p_pcre       << '\n'
                   << "_flags                        " << _flags              << '\n'
                   << "sub_len                       " << sub_len             << '\n'

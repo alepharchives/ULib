@@ -211,7 +211,7 @@ const UString* UHttpClient_Base::str_proxy_authorization;
 
 void UHttpClient_Base::str_allocate()
 {
-   U_TRACE(0, "UHttpClient_Base::str_allocate()")
+   U_TRACE(0+256, "UHttpClient_Base::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_www_authenticate, 0)
    U_INTERNAL_ASSERT_EQUALS(str_proxy_authenticate, 0)
@@ -902,8 +902,6 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file)
 
 const char* UHttpClient_Base::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UClient_Base::dump(false);
 
    *UObjectIO::os << '\n'

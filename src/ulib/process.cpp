@@ -558,8 +558,6 @@ char* UProcess::exitInfo(int _status)
 
 const char* UProcess::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "pid             " << _pid    << '\n'
                   << "status          " << status  << '\n' 
                   << "running         " << running;

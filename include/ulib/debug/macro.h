@@ -70,17 +70,26 @@
 
 // Some useful macros for conditionally compiling debug features...
 
-#ifdef DEBUG
-// Manage test for memory corruption
+#ifndef HAVE_ARCH64
+#  define U_CHECK_MEMORY_SENTINEL      0x0a1b2c3d
+#  define U_CHECK_MEMORY_SENTINEL_STR "0x0a1b2c3d" 
+#else
+#  define U_CHECK_MEMORY_SENTINEL      0x0a1b2c3d4e5f6789
+#  define U_CHECK_MEMORY_SENTINEL_STR "0x0a1b2c3d4e5f6789"
+#endif
 
-#  define U_MEMORY_TEST             UMemoryError memory;
-#  define U_MEMORY_TEST_COPY(o)                  memory = o.memory;
-#  define U_CHECK_MEMORY            U_CHECK_MEMORY_CLASS(memory);
-#  define U_CHECK_MEMORY_OBJ(o)     U_CHECK_MEMORY_CLASS((o).memory);
+#ifdef DEBUG
+// Manage class test for memory corruption
+
+#  define U_MEMORY_TEST         UMemoryError memory;
+#  define U_MEMORY_TEST_COPY(o)   memory = o.memory;
+
+#  define U_CHECK_MEMORY_OBJECT(p) U_ASSERT_MACRO((p)->memory.invariant(), "ERROR ON MEMORY", (p)->memory.getErrorType(p))
+#  define U_CHECK_MEMORY           U_CHECK_MEMORY_OBJECT(this)
 
 // Manage info on execution of program
 
-#  define U_TRACE(level,args...)    UTrace utr(level , ##args);
+#  define U_TRACE(level,args...) UTrace utr(level , ##args);
 
 // NB: U_DUMP(), U_SYSCALL(), U_RETURN() sono vincolati alla presenza di U_TRACE()
 
@@ -106,20 +115,23 @@
 #  define U_RETURN_POINTER(ptr,type)                                  return ((type*)utr.trace_return_type((void*)(ptr)))
 #  define U_RETURN_SUB_STRING(substr) U_RETURN_STRING(substr)
 
-#  define U__MEMCPY(a,b,n) (void) U_SYSCALL(u__memcpy, "%p,%p,%u,%S", (void* restrict)(a), (b), (n), __PRETTY_FUNCTION__)
+#  define U__MEMCPY(a,b,n) (void) U_SYSCALL(u__memcpy, "%p,%p,%u,%S", (void*)(a), (b), (n), __PRETTY_FUNCTION__)
 
 // A mechanism that allow all objects to be registered with a
 // central in-memory "database" that can dump the state of all live objects
 
-#  define U_REGISTER_OBJECT_PTR(level,CLASS,ptr)  \
+#  define U_REGISTER_OBJECT_PTR(level,CLASS,ptr) \
             if (UObjectDB::fd > 0 && \
                 (level) >= UObjectDB::level_active) { \
-                  UObjectDB::registerObject(new UObjectDumpable_Adapter<CLASS>(level, #CLASS, ptr)); }
+                  UObjectDB::registerObject(new UObjectDumpable_Adapter<CLASS>(level, #CLASS, ptr, &(ptr->memory._this))); }
 
-#  define U_REGISTER_OBJECT(level,CLASS)  \
+#  define U_REGISTER_OBJECT_PTR_WITHOUT_CHECK_MEMORY(level,CLASS,ptr) \
             if (UObjectDB::fd > 0 && \
                 (level) >= UObjectDB::level_active) { \
-                  UObjectDB::registerObject(new UObjectDumpable_Adapter<CLASS>(level, #CLASS, this)); }
+                  UObjectDB::registerObject(new UObjectDumpable_Adapter<CLASS>(level, #CLASS, ptr, 0)); }
+
+#  define U_REGISTER_OBJECT(                     level,CLASS) U_REGISTER_OBJECT_PTR(                     level,CLASS,this)
+#  define U_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS) U_REGISTER_OBJECT_PTR_WITHOUT_CHECK_MEMORY(level,CLASS,this)
 
 #  define U_UNREGISTER_OBJECT(level,ptr) \
             if (UObjectDB::fd > 0 && \
@@ -129,6 +141,12 @@
 #  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...) if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
                                                                   UObjectDB::flag_new_object =  false; \
                                                               U_REGISTER_OBJECT(level,CLASS) \
+                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+
+#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) \
+                                                              if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
+                                                                  UObjectDB::flag_new_object =  false; \
+                                                              U_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS) \
                                                               UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
 
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)              U_UNREGISTER_OBJECT(level,this) \
@@ -142,18 +160,18 @@
 
 // Manage location info for object allocation
 
-#  define U_ALLOCA(args...)                      U_SET_LOCATION_INFO; args
+#  define U_ALLOCA(args...)                       U_SET_LOCATION_INFO; args
 
-#  define U_NEW(args...)                        (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
-#  define U_NEW_VECTOR(n,type)                  (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, u_new_vector<type>(n))
+#  define U_NEW(args...)                         (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
+#  define U_NEW_VECTOR(n,type,p)                 (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, u_new_vector<type>(n,p))
 
-#  define U_NEW_ULIB_OBJECT(obj,args...)        UObjectDB::flag_ulib_object = true, \
-                                                obj = U_NEW(args), \
-                                                UObjectDB::flag_ulib_object = false
+#  define U_NEW_ULIB_OBJECT(obj,args...)         UObjectDB::flag_ulib_object = true, \
+                                                 obj = U_NEW(args), \
+                                                 UObjectDB::flag_ulib_object = false
 
-#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type)  UObjectDB::flag_ulib_object = true, \
-                                                obj = U_NEW_VECTOR(n,type), \
-                                                UObjectDB::flag_ulib_object = false
+#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type,p) UObjectDB::flag_ulib_object = true, \
+                                                 obj = U_NEW_VECTOR(n,type,p), \
+                                                 UObjectDB::flag_ulib_object = false
 
 
 // Dump argument for exec()...
@@ -203,7 +221,7 @@ if (envp) \
 #  define U_MEMORY_TEST
 #  define U_MEMORY_TEST_COPY(o)
 #  define U_CHECK_MEMORY
-#  define U_CHECK_MEMORY_OBJ(o)
+#  define U_CHECK_MEMORY_OBJECT(p)
 
 #  define U_TRACE(level,args...)
 #  define U_DUMP(args...)
@@ -224,18 +242,21 @@ if (envp) \
 #  define U_RETURN_POINTER(ptr,type)   return ((type*)ptr)
 #  define U_RETURN_SUB_STRING(r)       return (r)
 
-#  define U_REGISTER_OBJECT(level,CLASS)
-#  define U_REGISTER_OBJECT_PTR(level,CLASS,ptr)
+#  define U_REGISTER_OBJECT(                           level,CLASS)
+#  define U_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(      level,CLASS)
+#  define U_REGISTER_OBJECT_PTR(                       level,CLASS,ptr)
+#  define U_REGISTER_OBJECT_PTR_WITHOUT_CHECK_MEMORY(  level,CLASS,ptr)
+#  define U_TRACE_REGISTER_OBJECT(                     level,CLASS,format,args...)
+#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...)
 #  define U_UNREGISTER_OBJECT(level,pointer)
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
-#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)
 
 #  define U_NEW(args...)                       new args
 #  define U_ALLOCA(args...)                        args
-#  define U_NEW_VECTOR(n,type)                 u_new_vector<type>(n)
+#  define U_NEW_VECTOR(n,type,p)               u_new_vector<type>(n,p)
 
-#  define U_NEW_ULIB_OBJECT(obj,args...)       obj = new args
-#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type) obj = u_new_vector<type>(n)
+#  define U_NEW_ULIB_OBJECT(obj,args...)         obj = new args
+#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type,p) obj = u_new_vector<type>(n,p)
 
 #  define U_DUMP_ATTRS(attrs)
 #  define U_DUMP_EXEC(argv, envp)

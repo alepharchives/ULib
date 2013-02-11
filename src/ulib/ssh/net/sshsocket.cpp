@@ -313,8 +313,6 @@ int USSHSocket::send(const void* pData, int iDataLen)
 
 const char* USSHSocket::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    USocket::dump(false);
 
    *UObjectIO::os << '\n'

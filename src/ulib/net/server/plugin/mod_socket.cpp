@@ -43,7 +43,7 @@ void UWebSocketPlugIn::str_allocate()
 
 UWebSocketPlugIn::UWebSocketPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UWebSocketPlugIn, "")
 
    if (str_MAX_MESSAGE_SIZE == 0) str_allocate();
 }

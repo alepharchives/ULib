@@ -24,6 +24,7 @@
 #include <ulib/utility/escape.h>
 #include <ulib/utility/base64.h>
 #include <ulib/base/coder/url.h>
+#include <ulib/utility/dir_walk.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/websocket.h>
 #include <ulib/net/server/server.h>
@@ -81,6 +82,7 @@ UString*    UHTTP::fcgi_uri_mask;
 UString*    UHTTP::scgi_uri_mask;
 UString*    UHTTP::cookie_option;
 UString*    UHTTP::cache_file_mask;
+UString*    UHTTP::cache_file_store;
 UString*    UHTTP::uri_protected_mask;
 UString*    UHTTP::uri_request_cert_mask;
 UString*    UHTTP::maintenance_mode_page;
@@ -139,7 +141,7 @@ const UString* UHTTP::str_strict_transport_security;
 
 void UHTTP::str_allocate()
 {
-   U_TRACE(0, "UHTTP::str_allocate()")
+   U_TRACE(0+256, "UHTTP::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_indexhtml,0)
    U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa,0)
@@ -315,13 +317,13 @@ UHTTP::UFileCacheData::UFileCacheData()
 
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (UServer_Base::handler_inotify &&
-       (u_ftw_ctx.is_directory || file->dir()))
+       (UDirWalk::isDirectory() || file->dir()))
       {
       wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_inotify->fd, pathname->c_str(), IN_ONLYDIR | IN_CREATE | IN_DELETE | IN_MODIFY);
       }
 #endif
 
-   U_INTERNAL_DUMP("size = %u mtime = %ld dir() = %b u_ftw_ctx.is_directory = %b", size, mtime, S_ISDIR(mode), u_ftw_ctx.is_directory)
+   U_DUMP("size = %u mtime = %ld dir() = %b UDirWalk::isDirectory() = %b", size, mtime, S_ISDIR(mode), UDirWalk::isDirectory())
 }
 
 UHTTP::UFileCacheData::~UFileCacheData()
@@ -420,13 +422,16 @@ U_NO_EXPORT void UHTTP::in_CREATE()
 
    if (file_data == 0)
       {
+      U_INTERNAL_ASSERT_POINTER(pathname)
       U_INTERNAL_ASSERT_POINTER(UHashMap<void*>::pkey)
 
-      u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*UHashMap<void*>::pkey));
+      uint32_t sz = UHashMap<void*>::pkey->size();
+
+      pathname->setBuffer(sz);
+
+      (void) pathname->snprintf("%.*s", sz, UHashMap<void*>::pkey->data());
 
       checkFileForCache();
-
-      u_buffer_len = 0;
       }
 }
 
@@ -482,7 +487,7 @@ void UHTTP::in_READ()
                                                   event.ip->mask & IN_DELETE ? "deleted"   :
                                                   event.ip->mask & IN_MODIFY ? "modified"  : "???"))
 
-         u_ftw_ctx.is_directory = (event.ip->mask & IN_ISDIR);
+         UDirWalk::pthis->is_directory = (event.ip->mask & IN_ISDIR);
 
          // NB: The length contains any potential padding that is, the result of strlen() on the name field may be smaller than len...
 
@@ -679,7 +684,7 @@ void UHTTP::ctor()
    tmpdir          = U_NEW(UString(U_PATH_MAX));
    cbuffer         = U_NEW(UString);
    qcontent        = U_NEW(UString);
-   pathname        = U_NEW(UString(U_CAPACITY));
+   pathname        = U_NEW(UString);
    formMulti       = U_NEW(UMimeMultipart);
    set_cookie      = U_NEW(UString);
    request_uri     = U_NEW(UString);
@@ -834,6 +839,21 @@ void UHTTP::ctor()
    setCacheForDocumentRoot();
 }
 
+void UHTTP::checkFileForCache()
+{
+   U_TRACE(0+256, "UHTTP::checkFileForCache()")
+
+   U_INTERNAL_ASSERT_POINTER(pathname)
+
+   file->setPath(*pathname);
+
+   // NB: file->stat() get also the size of file...
+
+   if (file->stat()) manageDataForCache();
+
+   U_INTERNAL_DUMP("file_data->mime_index = %C", file_data->mime_index)
+}
+
 void UHTTP::setCacheForDocumentRoot()
 {
    U_TRACE(1, "UHTTP::setCacheForDocumentRoot()")
@@ -872,21 +892,29 @@ next:
 
    cache_file = U_NEW(UHashMap<UFileCacheData*>);
 
-   cache_file->allocate(6151U);
-
    if (U_STRNEQ(cache_file_mask->data(), "_off_") == false)
       {
-   // u_setPfnMatch(U_FNMATCH, FNM_INVERT);
+      UString item;
+      UDirWalk dirwalk(0); // U_CONSTANT_TO_PARAM("[cu]sp"));
+                           // u_setPfnMatch(U_FNMATCH, FNM_INVERT);
+      UVector<UString> vec(4000);
 
-      (void) UServices::setFtw(0); // U_CONSTANT_TO_PARAM("[cu]sp"));
+      UDirWalk::setRecurseSubDirs();
 
-      u_ftw_ctx.call              = checkFileForCache;
-      u_ftw_ctx.sort_by           = u_ftw_ino_cmp;
-      u_ftw_ctx.call_if_directory = true;
+      uint32_t i, n = dirwalk.walk(vec);
 
-      u_ftw();
+      cache_file->allocate(n + (15 * (n / 100)) + 32);
 
-      u_buffer_len = 0;
+      for (i = 0; i < n; ++i)
+         {
+         item = vec[i];
+
+         U_INTERNAL_ASSERT_POINTER(pathname)
+
+         (void) pathname->replace(item);
+
+         checkFileForCache();
+         }
       }
 
    // manage single favicon...
@@ -965,15 +993,6 @@ next:
       }
 #endif
 
-   if (UFile::isLastAllocation(cache_file->table, cache_file->_capacity * sizeof(UHashMapNode*)))
-      {
-      // resize hash table...
-
-      sz += (sz / 100) * 25;
-
-      cache_file->reserve(sz + 128U);
-      }
-
    // manage authorization data...
 
    file_data = (*cache_file)[".htpasswd"];
@@ -1031,6 +1050,7 @@ void UHTTP::dtor()
    if (global_alias)                       delete global_alias;
    if (cookie_option)                      delete cookie_option;
    if (cache_file_mask)                    delete cache_file_mask;
+   if (cache_file_store)                   delete cache_file_store;
    if (uri_protected_mask)                 delete uri_protected_mask;
    if (uri_request_cert_mask)              delete uri_request_cert_mask;
    if (maintenance_mode_page)              delete maintenance_mode_page;
@@ -1187,88 +1207,22 @@ uint32_t UHTTP::getUserAgent()
    U_RETURN(agent);
 }
 
-void UHTTP::writeApacheLikeLog()
+void UHTTP::writeApacheLikeLog(bool bprepare)
 {
-   U_TRACE(0, "UHTTP::writeApacheLikeLog()")
+   U_TRACE(0, "UHTTP::writeApacheLikeLog(%b)", bprepare)
 
-   const char* body;
-   const char* agent;
-   const char* referer;
-   const char* request = UClientImage_Base::request->data();
-   uint32_t referer_len, agent_len, request_len, body_len = UClientImage_Base::body->size();
+   static char buffer1[64];
+   static char buffer2[16];
 
-   char buffer[4096U];
-
-   if (u_http_info.startHeader)
-      {
-      U_INTERNAL_DUMP("u_http_info.startHeader = %u", u_http_info.startHeader)
-
-      request_len = u_http_info.startHeader;
-
-      if (u__isspace(request[request_len]) == false &&
-          u__isspace(request[request_len-1]))
-         {
-         while (u__isspace(request[--request_len])) {}
-
-         ++request_len;
-         }
-      }
-   else
-      {
-      request_len = U_STRING_FIND(*UClientImage_Base::request, 0, "HTTP/");
-
-      U_INTERNAL_DUMP("request_len = %u", request_len)
-
-      if (request_len != U_NOT_FOUND) request_len += U_CONSTANT_SIZE("HTTP/1.1");
-      else
-         {
-         request     = "-";
-         request_len = 1;
-         }
-      }
-
-   U_INTERNAL_DUMP("request(%u) = %.*S", request_len, request_len, request)
-
-   while (u__isspace(*request))
-      {
-      ++request;
-      --request_len;
-      }
-
-   if (body_len)
-      {
-      static char buf[16];
-
-      body     = buf;
-      body_len = u__snprintf(buf, sizeof(buf), "%u", body_len);
-      }
-   else
-      {
-      body     = "-";
-      body_len = 1;
-      }
-
-   if (u_http_info.referer_len)
-      {
-      referer     = u_http_info.referer;
-      referer_len = u_http_info.referer_len; 
-      }
-   else
-      {
-      referer     = "-";
-      referer_len = 1;
-      }
-
-   if (u_http_info.user_agent_len)
-      {
-      agent     = u_http_info.user_agent;
-      agent_len = u_http_info.user_agent_len; 
-      }
-   else
-      {
-      agent     = "-";
-      agent_len = 1;
-      }
+   static iovec iov[7] = {
+      { (caddr_t) buffer1, 0 },
+      { (caddr_t)       0, 0 }, // request
+      { (caddr_t) buffer2, 0 }, // response_code, body_len
+      { (caddr_t)       0, 0 }, // referer
+      { (caddr_t) U_CONSTANT_TO_PARAM("\" \"") },
+      { (caddr_t)       0, 0 }, // agent
+      { (caddr_t) U_CONSTANT_TO_PARAM("\"\n") }
+   };
 
    /* Example
    ------------------------------------------------------------------------------------------------------------------------------------------------- 
@@ -1277,15 +1231,84 @@ void UHTTP::writeApacheLikeLog()
    ------------------------------------------------------------------------------------------------------------------------------------------------- 
    */
 
-   (void) U_SYSCALL(write, "%d,%p,%u", apache_like_log->getFd(), buffer,
-                        u__snprintf(buffer, sizeof(buffer),
-                                    "%s - - [%11D] \"%.*s\" %u %.*s \"%.*s\" \"%.*s\"\n",
-                                    UServer_Base::getClientAddress(),
-                                    request_len, request,
-                                    u_http_info.nResponseCode,
-                                    body_len,    body,
-                                    referer_len, referer,
-                                    agent_len,   agent));
+   if (bprepare)
+      {
+      uint32_t request_len;
+      const char* request = UClientImage_Base::request->data();
+
+      if (u_http_info.startHeader)
+         {
+         U_INTERNAL_DUMP("u_http_info.startHeader = %u", u_http_info.startHeader)
+
+         request_len = u_http_info.startHeader;
+
+         if (u__isspace(request[request_len]) == false &&
+             u__isspace(request[request_len-1]))
+            {
+            while (u__isspace(request[--request_len])) {}
+
+            ++request_len;
+            }
+         }
+      else
+         {
+         request_len = U_STRING_FIND(*UClientImage_Base::request, 0, "HTTP/");
+
+         U_INTERNAL_DUMP("request_len = %u", request_len)
+
+         if (request_len != U_NOT_FOUND) request_len += U_CONSTANT_SIZE("HTTP/1.1");
+         else
+            {
+            request     = "-";
+            request_len = 1;
+            }
+         }
+
+      U_INTERNAL_DUMP("request(%u) = %.*S", request_len, request_len, request)
+
+      while (u__isspace(*request))
+         {
+         ++request;
+         --request_len;
+         }
+
+      iov[1].iov_base = (caddr_t) request;
+      iov[1].iov_len  = U_min(1000, request_len);
+
+      if (u_http_info.referer_len)
+         {
+         iov[3].iov_base = (caddr_t) u_http_info.referer;
+         iov[3].iov_len  = U_min(1000, u_http_info.referer_len);
+         }
+      else
+         {
+         iov[3].iov_base = (caddr_t) "-";
+         iov[3].iov_len  = 1;
+         }
+
+      if (u_http_info.user_agent_len)
+         {
+         iov[5].iov_base = (caddr_t) u_http_info.user_agent;
+         iov[5].iov_len  = U_min(1000, u_http_info.user_agent_len);
+         }
+      else
+         {
+         iov[5].iov_base = (caddr_t) "-";
+         iov[5].iov_len  = 1;
+         }
+      }
+   else
+      {
+      int fd            = apache_like_log->getFd();
+      uint32_t body_len = UClientImage_Base::body->size();
+
+      iov[0].iov_len = u__snprintf(buffer1, sizeof(buffer1), "%s - - [%11D] \"", UServer_Base::getClientAddress());
+
+      iov[2].iov_len = (body_len == 0 ? u__snprintf(buffer2, sizeof(buffer2), "\" %u - \"",  u_http_info.nResponseCode)
+                                      : u__snprintf(buffer2, sizeof(buffer2), "\" %u %u \"", u_http_info.nResponseCode, body_len));
+
+      (void) U_SYSCALL(writev, "%d,%p,%d", fd, iov, 7);
+      }
 }
 
 /* read HTTP message
@@ -1733,6 +1756,8 @@ bool UHTTP::readHeader(USocket* s, UString& buffer)
       if (buffer.empty()  == false &&
           buffer.isText() == false)
          {
+         setNoResponse();
+
          U_RETURN(false);
          }
 
@@ -2872,7 +2897,7 @@ int UHTTP::manageRequest()
 
          if (result != U_PLUGIN_HANDLER_FINISHED)
             {
-            if (apache_like_log) writeApacheLikeLog();
+            if (apache_like_log) writeApacheLikeLog(false);
 
             U_RETURN(result);
             }
@@ -2960,7 +2985,11 @@ int UHTTP::manageRequest()
 
    if (result == U_PLUGIN_HANDLER_ERROR)
       {
-      if (UServer_Base::pClientImage->socket->isClosed()) UClientImage_Base::write_off = true;
+      if (UClientImage_Base::write_off == false &&
+          UServer_Base::pClientImage->socket->isClosed())
+         {
+         UClientImage_Base::write_off = true;
+         }
       else
          {
          U_http_is_connection_close = U_YES;
@@ -3160,6 +3189,8 @@ next2:
    // 2) DOC_ROOT dir need to be processed (and it can be forbidden...)
    // 3) file is in FILE CACHE with/without content (stat() cache...)
    // 4) file do not exist
+
+   if (apache_like_log) writeApacheLikeLog(true);
 
    U_INTERNAL_DUMP("file_data = %p U_http_request_check = %C u_http_info.flag = %.8S", file_data, U_http_request_check, u_http_info.flag)
 
@@ -3999,6 +4030,7 @@ const char* UHTTP::getStatusDescription(uint32_t nResponseCode)
       case HTTP_PRECONDITION_REQUIRED:           descr = "Precondition required";           break;
       case HTTP_TOO_MANY_REQUESTS:               descr = "Too many requests";               break;
       case HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE: descr = "Request_header_fields_too_large"; break;
+      case HTTP_NO_RESPONSE:                     descr = "No Response";                     break;
    // case 449:                                  descr = "Retry With Appropriate Action";   break;
 
       // 5xx indicates an error on the server's part
@@ -4037,6 +4069,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
    U_INTERNAL_ASSERT(file->pathname.isNullTerminated())
 
    bool is_dir;
+   UDirWalk dirwalk(0);
    const char* item_ptr;
    UVector<UString> vec(2048);
    uint32_t i, pos, n, item_len;
@@ -4070,7 +4103,9 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
       if (UFile::chdir(ptr, true) == false) goto end; 
       }
 
-   if ((n = UFile::listContentOf(vec, 0, 0, 0)) > 1) vec.sort();
+   n = dirwalk.walk(vec);
+
+   if (n > 1) vec.sort();
 
    pos = buffer.size();
 
@@ -4446,6 +4481,18 @@ UString UHTTP::getHeaderForResponse(const UString& content, bool connection_clos
    U_INTERNAL_DUMP("tmp(%u) = %.*S", tmp.size(), U_STRING_TO_TRACE(tmp))
 
    U_RETURN_STRING(tmp);
+}
+
+void UHTTP::setNoResponse()
+{
+   U_TRACE(0, "UHTTP::setNoResponse()")
+
+   UClientImage_Base::write_off = true;
+
+   u_http_info.nResponseCode = HTTP_NO_RESPONSE; 
+
+   UClientImage_Base::body->clear();
+   UClientImage_Base::wbuffer->clear();
 }
 
 void UHTTP::setResponse(const UString* content_type, const UString* body)
@@ -5705,7 +5752,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    cache_file->insert(*pathname, file_data);
 
-   if (u_ftw_ctx.is_directory || file->dir()) return; // NB: can be a simbolic link to a directory...
+   if (UDirWalk::isDirectory() || file->dir()) return; // NB: can be a simbolic link to a directory...
 
    if (u_dosmatch_with_OR(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("*cgi-bin/*|*servlet/*"), 0))
       {
@@ -5878,28 +5925,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       }
 }
 
-void UHTTP::checkFileForCache()
-{
-   U_TRACE(0+256, "UHTTP::checkFileForCache()")
-
-   U_INTERNAL_DUMP("u_buffer(%u) = %.*S", u_buffer_len, u_buffer_len, u_buffer)
-
-   U_INTERNAL_ASSERT_POINTER(pathname)
-   U_INTERNAL_ASSERT_EQUALS(u_buffer[0], '.')
-
-   if (u_buffer_len <= 2) return;
-
-   (void) pathname->replace(u_buffer+2, u_buffer_len-2);
-
-   file->setPath(*pathname);
-
-   // NB: file->stat() get also the size of file...
-
-   if (file->stat()) manageDataForCache();
-
-   U_INTERNAL_DUMP("file_data->mime_index = %C", file_data->mime_index)
-}
-
 UHTTP::UFileCacheData* UHTTP::getFileInCache(const char* path, uint32_t len)
 {
    U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, path, len)
@@ -5947,11 +5972,15 @@ void UHTTP::renewDataCache()
 
    U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %.*S", file_data->fd, U_STRING_TO_TRACE(*key))
 
-   u_buffer_len = u__snprintf(u_buffer, sizeof(u_buffer), "./%.*s", U_STRING_TO_TRACE(*key));
+   U_INTERNAL_ASSERT_POINTER(pathname)
+
+   uint32_t sz = key->size();
+
+   pathname->setBuffer(sz);
+
+   (void) pathname->snprintf("%.*s", sz, key->data());
 
    cache_file->eraseAfterFind();
-
-   u_ftw_ctx.is_directory = false;
 
    checkFileForCache();
 
@@ -5962,8 +5991,6 @@ void UHTTP::renewDataCache()
 
       if (file->open()) file_data->fd = file->fd;
       }
-
-   u_buffer_len = 0;
 }
 
 UString UHTTP::getDataFromCache(bool bheader, bool gzip)
@@ -8374,8 +8401,6 @@ UString UHTTP::getUploadProgress()
 
 U_EXPORT const char* UHTTP::UServletPage::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'
@@ -8394,8 +8419,6 @@ U_EXPORT const char* UHTTP::UServletPage::dump(bool reset) const
 
 U_EXPORT const char* UHTTP::UCServletPage::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "size      " << size             << '\n'
                   << "relocated " << (void*)relocated << '\n'
                   << "prog_main " << (void*)prog_main << '\n';
@@ -8413,8 +8436,6 @@ U_EXPORT const char* UHTTP::UCServletPage::dump(bool reset) const
 #  ifdef USE_PAGE_SPEED
 U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'
@@ -8437,8 +8458,6 @@ U_EXPORT const char* UHTTP::UPageSpeed::dump(bool reset) const
 #  ifdef USE_LIBV8
 U_EXPORT const char* UHTTP::UV8JavaScript::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'
@@ -8457,8 +8476,6 @@ U_EXPORT const char* UHTTP::UV8JavaScript::dump(bool reset) const
 
 U_EXPORT const char* UHTTP::RewriteRule::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os
 #              ifdef USE_LIBPCRE
                   << "key         (UPCRE   " << (void*)&key         << ")\n"
@@ -8477,8 +8494,6 @@ U_EXPORT const char* UHTTP::RewriteRule::dump(bool reset) const
 
 U_EXPORT const char* UHTTP::UFileCacheData::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "wd                      " << wd            << '\n'
                   << "size                    " << size          << '\n'
                   << "mode                    " << mode          << '\n'

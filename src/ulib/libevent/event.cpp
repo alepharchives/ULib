@@ -18,8 +18,6 @@
 
 const char* UEvent_Base::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    /*
    struct event {
    TAILQ_ENTRY (event) ev_next;

@@ -76,6 +76,7 @@
 #define HTTP_PRECONDITION_REQUIRED           428
 #define HTTP_TOO_MANY_REQUESTS               429
 #define HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE 431
+#define HTTP_NO_RESPONSE                     444
 
 /* 5xx indicates an error on the server's part */
 #define HTTP_INTERNAL_ERROR                  500

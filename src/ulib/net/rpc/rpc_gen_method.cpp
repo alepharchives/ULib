@@ -103,8 +103,6 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
 const char* URPCGenericMethod::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    URPCMethod::dump(false);
 
    *UObjectIO::os << '\n'

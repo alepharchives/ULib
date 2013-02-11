@@ -842,8 +842,6 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
 const char* UOptions::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "item                         " << (void*)item           << '\n'
                   << "length                       " << length                << '\n'
                   << "capacity                     " << capacity              << '\n'

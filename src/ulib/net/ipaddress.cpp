@@ -20,7 +20,7 @@ const UString* UIPAddress::str_localhost;
 
 void UIPAddress::str_allocate()
 {
-   U_TRACE(0, "UIPAddress::str_allocate()")
+   U_TRACE(0+256, "UIPAddress::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_localhost,0)
 
@@ -667,8 +667,6 @@ __pure uint32_t UIPAllow::contains(const char* ip_client, UVector<UIPAllow*>& vi
 
 const char* UIPAllow::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "addr " << addr << '\n'
                   << "mask " << mask << ')';
 
@@ -684,8 +682,6 @@ const char* UIPAllow::dump(bool reset) const
 
 const char* UIPAddress::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "pcAddress            " << (void*)pcAddress.p << '\n'
                   << "pcStrAddress         ";
 

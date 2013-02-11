@@ -162,6 +162,9 @@ protected:
    virtual ~UClientImage_Base();
 
    virtual void set();
+#ifdef DEBUG
+   virtual bool check_memory();
+#endif
 
 private:
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
@@ -169,7 +172,10 @@ private:
 
                       friend class UHTTP;
                       friend class UServer_Base;
-   template <class T> friend void u_delete_vector(T* _vec, uint32_t offset, uint32_t n);
+   template <class T> friend void u_delete_vector(      T* _vec, uint32_t offset, uint32_t n);
+#ifdef DEBUG
+   template <class T> friend bool u_check_memory_vector(T* _vec,                  uint32_t n);
+#endif
 };
 
 template <class Socket> class U_EXPORT UClientImage : public UClientImage_Base {

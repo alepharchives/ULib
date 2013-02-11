@@ -780,8 +780,6 @@ fd_set* UPing::arpcache(UVector<UIPAddress*>** vaddr, uint32_t n)
 
 const char* UPing::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    USocket::dump(false);
 
    *UObjectIO::os << '\n'

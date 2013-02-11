@@ -52,7 +52,7 @@
 #  define U_MEMORY_DEALLOCATOR
 #  define U_MEMORY_TEST_COPY(o)
 #  define U_CHECK_MEMORY
-#  define U_CHECK_MEMORY_OBJ(o)
+#  define U_CHECK_MEMORY
 
 #  define U_TRACE(level,args...)
 #  define U_DUMP(args...)

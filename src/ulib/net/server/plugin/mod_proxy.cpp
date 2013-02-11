@@ -35,7 +35,7 @@ U_CREAT_FUNC(mod_proxy, UProxyPlugIn)
 
 UProxyPlugIn::UProxyPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UProxyPlugIn, "")
 
    client_http = U_NEW(UHttpClient<UTCPSocket>((UFileConfig*)0));
 }

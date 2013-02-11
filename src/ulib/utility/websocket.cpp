@@ -60,7 +60,7 @@ UWebSocket::WebSocketFrameData UWebSocket::message_frame = { 0, 0, 1, 0, 0 };
 
 void UWebSocket::str_allocate()
 {
-   U_TRACE(0, "UWebSocket::str_allocate()")
+   U_TRACE(0+256, "UWebSocket::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_frm_websocket,0)
    U_INTERNAL_ASSERT_EQUALS(str_websocket_key,0)

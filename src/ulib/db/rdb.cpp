@@ -141,6 +141,8 @@ U_NO_EXPORT inline bool URDB::resizeJournal(uint32_t oversize)
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference)
+
    U_INTERNAL_ASSERT_EQUALS(RDB_reference, 1)
 
    uint32_t _size = (journal.st_size / 2);
@@ -410,6 +412,8 @@ void URDB::reset()
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference)
+
    U_INTERNAL_ASSERT_EQUALS(RDB_reference, 1)
    U_INTERNAL_ASSERT_DIFFERS(journal.map, MAP_FAILED)
 
@@ -503,6 +507,8 @@ U_NO_EXPORT bool URDB::reorganize()
 
    if (RDB_off > sizeof(URDB::cache_struct))
       {
+      U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference)
+
       U_INTERNAL_ASSERT_EQUALS(RDB_reference, 1)
 
       UCDB cdb(UCDB::ignore_case);
@@ -1455,8 +1461,6 @@ U_EXPORT ostream& operator<<(ostream& os, URDB& rdb)
 
 const char* URDB::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UCDB::dump(false);
 
    *UObjectIO::os << "\n"

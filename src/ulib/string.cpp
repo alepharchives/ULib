@@ -17,7 +17,7 @@
 
 static ustringrep empty_string_rep_storage = {
 #ifdef DEBUG
-   &empty_string_rep_storage, // memory_error (_this)
+   (void*)U_CHECK_MEMORY_SENTINEL, // memory_error (_this)
 #endif
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    0, // parent - substring increment reference of source string
@@ -33,20 +33,8 @@ static ustringrep empty_string_rep_storage = {
 
 static uustringrep uustringrepnull      = { &empty_string_rep_storage };
 UStringRep* UStringRep::string_rep_null = uustringrepnull.p2;
-
-struct ustring {
-#ifdef DEBUG
-   ustring* _this;
-#endif
-   ustringrep* rep;
-};
-
-static ustring empty_string_storage = {
-#ifdef DEBUG
-   &empty_string_storage, // memory_error (_this)
-#endif
-   &empty_string_rep_storage
-};
+struct ustring                            { ustringrep* rep; };
+static ustring empty_string_storage     = { &empty_string_rep_storage };
 
 union uustring {
    ustring* p1;
@@ -126,7 +114,12 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
          uint32_t sz = capacity + (1 + sizeof(UStringRep));
 
-         if (sz <= U_STACK_TYPE_5)      // 256
+         if (sz <= U_STACK_TYPE_4)      // 128
+            {
+            capacity    = U_STACK_TYPE_4 - (1 + sizeof(UStringRep));
+            stack_index = 4;
+            }
+         else if (sz <= U_STACK_TYPE_5) // 256
             {
             capacity    = U_STACK_TYPE_5 - (1 + sizeof(UStringRep));
             stack_index = 5;
@@ -172,7 +165,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 #ifdef DEBUG
    U_SET_LOCATION_INFO;
    U_REGISTER_OBJECT_PTR(0,UStringRep,r)
-   r->memory._this = (const UMemoryError*)r;
+   r->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 #endif
 
    r->set(length, capacity, _ptr);
@@ -277,6 +270,7 @@ void UStringRep::release()
 
          switch (sz)
             {
+            case U_STACK_TYPE_4: stack_index = 4;                                                     break; //  128
             case U_STACK_TYPE_5: stack_index = 5;                                                     break; //  256
             case U_STACK_TYPE_6: stack_index = 6;                                                     break; //  512
             case U_STACK_TYPE_7: stack_index = 7;                                                     break; // 1024
@@ -655,7 +649,7 @@ void UStringRep::size_adjust(uint32_t value)
 
 UString::UString(const char* t)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%S", t)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", t)
 
    uint32_t len = (t ? u__strlen(t) : 0);
 
@@ -669,7 +663,7 @@ UString::UString(const char* t)
 
 UString::UString(const char* t, uint32_t len)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%.*S,%u", len, t, len)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", len, t, len)
 
    if (len) rep = U_NEW(UStringRep(t, len));
    else     _copy(UStringRep::string_rep_null);
@@ -681,7 +675,7 @@ UString::UString(const char* t, uint32_t len)
 
 UString::UString(const UString& str, uint32_t pos, uint32_t n)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%p,%u,%u", &str, pos, n)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", &str, pos, n)
 
    U_INTERNAL_ASSERT(pos <= str.size())
 
@@ -697,10 +691,10 @@ UString::UString(const UString& str, uint32_t pos, uint32_t n)
 
 UString::UString(ustringrep* r)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%p", r)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", r)
 
 #ifdef DEBUG
-   r->_this = (const UMemoryError*)r;
+   r->_this = (void*)U_CHECK_MEMORY_SENTINEL;
 #endif
 
    uustringrep u = { r };
@@ -715,8 +709,6 @@ UString::UString(ustringrep* r)
 UString& UString::operator=(const UString& str)
 {
    U_TRACE(0, "UString::operator=(%p)", &str)
-
-   U_MEMORY_TEST_COPY(str)
 
    _assign(str.rep);
 
@@ -794,18 +786,18 @@ UString UString::copy() const
 
 UString::UString(uint32_t n)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%u", n)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n)
 
    rep = UStringRep::create(0U, U_HOW_MUCH_PREALLOCATE(n,n), 0);
 
-   U_INTERNAL_DUMP("this = %p rep = %p", this, rep)
+   U_INTERNAL_DUMP("this = %p rep = %p rep->memory._this = %p", this, rep, rep->memory._this)
 
    U_INTERNAL_ASSERT(invariant())
 }
 
 UString::UString(uint32_t n, unsigned char c)
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%u,%C", n, c)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%C", n, c)
 
    rep = UStringRep::create(n, n, 0);
 
@@ -818,7 +810,7 @@ UString::UString(uint32_t n, unsigned char c)
 
 UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::deflate()...
 {
-   U_TRACE_REGISTER_OBJECT(0, UString, "%u,%u,%p", len, sz, ptr)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%u,%p", len, sz, ptr)
 
    U_INTERNAL_ASSERT_MAJOR(sz, U_CAPACITY)
    U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
@@ -828,7 +820,7 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
 #ifdef DEBUG
    U_SET_LOCATION_INFO;
    U_REGISTER_OBJECT_PTR(0,UStringRep,rep)
-   rep->memory._this = (const UMemoryError*)rep;
+   rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 #endif
 
    rep->set(len, sz, ptr);
@@ -1914,8 +1906,6 @@ U_EXPORT UString operator+(const UString& lhs, const char* rhs)
 
 const char* UStringRep::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "length     " << _length       << '\n'
                   << "capacity   " << _capacity     << '\n'
                   << "references " << references+1  << '\n'
@@ -1977,8 +1967,6 @@ bool UStringRep::invariant() const
 
 bool UString::invariant() const
 {
-   U_CHECK_MEMORY
-
    if (rep == 0)
       {
       U_WARNING("error on string: (rep = null pointer)");
@@ -1993,7 +1981,7 @@ bool UString::invariant() const
 #ifdef DEBUG
 const char* UString::dump(bool reset) const
 {
-   U_CHECK_MEMORY
+   U_CHECK_MEMORY_OBJECT(rep)
 
    *UObjectIO::os << "rep (UStringRep " << (void*)rep << ")";
 

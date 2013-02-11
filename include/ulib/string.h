@@ -83,11 +83,11 @@
 // a 0 indicates one reference, so you never try to destroy the empty-string UStringRep object
 
 #ifdef DEBUG
-#  define U_STRINGREP_FROM_CONSTANT(c_str) 0, 0, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str) (void*)U_CHECK_MEMORY_SENTINEL, 0, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #elif defined(U_SUBSTR_INC_REF)
-#  define U_STRINGREP_FROM_CONSTANT(c_str)    0,    U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str)                                 0,    U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #else
-#  define U_STRINGREP_FROM_CONSTANT(c_str)          U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str)                                       U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #endif
 
 #define U_STRING_FROM_STRINGREP_STORAGE(n) UString(&(stringrep_storage[n]))
@@ -559,9 +559,6 @@ private:
 class U_EXPORT UString {
 public:
 
-   // Check for memory error
-   U_MEMORY_TEST
-
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
@@ -570,8 +567,6 @@ public:
 
    static UString& getStringNull()
       {
-      U_TRACE(0, "UString::getStringNull()")
-
       U_INTERNAL_ASSERT_EQUALS((bool)*string_null, false)
 
       return *string_null;
@@ -613,32 +608,30 @@ protected:
       {
       U_TRACE(0, "UString::_set(%p)", r)
 
-      U_CHECK_MEMORY
-
       U_INTERNAL_ASSERT_DIFFERS(rep,r)
 
       rep->release();
 
       rep = r;
+
+      U_CHECK_MEMORY_OBJECT(rep)
       }
 
    void _copy(UStringRep* r)
       {
       U_TRACE(0, "UString::_copy(%p)", r)
 
-      U_CHECK_MEMORY
-
       rep = r;
 
       rep->hold();
+
+      U_CHECK_MEMORY_OBJECT(rep)
       }
 
 public:
    void _assign(UStringRep* r)
       {
       U_TRACE(0, "UString::_assign(%p)", r)
-
-      U_CHECK_MEMORY
 
       // NB: works also int the case of (rep == r)...
 
@@ -647,13 +640,15 @@ public:
       rep->release();   // 2. release existing resource
 
       rep = r;          // 3. bind copy to self
+
+      U_CHECK_MEMORY_OBJECT(rep)
       }
 
    // COSTRUTTORI
 
    UString()
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "")
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "")
 
       _copy(UStringRep::string_rep_null);
 
@@ -664,7 +659,7 @@ public:
 
    explicit UString(UStringRep* r)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%p", r)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", r)
 
       _copy(r);
 
@@ -677,9 +672,7 @@ public:
 
    UString(const UString& str)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%p", &str)
-
-      U_MEMORY_TEST_COPY(str)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", &str)
 
       _copy(str.rep);
 
@@ -698,7 +691,7 @@ public:
 
    explicit UString(void* t)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%S", (char*)t)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", (char*)t)
 
       U_INTERNAL_ASSERT_POINTER(t)
 
@@ -713,7 +706,7 @@ public:
 
    explicit UString(void* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
 
       U_INTERNAL_ASSERT_POINTER(t)
 
@@ -730,7 +723,7 @@ public:
 
    explicit UString(UStringRep* _rep, const char* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%p,%p,%u", _rep, t, tlen)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%p,%u", _rep, t, tlen)
 
       rep = _rep->substr(t, tlen);
 
@@ -741,7 +734,7 @@ public:
 
    explicit UString(UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
-      U_TRACE_REGISTER_OBJECT(0, UString, "%p,%u,%u", _rep, pos, n)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", _rep, pos, n)
 
       rep = _rep->substr(pos, _rep->fold(pos, n));
 
@@ -762,16 +755,16 @@ public:
 
       U_INTERNAL_DUMP("this = %p rep = %p", this, rep)
 
-      U_CHECK_MEMORY
-
       U_INTERNAL_ASSERT_POINTER(rep)
+
+      U_CHECK_MEMORY_OBJECT(rep)
 
       rep->release();
       }
 
    // Replace
 
-   UString& replace(uint32_t pos, uint32_t n1, uint32_t n2, char c); // NB: we cannot use unsigned char when conflict with the same parameter position with a uint32_t...
+   UString& replace(uint32_t pos, uint32_t n1, uint32_t n2, char c); // NB: unsigned char conflict with a uint32_t at the same parameter position...
    UString& replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2);
 
    UString& replace(uint32_t pos1, uint32_t n1, const UString& str, uint32_t pos2, uint32_t n2 = U_NOT_FOUND)
@@ -889,7 +882,7 @@ public:
    void push(unsigned      char c) { (void) append(1U, c); }
    void push_back(unsigned char c) { (void) append(1U, c); }
 
-   UString& append(uint32_t n, char c); // NB: we cannot use unsigned char when conflict with the same parameter position with a uint32_t...
+   UString& append(uint32_t n, char c); // NB: unsigned char conflict with a uint32_t at the same parameter position...
    UString& append(const char* s, uint32_t n);
 
    UString& append(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND)
@@ -964,7 +957,7 @@ public:
       }
 
    UString& insert(uint32_t pos,             char c) { return replace(pos, 0, 1, c); }
-   UString& insert(uint32_t pos, uint32_t n, char c) { return replace(pos, 0, n, c); } // NB: we cannot use unsigned char when conflict with the same parameter position a uint32_t
+   UString& insert(uint32_t pos, uint32_t n, char c) { return replace(pos, 0, n, c); } // NB: uchar conflict with a uint32_t at the same parameter position
 
    UString& insert(uint32_t pos, const char* s)             { return replace(pos, 0, s, u__strlen(s)); }
    UString& insert(uint32_t pos, const char* s, uint32_t n) { return replace(pos, 0, s, n); }

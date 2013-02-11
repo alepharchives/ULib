@@ -712,8 +712,6 @@ U_EXPORT ostream& operator<<(ostream& os, UValue& v)
 
 const char* UValue::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "type_ " << type_ << '\n';
 
    if (reset)

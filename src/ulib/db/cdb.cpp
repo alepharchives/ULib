@@ -1060,8 +1060,6 @@ bool UCDB::invariant()
 
 const char* UCDB::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UFile::dump(false);
 
    *UObjectIO::os << '\n'

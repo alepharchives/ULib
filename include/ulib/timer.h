@@ -36,6 +36,8 @@ public:
 
       next  = 0;
       alarm = 0;
+
+      U_INTERNAL_DUMP("this = %p memory._this = %p", this, memory._this)
       }
 
    ~UTimer();

@@ -398,8 +398,6 @@ bool USmtpClient::sendMessage(bool secure)
 
 const char* USmtpClient::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UTCPSocket::dump(false);
 
    *UObjectIO::os << '\n'

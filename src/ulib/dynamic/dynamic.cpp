@@ -108,8 +108,6 @@ void UDynamic::close()
 
 const char* UDynamic::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "err           " << err        << '\n'
                   << "addr          " << addr       << '\n'
                   << "handle        " << (void*)handle;

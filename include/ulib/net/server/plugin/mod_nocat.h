@@ -28,6 +28,9 @@ class UNoCatPlugIn;
 class UModNoCatPeer : public UEventTime, UIPAddress {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
@@ -78,8 +81,8 @@ private:
 #define U_peer_max_time_no_traffic(peer) (peer)->UModNoCatPeer::flag[6]
 #define U_peer_unused1                   (peer)->UModNoCatPeer::flag[7]
 
-// NB: sizeof(UModNoCatPeer) 32bit == 196 (=> U_STACK_TYPE_4)
-// NB: sizeof(UModNoCatPeer) 64bit == 304 (not optimized)
+// NB: sizeof(UModNoCatPeer) 32bit == 196
+// NB: sizeof(UModNoCatPeer) 64bit == 304
 
 // override the default...
 template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UIPAddress*>(%p,%u)", ptr, n) }

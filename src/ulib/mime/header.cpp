@@ -28,7 +28,7 @@ const UString* UMimeHeader::str_content_transfer_encoding;
 
 void UMimeHeader::str_allocate()
 {
-   U_TRACE(0, "UMimeHeader::str_allocate()")
+   U_TRACE(0+256, "UMimeHeader::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_name,0)
    U_INTERNAL_ASSERT_EQUALS(str_ascii,0)
@@ -444,8 +444,6 @@ U_EXPORT ostream& operator<<(ostream& os, UMimeHeader& h)
 
 const char* UMimeHeader::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "table     (UHashMap " << (void*)&table  << ")\n"
                   << "header    (UString  " << (void*)&header << ')';
 

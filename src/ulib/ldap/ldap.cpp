@@ -682,8 +682,6 @@ void ULDAP::get(ULDAPEntry& e)
 
 const char* ULDAPEntry::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "dn                 " << (void*)dn        << '\n'
                   << "n_attr             " << n_attr           << '\n'
                   << "n_entry            " << n_entry          << '\n'
@@ -702,8 +700,6 @@ const char* ULDAPEntry::dump(bool reset) const
 
 const char* ULDAP::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "ld                 " << (void*)ld           << '\n'
                   << "ludpp              " << (void*)ludpp        << '\n'
                   << "result             " << result              << '\n'

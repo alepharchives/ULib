@@ -39,24 +39,30 @@ in "release mode" builds without changing code. There are several interesting as
    Base class that defines a uniform interface for all object dumping
 */
 
+class UObjectDB;
+class UHashMapObjectDumpable;
+
 class U_NO_EXPORT UObjectDumpable {
 public:
 
-   // Info on object
+            UObjectDumpable(int lv, const char* name, const void* pobj, uint32_t sz, const void** pmem)
+                        : level(lv), name_class(name), ptr_object(pobj),  sz_obj(sz),   psentinel(pmem) {}
 
+   virtual ~UObjectDumpable()                                                                           {}
+
+   virtual const char* dump() const = 0; // This pure virtual method must be filled in by a subclass.
+
+protected:
+   int level, num_line;
    const char* name_file;
    const char* name_class;
    const char* name_function;
    const void* ptr_object; // Pointer to the object that is being stored
-   int         num_line, level;
-   uint32_t    cnt, size_object;
+   uint32_t sz_obj, cnt;
+   const void** psentinel; // Pointer to the memory sentinel of the object (for memory check)
 
-   // Constructor
-
-            UObjectDumpable(int lv, const char* name, const void* ptr) : name_class(name), ptr_object(ptr), level(lv) {}
-   virtual ~UObjectDumpable()                                                                                         {}
-
-   virtual const char* dump() const = 0; // This pure virtual method must be filled in by a subclass.
+   friend class UObjectDB;
+   friend class UHashMapObjectDumpable;
 };
 
 /** class UObjectDumpable_Adapter
@@ -70,13 +76,9 @@ provides the uniform virtual interface!
 template <class Concrete> class U_NO_EXPORT UObjectDumpable_Adapter : public UObjectDumpable {
 public:
 
-   // Initialization and termination methods
-
-   UObjectDumpable_Adapter(int _level, const char* _name_class, const Concrete* object) : UObjectDumpable(_level, _name_class, object)
+   UObjectDumpable_Adapter(int lv, const char* name, const Concrete* pobj, const void** pmem) : UObjectDumpable(lv, name, pobj, sizeof(Concrete), pmem)
       {
-      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter(%u,%s,%p)", _level, _name_class, object)
-
-      UObjectDumpable::size_object = (sizeof(Concrete) > sizeof(void*) ? (uint32_t)(sizeof(Concrete) - sizeof(void*)) : 1U); // - U_MEMORY_TEST...
+      U_INTERNAL_TRACE("UObjectDumpable_Adapter::UObjectDumpable_Adapter(%d,%s,%p,%p)", lv, name, pobj, pmem)
 
       U_INTERNAL_PRINT("this = %p", this)
       }
@@ -127,18 +129,17 @@ private:
    static char*    file_limit;
    static uint32_t file_size;
 
-   static uint32_t n;
-   static const UObjectDumpable** vec_obj_live;
-
-   static char buffer1[64];
-   static char buffer2[256];
-
    static char* lbuf;
    static char* lend;
-   static iovec liov[7];
+   static uint32_t n;
+   static iovec liov[8];
+   static char buffer1[64];
+   static char buffer2[256];
+   static char buffer3[64];
    static bPFpcpv checkObject;
    static const char* _name_class;
    static const void* _ptr_object;
+   static const UObjectDumpable** vec_obj_live;
 
    static void _write(const struct iovec* iov, int n) U_NO_EXPORT;
    static bool addObjLive(const UObjectDumpable* dumper) U_NO_EXPORT;

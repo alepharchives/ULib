@@ -770,8 +770,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UCertificate& c)
 
 const char* UCertificate::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "x509   " << x509;
 
    if (reset)

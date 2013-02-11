@@ -55,7 +55,7 @@ const UString* USocket::str_chunked;
 
 void USocket::str_allocate()
 {
-   U_TRACE(0, "USocket::str_allocate()")
+   U_TRACE(0+256, "USocket::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_host,0)
    U_INTERNAL_ASSERT_EQUALS(str_range,0)
@@ -169,6 +169,8 @@ USocket::USocket(bool bSocketIsIPv6)
 #endif
 
    if (str_host == 0) str_allocate();
+
+   U_INTERNAL_DUMP("this = %p memory._this = %p iSockDesc = %d", this, memory._this, iSockDesc)
 }
 
 USocket::~USocket()
@@ -1085,8 +1087,6 @@ loop:
 
 const char* USocket::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "flags                         " << flags                  << '\n'
                   << "iState                        " << iState                 << '\n'
                   << "iSockDesc                     " << iSockDesc              << '\n'

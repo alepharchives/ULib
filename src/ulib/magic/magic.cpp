@@ -73,8 +73,6 @@ UString UMagic::getType(const char* buffer, uint32_t buffer_len)
 
 const char* UMagic::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "magic " << magic;
 
    if (reset)

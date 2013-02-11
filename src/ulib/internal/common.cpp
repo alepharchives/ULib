@@ -137,10 +137,7 @@ void ULib_init()
 
    U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
 
-   UHashMap<void*>::pkey               =                      u.p2;
-#ifdef DEBUG
-   UHashMap<void*>::pkey->memory._this = (const UMemoryError*)u.p2;
-#endif
+   UHashMap<void*>::pkey               = u.p2;
 
    U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
 

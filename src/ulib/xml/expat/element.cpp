@@ -112,8 +112,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UXMLElement& e)
 
 const char* UXMLElement::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "str                (UString                 " << (void*)&str                  << ")\n"
                   << "value              (UString                 " << (void*)&value                << ")\n"
                   << "accessorName       (UString                 " << (void*)&accessorName         << ")\n"

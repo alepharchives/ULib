@@ -18,7 +18,7 @@
 #include <ulib/utility/lock.h>
 
 class ULog;
-class UBackupThread;
+class UTimeThread;
 
 typedef void (*vPFpf)(const ULog*);
 
@@ -39,7 +39,7 @@ public:
    static const char* prefix;
    static const char* dir_log_gz;
    static log_data* ptr_log_data;
-   static vPF backup_log_function;
+   static vPF log_rotate_function;
    static bool bsyslog, log_data_must_be_unmapped;
 
    // COSTRUTTORI
@@ -131,18 +131,19 @@ protected:
 #ifdef USE_LIBZ
    static void* pthread;
    static uint32_t path_compress;
+   static UString* data_to_write;
    static UString* buffer_path_compress;
 
    // if overwrite log file compress it as gzip...
 
-   static void backup();
-   static void backup_write(UString& pathfile, UString& data);
+   static void logRotate();
+   static void logRotateWrite();
 
    static RETSIGTYPE handlerSIGUSR1(int signo) // manage signal SIGUSR1
       {
       U_TRACE(0, "ULog::handlerSIGUSR1(%d)", signo)
 
-      backup();
+      logRotate();
       }
 #endif
 
@@ -152,7 +153,7 @@ private:
    ULog(const ULog&) : UFile()  {}
    ULog& operator=(const ULog&) { return *this; }
 
-   friend class UBackupThread;
+   friend class UTimeThread;
 };
 
 #endif

@@ -52,10 +52,11 @@ const char* dump(bool reset) const { return UServer<socket_type>::dump(reset); }
 protected: \
 virtual void preallocate() { \
 U_TRACE(5+256, #server_class "::preallocate()") \
-UServer_Base::setClientImageOffset(U_NEW_VECTOR(UNotifier::max_connection, client_type)); } \
+(void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage); } \
 virtual void deallocate() { \
 U_TRACE(5+256, #server_class "::deallocate()") \
-u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection); } }
+u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection); }  \
+virtual bool check_memory() { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); } }
 #else
 #  define U_MACROSERVER(server_class,client_type,socket_type) \
 class server_class : public UServer<socket_type> { \
@@ -64,9 +65,7 @@ public: \
 ~server_class()                                             {} \
 protected: \
 virtual void preallocate() { \
-UServer_Base::setClientImageOffset(U_NEW_VECTOR(UNotifier::max_connection, client_type)); } \
-virtual void deallocate() { \
-u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection); } }
+(void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage); } }
 #endif
 // ---------------------------------------------------------------------------------------------
 
@@ -323,31 +322,17 @@ public:
       U_RETURN_POINTER(shared_data_ptr, void);
       }
 
-   static uint32_t           oClientImage;
+   static int32_t            oClientImage;
    static UClientImage_Base* pClientImage;
    static UClientImage_Base* vClientImage;
    static UClientImage_Base* pClientIndex;
    static UClientImage_Base* eClientImage;
 
-   static void setClientImageOffset(UClientImage_Base* _vec)
-      {
-      U_TRACE(0, "UServer_Base::setClientImageOffset(%p)", _vec)
-
-      U_INTERNAL_ASSERT_POINTER(_vec)
-      U_INTERNAL_ASSERT_POINTER(vClientImage)
-
-      oClientImage = ((char*)vClientImage - (char*)_vec);
-
-      U_INTERNAL_DUMP("pClientIndex = %p socket = %p UEventFd::fd = %d", pClientIndex, pClientIndex->socket, pClientIndex->UEventFd::fd)
-
-      U_INTERNAL_ASSERT_EQUALS(pClientIndex->UEventFd::fd, 0)
-      }
-
    static const char* getClientAddress()
       {
       U_TRACE(0, "UServer_Base::getClientAddress()")
 
-      U_INTERNAL_ASSERT_POINTER(pClientImage->client_address)
+      U_INTERNAL_ASSERT_POINTER(pClientImage)
 
       U_RETURN(pClientImage->client_address);
       }
@@ -544,8 +529,11 @@ protected:
       U_TRACE(0, "UServer_Base::handlerSignal()")
       }
 
-   virtual void  deallocate() = 0;
-   virtual void preallocate() = 0;
+   virtual void preallocate()  = 0;
+#ifdef DEBUG
+   virtual void  deallocate()  = 0;
+   virtual bool check_memory() = 0;
+#endif
 
    // SERVICES
 
@@ -625,9 +613,10 @@ protected:
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
-      UServer_Base::setClientImageOffset(U_NEW_VECTOR(UNotifier::max_connection, client_type));
+      (void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage);
       }
 
+#ifdef DEBUG
    virtual void deallocate()
       {
       U_TRACE(0+256, "UServer<Socket>::deallocate()")
@@ -636,6 +625,9 @@ protected:
 
       u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection);
       }
+
+   virtual bool check_memory() { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); }
+#endif
 
 private:
    UServer(const UServer&) : UServer_Base(0) {}
@@ -741,9 +733,10 @@ protected:
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
-      UServer_Base::setClientImageOffset(U_NEW_VECTOR(UNotifier::max_connection, client_type));
+      (void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage);
       }
 
+#ifdef DEBUG
    virtual void deallocate()
       {
       U_TRACE(0+256, "UServer<USSLSocket>::deallocate()")
@@ -752,6 +745,9 @@ protected:
 
       u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection);
       }
+
+   virtual bool check_memory() { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); }
+#endif
 
 private:
    UServer<USSLSocket>(const UServer<USSLSocket>&) : UServer_Base(0) {}

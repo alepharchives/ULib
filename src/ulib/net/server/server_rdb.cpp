@@ -52,7 +52,7 @@ bool URDBServer::open(const UString& pathdb, uint32_t log_size)
 
 void URDBServer::preallocate()
 {
-   U_TRACE(0, "URDBServer::preallocate()")
+   U_TRACE(0+256, "URDBServer::preallocate()")
 
    if (UServer_Base::isPreForked())
       {
@@ -61,17 +61,21 @@ void URDBServer::preallocate()
       rdb->setShared(U_LOCK_RDB_SERVER);
       }
 
-   UServer_Base::setClientImageOffset(U_NEW_VECTOR(UNotifier::max_connection, URDBClientImage));
+   (void) U_NEW_VECTOR(UNotifier::max_connection, URDBClientImage, &UServer_Base::oClientImage);
 }
 
+#ifdef DEBUG
 void URDBServer::deallocate()
 {
-   U_TRACE(0, "URDBServer::deallocate()")
+   U_TRACE(0+256, "URDBServer::deallocate()")
 
    // NB: array are not pointers (virtual table can shift the address of this)...
 
    u_delete_vector<URDBClientImage>((URDBClientImage*)UServer_Base::vClientImage, UServer_Base::oClientImage, UNotifier::max_connection);
 }
+
+bool URDBServer::check_memory() { return u_check_memory_vector<URDBClientImage>((URDBClientImage*)UServer_Base::vClientImage, UNotifier::max_connection); }
+#endif
 
 // DEBUG
 
@@ -80,8 +84,6 @@ void URDBServer::deallocate()
 
 const char* URDBServer::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UServer<UTCPSocket>::dump(false);
 
    *UObjectIO::os << '\n'

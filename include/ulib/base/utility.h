@@ -308,30 +308,6 @@ U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint3
 U_EXPORT uint32_t u_split(       char* restrict s, uint32_t n, char** restrict argv, const char* restrict delim);
 U_EXPORT int      u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* restrict pathbuf, uint32_t pathbuf_size);
 
-/* FTW - walks through the directory tree starting from the indicated directory dir. For each found entry in
- *       the tree, it calls fn() with the full pathname of the entry, his length and if it is a directory
- */
-
-struct u_ftw_ctx_s {
-   qcompare sort_by;
-   vPF call, call_if_up;
-   uint32_t filter_len;
-   const char* restrict filter;
-   bool depth, is_directory, call_if_directory;
-
-   /* NB: we use u_buffer...
-    * -----------------------
-    * uint32_t u_ftw_pathlen;
-    * char*    u_ftw_fullpath;
-    * -----------------------
-    */
-};
-
-extern U_EXPORT struct u_ftw_ctx_s u_ftw_ctx;
-
-U_EXPORT void u_ftw(void);
-U_EXPORT  int u_ftw_ino_cmp(const void* restrict a, const void* restrict b) __pure;
-
 /* From RFC 3986 */
 
 #define U_URI_UNRESERVED  0 /* ALPHA (%41-%5A and %61-%7A) DIGIT (%30-%39) '-' '.' '_' '~' */

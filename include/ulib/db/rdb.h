@@ -29,6 +29,7 @@
 */
 
 class URDBServer;
+class Application;
 class URDBClient_Base;
 class URDBClientImage;
 
@@ -278,6 +279,17 @@ protected:
    bool isDeleted();
    int  substitute(UCDB::datum* new_key, int flag);
 
+   void resetReference()
+      {
+      U_TRACE(0, "URDB::resetReference()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference)
+
+      RDB_reference = 1;
+      }
+
    bool cdbLookup() // NB: valorizza struct UCDB::data..
       {
       U_TRACE(0, "URDB::cdbLookup()")
@@ -332,6 +344,7 @@ private:
    URDB& operator=(const URDB&)  { return *this; }
 
    friend class URDBServer;
+   friend class Application;
    friend class URDBClient_Base;
    friend class URDBClientImage;
 };

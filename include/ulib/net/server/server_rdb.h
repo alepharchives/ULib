@@ -45,8 +45,11 @@ protected:
 
    // method VIRTUAL to redefine
 
-   virtual void  deallocate();
    virtual void preallocate();
+#ifdef DEBUG
+   virtual void  deallocate();
+   virtual bool check_memory();
+#endif
 
 private:
    URDBServer(const URDBServer& s) : UServer<UTCPSocket>(0) {}

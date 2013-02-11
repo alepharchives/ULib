@@ -1,6 +1,6 @@
 // update.cpp
 
-#include <ulib/string.h>
+#include <ulib/utility/dir_walk.h>
 
 #undef  PACKAGE
 #define PACKAGE "update"
@@ -32,6 +32,42 @@ public:
       IR::parse();
       }
 
+   static void buildFilenameListFrom(UVector<UString>& vec, const UString& arg)
+      {
+      U_TRACE(5, "Application::buildFilenameListFrom(%p,%.*S)", &vec, U_STRING_TO_TRACE(arg))
+
+      uint32_t pos;
+      UTokenizer t(arg);
+      UString dir, filename, filter;
+
+      while (t.next(filename, ','))
+         {
+         if (filename.find_first_of("?*", 0, 2) == U_NOT_FOUND) vec.push(filename);
+         else
+            {
+            pos = filename.find_last_of('/');
+
+            U_INTERNAL_DUMP("pos = %u", pos)
+
+            if (pos == U_NOT_FOUND)
+               {
+               UDirWalk dirwalk(0, U_STRING_TO_PARAM(filename));
+
+               (void) dirwalk.walk(vec);
+               }
+            else
+               {
+               dir    = filename.substr(0U, pos);
+               filter = filename.substr(pos + 1);
+
+               UDirWalk dirwalk(&dir, U_STRING_TO_PARAM(filter));
+
+               (void) dirwalk.walk(vec);
+               }
+            }
+         }
+      }
+
    void run(int argc, char* argv[], char* env[])
       {
       U_TRACE(5, "Application::run(%d,%p,%p)", argc, argv, env)
@@ -53,9 +89,9 @@ public:
          {
          // load all filenames in argument
 
-         if (opt_file_to_add.empty() == false) (void) UFile::buildFilenameListFrom(file_to_add, opt_file_to_add);
-         if (opt_file_to_sub.empty() == false) (void) UFile::buildFilenameListFrom(file_to_sub, opt_file_to_sub);
-         if (opt_file_to_del.empty() == false) (void) UFile::buildFilenameListFrom(file_to_del, opt_file_to_del);
+         if (opt_file_to_add.empty() == false) buildFilenameListFrom(file_to_add, opt_file_to_add);
+         if (opt_file_to_sub.empty() == false) buildFilenameListFrom(file_to_sub, opt_file_to_sub);
+         if (opt_file_to_del.empty() == false) buildFilenameListFrom(file_to_del, opt_file_to_del);
 
          // process all filenames in argument
 

@@ -146,6 +146,7 @@
 #  define FILENAME_CMP(s1, s2)  strcasecmp(s1, s2)
 #  define U_PATH_CONV(s)        u_slashify(s, '/', '\\')
 #  define U_PATH_SHELL          "sh.exe"
+#  define U_LIB_SUFFIX          "dll"
 #else
 #  define PATH_SEPARATOR        '/'
 #  define IS_DIR_SEPARATOR(c)   ((c) == '/')
@@ -153,6 +154,7 @@
 #  define FILENAME_CMP(s1, s2)  strcmp(s1, s2)
 #  define U_PATH_CONV(s)        (s)
 #  define U_PATH_SHELL          "/bin/sh"
+#  define U_LIB_SUFFIX          "so"
 /* unix is binary by default */
 #ifndef   O_BINARY
 #  define O_BINARY 0
@@ -233,7 +235,7 @@ enum AffermationType {
 
 typedef struct ustringrep {
 #ifdef DEBUG
-   const void* restrict _this;
+   const void* _this;
 #endif
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    struct ustringrep* parent; // manage substring for increment reference of source string

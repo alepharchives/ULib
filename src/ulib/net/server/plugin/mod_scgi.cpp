@@ -50,7 +50,7 @@ void USCGIPlugIn::str_allocate()
 
 USCGIPlugIn::USCGIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, USCGIPlugIn, "")
 
    if (str_SCGI_URI_MASK == 0) str_allocate();
 }

@@ -157,8 +157,6 @@ UDataSession* UDataSession::toDataSession()
 
 const char* UDataSession::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "creation                " << creation     << '\n'
                   << "last_access             " << last_access  << '\n'
                   << "data (UString           " << (void*)&data << ")\n"

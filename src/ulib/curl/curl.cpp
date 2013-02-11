@@ -282,8 +282,6 @@ bool UCURL::perform()
 
 const char* UCURL::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "added             " << added              << '\n'
                   << "result            " << result             << '\n'
                   << "inited            " << inited             << '\n'

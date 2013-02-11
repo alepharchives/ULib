@@ -282,8 +282,6 @@ UString UZIP::getFileContentAt(int index)
 
 const char* UZIP::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "npart                            " << npart                      << '\n'
                   << "valid                            " << valid                      << '\n'
                   << "filenames                        " << (void*)filenames           << '\n'

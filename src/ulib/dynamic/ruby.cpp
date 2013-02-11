@@ -129,8 +129,6 @@ bool URUBY::run(int argc, char** argv)
 
 const char* URUBY::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'

@@ -247,8 +247,6 @@ const char* UIptAccount::getNextName()
 
 const char* UIptAccount::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    USocket::dump(false);
 
    *UObjectIO::os << '\n'

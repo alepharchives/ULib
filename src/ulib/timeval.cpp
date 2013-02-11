@@ -134,8 +134,6 @@ U_EXPORT ostream& operator<<(ostream& os, const UTimeVal& t)
 
 const char* UTimeVal::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "tv_sec  " << tv_sec << '\n'
                   << "tv_usec " << tv_usec;
 

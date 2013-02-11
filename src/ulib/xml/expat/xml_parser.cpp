@@ -53,8 +53,6 @@ void UXMLParser::initParser(bool ns, const char* encoding)
 
 const char* UXMLParser::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "m_parser                                          " << (void*)m_parser;
 
    if (reset)

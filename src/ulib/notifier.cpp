@@ -611,12 +611,6 @@ loop:
 
       U_INTERNAL_DUMP("bread = %b bwrite = %b bexcept = %b", bread, ((pevents->events & U_WRITE_OUT) != 0), bexcept)
 
-      U_INTERNAL_ASSERT((pevents->events & U_READ_IN)   != 0 ||
-                        (pevents->events & U_WRITE_OUT) != 0 ||
-                        (pevents->events & EPOLLHUP)    != 0 ||
-                        (pevents->events & EPOLLERR)    != 0 ||
-                        (pevents->events & EPOLLRDHUP)  != 0)
-
       U_INTERNAL_DUMP("fd = %d op_mask = %B handler_event = %p", handler_event->fd, handler_event->op_mask, handler_event)
 
       handlerResult(handler_event, bread, bexcept);

@@ -171,10 +171,6 @@ struct U_EXPORT UServices {
       U_RETURN(result);
       }
 
-   // FTW
-
-   static bool setFtw(const UString* dir, const char* filter = 0, uint32_t filter_len = 0);
-
    // manage session cookies and hashing password...
 
    static void generateKey();

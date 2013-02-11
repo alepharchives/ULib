@@ -184,7 +184,7 @@ void UFCGIPlugIn::str_allocate()
 
 UFCGIPlugIn::UFCGIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, UFCGIPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UFCGIPlugIn, "")
 
    if (str_FCGI_URI_MASK == 0) str_allocate();
 }

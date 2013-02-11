@@ -927,6 +927,7 @@ dist-hook:
 		$(distdir)/cdb/softlimit \
 		$(distdir)/examples/*/*.spec \
 		$(distdir)/tests/ulib/tmp/* \
+		$(distdir)/tests/ulib/private/* \
 		$(distdir)/tests/ulib/CApath/*.*0 \
 		$(distdir)/tests/ulib/ok/timer.ok \
 		$(distdir)/tests/ulib/ok/interrupt.ok \

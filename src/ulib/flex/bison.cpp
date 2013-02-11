@@ -20,8 +20,6 @@
 
 const char* UBison::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UFlexer::dump(false);
 
    if (_reset)

@@ -172,7 +172,10 @@
   40 sizeof(UMimePKCS7)
   44 sizeof(UZIP)
   48 sizeof(UIPAddress)
-  48 sizeof(UClientImage<UTCPSocket>)
+  48 sizeof(UClientImage<UTCPSocket>) <==
+-------------------------
+   U_STACK_TYPE_3
+
   56 sizeof(UMimeMessage)
   68 sizeof(USOAPParser)
   80 sizeof(UMimeMultipart)
@@ -185,18 +188,15 @@
  124 sizeof(UUDPSocket)
  128
 -------------------------
-   U_STACK_TYPE_3
+   U_STACK_TYPE_4
 
  144 sizeof(USSLSocket)
  156 sizeof(UHttpClient<UTCPSocket>)
  172 sizeof(UFileConfig)
  176 sizeof(USmtpClient)
  180 sizeof(USOAPClient<UTCPSocket>)
- 196 sizeof(UModNoCatPeer: 32bit) <==
+ 196 sizeof(UModNoCatPeer: 32bit)
  200 sizeof(UCDB)
--------------------------
-   U_STACK_TYPE_4
-
  256
 -------------------------
    U_STACK_TYPE_5
@@ -223,22 +223,33 @@
 */
 
 #ifdef HAVE_ARCH64
-#  define U_STACK_TYPE_0   8U
-#  define U_STACK_TYPE_1  24U
-#  define U_STACK_TYPE_2  32U
-#  define U_STACK_TYPE_3  56U
-#  define U_STACK_TYPE_4 128U
+#     define U_STACK_TYPE_0   8U
+#  ifndef DEBUG
+#     define U_STACK_TYPE_1  24U
+#     define U_STACK_TYPE_2  32U
+#     define U_STACK_TYPE_3  56U
+#  else
+#     define U_STACK_TYPE_1 (24U+8U)
+#     define U_STACK_TYPE_2 (32U+8U)
+#     define U_STACK_TYPE_3 (56U+8U)
+#  endif
 #else
-#  define U_STACK_TYPE_0   4U
-#  define U_STACK_TYPE_1  16U
-#  define U_STACK_TYPE_2  36U
-#  define U_STACK_TYPE_3 128U
-#  define U_STACK_TYPE_4 196U // sizeof(UModNoCatPeer: 32bit) 
+#     define U_STACK_TYPE_0   4U
+#  ifndef DEBUG
+#     define U_STACK_TYPE_1  16U
+#     define U_STACK_TYPE_2  36U
+#     define U_STACK_TYPE_3  48U
+#  else
+#     define U_STACK_TYPE_1 (16U+4U)
+#     define U_STACK_TYPE_2 (36U+4U)
+#     define U_STACK_TYPE_3 (48U+4U)
+#  endif
 #endif
 
 // NB: con U_NUM_ENTRY_MEM_BLOCK == 32 sono necessari i tipi stack
 //     multipli di 2 a partire da 128 per i blocchi puntatori per 32bit arch...
 
+#define U_STACK_TYPE_4  128U
 #define U_STACK_TYPE_5  256U
 #define U_STACK_TYPE_6  512U
 #define U_STACK_TYPE_7 1024U
@@ -261,23 +272,12 @@
                                    (sz) <= U_STACK_TYPE_7 ? 7 : \
                                    (sz) <= U_STACK_TYPE_8 ? 8 : 9)
 
-struct U_EXPORT UMemoryPool {
+class UStringRep;
+class UServer_Base;
+class UStackMemoryPool;
 
-#if defined(DEBUG) || defined(U_TEST)
-   static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
-#  ifdef DEBUG
-   static void printInfo(std::ostream& os);
-#  endif
-#endif
-
-   static void deallocate(void* ptr, uint32_t length);
-   static void      _free(void* ptr, uint32_t num, uint32_t type_size = 1);
-
-   static void allocateMemoryBlocks(int stack_index, uint32_t n);
-
-   static void* _malloc(uint32_t   num, uint32_t type_size = 1, bool bzero = false);
-   static void* _malloc(uint32_t* pnum, uint32_t type_size = 1, bool bzero = false);
-
+class U_EXPORT UMemoryPool {
+public:
    // -------------------------------------------------------------------
    // NB: allocazione area di memoria <= U_MAX_SIZE_PREALLOCATE
    //     ritorna area di memoria preallocata su stack predefiniti
@@ -286,18 +286,63 @@ struct U_EXPORT UMemoryPool {
    static void* pop(            int stack_index);
    static void  push(void* ptr, int stack_index);
    // -------------------------------------------------------------------
+
+   static void  _free(void* ptr, uint32_t   num, uint32_t type_size = 1);
+   static void* _malloc(         uint32_t   num, uint32_t type_size = 1, bool bzero = false);
+   static void* _malloc(         uint32_t* pnum, uint32_t type_size = 1, bool bzero = false);
+
+#if defined(DEBUG) || defined(U_TEST)
+   static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
+#  ifdef DEBUG
+   static void printInfo(std::ostream& os);
+#  endif
+#endif
+
+private:
+   static void deallocate(void* ptr, uint32_t length);
+   static void allocateMemoryBlocks(int stack_index, uint32_t n);
+
+#if defined(ENABLE_MEMPOOL) && defined(__linux__) && defined(DEBUG)
+   static bool check(void* ptr);
+#endif
+
+   UMemoryPool(const UMemoryPool&)            {}
+   UMemoryPool& operator=(const UMemoryPool&) { return *this; }
+
+   friend class UStringRep;
+   friend class UServer_Base;
+   friend class UStackMemoryPool;
 };
 
-template <class T> T* u_new_vector(uint32_t& n)
+//#define ENABLE_NEW_VECTOR yes // I don't understand what happen with this...
+
+template <class T> T* u_new_vector(uint32_t& n, int32_t* poffset)
 {
-   U_TRACE(0, "u_new_vector<T>(%u)", n)
+   U_TRACE(0, "u_new_vector<T>(%u,%p)", n, poffset)
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
-   T* _vec = new T[n];
+   uint32_t sz = n * sizeof(T);
+            sz = (sz + U_PAGEMASK) & ~U_PAGEMASK;
+
+   U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
+
+   n = sz / sizeof(T);
+
+   U_INTERNAL_DUMP("n = %u", n)
+
+#if !defined(ENABLE_MEMPOOL) || !defined(__linux__) || !defined(ENABLE_NEW_VECTOR)
+   T* _vec    = new T[n];
 #else
-   T* _vec = (T*) UMemoryPool::_malloc(&n, sizeof(T));
+   char* area = UFile::mmap(&sz, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
+   T* _vec    = new(area) T[n]; // NB: Initializers cannot be specified for arrays...
 
-   (void) new(_vec) T[n]; // NB: Initializers cannot be specified for arrays...
+   // NB: array are not pointers (virtual table can shift the address of this)...
+
+   if (poffset)
+      {
+      *poffset = ((char*)_vec - area);
+
+      U_INTERNAL_DUMP("offset = %d", *poffset)
+      }
 #endif
 
    U_RETURN_POINTER(_vec, T);
@@ -307,14 +352,32 @@ template <class T> void u_delete_vector(T* _vec, uint32_t offset, uint32_t n)
 {
    U_TRACE(0, "u_delete_vector<T>(%p,%u,%u)", _vec, offset, n)
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL) || !defined(__linux__) || !defined(ENABLE_NEW_VECTOR)
    delete[] _vec;
 #else
-   for (uint32_t i = 0; i < n; ++i) _vec[i].~T();
+   uint32_t i = n;
+
+   do {
+      _vec[--i].~T();
+
+      if (i == 0) break;
+      }
+   while (true);
 
    UMemoryPool::_free((char*)_vec - offset, n, sizeof(T));
 #endif
 }
+
+#ifdef DEBUG
+template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
+{
+   U_TRACE(0, "u_check_memory_vector<T>(%p,%u)", _vec, n)
+
+   for (uint32_t i = 0; i < n; ++i) if (_vec[i].check_memory() == false) U_RETURN(false);
+
+   U_RETURN(true);
+}
+#endif
 
 #if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
 #  define U_MEMORY_ALLOCATOR
@@ -324,13 +387,25 @@ template <class T> void u_delete_vector(T* _vec, uint32_t offset, uint32_t n)
 #  define U_FREE(ptr,sz)               free(ptr);
 #  define U_FREE_TYPE(ptr,type)        free(ptr);
 #else
-#  define U_MEMORY_ALLOCATOR \
- void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
- void* operator new[](size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
- void* operator new[](size_t sz, void* p) { return p; }
-#  define U_MEMORY_DEALLOCATOR \
- void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
- void  operator delete[](void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); }
+#  ifdef ENABLE_NEW_VECTOR
+#     define U_MEMORY_ALLOCATOR \
+void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
+void* operator new[](size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
+void* operator new[](size_t sz, void* p) { return p; }
+#  else
+#     define U_MEMORY_ALLOCATOR \
+void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
+void* operator new[](size_t sz)          {                                                  return UMemoryPool::_malloc(sz); }
+#  endif
+#  ifdef ENABLE_NEW_VECTOR
+#     define U_MEMORY_DEALLOCATOR \
+void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
+void  operator delete[](void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); }
+#  else
+#     define U_MEMORY_DEALLOCATOR \
+void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
+void  operator delete[](void* _ptr, size_t sz) {                                                  UMemoryPool::_free( _ptr, sz); }
+#  endif
 #  define U_MALLOC(  sz)               UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);
 #  define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);
 #  define U_FREE(ptr,sz)              {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);}

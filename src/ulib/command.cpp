@@ -533,8 +533,6 @@ UString UCommand::outputCommand(const UString& cmd, char** penv, int fd_stdin, i
 
 const char* UCommand::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "pid                     " << pid                  << '\n'
                   << "ncmd                    " << ncmd                 << '\n'
                   << "nfile                   " << nfile                << '\n'

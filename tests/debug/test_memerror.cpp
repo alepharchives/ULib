@@ -46,7 +46,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    UInt a(10);
 
-   U_CHECK_MEMORY_OBJ(a)
+   U_CHECK_MEMORY_OBJECT(&a)
 
    UInt* b = new UInt(a);
 

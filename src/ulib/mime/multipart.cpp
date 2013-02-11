@@ -244,8 +244,6 @@ UString UMimeMultipartMsg::section(const UString& content,
 
 const char* UMimeMultipartMsg::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "boundary              " << '"' << boundary         << "\"\n"
                   << "boundary_len          " << boundary_len            << '\n'
                   << "vec_part     (UVector " << (void*)&vec_part        << ')';

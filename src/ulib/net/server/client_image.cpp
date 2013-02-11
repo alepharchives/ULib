@@ -121,7 +121,7 @@ UClientImage_Base::UClientImage_Base()
 {
    U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
-   U_INTERNAL_DUMP("this = %p UEventFd::fd = %d", this, UEventFd::fd)
+   U_INTERNAL_DUMP("this = %p memory._this = %p UEventFd::fd = %d", this, memory._this, UEventFd::fd)
 
    socket     = 0;
    logbuf     = (UServer_Base::isLog() ? U_NEW(UString(200U)) : 0);
@@ -146,8 +146,24 @@ UClientImage_Base::~UClientImage_Base()
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
-               delete socket;
-   if (logbuf) delete logbuf;
+   delete socket;
+
+   if (logbuf)
+      {
+#  ifndef ENABLE_NEW_VECTOR
+      U_CHECK_MEMORY_OBJECT(logbuf->rep)
+#  else
+      if (logbuf->rep->memory.invariant() == false)
+         {
+         U_INTERNAL_DUMP("logbuf = %p logbuf->rep = %p logbuf->rep->memory._this = %p",
+                          logbuf,     logbuf->rep,     logbuf->rep->memory._this)
+
+         logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
+         }
+#  endif
+
+      delete logbuf;
+      }
 }
 
 void UClientImage_Base::set()
@@ -180,8 +196,68 @@ void UClientImage_Base::set()
 
                                                socket->flags |= O_CLOEXEC;
    if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
+
+#ifdef DEBUG
+               U_CHECK_MEMORY
+               U_CHECK_MEMORY_OBJECT(socket)
+   if (logbuf) U_CHECK_MEMORY_OBJECT(logbuf->rep)
+
+   uint32_t index = (this - UServer_Base::vClientImage);
+
+   if (index)
+      {
+      UClientImage_Base* ptr = UServer_Base::vClientImage + index-1;
+
+      U_CHECK_MEMORY_OBJECT(ptr)
+      U_CHECK_MEMORY_OBJECT(ptr->socket)
+
+      if (logbuf)
+         {
+         U_INTERNAL_DUMP("ptr->logbuf = %p ptr->logbuf->rep = %p ptr->logbuf->rep->memory._this = %p",
+                          ptr->logbuf,     ptr->logbuf->rep,     ptr->logbuf->rep->memory._this)
+
+         U_CHECK_MEMORY_OBJECT(ptr->logbuf->rep)
+
+         if (index == (UNotifier::max_connection-1))
+            {
+            for (index = 0, ptr = UServer_Base::vClientImage; index < UNotifier::max_connection; ++index, ++ptr) (void) ptr->check_memory();
+            }
+         }
+      }
+#endif
 }
 // ------------------------------------------------------------------------
+
+#ifdef DEBUG
+bool UClientImage_Base::check_memory()
+{
+   U_TRACE(0, "UClientImage_Base::check_memory()")
+
+   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this - UServer_Base::vClientImage, UNotifier::max_connection)
+
+   U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
+
+   U_CHECK_MEMORY
+   U_CHECK_MEMORY_OBJECT(socket)
+
+   if (logbuf)
+      {
+#  ifndef ENABLE_NEW_VECTOR
+      U_CHECK_MEMORY_OBJECT(logbuf->rep)
+#  else
+      if (logbuf->rep->memory.invariant() == false)
+         {
+         U_INTERNAL_DUMP("logbuf = %p logbuf->rep = %p logbuf->rep->memory._this = %p",
+                          logbuf,     logbuf->rep,     logbuf->rep->memory._this)
+
+         logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
+         }
+#  endif
+      }
+
+   U_RETURN(true);
+}
+#endif
 
 void UClientImage_Base::init()
 {
@@ -588,15 +664,30 @@ int UClientImage_Base::handlerError(int sock_state)
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
+   U_INTERNAL_DUMP("fd = %d sock_fd = %d client_address = %S", UEventFd::fd, socket->iSockDesc, client_address)
+
+#ifdef DEBUG
+   if (client_address == 0)
+      {
+      if (UServer_Base::isLog())
+         {
+         U_INTERNAL_ASSERT_POINTER(logbuf)
+
+         UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s, fd = %d sock_fd = %d sfd = %d count = %u UEventFd::op_mask = %B bclose = %B\n",
+            U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(*logbuf), UEventFd::fd, socket->iSockDesc, sfd, count, UEventFd::op_mask, bclose);
+         }
+
+      U_ERROR("UClientImage_Base::handlerError(): client_address null");
+      }
+#endif
+
+   UServer_Base::pClientImage = this;
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT)
    if (UEventFd::fd) // NB: sometime happens that epoll fire event despite fd == 0...
 #endif
       {
       socket->iState = sock_state;
-
-      UServer_Base::pClientImage = this;
 
    // if (socket->isTimeout()) {} // maybe we need some specific kind of processing...
 
@@ -639,8 +730,6 @@ int UClientImage_Base::handlerRead()
 #ifndef U_HTTP_CACHE_REQUEST
    initAfterGenericRead();
 #endif
-
-   U_INTERNAL_DUMP("client_address = %S", client_address)
 
 loop:
    ++counter;
@@ -931,8 +1020,6 @@ void UClientImage_Base::handlerDelete()
 
 const char* UClientImage_Base::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "sfd                                " << sfd                << '\n'
                   << "state                              " << state              << '\n'
                   << "start                              " << start              << '\n'

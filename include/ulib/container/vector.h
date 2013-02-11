@@ -402,7 +402,7 @@ public:
          {
          elem = at(i);
 
-         U_CHECK_MEMORY_CLASS(*(const UMemoryError*)elem);
+         U_CHECK_MEMORY_OBJECT(elem)
          }
 
       U_RETURN(true);

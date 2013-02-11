@@ -29,6 +29,7 @@ template <class T> class UVector;
 
 class U_NO_EXPORT UHashMapNode {
 public:
+
    // Check for memory error
    U_MEMORY_TEST
 
@@ -43,8 +44,7 @@ public:
 
    // COSTRUTTORI
 
-   UHashMapNode(UStringRep* _key, void* _elem, UHashMapNode* _next, uint32_t _hash)
-                  : elem(_elem), key(_key), next(_next), hash(_hash)
+   UHashMapNode(UStringRep* _key, void* _elem, UHashMapNode* _next, uint32_t _hash) : elem(_elem), key(_key), next(_next), hash(_hash)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(*_key), _elem, _next, _hash)
 
@@ -63,6 +63,20 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UHashMapNode)
 
       key->release(); // NB: si decrementa la reference della stringa...
+      }
+
+   UHashMapNode& operator=(const UHashMapNode& n)
+      {
+      U_TRACE(0, "UHashMapNode::operator=(%p)", &n)
+
+      U_MEMORY_TEST_COPY(n)
+
+      elem = n.elem;
+      key  = n.key;
+      next = n.next;
+      hash = n.hash;
+
+      return *this;
       }
 
 #ifdef DEBUG
@@ -165,7 +179,7 @@ public:
       {
       U_TRACE(0, "UHashMap<void*>::setIgnoreCase(%b)", flag)
 
-      U_INTERNAL_ASSERT_EQUALS(_length,0)
+      U_INTERNAL_ASSERT_EQUALS(_length, 0)
 
       ignore_case = flag;
       }
@@ -375,7 +389,7 @@ public:
       }
 
 #ifdef DEBUG
-   bool check_memory() // check all element
+   bool check_memory() const // check all element
       {
       U_TRACE(0, "UHashMap<T*>::check_memory()")
 
@@ -383,35 +397,41 @@ public:
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
-      T* _elem;
-      UHashMapNode* _next;
-      int sum = 0, max = 0, min = 1024, width;
-
-      for (index = 0; index < _capacity; ++index)
+      if (_length)
          {
-         if (table[index])
+         T* _elem;
+         UHashMapNode* _node;
+         UHashMapNode* _next;
+         int sum = 0, max = 0, min = 1024, width;
+
+         for (uint32_t _index = 0; _index < _capacity; ++_index)
             {
-            node = table[index];
+            _node = table[_index];
 
-            ++sum;
-            width = -1;
+            if (_node)
+               {
+               ++sum;
+               width = -1;
 
-            do {
-               ++width;
+               do {
+                  ++width;
 
-               _next  =     node->next;
-               _elem = (T*) node->elem;
+                  _next  =     _node->next;
+                  _elem = (T*) _node->elem;
 
-               U_CHECK_MEMORY_CLASS(*(const UMemoryError*)_elem);
+                  U_INTERNAL_DUMP("_elem = %p", _elem)
+
+                  U_CHECK_MEMORY_OBJECT(_elem)
+                  }
+               while ((_node = _next));
+
+               if (max < width) max = width;
+               if (min > width) min = width;
                }
-            while ((node = _next));
-
-            if (max < width) max = width;
-            if (min > width) min = width;
             }
-         }
 
-      U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (double)_length / (double)sum)
+         U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (double)_length / (double)sum)
+         }
 
       U_RETURN(true);
       }
@@ -421,34 +441,39 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UHashMap<T*>::clear()")
+      U_TRACE(0+256, "UHashMap<T*>::clear()")
 
-      U_ASSERT(check_memory())
+      U_INTERNAL_ASSERT(check_memory())
 
-      T* _elem;
-      UHashMapNode* _next;
+      U_INTERNAL_DUMP("_length = %u", _length)
 
-      for (index = 0; index < _capacity; ++index)
+      if (_length)
          {
-         if (table[index])
+         T* _elem;
+         UHashMapNode* _next;
+
+         for (index = 0; index < _capacity; ++index)
             {
-            node = table[index];
+            if (table[index])
+               {
+               node = table[index];
 
-            do {
-               _next  =     node->next;
-               _elem = (T*) node->elem;
+               do {
+                  _next  =     node->next;
+                  _elem = (T*) node->elem;
 
-               u_destroy<T>(_elem);
+                  u_destroy<T>(_elem);
 
-               delete node;
+                  delete node;
+                  }
+               while ((node = _next));
+
+               table[index] = 0;
                }
-            while ((node = _next));
-
-            table[index] = 0;
             }
-         }
 
-      _length = 0;
+         _length = 0;
+         }
       }
 
    void callWithDeleteForAllEntry(bPFprpv function)
@@ -508,30 +533,45 @@ public:
       U_INTERNAL_ASSERT_EQUALS(ignore_case, h.ignore_case)
 
       clear();
-      allocate(h._capacity);
 
-      T* _elem;
-      UHashMapNode** ptr;
-
-      for (uint32_t _index = 0; _index < h._capacity; ++_index)
+      if (h._length)
          {
-         if (h.table[_index])
+         T* _elem;
+         UHashMapNode** ptr;
+
+         allocate(h._capacity);
+
+         for (index = 0; index < h._capacity; ++index)
             {
-            node = h.table[_index];
-            ptr  = table + _index;
+            node = h.table[index];
 
-            do {
-               *ptr = U_NEW(UHashMapNode(node, *ptr)); // lo si inserisce nella lista collisioni...
+            if (node)
+               {
+               ptr = table+index;
 
-               _elem = (T*) (*ptr)->elem;
+               U_INTERNAL_ASSERT_EQUALS(*ptr, 0)
 
-               u_construct<T>(_elem);
+               do {
+                  *ptr = U_NEW(UHashMapNode(node, *ptr)); // lo si inserisce nella lista collisioni...
+
+                  _elem = (T*) (*ptr)->elem;
+
+                  U_INTERNAL_DUMP("_elem = %p", _elem)
+
+                  U_ASSERT_EQUALS(_elem, h[node->key])
+
+                  u_construct<T>(_elem);
+                  }
+               while ((node = node->next));
                }
-            while ((node = node->next));
             }
+
+         _length = h._length;
          }
 
-      _length = h._length;
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      U_INTERNAL_ASSERT_EQUALS(_length, h._length)
       }
 
    // STREAMS
@@ -539,6 +579,10 @@ public:
    friend ostream& operator<<(ostream& _os, const UHashMap<T*>& t)
       {
       U_TRACE(0+256, "UHashMap<T*>::operator<<(%p,%p)", &_os, &t)
+
+      U_INTERNAL_ASSERT(t.check_memory())
+
+      U_INTERNAL_DUMP("t._length = %u", t._length)
 
       UHashMapNode* node;
       UHashMapNode* next;

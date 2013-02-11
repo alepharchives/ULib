@@ -24,7 +24,7 @@ const UString* Url::str_https;
 
 void Url::str_allocate()
 {
-   U_TRACE(0, "Url::str_allocate()")
+   U_TRACE(0+256, "Url::str_allocate()")
 
    U_INTERNAL_ASSERT_EQUALS(str_ftp,0)
    U_INTERNAL_ASSERT_EQUALS(str_ldap,0)
@@ -565,8 +565,6 @@ U_EXPORT ostream& operator<<(ostream& os, const Url& u)
 
 const char* Url::dump(bool reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "service_end  " << service_end << '\n'
                   << "user_begin   " << user_begin  << '\n'
                   << "user_end     " << user_end    << '\n'

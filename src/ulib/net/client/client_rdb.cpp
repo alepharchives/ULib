@@ -276,8 +276,6 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
 
 const char* URDBClient_Base::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    UClient_Base::dump(false);
 
    *UObjectIO::os << '\n'

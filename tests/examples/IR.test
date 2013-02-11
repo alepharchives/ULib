@@ -6,7 +6,7 @@
 
 start_msg query
 
-#UTRACE="0 50M 1"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 5M 1k"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
@@ -25,11 +25,11 @@ DIR_CMD="../../examples/IR"
    DOC_DIR=IR/doc
 #fi
 
-#  exit 0
+# exit 0
 
-#  mkdir /doc
-#  mount -t tmpfs -o defaults,noatime,nodiratime,size=2g,nr_inodes=64m tmpfs /doc
-#  $DIR_CMD/gendoc 1000 0 /doc/
+# mkdir /doc
+# mount -t tmpfs -o defaults,noatime,nodiratime,size=2g,nr_inodes=64m tmpfs /doc
+# $DIR_CMD/gendoc 1000 0 /doc/
 
 # rm -rf $DOC_DIR/*
   rm -rf trace.*gendoc*.[0-9]*   object.*gendoc*.[0-9]*   stack.*gendoc*.[0-9]*   mempool.*gendoc*.[0-9]* \
@@ -50,17 +50,17 @@ then
 #     inp/xmltutorial.pdf IR/doc/
 fi
 
-#  rm -rf $DB_DIR/*
-#  start_prg index1  -c index.cfg
-#  start_prg db_dump -c index.cfg
-#  exit 0
+# rm -rf $DB_DIR/*
+# start_prg index1  -c index.cfg
+# start_prg db_dump -c index.cfg
+# exit 0
 
 if [ ! -d $DB_DIR ]
 then
    mkdir -p $DB_DIR
 
+#export UTRACE="0 10M 1"
 #export UOBJDUMP="0 5M 1k"
-#export UTRACE="0 10M 0"
    start_prg index1 -c index.cfg
 #unset UOBJDUMP UTRACE
 #exit 0
@@ -85,7 +85,7 @@ DEL_FILE="D01/D01_studente_1.xml,D01/D01_studente_1_op_1.xml"
 ADD_FILE="$DEL_FILE,D01/D01_studente_1_op_2?.xml"
 SUB_FILE="D01/D01_studente_1_op_2?.xml"
 
-#export UTRACE="0 10M 0"
+#export UTRACE="0 10M 1"
  if [ -f $DOC_DIR/D01/D01_studente_1_op_20.xml ]
  then
    start_prg update -c index.cfg -d "$ADD_FILE"
@@ -101,8 +101,8 @@ SUB_FILE="D01/D01_studente_1_op_2?.xml"
 #unset UTRACE
 #exit 0
 
-#  start_prg db_check -c index.cfg
-#  exit 0
+# start_prg db_check -c index.cfg
+# exit 0
 
  if [ ! -f ok/query.ok ]
  then

@@ -165,7 +165,7 @@ void USSIPlugIn::str_allocate()
 
 USSIPlugIn::USSIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, USSIPlugIn, "")
 
    errmsg  = U_NEW(UString);
    timefmt = U_NEW(UString);

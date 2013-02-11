@@ -53,6 +53,8 @@ public:
 
          if (method == 0) U_ERROR("missing <number_of_command> argument...");
 
+         x.resetReference();
+
          int op = atoi(method);
 
          switch (op)

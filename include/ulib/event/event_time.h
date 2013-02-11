@@ -41,6 +41,8 @@ public:
 
       (void) UDispatcher::add(*pevent, *(UTimeVal*)this);
 #  endif
+
+      U_INTERNAL_DUMP("this = %p memory._this = %p", this, memory._this)
       }
 
    virtual ~UEventTime()
@@ -51,6 +53,8 @@ public:
       UDispatcher::del(pevent);
                 delete pevent;
 #  endif
+
+      U_INTERNAL_DUMP("this = %p memory._this = %p", this, memory._this)
       }
 
    bool operator<(const UEventTime& t) const __pure;

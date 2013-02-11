@@ -1430,7 +1430,6 @@
       request_uri        = U_NEW(UString);
       auth_domain        = U_NEW(UString);
       account_auth       = U_NEW(U_STRING_FROM_CONSTANT("ACCOUNT_AUTH"));
-      title_default      = U_NEW(UString);
       client_address     = U_NEW(UString);
       allowed_web_hosts  = U_NEW(UString);
    
