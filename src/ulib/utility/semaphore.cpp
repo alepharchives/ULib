@@ -30,10 +30,10 @@ void USemaphore::init(sem_t* ptr, unsigned resource)
 
    U_CHECK_MEMORY
 
-#ifdef __MINGW32__
+#ifdef U_LOCKFILE
+   (void) tmp.mkTemp(0); // temporary  file for locking...
+#elif defined(__MINGW32__)
    sem = ::CreateSemaphore((LPSECURITY_ATTRIBUTES)NULL, (LONG)resource, MAX_SEM_VALUE, (LPCTSTR)NULL);
-#elif defined(U_LOCKFILE)
-   (void) tmp.mkTemp();
 #else
    if (ptr)
       {
@@ -78,10 +78,10 @@ USemaphore::~USemaphore()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USemaphore)
 
-#ifdef __MINGW32__
-   ::CloseHandle(sem);
-#elif defined(U_LOCKFILE)
+#ifdef U_LOCKFILE
    (void) tmp.close();
+#elif defined(__MINGW32__)
+   ::CloseHandle(sem);
 #else
 #  ifdef U_MAYBE_BROKEN_SEM_IMPL
    if (broken) (void) U_SYSCALL(pthread_mutex_destroy, "%p", &mutex);
@@ -103,7 +103,6 @@ bool USemaphore::checkForDeadLock(UTimeVal& time)
    bool sleeped = false;
 
 #if !defined(__MINGW32__) && !defined(U_LOCKFILE)
-
    int value;
    sem_t* sem;
 
@@ -147,14 +146,12 @@ bool USemaphore::wait(timeout_t timeout)
 
    U_CHECK_MEMORY
 
-#ifdef __MINGW32__
-   bool result = (::WaitForSingleObject(sem, (timeout ? timeout : INFINITE)) == WAIT_OBJECT_0);
-
-   U_RETURN(result);
-#elif defined(U_LOCKFILE)
+#ifdef U_LOCKFILE
    if (tmp.lock()) U_RETURN(true);
-
-   U_RETURN(false);
+                   U_RETURN(false);
+#elif defined(__MINGW32__)
+   if (::WaitForSingleObject(sem, (timeout ? timeout : INFINITE)) == WAIT_OBJECT_0) U_RETURN(true);
+                                                                                    U_RETURN(false);
 #else
    int rc;
 
@@ -197,10 +194,10 @@ void USemaphore::post()
 
    U_CHECK_MEMORY
 
-#ifdef __MINGW32__
-   ::ReleaseSemaphore(sem, 1, (LPLONG)NULL);
-#elif defined(U_LOCKFILE)
+#ifdef U_LOCKFILE
    (void) tmp.unlock();
+#elif defined(__MINGW32__)
+   ::ReleaseSemaphore(sem, 1, (LPLONG)NULL);
 #else
    U_INTERNAL_DUMP("value = %d", getValue())
    U_INTERNAL_ASSERT(getValue() <= 1)
@@ -219,10 +216,10 @@ void USemaphore::post()
 
 const char* USemaphore::dump(bool reset) const
 {
-#ifdef __MINGW32__
-   *UObjectIO::os << "sem        " << (void*)sem;
-#elif defined(U_LOCKFILE)
+#ifdef U_LOCKFILE
    *UObjectIO::os << "tmp (UFile " << (void*)&tmp   << ')';
+#elif defined(__MINGW32__)
+   *UObjectIO::os << "sem        " << (void*)sem;
 #else
    *UObjectIO::os << "sem        " << (void*)sem    << '\n';
 #  if defined(U_MAYBE_BROKEN_SEM_IMPL)

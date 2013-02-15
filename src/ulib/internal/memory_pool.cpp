@@ -447,6 +447,9 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
    U_INTERNAL_DUMP("length = %u", length)
 
 #if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#  ifndef HAVE_ARCH64
+   U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
+#  endif
    ptr = U_SYSCALL(malloc, "%u", length);
 #else
    if (length <= U_MAX_SIZE_PREALLOCATE)
@@ -479,6 +482,9 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    U_INTERNAL_DUMP("length = %u", length)
 
 #if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#  ifndef HAVE_ARCH64
+   U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
+#  endif
    ptr = U_SYSCALL(malloc, "%u", length);
 #else
    if (length <= U_MAX_SIZE_PREALLOCATE)
@@ -507,7 +513,7 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
 {
    U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL) || !defined(__linux__) || (!defined(HAVE_ARCH64) && !defined(ENABLE_THREAD))
    U_SYSCALL_VOID(free, "%p", ptr);
 #else
    if (UFile::isLastAllocation(ptr, length))

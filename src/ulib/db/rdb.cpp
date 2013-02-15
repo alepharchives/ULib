@@ -151,8 +151,6 @@ U_NO_EXPORT inline bool URDB::resizeJournal(uint32_t oversize)
 
    U_INTERNAL_DUMP("oversize = %u", oversize)
 
-// msync();
-
    uint32_t _offset = (char*)pnode - journal.map;
 
    U_INTERNAL_DUMP("pnode = %p node = %u offset = %u", pnode, node, _offset)
@@ -464,7 +462,7 @@ void URDB::msync()
 
    U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u", RDB_off, RDB_sync)
 
-   UFile::msync(journal.map+RDB_off, journal.map+RDB_sync);
+   UFile::msync(journal.map + RDB_off, journal.map + RDB_sync);
 
    RDB_sync = RDB_off;
 

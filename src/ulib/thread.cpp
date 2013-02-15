@@ -428,7 +428,16 @@ bool UThread::start()
       }
 #endif
 
-   if (U_SYSCALL(pthread_create, "%p,%p,%p,%p", &(priv->_tid), &(priv->_attr), (exec_t)execHandler, this) == 0) U_RETURN(true);
+   if (U_SYSCALL(pthread_create, "%p,%p,%p,%p", &(priv->_tid), &(priv->_attr), (exec_t)execHandler, this) == 0)
+      {
+      /* give at the thread the time to initialize... */
+
+      struct timespec ts = { 0L, 50L * 1000000L };
+
+      (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+
+      U_RETURN(true);
+      }
 
    U_RETURN(false);
 }

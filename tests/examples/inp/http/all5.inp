@@ -1,3 +1,13 @@
+GET /js.php?name=Free%20YouTube%20Downloader%20Pro HTTP/1.1
+Host: tabplus.net
+Connection: keep-alive
+User-Agent: Mozilla/5.0 (X11; Linux i686) AppleWebKit/537.11 (KHTML, like Gecko) Chrome/23.0.1271.64 Safari/537.11
+Accept: */*
+Referer: http://www.google.it/ig
+Accept-Encoding: gzip,deflate,sdch
+Accept-Language: it-IT,it;q=0.8,en-US;q=0.6,en;q=0.4
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.3
+
 GET /ajax/notifications/get.php?time=1356343296&user=1273353000&version=2&locale=it_IT&earliest_time=1356287553&__user=1273353000&__a=1 HTTP/1.1
 Accept: */*
 Accept-Language: it

@@ -270,8 +270,6 @@ public:
       sig_atomic_t cnt_user2;
       sig_atomic_t cnt_connection;
    // ---------------------------------
-      ULog::log_data log_data_shared;
-   // ---------------------------------
       struct timeval _timeval;
       long last_sec[3];
       char data_1[17]; // 18/06/12 18:45:56
@@ -280,7 +278,10 @@ public:
       char  null2[1];  // 123456789012345678901234567890
       char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
       char  null3[1];  // 123456789012345678901234567890
-   // -------------------------------
+   // ------------------------------------------------------------------------------
+      ULog::log_data log_data_shared;
+   // -> maybe unnamed array of char for gzip compression (log rotate)...
+   // --------------------------------------------------------------------------------
    } shared_data;
 
 #define U_LOCK_USER1        &(UServer_Base::ptr_shared_data->lock_user1)
@@ -288,11 +289,11 @@ public:
 #define U_LOCK_RDB_SERVER   &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_LOCK_SSL_SESSION  &(UServer_Base::ptr_shared_data->lock_ssl_session)
 #define U_LOCK_HTTP_SESSION &(UServer_Base::ptr_shared_data->lock_http_session)
-#define U_LOG_DATA_SHARED   &(UServer_Base::ptr_shared_data->log_data_shared)
 #define U_CNT_USER1           UServer_Base::ptr_shared_data->cnt_user1
 #define U_CNT_USER2           UServer_Base::ptr_shared_data->cnt_user2
 #define U_TOT_CONNECTION      UServer_Base::ptr_shared_data->cnt_connection
 #define U_NOW               &(UServer_Base::ptr_shared_data->_timeval)
+#define U_LOG_DATA_SHARED   &(UServer_Base::ptr_shared_data->log_data_shared)
 
    static pid_t pid;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves

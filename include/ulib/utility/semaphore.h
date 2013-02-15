@@ -16,31 +16,38 @@
 
 #include <ulib/internal/common.h>
 
+#ifndef ENABLE_THREAD
+#  define U_LOCKFILE
+#  include <ulib/file.h>
+typedef int sem_t;
+#endif
+
 #ifdef __MINGW32__
+typedef DWORD  timeout_t;
 typedef HANDLE sem_t;
 #  define MAX_SEM_VALUE 1000000
-#elif defined(HAVE_SEMAPHORE_H)
-#  include <semaphore.h>
-// -------------------------------------------------------------
-// check for broken implementation on Linux (debian)...
-// -------------------------------------------------------------
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-#     include <linux/version.h>
-#     ifndef KERNEL_VERSION
-#        define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
-#     endif
-#     ifndef LINUX_VERSION_CODE
-#        error "You need to use at least 2.0 Linux kernel."
-#     endif
-#     if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,7)
-#        define U_MAYBE_BROKEN_SEM_IMPL
-#     endif
-#  endif
-// -------------------------------------------------------------
 #else
+typedef time_t timeout_t;
+#  if !defined(U_LOCKFILE) && defined(HAVE_SEMAPHORE_H)
+#     include <semaphore.h>
+//    -------------------------------------------------------------
+//    check for broken implementation on Linux (debian)...
+//    -------------------------------------------------------------
+#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#        include <linux/version.h>
+#        ifndef KERNEL_VERSION
+#           define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
+#        endif
+#        ifndef LINUX_VERSION_CODE
+#           error "You need to use at least 2.0 Linux kernel."
+#        endif
+#        if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,7)
+#           define U_MAYBE_BROKEN_SEM_IMPL
+#        endif
+#     endif
+//    -------------------------------------------------------------
 /*
-typedef int sem_t;
-
+#  else
 extern "C" {
 int sem_wait(sem_t*__sem);
 int sem_post(sem_t* __sem);
@@ -49,9 +56,10 @@ int sem_getvalue(sem_t* sem, int* sval);
 int sem_init(sem_t* __sem, int __pshared, unsigned int __value):
 }
 */
+#  endif
 #endif
 
-#if !defined(HAVE_SEMAPHORE_H) || defined(U_MAYBE_BROKEN_SEM_IMPL) // _LIBC // uClib
+#if !defined(U_LOCKFILE) && (!defined(HAVE_SEMAPHORE_H) || defined(U_MAYBE_BROKEN_SEM_IMPL)) // _LIBC // uClib
 #  ifdef _POSIX_THREAD_PROCESS_SHARED
 #     ifdef HAVE_PTHREAD_H
 #        include <pthread.h>
@@ -64,20 +72,7 @@ int pthread_mutex_destroy(pthread_mutex_t* mutex);
 int pthread_mutexattr_init(pthread_mutexattr_t* mutex_attr);
 int pthread_mutex_init(pthread_mutex_t* mutex, const pthread_mutexattr_t* mutex_attr); }
 #     endif
-#  else
-#     define U_LOCKFILE
-#     undef  U_MAYBE_BROKEN_SEM_IMPL
 #  endif
-#endif
-
-#ifdef U_LOCKFILE
-#  include <ulib/file.h>
-#endif
-
-#ifdef __MINGW32__
-typedef DWORD  timeout_t;
-#else
-typedef time_t timeout_t;
 #endif
 
 class UTimeVal;
@@ -156,13 +151,13 @@ public:
 
 protected:
    USemaphore* next;
-#ifdef __MINGW32__
-   HANDLE sem;
-#elif defined(U_LOCKFILE)
+#ifdef U_LOCKFILE
    UFile tmp;
+#elif defined(__MINGW32__)
+   HANDLE sem;
 #else
    sem_t* sem;
-#  if defined(U_MAYBE_BROKEN_SEM_IMPL)
+#  ifdef U_MAYBE_BROKEN_SEM_IMPL
    pthread_mutex_t     mutex;
    pthread_mutexattr_t mutex_attr;
 #  endif

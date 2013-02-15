@@ -3322,7 +3322,7 @@
          if (bstart) nodog_rec->setDown(true);
               (void) nodog_rec->setDown(false);
    
-         U_LOGGER("%.*s:%.*s %s", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), bstart ? "started" : "*** AP CRASHED ***");
+         U_LOGGER("%.*s:%.*s %s", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), bstart ? "started" : "*** NODOG CRASHED ***");
    
          callForAllUsers(quitUserConnected);
          }

@@ -258,6 +258,7 @@ protected:
    bool active;
 
    static int session_cache_index;
+   static const char* protocol_version;
 
    static void        info_callback(const SSL* ssl, int where, int ret);
    static const char* status(SSL* ssl, int ret, bool _flag, char* buffer, uint32_t buffer_size);

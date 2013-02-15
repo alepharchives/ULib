@@ -209,15 +209,11 @@ public:
 
       while (UServer_Base::flag_loop)
          {
-         (void) nanosleep(&ts, 0);
+         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
 
-         if (ULog::data_to_write &&
-             ULog::data_to_write->empty() == false)
-            {
-            ULog::logRotateWrite();
-
-            watch_counter = 1;
-            }
+#     ifdef USE_LIBZ
+         if (ULog::checkForLogRotateDataToWrite()) watch_counter = 1;
+#     endif
 
          U_INTERNAL_DUMP("watch_counter = %d", watch_counter)
 
@@ -1298,6 +1294,26 @@ void UServer_Base::init()
 
    // init plugin modules...
 
+   bool     log_shared;
+   uint32_t log_rotate_size = 0;
+
+   if (isLog())
+      {
+      log_shared = true; // NB: is always shared cause of possibility of fork() by parallelization...
+
+#  if defined(USE_LIBZ) && defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+      // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
+      log_rotate_size = shared_data_add = log->UFile::st_size + (log->UFile::st_size / 10) + 12U;
+#  endif
+      }
+   else
+      {
+      log_shared      = false;
+      log_rotate_size = 0;
+      }
+
+   U_INTERNAL_DUMP("log_shared = %b log_rotate_size = %u", log_shared, log_rotate_size)
+
    if (pluginsHandlerInit() != U_PLUGIN_HANDLER_FINISHED)
       {
       U_ERROR("Plugins initialization FAILED. Going down...");
@@ -1305,7 +1321,7 @@ void UServer_Base::init()
 
    flag_loop = true; // NB: UTimeThread loop depend on this...
 
-   if (isPreForked() ||
+   if (log_shared ||
        shared_data_add)
       {
       // manage shared data...
@@ -1352,21 +1368,12 @@ void UServer_Base::init()
 
       ((UTimeThread*)u_pthread_time)->start();
 #  endif
-      }
 
-   if (isLog())
-      {
-      bool shared;
-
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      shared = true;                     // NB: is always shared cause of possibility of fork() by parallelization...
-#  else
-      shared = (preforked_num_kids > 1); // NB: for nodog it is not shared...
-#  endif
-
-      if (shared)
+      if (log_shared)
          {
-         ULog::setShared((ptr_shared_data ? U_LOG_DATA_SHARED : 0));
+         U_INTERNAL_ASSERT_POINTER(log)
+
+         ULog::setShared(U_LOG_DATA_SHARED, log_rotate_size);
 
          U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d process", sizeof(shared_data) + shared_data_add, map_size / 1024, preforked_num_kids);
          }
@@ -1398,7 +1405,7 @@ void UServer_Base::init()
 
    pthis->preallocate();
 
-#if defined(USE_LIBSSL)
+#ifdef USE_LIBSSL
    if (bssl)
       {
       if (isPreForked() &&
@@ -1407,21 +1414,7 @@ void UServer_Base::init()
          ((URDB*)USSLSession::db_ssl_session)->setShared(U_LOCK_SSL_SESSION);
          }
 
-      const char* msg;
-
-#    if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
-      msg = "TLS 1.2";
-#  elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
-      msg = "TLS 1.1";
-#  elif !defined(OPENSSL_NO_SSL3)
-      msg = "SSL 2.0/3.0";
-#  elif !defined(OPENSSL_NO_SSL2)
-      msg = "SSL 2.0";
-#  else
-      msg = "unknow";
-#  endif
-
-      U_SRV_LOG("SSL Server use %s protocol", msg);
+      U_SRV_LOG("SSL Server use %s protocol", USSLSocket::protocol_version ? USSLSocket::protocol_version : "unknow");
       }
 #elif defined(U_HTTP_CACHE_REQUEST) && !defined(__MINGW32__)
    accept_edge_triggered     = true;
@@ -1798,7 +1791,7 @@ retry:
          {
          UNotifier::init(false);
 
-         if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+         if (isLog()) ULog::setAsChild();
 
          // NB: in the classic model we don't need to be notified for request of connection (loop: accept-fork)
          // and the forked child don't accept new client, but we need anyway the event manager because the forked
@@ -2136,7 +2129,7 @@ void UServer_Base::run()
 
       pid_t pid_to_wait;
       int status, i = 0, nkids;
-      UTimeVal to_sleep(0L, 500 * 1000L);
+      UTimeVal to_sleep(0L, 500L * 1000L);
       bool baffinity = (preforked_num_kids <= u_get_num_cpu() && u_num_cpu > 1);
 
       if (isPreForked())
@@ -2223,7 +2216,7 @@ void UServer_Base::run()
 
                UNotifier::init(true);
 
-               if (isLog()) u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+               if (isLog()) ULog::setAsChild();
 
                // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
 
@@ -2308,12 +2301,12 @@ bool UServer_Base::parallelization()
 
       if (isLog())
          {
-         u_unatexit(&ULog::close); // NB: needed because all instance try to close the log... (inherits from its parent)
+         ULog::setAsChild();
 
          if (ULog::isMemoryMapped() &&
              ULog::isShared() == false)
             {
-            log = 0; // NB: we need locking to write on the log...
+            log = 0; // we don't have the locking engine to write on the log...
             }
          }
       }

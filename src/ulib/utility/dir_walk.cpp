@@ -60,58 +60,72 @@ const char*       UDirWalk::filter;
 UTree<UString>*   UDirWalk::ptree;
 UVector<UString>* UDirWalk::pvector;
 
-UDirWalk::UDirWalk(const UString* dir, const char* _filter, uint32_t _filter_len)
+UDirWalk::UDirWalk(const char* dir, const char* _filter, uint32_t _filter_len)
 {
-   U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u", dir, _filter_len, _filter, _filter_len)
+   U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%S,%.*S,%u", dir, _filter_len, _filter, _filter_len)
 
    max               = 128 * 1024;
    depth             = -1; // starting recursion depth
    pthis             = this;
    sort_by           = 0;
-   pathlen           = (dir ? dir->size() : 0);
    filetype          = '.';
    call_if_up        = 0;
    call_internal     = 0;
    call_if_directory = brecurse = is_directory = false;
 
-   if (pathlen == 0)
-      {
-      pathlen     = 1;
-      pathname[0] = '.';
-      }
+   if (dir) (void) setDirectory(dir, _filter, _filter_len);
    else
       {
-      const char* ptr = dir->c_str();
+      pathname[0]             = '.';
+      pathname[(pathlen = 1)] = '\0';
 
-      U_INTERNAL_DUMP("dir      = %S", ptr)
-
-      ptr = u_getPathRelativ(ptr, &pathlen);
-
-      U_INTERNAL_ASSERT_MAJOR(pathlen, 0)
-
-      if (UFile::access(ptr) == false)
+      if ((filter_len = _filter_len))
          {
-         pathlen = 0;
-
-         return;
+         filter      = _filter;
+         u_pfn_flags = 0;
+         u_pfn_match = u_dosmatch_with_OR;
          }
+      }
+}
 
-      U__MEMCPY(pathname, ptr, pathlen);
+bool UDirWalk::setDirectory(const char* dir, const char* _filter, uint32_t _filter_len)
+{
+   U_TRACE(0, "UDirWalk::setDirectory(%S,%.*S,%u", dir, _filter_len, _filter, _filter_len)
+
+   pthis->pathlen = u__strlen(dir);
+
+   dir = u_getPathRelativ(dir, &(pthis->pathlen));
+
+   U_INTERNAL_ASSERT_MAJOR(pthis->pathlen, 0)
+
+   if (UFile::access(dir) == false)
+      {
+      pthis->pathlen = 0;
+
+      U_RETURN(false);
       }
 
-   pathname[pathlen] = '\0';
+   U__MEMCPY(pthis->pathname, dir, pthis->pathlen);
 
-   if ((filter_len = _filter_len))
+   pthis->pathname[pthis->pathlen] = '\0';
+
+   if (_filter_len)
       {
-      filter      = _filter;
+      filter     = _filter;
+      filter_len = _filter_len;
+
       u_pfn_flags = 0;
       u_pfn_match = u_dosmatch_with_OR;
       }
+
+   U_RETURN(true);
 }
 
 U_NO_EXPORT void UDirWalk::prepareForCallingRecurse(char* d_name, uint32_t d_namlen, unsigned char d_type)
 {
    U_TRACE(0, "UDirWalk::prepareForCallingRecurse(%.*S,%u,%d)", d_namlen, d_name, d_namlen, d_type)
+
+   U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
    if (d_type == DT_REG ||
        d_type == DT_DIR ||
@@ -148,6 +162,8 @@ end:
 void UDirWalk::recurse()
 {
    U_TRACE(1+256, "UDirWalk::recurse()")
+
+   U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
    DIR* dirp;
 
@@ -323,11 +339,15 @@ void UDirWalk::walk()
    U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
    U_INTERNAL_DUMP("pathname = %S", pathname)
 
-   if (pathlen == 1)
-      {
-      U_INTERNAL_ASSERT_EQUALS(pathname[0], '.')
+   U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
+   if (pathlen     == 1 &&
+       pathname[0] == '.')
+      {
       recurse();
+
+      pathname[0]             = '.';
+      pathname[(pathlen = 1)] = '\0';
       }
    else
       {
@@ -339,11 +359,23 @@ void UDirWalk::walk()
 
       if (UFile::chdir(pathname, false))
          {
+         char pathname_save[U_PATH_MAX];
+         uint32_t pathlen_save = pathlen;
+
+         (void) u__strcpy(pathname_save, pathname);
+
          recurse();
 
          (void) UFile::chdir(cwd_save, false);
+
+         pathlen = pathlen_save;
+
+         (void) u__strcpy(pathname, pathname_save);
          }
       }
+
+   U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
+   U_INTERNAL_DUMP("pathname = %S", pathname)
 }
 
 U_NO_EXPORT void UDirWalk::vectorPush()
@@ -375,6 +407,8 @@ U_NO_EXPORT void UDirWalk::vectorPush()
 uint32_t UDirWalk::walk(UVector<UString>& vec)
 {
    U_TRACE(0, "UDirWalk::walk(%p)", &vec)
+
+   U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
    pvector = &vec;
 
@@ -418,6 +452,8 @@ U_NO_EXPORT void UDirWalk::treeUp()
 uint32_t UDirWalk::walk(UTree<UString>& tree)
 {
    U_TRACE(0, "UDirWalk::walk(%p)", &tree)
+
+   U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
    ptree     = &tree;
    tree_root = true;

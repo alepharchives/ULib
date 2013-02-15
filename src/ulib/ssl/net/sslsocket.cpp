@@ -25,7 +25,8 @@
 #define SSL_ERROR_WANT_ACCEPT SSL_ERROR_WANT_READ
 #endif
 
-int USSLSocket::session_cache_index;
+int         USSLSocket::session_cache_index;
+const char* USSLSocket::protocol_version;
 
 /* The OpenSSL ssl library implements the Secure Sockets Layer (SSL v2/v3) and Transport Layer Security (TLS v1) protocols.
  * It provides a rich API. At first the library must be initialized; see SSL_library_init(3). Then an SSL_CTX object is created
@@ -104,33 +105,98 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool server, long options)
 {
    U_TRACE(0, "USSLSocket::getContext(%p,%b,%ld)", method, server, options)
 
-   if (method == 0)
+   if (method)
+      {
+      if (server)
+         {
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+         if (method == (SSL_METHOD*)TLSv1_2_server_method()) protocol_version = "TLS 1.2";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
+         if (method == (SSL_METHOD*)TLSv1_1_server_method()) protocol_version = "TLS 1.1";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_VERSION)
+         if (method == (SSL_METHOD*)TLSv1_server_method())   protocol_version = "TLS 1.0";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_SSL3)
+         if (method == (SSL_METHOD*)SSLv23_server_method())  protocol_version = "SSL 2.0/3.0";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_SSL2)
+         if (method == (SSL_METHOD*)SSLv2_server_method())   protocol_version = "SSL 2.0";
+#     endif
+         {};
+         }
+      else
+         {
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
+         if (method == (SSL_METHOD*)TLSv1_2_client_method()) protocol_version = "TLS 1.2";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
+         if (method == (SSL_METHOD*)TLSv1_1_client_method()) protocol_version = "TLS 1.2";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_TLS1) && defined(TLS1_VERSION)
+         if (method == (SSL_METHOD*)TLSv1_client_method())   protocol_version = "TLS 1.0";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_SSL3)
+         if (method == (SSL_METHOD*)SSLv23_client_method())  protocol_version = "SSL 2.0/3.0";
+         else
+#     endif
+#     if !defined(OPENSSL_NO_SSL2)
+         if (method == (SSL_METHOD*)SSLv2_client_method())   protocol_version = "SSL 2.0";
+#     endif
+         {};
+         }
+      }
+   else
       {
       if (server)
          {
 #       if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
-         method = (SSL_METHOD*)TLSv1_2_server_method();
+         method           = (SSL_METHOD*)TLSv1_2_server_method();
+         protocol_version = "TLS 1.2";
 #     elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
-         method = (SSL_METHOD*)TLSv1_1_server_method();
+         method           = (SSL_METHOD*)TLSv1_1_server_method();
+         protocol_version = "TLS 1.1";
+#     elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_VERSION)
+         method           = (SSL_METHOD*)TLSv1_server_method();
+         protocol_version = "TLS 1.0";
 #     elif !defined(OPENSSL_NO_SSL3)
-         method = (SSL_METHOD*)SSLv23_server_method();
+         method           = (SSL_METHOD*)SSLv23_server_method();
+         protocol_version = "SSL 2.0/3.0";
 #     elif !defined(OPENSSL_NO_SSL2)
-         method = (SSL_METHOD*)SSLv2_server_method();
+         method           = (SSL_METHOD*)SSLv2_server_method();
+         protocol_version = "SSL 2.0";
 #     endif
          }
       else
          {
 #       if !defined(OPENSSL_NO_TLS1) && defined(TLS1_2_VERSION)
-         method = (SSL_METHOD*)TLSv1_2_client_method();
+         method           = (SSL_METHOD*)TLSv1_2_client_method();
+         protocol_version = "TLS 1.2";
 #     elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_1_VERSION)
-         method = (SSL_METHOD*)TLSv1_1_client_method();
+         method           = (SSL_METHOD*)TLSv1_1_client_method();
+         protocol_version = "TLS 1.2";
+#     elif !defined(OPENSSL_NO_TLS1) && defined(TLS1_VERSION)
+         method           = (SSL_METHOD*)TLSv1_client_method();
+         protocol_version = "TLS 1.0";
 #     elif !defined(OPENSSL_NO_SSL3)
-         method = (SSL_METHOD*)SSLv3_client_method();
+         method           = (SSL_METHOD*)SSLv23_client_method();
+         protocol_version = "SSL 2.0/3.0";
 #     elif !defined(OPENSSL_NO_SSL2)
-         method = (SSL_METHOD*)SSLv2_client_method();
+         method           = (SSL_METHOD*)SSLv2_client_method();
+         protocol_version = "SSL 2.0";
 #     endif
          }
       }
+
+   U_INTERNAL_DUMP("protocol_version = %S", protocol_version)
 
    SSL_CTX* ctx = (SSL_CTX*) U_SYSCALL(SSL_CTX_new, "%p", method);
 

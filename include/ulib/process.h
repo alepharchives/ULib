@@ -63,16 +63,24 @@ public:
 
    bool fork();
 
-   pid_t pid() const   { return _pid; }
-
-   bool child() const  { return (_pid == 0); }
+   bool  child() const { return (_pid == 0); }
    bool parent() const { return (_pid >  0); }
+
+   pid_t  pid() const  { return  _pid; }
+   pid_t ppid() const
+      {
+      U_TRACE(0, "UProcess::ppid()")
+
+      pid_t _ppid = U_SYSCALL_NO_PARAM(getppid);
+
+      U_RETURN(_ppid);
+      }
 
    // WAIT
 
    void wait()
       {
-      U_TRACE(1, "UProcess::wait()")
+      U_TRACE(0, "UProcess::wait()")
 
       U_CHECK_MEMORY
 

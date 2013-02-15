@@ -219,6 +219,11 @@ case "$target_os" in
 	kernel=`uname -r`
 
 	case "${kernel}" in
+		4.*)
+		AC_MSG_RESULT([4 family (${kernel})])
+#		AC_DEFINE([KERNEL_4], 1, [Define to 1 if you're using Linux 4.x])
+		;;
+
 		3.*)
 		AC_MSG_RESULT([3 family (${kernel})])
 #		AC_DEFINE([KERNEL_3], 1, [Define to 1 if you're using Linux 3.x])
@@ -236,7 +241,7 @@ case "$target_os" in
 
 		*)
 		AC_MSG_RESULT([unsupported (${kernel})])
-		AC_MSG_ERROR([ULib works on kernels 2.4, 2.6])
+		AC_MSG_ERROR([ULib works on kernels 2.4,2.6,3])
 		;;
 	esac
 
@@ -1041,7 +1046,7 @@ if test "${ac_cv_c_compiler_gnu}" = "yes"; then
 		AC_MSG_CHECKING([which gcc flags were supported])
 	])
 
-	# NB: "-g -O2" e' gia' inserito in configure...
+	# NB: "-g -O2" it is already present in configure script...
 	CPPFLAGS="${CPPFLAGS} -pipe -D_GNU_SOURCE"
 
 	CFLAGS="${CFLAGS} $ulib_cv_CC_flags"

@@ -617,7 +617,7 @@ public:
       (void) U_SYSCALL(munmap, "%p,%u", _map, length);
       }
 
-   static void msync(char* ptr, char* page, int flags = MS_SYNC); // flushes changes made to memory mapped file back to disk
+   static void msync(char* ptr, char* page, int flags = MS_ASYNC | MS_INVALIDATE); // flushes changes made to memory mapped file back to disk
 
    // mremap() expands (or shrinks) an existing memory mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
@@ -725,9 +725,16 @@ public:
    static int getSysParam(const char* name);
    static int setSysParam(const char* name, int value, bool force = false);
 
-          bool write(                        const UString& data, bool append = false, bool bmkdirs = false);
-   static bool writeTo(const UString& path,  const UString& data, bool append = false, bool bmkdirs = false);
-   static bool writeToTmpl(const char* tmpl, const UString& data, bool append = false, bool bmkdirs = false);
+   bool write(const char* data, uint32_t sz, bool append,         bool bmkdirs);
+   bool write(const UString& data,           bool append = false, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), append, bmkdirs); }
+
+   static bool writeTo(const UString& path,  const char* data, uint32_t sz, bool append,         bool bmkdirs);
+   static bool writeTo(const UString& path,  const UString& data,           bool append = false, bool bmkdirs = false)
+      { return writeTo(path, U_STRING_TO_PARAM(data), append, bmkdirs); }
+
+   static bool writeToTmpl(const char* tmpl, const char* data, uint32_t sz, bool append,         bool bmkdirs);
+   static bool writeToTmpl(const char* tmpl, const UString& data,           bool append = false, bool bmkdirs = false)
+      { return writeToTmpl(tmpl, U_STRING_TO_PARAM(data), append, bmkdirs); }
 
    // symlink creates a symbolic link named newpath which contains the string oldpath
 
@@ -769,9 +776,7 @@ public:
 
    static UString getRealPath(const char* path);
 
-   // TEMP FILES
-
-   bool mkTemp(const char* _tmpl = "lockXXXXXX"); // temporary  file for locking...
+   // TEMP OP
 
    // ----------------------------------------------------------------------------------------------------------------------
    // create a unique temporary file
@@ -780,16 +785,16 @@ public:
    // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
    // ----------------------------------------------------------------------------------------------------------------------
 
-   static int mkstemp(char* _template);
+   bool mkTemp(char* _template);
 
-   // ----------------------------------------------------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------------------------------------
    // mkdtemp - create a unique temporary directory
-   // ------------------------------------------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------------------------------------
    // The mkdtemp() function generates a uniquely-named temporary directory from template. The last six characters
    // of template must be XXXXXX and these are replaced with a string that makes the directory name unique.
-   // The directory is then created with permissions 0700. Since it will be modified, template must not be a string
-   // constant, but should be declared as a character array.
-   // ------------------------------------------------------------------------------------------------------------
+   // The directory is then created with permissions 0700.
+   // Since it will be modified, template must not be a string constant, but should be declared as a character array
+   // --------------------------------------------------------------------------------------------------------------
 
    static bool mkdtemp(UString& _template);
 

@@ -72,6 +72,7 @@ UString*                   UNoCatPlugIn::allowed_members;
 UCommand*                  UNoCatPlugIn::fw;
 UCommand*                  UNoCatPlugIn::uclient;
 UCommand*                  UNoCatPlugIn::uploader;
+UDirWalk*                  UNoCatPlugIn::dirwalk;
 UIptAccount*               UNoCatPlugIn::ipt;
 const UString*             UNoCatPlugIn::label_to_match;
 UVector<Url*>*             UNoCatPlugIn::vauth_url;
@@ -461,6 +462,8 @@ UNoCatPlugIn::~UNoCatPlugIn()
       UMemoryPool::_free(sockp, num_radio, sizeof(UPing*));
       UMemoryPool::_free(vaddr, num_radio, sizeof(UVector<UIPAddress*>*));
       }
+
+   if (dirwalk) delete dirwalk;
 }
 
 // status
@@ -878,10 +881,9 @@ void UNoCatPlugIn::checkSystem(bool blog)
    UFile file;
    const char* ptr;
    UVector<UString> vec(64);
-   UString log_file, log_file_basename, log_file_name(U_CAPACITY), log_file_renamed(U_CAPACITY), dir(ULog::dir_log_gz);
-   UDirWalk dirwalk(&dir, U_CONSTANT_TO_PARAM("*.gz"));
+   UString log_file, log_file_basename, log_file_name(U_CAPACITY), log_file_renamed(U_CAPACITY);
 
-   for (i = 0, n = dirwalk.walk(vec); i < n; ++i)
+   for (i = 0, n = dirwalk->walk(vec); i < n; ++i)
       {
       log_file = vec[i];
 
@@ -896,7 +898,8 @@ void UNoCatPlugIn::checkSystem(bool blog)
          {
          log_file_name.snprintf("%.*s_%.*s", U_STRING_TO_TRACE(*hostname), U_STRING_TO_TRACE(log_file_basename));
 
-         log_file_renamed.snprintf("%s/%.*s", ULog::dir_log_gz, U_STRING_TO_TRACE(log_file_name));
+         if (ULog::dir_log_gz == 0) log_file_renamed.snprintf(   "%.*s",                   U_STRING_TO_TRACE(log_file_name));
+         else                       log_file_renamed.snprintf("%s/%.*s", ULog::dir_log_gz, U_STRING_TO_TRACE(log_file_name));
 
          (void) file._rename((ptr = log_file_renamed.data()));
          }
@@ -1044,6 +1047,8 @@ retry:
       }
 
    UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);
+
+   errno = 0;
 
    last_request_firewall = u_now->tv_sec;
 }
@@ -2284,6 +2289,10 @@ int UNoCatPlugIn::handlerFork()
          }
       }
 
+   U_INTERNAL_ASSERT_EQUALS(dirwalk, 0)
+
+   dirwalk = U_NEW(UDirWalk(ULog::dir_log_gz, U_CONSTANT_TO_PARAM("*.gz")));
+
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 }
 
@@ -2665,8 +2674,6 @@ const char* UModNoCatPeer::dump(bool _reset) const
 
 const char* UNoCatPlugIn::dump(bool _reset) const
 {
-   U_CHECK_MEMORY
-
    *UObjectIO::os << "nfds                                           " << nfds                        <<  '\n'
                   << "vaddr                                          " << (void*)vaddr                <<  '\n' 
                   << "sockp                                          " << (void*)sockp                <<  '\n'

@@ -169,7 +169,7 @@ public:
 
       U_CHECK_MEMORY
 
-      long result = tv_sec + (tv_usec >= 500000L ? 1 : 0);
+      long result = tv_sec + (tv_usec >= 500000L ? 1L : 0L);
 
       U_RETURN(result);
       }
@@ -298,7 +298,7 @@ public:
       U_INTERNAL_ASSERT_RANGE(0L, tv_usec, U_SECOND)
 
       t->tv_sec  = tv_sec;
-      t->tv_nsec = tv_usec * 1000;
+      t->tv_nsec = tv_usec * 1000L;
       }
 
    bool operator>(struct timespec* t) const
@@ -310,7 +310,7 @@ public:
       U_INTERNAL_ASSERT_RANGE(0L, tv_usec, U_SECOND)
 
       bool result = (tv_sec >  t->tv_sec ||
-                    (tv_sec == t->tv_sec && ((tv_usec * 1000) > t->tv_nsec)));
+                    (tv_sec == t->tv_sec && ((tv_usec * 1000L) > t->tv_nsec)));
 
       U_RETURN(result);
       }

@@ -16,10 +16,14 @@
 
 #include <ulib/internal/common.h>
 
+#ifdef SocketInit
+#undef SocketInit
+#endif
+
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Socket        USSLSocket
-#  define SocketInit(b) USSLSocket(b,0,false)
+#  define SocketInit(b) USSLSocket(b,USSLSocket::getContext((SSL_METHOD*)SSLv23_client_method(),false,0),false)
 #else
 #  include <ulib/net/tcpsocket.h>
 #  define Socket        UTCPSocket

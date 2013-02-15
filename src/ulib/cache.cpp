@@ -95,8 +95,8 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
       {
       UDirWalk dirwalk;
       bool exist = true;
-      uint32_t i, n, size = 0, hsize;
       UVector<UString> vec1(256), vec2;
+      uint32_t i, n, size = 0, hsize = 0;
 
       if (( _x.size() == 0                          ||
            (_x.fstat(), _x.st_mtime < _y.st_mtime)) &&
@@ -365,7 +365,7 @@ void UCache::loadContentOf(const UString& dir, const char* filter, uint32_t filt
 
    UString item, content;
    UVector<UString> vec(128);
-   UDirWalk dirwalk(&dir, filter, filter_len);
+   UDirWalk dirwalk(dir.c_str(), filter, filter_len);
 
    for (uint32_t i = 0, n = dirwalk.walk(vec); i < n; ++i)
       {

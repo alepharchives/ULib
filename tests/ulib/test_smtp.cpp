@@ -21,7 +21,7 @@ U_EXPORT main (int argc, char* argv[])
       bool secure = false;
 #  endif
 
-      smtp.setSenderAddress(U_STRING_FROM_CONSTANT("< stefano@unirel.it >"));
+      smtp.setSenderAddress(U_STRING_FROM_CONSTANT("< stefano.casazza@unirel.com >"));
       smtp.setRecipientAddress(rcpt);
 
       cout << (smtp.sendMessage(secure) ? "mail     send"

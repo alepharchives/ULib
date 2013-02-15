@@ -50,7 +50,7 @@ public:
 
    // Costruttori
 
-            UDirWalk(const UString* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
+            UDirWalk(const char* dir = 0, const char* filter = 0, uint32_t filter_len = 0);
    virtual ~UDirWalk()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UDirWalk)
@@ -106,6 +106,8 @@ public:
       path.replace(pthis->pathname+2, pthis->pathlen-2);
       }
 
+   static bool setDirectory(const char* dir, const char* filter = 0, uint32_t filter_len = 0);
+
    // DEBUG
 
 #ifdef DEBUG
@@ -135,6 +137,8 @@ protected:
    virtual void foundFile()
       {
       U_TRACE(0, "UDirWalk::foundFile()")
+
+      U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
       if (call_internal) call_internal();
       }

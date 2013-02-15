@@ -16,6 +16,10 @@
 
 #include <ulib/container/vector.h>
 
+#ifdef SocketInit
+#undef SocketInit
+#endif
+
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
 #  define Socket        USSLSocket

@@ -89,7 +89,7 @@ void UFile::setPathRelativ(const UString* environment)
    path_relativ_len = pathname.size();
    path_relativ     = u_getPathRelativ(pathname.c_str(), &path_relativ_len);
 
-   U_INTERNAL_ASSERT_MAJOR(path_relativ_len,0)
+   U_INTERNAL_ASSERT_MAJOR(path_relativ_len, 0)
 
    // we don't need this... (I think)
 
@@ -389,7 +389,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
 #ifndef __MINGW32__
 #  ifndef HAVE_ARCH64
-      U_INTERNAL_ASSERT_RANGE(1U, *plength, 3U * 1024U * 1024U  *1024U) // limit of linux system on 32bit
+   U_INTERNAL_ASSERT_RANGE(1U, *plength, 3U * 1024U * 1024U * 1024U) // limit of linux system on 32bit
 #  endif
    if (_fd != -1)
 #endif
@@ -403,18 +403,24 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    char* _ptr;
 
-   if (*plength >= (256U * 1024U * 1024U))
+   if (*plength >= (256U * 1024U * 1024U)) // NB: to save some swap pressure...
       {
-      // NB: to save some swap pressure...
-
       UFile tmp;
+      char _template[32];
 
-      _ptr = (char*)MAP_FAILED;
+      // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
+      // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
 
-      if (tmp.mkTemp() &&
+      (void) strcpy(_template, "/var/tmp/mapXXXXXX");
+
+      if (tmp.mkTemp(_template) &&
           tmp.fallocate(*plength))
          {
          _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, prot, MAP_PRIVATE | MAP_NORESERVE, tmp.fd, 0);
+         }
+      else
+         {
+         _ptr = (char*)MAP_FAILED;
          }
 
       tmp.close();
@@ -424,6 +430,9 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
 
+#if !defined(HAVE_ARCH64) && !defined(ENABLE_THREAD)
+   _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
+#else
    if (pfree == 0)
       {
       nfree = (256U * 1024U * 1024U);
@@ -443,6 +452,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
       }
 
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
+#endif
 
    return _ptr;
 }
@@ -528,13 +538,18 @@ void UFile::msync(char* ptr, char* page, int flags)
 {
    U_TRACE(1, "UFile::msync(%p,%p,%d)", ptr, page, flags)
 
-   void* start = page - ((long)page % PAGESIZE);
+   U_INTERNAL_ASSERT(ptr > page)
 
-   int32_t length = (ptr - page) / PAGESIZE;
+   uint32_t resto = (long)page & U_PAGEMASK;
 
-   if (length <= 0) length = 1;
+   U_INTERNAL_DUMP("resto = %u", resto)
 
-   (void) U_SYSCALL(msync, "%p,%u,%d", (char*)start, length * PAGESIZE, flags);
+   char* addr      = page - resto;
+   uint32_t length =  ptr - addr;
+
+   U_INTERNAL_ASSERT_EQUALS((long)addr & U_PAGEMASK, 0) // addr should be a multiple of the page size as returned by getpagesize(2)
+
+   (void) U_SYSCALL(msync, "%p,%u,%d", addr, length, flags);
 }
 
 UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
@@ -631,9 +646,9 @@ UString UFile::contentOf(const char* _pathname, int flags, bool bstat, const USt
    U_RETURN_STRING(content);
 }
 
-bool UFile::write(const UString& data, bool append, bool bmkdirs)
+bool UFile::write(const char* data, uint32_t sz, bool append, bool bmkdirs)
 {
-   U_TRACE(1, "UFile::write(%.*S,%b,%b)", U_STRING_TO_TRACE(data), append, bmkdirs)
+   U_TRACE(1, "UFile::write(%.*S,%u,%b,%b)", sz, data, sz, append, bmkdirs)
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
@@ -670,36 +685,31 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
          }
       }
 
-   if (esito)
+   if (sz &&
+       esito)
       {
-      uint32_t sz     = data.size();
-      const char* ptr = data.data();
-
-      if (sz)
+      if (sz <= PAGESIZE) esito = UFile::write(fd, data, sz);
+      else
          {
-         if (sz <= PAGESIZE) esito = UFile::write(fd, ptr, sz);
-         else
+         uint32_t offset = (append ? size() : 0);
+
+         esito = fallocate(offset + sz);
+
+         if (esito == false)
             {
-            uint32_t offset = (append ? size() : 0);
+            readSize();
 
-            esito = fallocate(offset + sz);
+            U_WARNING("no more space on disk for requested size %u - acquired only %u bytes", offset + sz, st_size);
 
-            if (esito == false)
-               {
-               readSize();
+            sz = (st_size > offset ? st_size - offset : 0);
+            }
 
-               U_WARNING("no more space on disk for requested size %u - acquired only %u bytes", offset + sz, st_size);
+         if (sz &&
+             memmap(PROT_READ | PROT_WRITE, 0, offset, st_size))
+            {
+            U__MEMCPY(map + offset, data, sz);
 
-               sz = (st_size > offset ? st_size - offset : 0);
-               }
-
-            if (sz &&
-                memmap(PROT_READ | PROT_WRITE, 0, offset, st_size))
-               {
-               U__MEMCPY(map + offset, ptr, sz);
-
-               munmap();
-               }
+            munmap();
             }
          }
       }
@@ -707,32 +717,32 @@ bool UFile::write(const UString& data, bool append, bool bmkdirs)
    U_RETURN(esito);
 }
 
-bool UFile::writeTo(const UString& path, const UString& data, bool append, bool bmkdirs)
+bool UFile::writeTo(const UString& path, const char* data, uint32_t sz, bool append, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::writeTo(%.*S,%.*S,%b,%b)", U_STRING_TO_TRACE(path), U_STRING_TO_TRACE(data), append, bmkdirs)
+   U_TRACE(0, "UFile::writeTo(%.*S,%.*S,%u,%b,%b)", U_STRING_TO_TRACE(path), sz, data, sz, append, bmkdirs)
 
    UFile tmp(path);
 
-   bool result = tmp.write(data, append, bmkdirs);
+   bool result = tmp.write(data, sz, append, bmkdirs);
 
    if (tmp.isOpen()) tmp.close();
 
    U_RETURN(result);
 }
 
-bool UFile::writeToTmpl(const char* tmpl, const UString& data, bool append, bool bmkdirs)
+bool UFile::writeToTmpl(const char* tmpl, const char* data, uint32_t sz, bool append, bool bmkdirs)
 {
-   U_TRACE(0+256, "UFile::writeToTmpl(%S,%.*S,%b,%b)", tmpl, U_STRING_TO_TRACE(data), append, bmkdirs)
+   U_TRACE(0+256, "UFile::writeToTmpl(%S,%.*S,%u,%b,%b)", tmpl, sz, data, sz, append, bmkdirs)
 
    bool result = false;
 
-   if (data.empty() == false)
+   if (sz)
       {
       UString path(U_PATH_MAX);
 
       path.snprintf(tmpl, 0);
 
-      result = UFile::writeTo(path, data, append, bmkdirs);
+      result = UFile::writeTo(path, data, sz, append, bmkdirs);
       }
 
    U_RETURN(result);
@@ -1007,39 +1017,29 @@ UString UFile::getRealPath(const char* path)
 // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
 // ----------------------------------------------------------------------------------------------------------------------
 
-int UFile::mkstemp(char* _template)
+bool UFile::mkTemp(char* _template)
 {
-   U_TRACE(1, "UFile::mkstemp(%S)", _template)
+   U_TRACE(1, "UFile::mkTemp(%S)", _template)
 
-   errno = 0; // mkstemp may not set it on error
+   if (_template) setPath(_template);
+   else
+      {
+      UString path(U_PATH_MAX);
+
+      path.snprintf("%s/lockXXXXXX", u_tmpdir);
+
+      setPath(path);
+      }
+
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
    mode_t old_mode = U_SYSCALL(umask, "%d", 077);  // Create file with restrictive permissions
 
-   int _fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV(_template));
+   errno = 0; // mkstemp may not set it on error
 
-   U_INTERNAL_DUMP("_template = %S", _template)
+   fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV((char*)path_relativ));
 
    (void) U_SYSCALL(umask, "%d", old_mode);
-
-   U_RETURN(_fd);
-}
-
-// temporary file for locking...
-
-bool UFile::mkTemp(const char* name)
-{
-   U_TRACE(0, "UFile::mkTemp(%S)", name)
-
-   UString path(U_PATH_MAX);
-
-   // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
-   // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
-
-   path.snprintf("/var/tmp/%s", name);
-
-   setPath(path);
-
-   fd = UFile::mkstemp(pathname.data());
 
    bool result = (isOpen() && _unlink());
 
@@ -1058,7 +1058,7 @@ bool UFile::mkdtemp(UString& _template)
 
    if (modified)
       {
-      // NB: mkdtemp in replace use new string...
+      // NB: c_str() in replace use a new string...
 
       if (modified != _template.data()) (void) _template.assign(modified);
 
@@ -1118,8 +1118,7 @@ bool UFile::rmdir(const char* path, bool remove_all)
 #  endif
          {
          const char* file;
-         UString tmp(path);
-         UDirWalk dirwalk(&tmp);
+         UDirWalk dirwalk(path);
          UVector<UString> vec(256);
 
          for (uint32_t i = 0, n = dirwalk.walk(vec); i < n; ++i)
@@ -1128,7 +1127,7 @@ bool UFile::rmdir(const char* path, bool remove_all)
 
             file = vec[i].data();
 
-            U_ASSERT_DIFFERS(tmp,file)
+            U_ASSERT_DIFFERS(path, file)
 
             if (UFile::_unlink(file) == false &&
 #        ifdef __MINGW32__

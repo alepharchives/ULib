@@ -60,7 +60,7 @@ public:
                dir    = filename.substr(0U, pos);
                filter = filename.substr(pos + 1);
 
-               UDirWalk dirwalk(&dir, U_STRING_TO_PARAM(filter));
+               UDirWalk dirwalk(dir.c_str(), U_STRING_TO_PARAM(filter));
 
                (void) dirwalk.walk(vec);
                }

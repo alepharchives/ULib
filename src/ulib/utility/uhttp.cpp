@@ -1307,6 +1307,12 @@ void UHTTP::writeApacheLikeLog(bool bprepare)
       iov[2].iov_len = (body_len == 0 ? u__snprintf(buffer2, sizeof(buffer2), "\" %u - \"",  u_http_info.nResponseCode)
                                       : u__snprintf(buffer2, sizeof(buffer2), "\" %u %u \"", u_http_info.nResponseCode, body_len));
 
+      if (u_http_info.nResponseCode == HTTP_NO_RESPONSE)
+         {
+         iov[1].iov_base = iov[3].iov_base = iov[5].iov_base = (caddr_t) "-";
+         iov[1].iov_len  = iov[3].iov_len  = iov[5].iov_len  = 1;
+         }
+
       (void) U_SYSCALL(writev, "%d,%p,%d", fd, iov, 7);
       }
 }
@@ -1436,7 +1442,7 @@ bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
       {
       // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected"
 
-      if (u__isspace(c)) while (u__isspace((c = *++ptr)));
+      if (u__isspace(c)) while (u__isspace((c = *++ptr))) {}
 
       // DELETE
       // GET
@@ -2985,34 +2991,33 @@ int UHTTP::manageRequest()
 
    if (result == U_PLUGIN_HANDLER_ERROR)
       {
-      if (UClientImage_Base::write_off == false &&
-          UServer_Base::pClientImage->socket->isClosed())
+      if (UClientImage_Base::write_off == false)
          {
-         UClientImage_Base::write_off = true;
-         }
-      else
-         {
-         U_http_is_connection_close = U_YES;
-
-         if (UClientImage_Base::wbuffer->empty())
+         if (UServer_Base::pClientImage->socket->isClosed()) UClientImage_Base::write_off = true;
+         else
             {
-            // HTTP/1.1 compliance:
-            // -----------------------------------------------------
-            // Sends 501 for request-method != (GET|POST|HEAD)
-            // Sends 505 for protocol != HTTP/1.[0-1]
-            // Sends 400 for broken Request-Line
-            // Sends 411 for missing Content-Length on POST requests
+            U_http_is_connection_close = U_YES;
 
-                 if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
-            else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
-            else
+            if (UClientImage_Base::wbuffer->empty())
                {
-               setBadRequest();
+               // HTTP/1.1 compliance:
+               // -----------------------------------------------------
+               // Sends 501 for request-method != (GET|POST|HEAD)
+               // Sends 505 for protocol != HTTP/1.[0-1]
+               // Sends 400 for broken Request-Line
+               // Sends 411 for missing Content-Length on POST requests
 
-               U_RETURN(U_PLUGIN_HANDLER_ERROR);
+                    if (U_http_method_type == 0)                        u_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+               else if (U_http_version     == 0 && u_http_info.uri_len) u_http_info.nResponseCode = HTTP_VERSION;
+               else
+                  {
+                  setBadRequest();
+
+                  U_RETURN(U_PLUGIN_HANDLER_ERROR);
+                  }
+
+               setResponse(0, 0);
                }
-
-            setResponse(0, 0);
             }
          }
 
@@ -4069,10 +4074,9 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
    U_INTERNAL_ASSERT(file->pathname.isNullTerminated())
 
    bool is_dir;
+   uint32_t i, pos, n;
    UDirWalk dirwalk(0);
-   const char* item_ptr;
    UVector<UString> vec(2048);
-   uint32_t i, pos, n, item_len;
    UString buffer(4000U), item, size, entry(4000U), value_encoded(U_CAPACITY);
 
    int32_t len     = file->getPathRelativLen();
@@ -4092,15 +4096,15 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
    else
       {
       buffer.snprintf(
-         "<html><head><title>Index of %.*s</title></head>"
-         "<body><h1>Index of directory: %.*s</h1><hr>"
+         "<html><head><title>Index of %s</title></head>"
+         "<body><h1>Index of directory: %s</h1><hr>"
          "<table><tr>"
-         "<td><a href=\"/%.*s/..?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
+         "<td><a href=\"/%s/..?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/menu.png\"> Up one level</a></td>"
          "<td></td>"
          "<td></td>"
-         "</tr>", len, ptr, len, ptr, len, ptr);
+         "</tr>", ptr, ptr, ptr);
 
-      if (UFile::chdir(ptr, true) == false) goto end; 
+      if (dirwalk.setDirectory(ptr) == false) goto end;
       }
 
    n = dirwalk.walk(vec);
@@ -4111,16 +4115,8 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 
    for (i = 0; i < n; ++i)
       {
-      item     = vec[i];
-      item_len = item.size();
-      item_ptr = item.data();
-
-      pathname->setBuffer(len + 1 + item_len);
-
-      if (broot) pathname->snprintf(     "%.*s",           item_len, item_ptr);
-      else       pathname->snprintf("%.*s/%.*s", len, ptr, item_len, item_ptr);
-
-      file_data = (*cache_file)[*pathname];
+      item      = vec[i];
+      file_data = (*cache_file)[item];
 
       if (file_data == 0) continue; // NB: this can happen (servlet for example...)
 
@@ -4130,34 +4126,17 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 
       size = UStringExt::numberToString(file_data->size, true);
 
-      if (broot)
-         {
-         entry.snprintf(
-            "<tr>"
-               "<td><strong>"
-                  "<a href=\"/%.*s?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a>"
-               "</strong></td>"
-               "<td align=\"right\" valign=\"bottom\">%.*s</td>"
-               "<td align=\"right\" valign=\"bottom\">%#3D</td>"
-            "</tr>",
-            U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), item_len, item_ptr,
-            U_STRING_TO_TRACE(size),
-            file_data->mtime);
-         }
-      else
-         {
-         entry.snprintf(
-            "<tr>"
-               "<td><strong>"
-                  "<a href=\"/%.*s/%.*s?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a>"
-               "</strong></td>"
-               "<td align=\"right\" valign=\"bottom\">%.*s</td>"
-               "<td align=\"right\" valign=\"bottom\">%#3D</td>"
-            "</tr>",
-            len, ptr, U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), item_len, item_ptr,
-            U_STRING_TO_TRACE(size),
-            file_data->mtime);
-         }
+      entry.snprintf(
+         "<tr>"
+            "<td><strong>"
+               "<a href=\"/%.*s?_nav_\"><img width=\"20\" height=\"21\" align=\"absbottom\" border=\"0\" src=\"/icons/%s\"> %.*s</a>"
+            "</strong></td>"
+            "<td align=\"right\" valign=\"bottom\">%.*s</td>"
+            "<td align=\"right\" valign=\"bottom\">%#3D</td>"
+         "</tr>",
+         U_STRING_TO_TRACE(value_encoded), (is_dir ? "menu.png" : "gopher-unknown.gif"), U_STRING_TO_TRACE(item),
+         U_STRING_TO_TRACE(size),
+         file_data->mtime);
 
       if (is_dir)
          {
@@ -4170,8 +4149,6 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
          (void) buffer.append(entry);
          }
       }
-
-   if (len) (void) UFile::chdir(0, true);
 
 end:
    (void) buffer.append(U_CONSTANT_TO_PARAM("</table><hr><address>ULib Server</address></body></html>"));
@@ -4493,6 +4470,8 @@ void UHTTP::setNoResponse()
 
    UClientImage_Base::body->clear();
    UClientImage_Base::wbuffer->clear();
+
+   if (apache_like_log) writeApacheLikeLog(false);
 }
 
 void UHTTP::setResponse(const UString* content_type, const UString* body)
@@ -7927,9 +7906,7 @@ void UHTTP::processGetRequest()
       {
       // we have a directory...
 
-      if (U_http_is_navigation  ||
-          u_http_info.query_len ||
-          u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0)) // NB: servlet is forbidden...
+      if (u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0)) // NB: servlet is forbidden...
          {
          setForbidden(); // set forbidden error response...
 
@@ -7938,47 +7915,53 @@ void UHTTP::processGetRequest()
 
       // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
 
-      uint32_t sz      = file->getPathRelativLen(), len = str_indexhtml->size();
-      const char* ptr  = file->getPathRelativ();
-      const char* ptr1 = str_indexhtml->data();
+      U_INTERNAL_DUMP("U_http_is_navigation = %b", U_http_is_navigation)
 
-      U_INTERNAL_ASSERT_MAJOR(sz,0)
-
-      pathname->setBuffer(sz + 1 + len);
-
-      bool broot = (sz == 1 && ptr[0] == '/');
-
-      if (broot) pathname->snprintf(     "%.*s",          len, ptr1);
-      else       pathname->snprintf("%.*s/%.*s", sz, ptr, len, ptr1);
-
-      file_data = (*cache_file)[*pathname];
-
-      if (file_data)
+      if (u_http_info.query_len == 0 &&
+          U_http_is_navigation  == false)
          {
-         // NB: we have an index file (index.html) in the directory...
+         uint32_t sz      = file->getPathRelativLen(), len = str_indexhtml->size();
+         const char* ptr  = file->getPathRelativ();
+         const char* ptr1 = str_indexhtml->data();
 
-         if (isDataFromCache()) // NB: check if we have the content of the index file in cache...
+         U_INTERNAL_ASSERT_MAJOR(sz,0)
+
+         pathname->setBuffer(sz + 1 + len);
+
+         bool broot = (sz == 1 && ptr[0] == '/');
+
+         if (broot) pathname->snprintf(     "%.*s",          len, ptr1);
+         else       pathname->snprintf("%.*s/%.*s", sz, ptr, len, ptr1);
+
+         file_data = (*cache_file)[*pathname];
+
+         if (file_data)
             {
-            u_http_info.nResponseCode = HTTP_OK;
+            // NB: we have an index file (index.html) in the directory...
 
-            bool gzip = (U_http_is_accept_gzip &&
-                         isDataCompressFromCache());
+            if (isDataFromCache()) // NB: check if we have the content of the index file in cache...
+               {
+               u_http_info.nResponseCode = HTTP_OK;
 
-            if (gzip) U_http_is_accept_gzip = '2';
+               bool gzip = (U_http_is_accept_gzip &&
+                            isDataCompressFromCache());
 
-            if (isHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, gzip);
-                                       *UClientImage_Base::wbuffer = getHeaderForResponse(getDataFromCache(true, gzip), false);
+               if (gzip) U_http_is_accept_gzip = '2';
 
-            goto end;
+               if (isHEAD() == false) *UClientImage_Base::body    = getDataFromCache(false, gzip);
+                                      *UClientImage_Base::wbuffer = getHeaderForResponse(getDataFromCache(true, gzip), false);
+
+               goto end;
+               }
+
+            file->setPath(*pathname);
+
+            file->st_size  = file_data->size;
+            file->st_mode  = file_data->mode;
+            file->st_mtime = file_data->mtime;
+
+            goto check_file;
             }
-
-         file->setPath(*pathname);
-
-         file->st_size  = file_data->size;
-         file->st_mode  = file_data->mode;
-         file->st_mtime = file_data->mtime;
-
-         goto check_file;
          }
 
       // now we check the directory...
@@ -7993,6 +7976,8 @@ void UHTTP::processGetRequest()
 
             return;
             }
+
+         uint32_t sz;
 
          if (isHEAD()) sz = getHTMLDirectoryList().size();
          else

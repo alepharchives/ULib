@@ -25,29 +25,24 @@
 #endif
 
 #ifdef USE_LIBZ // check for crc32
+#  include <ulib/base/coder/gzio.h>
 #  include <ulib/utility/interrupt.h>
 #  include <ulib/utility/string_ext.h>
 #  include <zlib.h>
-void*           ULog::pthread;
-uint32_t        ULog::path_compress;
-UString*        ULog::data_to_write;
-UString*        ULog::buffer_path_compress;
+uint32_t ULog::path_compress;
+UString* ULog::buffer_path_compress;
 #endif
 
-vPF             ULog::log_rotate_function;
 bool            ULog::bsyslog;
 bool            ULog::log_data_must_be_unmapped;
 ULog*           ULog::pthis;
 char*           ULog::LOG_FILE_SZ;
 ULock*          ULog::lock;
-uint32_t        ULog::map_size;
+uint32_t        ULog::LOG_gzip_sz;
 const char*     ULog::fmt = "*** %s %N (%ubit, pid %P) [%U@%H] ***\n";
 const char*     ULog::prefix;
 const char*     ULog::dir_log_gz;
 ULog::log_data* ULog::ptr_log_data;
-
-#define LOG_ptr  ptr_log_data->file_ptr
-#define LOG_page ptr_log_data->file_page
 
 ULog::~ULog()
 {
@@ -60,13 +55,7 @@ ULog::~ULog()
    if (lock) delete lock;
 
 #ifdef USE_LIBZ
-   if (data_to_write)
-      {
-      U_ASSERT(data_to_write->empty())
-
-      delete data_to_write;
-      delete buffer_path_compress;
-      }
+   if (buffer_path_compress) delete buffer_path_compress;
 #endif
 }
 
@@ -131,6 +120,8 @@ bool ULog::open(uint32_t _size, mode_t mode)
 
       pthis        = this;
       ptr_log_data = U_MALLOC_TYPE(log_data);
+      LOG_gzip_sz  = sizeof(log_data);
+      LOG_gzip_len = 0;
 
       LOG_ptr = LOG_page = (_size ? (UFile::map + file_size)      : 0); // append mode...
              LOG_FILE_SZ = (_size ? (UFile::map + UFile::st_size) : 0);
@@ -145,7 +136,6 @@ bool ULog::open(uint32_t _size, mode_t mode)
       char suffix[32];
       uint32_t len_suffix = u__snprintf(suffix, sizeof(suffix), ".%4D.gz");
 
-      data_to_write        = U_NEW(UString);
       buffer_path_compress = U_NEW(UString(MAX_FILENAME_LEN));
 
       char* ptr = buffer_path_compress->data();
@@ -158,7 +148,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
 
          buffer_path_compress->size_adjust();
 
-         path_compress = (buffer_path_compress->size() - len_suffix - 1);
+         path_compress = (buffer_path_compress->size() - len_suffix + 1);
          }
       else
          {
@@ -184,9 +174,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
       U_INTERNAL_DUMP("buffer_path_compress(%u) = %.*S path_compress = %u",
                        buffer_path_compress->size(), U_STRING_TO_TRACE(*buffer_path_compress), path_compress)
 
-      log_rotate_function = ULog::logRotate;
-
-      UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::handlerSIGUSR1);
+      UInterrupt::setHandlerForSignal(SIGUSR1, (sighandler_t)ULog::logRotate);
 #  endif
 
       if (fmt) startup();
@@ -200,9 +188,9 @@ end:
    U_RETURN(false);
 }
 
-void ULog::setShared(log_data* ptr)
+void ULog::setShared(log_data* ptr, uint32_t size)
 {
-   U_TRACE(0, "ULog::setShared(%p)", ptr)
+   U_TRACE(0, "ULog::setShared(%p,%u)", ptr, size)
 
    if (LOG_FILE_SZ &&
        bsyslog == false)
@@ -210,11 +198,10 @@ void ULog::setShared(log_data* ptr)
       U_INTERNAL_ASSERT_POINTER(lock)
       U_INTERNAL_ASSERT_POINTER(ptr_log_data)
 
-      if (ptr == 0)
+      if (ptr) LOG_gzip_sz = size;
+      else
          {
-         map_size = sizeof(log_data);
-
-         ptr = (log_data*) UFile::mmap(&map_size);
+         ptr = (log_data*) UFile::mmap(&LOG_gzip_sz);
 
          U_INTERNAL_ASSERT_DIFFERS(ptr, MAP_FAILED)
 
@@ -240,8 +227,9 @@ void ULog::msync()
       {
       U_INTERNAL_ASSERT_POINTER(ptr_log_data)
 
-      UFile::msync(LOG_ptr, LOG_page);
-                            LOG_page = LOG_ptr;
+      UFile::msync(LOG_ptr, LOG_page, MS_SYNC);
+
+      LOG_page = LOG_ptr;
       }
 }
 
@@ -263,15 +251,17 @@ void ULog::write(const struct iovec* iov, int n)
    if (LOG_FILE_SZ == 0) (void) pthis->UFile::writev(iov, n);
    else
       {
-      lock->lock();
+      U_INTERNAL_DUMP("LOG_ptr = %p %.*S", LOG_ptr, 40, LOG_ptr)
 
-      U_INTERNAL_DUMP("LOG_ptr = %p", LOG_ptr)
+      lock->lock();
 
       for (int i = 0; i < n; ++i)
          {
          if ((LOG_ptr + iov[i].iov_len) > LOG_FILE_SZ)
             {
-            if (log_rotate_function) log_rotate_function();
+#        ifdef USE_LIBZ
+            logRotate(0);
+#        endif
 
             LOG_ptr = LOG_page = pthis->UFile::map;
             }
@@ -282,7 +272,7 @@ void ULog::write(const struct iovec* iov, int n)
          U_INTERNAL_DUMP("memcpy() -> %.*S", iov[i].iov_len, LOG_ptr - iov[i].iov_len)
          }
 
-      U_INTERNAL_DUMP("LOG_ptr = %p", LOG_ptr)
+      U_INTERNAL_DUMP("LOG_ptr = %p %.*S", LOG_ptr, 40, LOG_ptr)
 
       lock->unlock();
       }
@@ -423,6 +413,12 @@ void ULog::close()
 
             ULog::msync();
 
+            // check for previous data to write
+
+            if (LOG_gzip_len) ULog::logRotateWrite(0);
+
+            U_INTERNAL_ASSERT_EQUALS(LOG_gzip_len, 0)
+            
                    pthis->UFile::munmap();
             (void) pthis->UFile::ftruncate(size);
                    pthis->UFile::fsync();
@@ -438,58 +434,88 @@ void ULog::close()
             {
             U_ASSERT(lock->isShared())
 
-            UFile::munmap(ptr_log_data, map_size);
+            UFile::munmap(ptr_log_data, LOG_gzip_sz);
             }
-
-         if (data_to_write->empty() == false) ULog::logRotateWrite();
          }
       }
 }
 
-#ifdef USE_LIBZ
-void ULog::logRotateWrite()
+void ULog::setAsChild()
 {
-   U_TRACE(0, "ULog::logRotateWrite()")
+   U_TRACE(0, "ULog::setAsChild()")
 
-   (void) u__snprintf(buffer_path_compress->c_pointer(path_compress), 17, "%4D");
-
-   U_ASSERT_EQUALS(UFile::access(buffer_path_compress->data(), R_OK | W_OK), false)
-
-   (void) UFile::writeTo(*buffer_path_compress, *data_to_write);
-
-   data_to_write->clear();
+   u_unatexit(&ULog::close); // NB: we need this because all instance try to close the log... (inherits from its parent)
 }
 
-void ULog::logRotate()
+#ifdef USE_LIBZ
+void ULog::logRotateWrite(uint32_t sz)
 {
-   U_TRACE(0, "ULog::logRotate()")
+   U_TRACE(0, "ULog::logRotateWrite(%u)", sz)
+
+   U_INTERNAL_DUMP("UFile::st_size = %u LOG_gzip_sz = %u", pthis->UFile::st_size, LOG_gzip_sz)
+
+   U_INTERNAL_ASSERT(sz <= pthis->UFile::st_size)
+
+   if (LOG_gzip_len)
+      {
+      // there are previous data to write
+
+      (void) u__snprintf(buffer_path_compress->c_pointer(path_compress), 17, "%4D");
+
+      U_ASSERT_EQUALS(UFile::access(buffer_path_compress->data(), R_OK | W_OK), false)
+
+      (void) UFile::writeTo(*buffer_path_compress, LOG_gzip_ptr, LOG_gzip_len, false, false);
+
+      LOG_gzip_len = 0;
+      }
+
+   if (sz)
+      {
+      if (sz <= LOG_gzip_sz) // NB: the shared area to compress log data may be not available at this time... (Ex: startup plugin u_server)
+         {
+         LOG_gzip_len = u_gz_deflate(pthis->UFile::map, sz, LOG_gzip_ptr, true);
+
+         U_INTERNAL_DUMP("u_gz_deflate(%u) = %u", sz, LOG_gzip_len)
+         }
+      else
+         {
+         UString data_to_write = UStringExt::deflate(pthis->UFile::map, sz, true);
+
+         (void) u__snprintf(buffer_path_compress->c_pointer(path_compress), 17, "%4D");
+
+         U_ASSERT_EQUALS(UFile::access(buffer_path_compress->data(), R_OK | W_OK), false)
+
+         (void) UFile::writeTo(*buffer_path_compress, data_to_write, false, false);
+         }
+      }
+}
+
+RETSIGTYPE ULog::logRotate(int signo) // manage also signal SIGUSR1
+{
+   U_TRACE(0, "ULog::logRotate(%d)", signo)
 
    U_INTERNAL_DUMP("pthis = %p bsyslog = %b", pthis, bsyslog)
 
    if (pthis &&
        bsyslog == false)
       {
-      uint32_t size;
+      uint32_t sz;
       bool locked = lock->isLocked();
 
       if (LOG_FILE_SZ)
          {
          if (locked == false) lock->lock();
 
-         size = LOG_ptr - pthis->UFile::map;
+         sz = LOG_ptr - pthis->UFile::map;
          }
       else
          {
-         size = pthis->UFile::size();
+         sz = pthis->UFile::size();
 
          if (pthis->UFile::memmap(PROT_READ | PROT_WRITE) == false) return;
          }
 
-      U_INTERNAL_ASSERT(size <= pthis->UFile::st_size)
-
-      if (data_to_write->empty() == false) ULog::logRotateWrite();
-
-      *data_to_write = UStringExt::deflate(pthis->UFile::map, size, true);
+      ULog::logRotateWrite(sz);
 
       if (LOG_FILE_SZ)
          {

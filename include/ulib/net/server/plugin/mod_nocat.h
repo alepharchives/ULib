@@ -22,6 +22,7 @@
 #include <ulib/container/hash_map.h>
 #include <ulib/net/server/server_plugin.h>
 
+class UDirWalk;
 class UIptAccount;
 class UNoCatPlugIn;
 
@@ -57,10 +58,10 @@ public:
 
 protected:
    UCommand fw;
-   unsigned char flag[8];
    UString ip, mac, token, user, ifname, label, gateway;
-   uint64_t traffic_done, traffic_available, traffic_remain;
    time_t connected, expire, logout, ctime, time_no_traffic, time_remain;
+   uint64_t traffic_done, traffic_available, traffic_remain;
+   unsigned char flag[8];
    uint32_t ctraffic;
 
    bool checkPeerInfo(bool btraffic);
@@ -209,6 +210,7 @@ protected:
    static fd_set addrmask;
    static fd_set* paddrmask;
    static UIptAccount* ipt;
+   static UDirWalk* dirwalk;
    static bool flag_check_system;
    static UString* login_timeout;
    static UString* status_content;
