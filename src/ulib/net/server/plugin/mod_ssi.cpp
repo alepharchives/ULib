@@ -822,7 +822,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                UHTTP::file->setPath(pathname, UClientImage_Base::environment);
 
-               if (bfile == false      &&
+               if (bfile == false         &&
                    UHTTP::isFileInCache() &&
                    UHTTP::isDataFromCache())
                   {

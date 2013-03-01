@@ -17,7 +17,7 @@ static void print_size()
    U_PRINT_SIZEOF(UApplication);
 // U_PRINT_SIZEOF(UBison);
    U_PRINT_SIZEOF(UCDB);
-   U_PRINT_SIZEOF(UCURL);
+// U_PRINT_SIZEOF(UCURL);
    U_PRINT_SIZEOF(UCache);
    U_PRINT_SIZEOF(UCertificate);
 // U_PRINT_SIZEOF(UCgiInput);

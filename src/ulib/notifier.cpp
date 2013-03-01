@@ -1060,11 +1060,11 @@ const char* UNotifier::dump(bool reset) const
                   << "fd_read_cnt                 " << fd_read_cnt    << '\n'
                   << "fd_write_cnt                " << fd_write_cnt   << '\n';
    *UObjectIO::os << "fd_set_read                 ";
-   char _buffer[70];
-    UObjectIO::os->write(_buffer, u__snprintf(_buffer, sizeof(_buffer), "%B", __FDS_BITS(&fd_set_read)[0]));
+   char buffer[70];
+    UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%B", __FDS_BITS(&fd_set_read)[0]));
     UObjectIO::os->put('\n');
    *UObjectIO::os << "fd_set_write                ";
-    UObjectIO::os->write(_buffer, u__snprintf(_buffer, sizeof(_buffer), "%B", __FDS_BITS(&fd_set_write)[0]));
+    UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%B", __FDS_BITS(&fd_set_write)[0]));
     UObjectIO::os->put('\n');
 #endif
    *UObjectIO::os << "nfd_ready                   " << nfd_ready      << '\n'

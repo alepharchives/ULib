@@ -88,13 +88,13 @@ U_NO_EXPORT const char* USSHSocket::status()
          }
       }
 
-   U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   uint32_t size = u__snprintf(u_buffer, sizeof(u_buffer), "(%d, %s) - %s", val, descr, errstr);
+   uint32_t size = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, "(%d, %s) - %s", val, descr, errstr);
 
    U_INTERNAL_DUMP("u_buffer = %.*S", size, u_buffer)
 
-   U_INTERNAL_ASSERT_MINOR(size,4096)
+   U_INTERNAL_ASSERT_MINOR(size, U_MAX_SIZE_PREALLOCATE)
 
    U_RETURN(u_buffer);
 }
@@ -249,9 +249,9 @@ const char* USSHSocket::getError()
       {
       errno = - USocket::iState;
 
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      (void) u__snprintf(u_buffer, sizeof(u_buffer), "%R", 0); // NB: the last argument (0) is necessary...
+      (void) u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, "%R", 0); // NB: the last argument (0) is necessary...
 
       U_RETURN(u_buffer+3);
       }

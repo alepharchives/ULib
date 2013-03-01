@@ -7,7 +7,7 @@
 
 #ifndef NO_ULIB
 template <>
-inline void u_construct(HttpField* f)
+inline void u_construct(HttpField** f)
 {
    U_TRACE(0, "u_construct<HttpField>(%p)", f)
 }

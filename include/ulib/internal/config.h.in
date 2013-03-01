@@ -209,11 +209,13 @@ typedef unsigned long long uint64;
 /* enable cpp preprocessor features */
 #undef HAVE_CPP
 
+/* define if exist type cpu_set_t */
+#undef HAVE_CPU_SET_T
+
 /* Define to 1 if you have the `daemon' function. */
 #undef HAVE_DAEMON
 
-/* Define to 1 if you have the <dirent.h> header file, and it defines `DIR'.
-   */
+/* Define to 1 if you have the <dirent.h> header file. */
 #undef HAVE_DIRENT_H
 
 /* Define to 1 if you have the <dlfcn.h> header file. */

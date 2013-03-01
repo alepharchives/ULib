@@ -55,7 +55,10 @@ union uusockaddr {
 /****************************************************************************/
 
 class USocket;
+class USocketExt;
 class UNoCatPlugIn;
+class UClient_Base;
+class UServer_Base;
 
 template <class T> class UVector;
 
@@ -179,6 +182,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UIPAddress, "")
 
       U_INTERNAL_DUMP("this = %p memory._this = %p", this, memory._this)
+
+      pcStrAddress[0] = '\0';
       }
 
    ~UIPAddress()
@@ -330,6 +335,8 @@ protected:
    void resolveHostName();
    void resolveStrAddress();
 
+   static char* resolveStrAddress(int iAddressType, const void* addr, char* ip);
+
    /****************************************************************************/
    /* This method is used to set the contents of the iAddressLength and        */
    /* pcAddress member variables. Address Length bytes are copied from the     */
@@ -341,7 +348,10 @@ protected:
 
 private:
    friend class USocket;
+   friend class USocketExt;
    friend class UNoCatPlugIn;
+   friend class UClient_Base;
+   friend class UServer_Base;
 };
 
 #endif

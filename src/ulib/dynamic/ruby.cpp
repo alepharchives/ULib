@@ -69,12 +69,9 @@ void URUBY::setError()
       "unhandled exception"               //  8 0x08
    };
 
-   static char buffer[1024];
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   (void) sprintf(buffer, "(%d, %s)", result,
-                  (result >= 0 && result < 9 ? errlist[result] : "unknown longjmp status"));
-
-   err = buffer;
+   (void) sprintf(u_buffer, "(%d, %s)", result, (result >= 0 && result < 9 ? errlist[result] : "unknown longjmp status"));
 }
 
 // RUBY operations

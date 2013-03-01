@@ -22,15 +22,7 @@
 #  include <ulib/replace/strstream.h>
 #endif
 
-// gestione conversione oggetti in const char*...
-
-#ifndef U_BUFSZ_OBJ_IO
-#  ifdef DEBUG
-#     define U_BUFSZ_OBJ_IO (1024 * 1024)
-#  else
-#     define U_BUFSZ_OBJ_IO (  10 * 1024)
-#  endif
-#endif
+// manage representation object => string
 
 class UStringRep;
 
@@ -39,12 +31,12 @@ struct U_EXPORT UObjectIO {
    static ostrstream* os;
    static istrstream* is;
 
-   static bool        busy_output;
-   static char        buffer_output[U_BUFSZ_OBJ_IO];
-   static uint32_t    buffer_output_len;
+   static bool     busy_output;
+   static char*    buffer_output;
+   static uint32_t buffer_output_sz, buffer_output_len;
 
-   static void init();
    static void output();
+   static void init(char* t, uint32_t sz);
    static void input(char* t, uint32_t tlen);
 
    static UStringRep* create();
@@ -56,14 +48,22 @@ template <class T> inline void UString2Object(char* t, uint32_t tlen, T& object)
 
    UObjectIO::input(t, tlen);
 
+   U_INTERNAL_ASSERT_POINTER(UObjectIO::is)
+
    *UObjectIO::is >> object;
+
+#ifdef HAVE_OLD_IOSTREAM
+   delete UObjectIO::is;
+#else
+   UObjectIO::is->~istrstream();
+#endif
 }
 
 template <class T> inline char* UObject2String(T& object)
 {
    U_INTERNAL_TRACE("UObject2String(%p)", &object)
 
-   if (!UObjectIO::os) UObjectIO::init();
+   U_INTERNAL_ASSERT_POINTER(UObjectIO::os)
 
    *UObjectIO::os << object;
 
@@ -76,7 +76,7 @@ template <class T> inline UStringRep* UObject2StringRep(T* object)
 {
    U_INTERNAL_TRACE("UObject2StringRep(%p)", object)
 
-   if (!UObjectIO::os) UObjectIO::init();
+   U_INTERNAL_ASSERT_POINTER(UObjectIO::os)
 
    *UObjectIO::os << *object;
 

@@ -60,9 +60,9 @@ END
 
 		grep '(-1)' < $TMPFILE.err # Can't contact LDAP server (-1)
 
-		if [ $? -eq 0 ]; then
-			anomalia 8
-		fi
+#		if [ $? -eq 0 ]; then
+#			anomalia 8
+#		fi
 	fi
 }
 

@@ -26,6 +26,9 @@ class UDirWalk;
 class UIptAccount;
 class UNoCatPlugIn;
 
+// sizeof(UModNoCatPeer) 32bit == 196
+// sizeof(UModNoCatPeer) 64bit == 304
+
 class UModNoCatPeer : public UEventTime, UIPAddress {
 public:
 
@@ -33,8 +36,10 @@ public:
    U_MEMORY_TEST
 
    // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
+   void* operator new(                 size_t sz) { U_TRACE(0, "UModNoCatPeer::operator new(%u)",   sz) return U_SYSCALL(malloc, "%u", sz); }
+   void* operator new[](               size_t sz) { U_TRACE(0, "UModNoCatPeer::operator new[](%u)", sz) return U_SYSCALL(malloc, "%u", sz); }
+   void  operator delete(  void* _ptr, size_t sz) { U_TRACE(0, "UModNoCatPeer::operator delete(%p,%u)",   _ptr, sz) U_SYSCALL_VOID(free, "%p", _ptr); }
+   void  operator delete[](void* _ptr, size_t sz) { U_TRACE(0, "UModNoCatPeer::operator delete[](%p,%u)", _ptr, sz) U_SYSCALL_VOID(free, "%p", _ptr); } 
 
    enum Status { PEER_DENY, PEER_PERMIT };
 
@@ -81,9 +86,6 @@ private:
 #define U_peer_index_network(peer)       (peer)->UModNoCatPeer::flag[5]
 #define U_peer_max_time_no_traffic(peer) (peer)->UModNoCatPeer::flag[6]
 #define U_peer_unused1                   (peer)->UModNoCatPeer::flag[7]
-
-// NB: sizeof(UModNoCatPeer) 32bit == 196
-// NB: sizeof(UModNoCatPeer) 64bit == 304
 
 // override the default...
 template <> inline void u_destroy(UIPAddress** ptr, uint32_t n) { U_TRACE(0,"u_destroy<UIPAddress*>(%p,%u)", ptr, n) }
@@ -220,7 +222,8 @@ protected:
    static UVector<UIPAddress*>** vaddr;
    static const UString* label_to_match;
    static UHashMap<UModNoCatPeer*>* peers;
-   static uint32_t total_connections, nfds, num_radio;
+   static UModNoCatPeer* peers_preallocate;
+   static uint32_t total_connections, nfds, num_radio, num_peers_preallocate;
    static time_t time_available, last_request_firewall, last_request_check, check_expire, next_event_time;
 
    // VARIE

@@ -88,9 +88,9 @@ extern U_EXPORT uint32_t             u_num_line;
 extern U_EXPORT const char* restrict u_name_file;
 extern U_EXPORT const char* restrict u_name_function;
 
-/* Temporary buffer: for example is used by u_ftw */
-extern U_EXPORT char     u_buffer[4096];
-extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy */
+/* Temporary buffer */
+extern U_EXPORT char*    u_buffer;
+extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy if != 0 */
 
 /* Time services */
 extern U_EXPORT bool   u_daylight;
@@ -147,7 +147,7 @@ static inline bool u_is_flv(void)  { return (u_mime_index == U_flv); }
 static inline bool u_is_gif(void)  { return (u_mime_index == U_gif); }
 static inline bool u_is_jpg(void)  { return (u_mime_index == U_jpg); }
 static inline bool u_is_png(void)  { return (u_mime_index == U_png); }
-static inline bool u_is_img(void)  { return (u_mime_index == U_png || u_mime_index == U_gif || u_mime_index == U_jpg); }
+static inline bool u_is_img(void)  { return (u_mime_index == U_png || u_mime_index == U_gif || u_mime_index == U_jpg || u_mime_index == U_ico); }
 static inline bool u_is_html(void) { return (u_mime_index == U_html); }
 
 /* Print with format extension: bBCDHMNOPQrRSUYwW

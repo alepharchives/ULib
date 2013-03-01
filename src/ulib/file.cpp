@@ -22,7 +22,7 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-char     UFile::cwd_save[U_PATH_MAX];
+char*    UFile::cwd_save;
 char*    UFile::pfree;
 uint32_t UFile::nfree;
 uint32_t UFile::cwd_save_len;
@@ -210,6 +210,8 @@ bool UFile::chdir(const char* path, bool flag_save)
    U_TRACE(1, "UFile::chdir(%S,%b)", path, flag_save)
 
    chk_num_file_object();
+
+   U_INTERNAL_ASSERT_POINTER(cwd_save)
 
    U_INTERNAL_DUMP("u_cwd    = %S", u_cwd)
    U_INTERNAL_DUMP("cwd_save = %S", cwd_save)
@@ -402,9 +404,13 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
    if ((flags & MAP_SHARED) != 0) return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, flags, -1, 0);
 
    char* _ptr;
+   bool _abort = false;
 
    if (*plength >= (256U * 1024U * 1024U)) // NB: to save some swap pressure...
       {
+#if defined(__linux__) && defined(ENABLE_THREAD)
+   try_from_file_system:
+#endif
       UFile tmp;
       char _template[32];
 
@@ -426,20 +432,47 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
       tmp.close();
 
       if (_ptr != (char*)MAP_FAILED) return _ptr;
+
+      if (_abort)
+         {
+         unsigned long vsz, rss;
+
+         u_get_memusage(&vsz, &rss);
+
+         U_ERROR("cannot allocate %u bytes (%u KB) of memory. Going down - ",
+                  "address space usage: %.2f MBytes - "
+                            "rss usage: %.2f MBytes\n",
+                  *plength, *plength / 1024, (double)vsz / (1024.0 * 1024.0),
+                                             (double)rss / (1024.0 * 1024.0));
+         }
       }
 
+#if defined(__linux__) && defined(ENABLE_THREAD)
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
 
-#if !defined(HAVE_ARCH64) && !defined(ENABLE_THREAD)
-   _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
-#else
    if (pfree == 0)
       {
       nfree = (256U * 1024U * 1024U);
       pfree = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, nfree, prot, U_MAP_ANON, -1, 0);
+
+      if (pfree == (char*)MAP_FAILED)
+         {
+         nfree = 0;
+         pfree = 0;
+         }
       }
 
-   if (*plength > nfree) return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, U_MAP_ANON, -1, 0);
+   if (*plength > nfree)
+      {
+      _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, U_MAP_ANON, -1, 0);
+
+      if (_ptr == (char*)MAP_FAILED)
+         {
+         _abort = true;
+
+         goto try_from_file_system;
+         }
+      }
 
    _ptr   = pfree;
    nfree -= *plength;
@@ -452,6 +485,8 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
       }
 
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
+#else
+   _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
 #endif
 
    return _ptr;
@@ -1214,6 +1249,8 @@ bool UFile::_rename(const char* newpath)
 void UFile::substitute(UFile& file)
 {
    U_TRACE(1, "UFile::substitute(%p)", &file)
+
+   U_INTERNAL_ASSERT_POINTER(cwd_save)
 
    U_INTERNAL_DUMP("u_cwd             = %S",   u_cwd)
    U_INTERNAL_DUMP("cwd_save          = %.*S", cwd_save_len, cwd_save)

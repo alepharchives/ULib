@@ -14,7 +14,6 @@
 #ifndef ULIBDBG_COMMON_H
 #define ULIBDBG_COMMON_H 1
 
-U_EXPORT void  u_debug_init(void);
 U_EXPORT pid_t u_debug_fork(pid_t pid);
 U_EXPORT pid_t u_debug_vfork(pid_t pid);
 U_EXPORT void  u_debug_exit(int exit_value);
@@ -23,6 +22,7 @@ U_EXPORT void  u_debug_exec(const char* pathname, char* const argv[], char* cons
 #ifdef __cplusplus
 extern "C" {
 #endif
+U_EXPORT void u_debug_init(void);
 U_EXPORT void u_debug_at_exit(void);
 #ifdef __cplusplus
 }

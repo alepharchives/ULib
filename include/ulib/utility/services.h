@@ -258,8 +258,8 @@ struct U_EXPORT UServices {
    static void releaseEngine(ENGINE* e, bool bkey);
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
    static ENGINE* loadEngine(const char* id, unsigned int flags);
-   static char* getOpenSSLError(char* buffer = 0, uint32_t buffer_size = 0, uint32_t* psize = 0);
    static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);
+   static char* getOpenSSLError(char* buffer = u_buffer, uint32_t buffer_size = U_MAX_SIZE_PREALLOCATE, uint32_t* psize = 0);
    static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = 0, ENGINE* e = 0);
 
    /*

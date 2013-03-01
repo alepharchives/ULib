@@ -25818,8 +25818,9 @@ $as_echo "#define HAVE_SYS_WAIT_H 1" >>confdefs.h
 
 fi
 
-for ac_header in assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
-						semaphore.h sys/syscall.h sysexits.h termios.h streambuf.h \
+for ac_header in assert.h byteswap.h endian.h execinfo.h ndir.h dirent.h ndir.h string.h netpacket/packet.h \
+						sched.h stdint.h semaphore.h sysexits.h termios.h streambuf.h \
+						sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h sys/sched.h sys/syscall.h \
 						linux/netfilter_ipv4/ipt_ACCOUNT.h libnetfilter_conntrack/libnetfilter_conntrack.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -26575,6 +26576,16 @@ _ACEOF
 
 fi
 done
+
+ac_fn_cxx_check_type "$LINENO" "cpu_set_t" "ac_cv_type_cpu_set_t" "#include <sched.h>
+"
+if test "x$ac_cv_type_cpu_set_t" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_CPU_SET_T 1
+_ACEOF
+
+fi
 
 
 # SECTION 8: checks for variables
@@ -27717,7 +27728,7 @@ $as_echo "#define HAVE_SIGINFO_T 1" >>confdefs.h
 
 	;;
 	*)
-	ac_fn_cxx_check_type "$LINENO" "siginfo_t" "ac_cv_type_siginfo_t" "#include <signal.h>
+		ac_fn_cxx_check_type "$LINENO" "siginfo_t" "ac_cv_type_siginfo_t" "#include <signal.h>
 "
 if test "x$ac_cv_type_siginfo_t" = xyes; then :
 
@@ -27727,15 +27738,15 @@ _ACEOF
 
 fi
 
-	if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes"; then
+		if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes"; then
 
 $as_echo "#define HAVE_GNUC_VISIBILTY 1" >>confdefs.h
 
-		CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
-	fi
-	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
-		LDFLAGS="${LDFLAGS} -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
-	fi
+			CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
+		fi
+		if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
+			LDFLAGS="${LDFLAGS} -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
+		fi
 	;;
 esac
 

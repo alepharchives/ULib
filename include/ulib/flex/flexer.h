@@ -112,7 +112,7 @@ public:
 
       if (length)
          {
-         length = data.copy(buf, length, write_position);
+         data.copy(buf, length, write_position);
 
          write_position += length;
 

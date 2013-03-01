@@ -69,11 +69,11 @@ const char* UFtpClient::status()
       default:                            descr = "Code unknown";                                        break;
       }
 
-   static char buffer[128];
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   (void) sprintf(buffer, "(%d, %s)", response, descr);
+   (void) sprintf(u_buffer, "(%d, %s)", response, descr);
 
-   U_RETURN(buffer);
+   U_RETURN(u_buffer);
 }
 
 bool UFtpClient::waitReady(uint32_t timeoutMS)

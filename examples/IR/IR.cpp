@@ -57,8 +57,6 @@ IR::~IR()
    if (bad_words)           delete bad_words;
    if (suffix_bad_words)    delete suffix_bad_words;
    if (suffix_skip_tag_xml) delete suffix_skip_tag_xml;
-
-   deleteDB();
 }
 
 void IR::setBadWords()

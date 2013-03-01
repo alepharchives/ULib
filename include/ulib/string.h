@@ -246,7 +246,7 @@ public:
 
    char* data() const { return (char*)str; }
 
-   uint32_t copy(char* s, uint32_t n, uint32_t pos = 0) const;
+   void copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const;
 
    // ELEMENT ACCESS
 
@@ -905,13 +905,13 @@ public:
    // OPTMIZE APPEND (BUFFERED)
 
    static char* ptrbuf;
-   static char  appbuf[1024];
+   static char* appbuf;
 
    void _append(unsigned char c)
       {
       U_TRACE(0, "UString::_append(%C)", c)
 
-      U_INTERNAL_ASSERT_RANGE(appbuf,ptrbuf,appbuf+sizeof(appbuf))
+      U_INTERNAL_ASSERT_RANGE(appbuf,ptrbuf,appbuf+1024)
 
       if ((ptrbuf - appbuf) == sizeof(appbuf))
          {
@@ -984,8 +984,8 @@ public:
    char* c_strdup() const;
    char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const;
 
-   UString  copy() const;
-   uint32_t copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const { return rep->copy(s, n, pos); }
+   UString copy() const;
+   void    copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const { rep->copy(s, n, pos); }
 
    // STRING OPERATIONS
 

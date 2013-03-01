@@ -58,7 +58,7 @@ public:
 
          WeightWord::dumpObjects();
 
-         UApplication::exit_value = 0;
+         IR::deleteDB();
          }
       }
 

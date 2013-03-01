@@ -329,15 +329,6 @@ public:
    static UClientImage_Base* pClientIndex;
    static UClientImage_Base* eClientImage;
 
-   static const char* getClientAddress()
-      {
-      U_TRACE(0, "UServer_Base::getClientAddress()")
-
-      U_INTERNAL_ASSERT_POINTER(pClientImage)
-
-      U_RETURN(pClientImage->client_address);
-      }
-
    static bool isPreForked()
       {
       U_TRACE(0, "UServer_Base::isPreForked()")
@@ -414,6 +405,9 @@ public:
    static UCommand* loadConfigCommand(UFileConfig& cfg);
 
    // NETWORK CTX
+
+   static int iAddressType;
+   static char* client_address;
 
    static UString getIPAddress()                              { return *IP_address; }
    static UString getMacAddress(    const char* device_or_ip) { return USocketExt::getMacAddress(socket->getFd(), device_or_ip); }
@@ -505,7 +499,7 @@ protected:
    static UVector<UString>*        vplugin_name_static;
    static UVector<UServerPlugIn*>* vplugin;
 
-   static const char* getNumConnection();
+   static const char* getNumConnection(char* buffer);
 
    static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);

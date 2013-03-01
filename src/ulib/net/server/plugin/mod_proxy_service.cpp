@@ -206,7 +206,7 @@ UString UModProxyService::getServer() const
          {
          UString pathname(U_CAPACITY);
 
-         pathname.snprintf("%.*s/%s:%u.srv", U_STRING_TO_TRACE(x), UServer_Base::getClientAddress(), UHTTP::getUserAgent());
+         pathname.snprintf("%.*s/%s:%u.srv", U_STRING_TO_TRACE(x), UServer_Base::client_address, UHTTP::getUserAgent());
 
          x = UFile::contentOf(pathname);
 

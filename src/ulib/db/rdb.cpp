@@ -909,46 +909,46 @@ void URDB::callForAllEntrySorted(vPFprpr function, UVector<UString>* vec, qcompa
 {
    U_TRACE(0, "URDB::callForAllEntrySorted(%p,%p,%p)", function, vec, compare_obj)
 
-   uint32_t i, n;
-   UStringRep* r;
-
-   lock();
-
    U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_nrecord = %u", UCDB::nrecord, RDB_nrecord)
 
-   n = UCDB::nrecord + RDB_nrecord;
+   uint32_t n = UCDB::nrecord + RDB_nrecord;
 
-   U_INTERNAL_DUMP("n = %u", n)
-
-   UVector<UString> vkey(n);
-
-   getKeys(vkey);
-
-   if (n > 1)
+   if (n)
       {
-      if (compare_obj) vkey.UVector<void*>::sort(compare_obj);
-      else             vkey.sort(ignore_case);
-      }
+      lock();
 
-   UCDB::setVector(vec);
-   UCDB::setFunctionToCall(function);
+      UVector<UString> vkey(n);
 
-   for (i = 0; i < n; ++i)
-      {
-      r = vkey.UVector<UStringRep*>::at(i);
+      getKeys(vkey);
 
-      UCDB::setKey(r);
-
-      if (fetch())
+      if (n > 1)
          {
-         UCDB::call((const char*)UCDB::key.dptr,  UCDB::key.dsize,
-                    (const char*)UCDB::data.dptr, UCDB::data.dsize);
+         if (compare_obj) vkey.UVector<void*>::sort(compare_obj);
+         else             vkey.sort(ignore_case);
          }
+
+      UCDB::setVector(vec);
+      UCDB::setFunctionToCall(function);
+
+      UStringRep* r;
+
+      for (uint32_t i = 0; i < n; ++i)
+         {
+         r = vkey.UVector<UStringRep*>::at(i);
+
+         UCDB::setKey(r);
+
+         if (fetch())
+            {
+            UCDB::call((const char*)UCDB::key.dptr,  UCDB::key.dsize,
+                       (const char*)UCDB::data.dptr, UCDB::data.dsize);
+            }
+         }
+
+      UCDB::setFunctionToCall(0);
+
+      unlock();
       }
-
-   UCDB::setFunctionToCall(0);
-
-   unlock();
 }
 
 UString URDB::printSorted()

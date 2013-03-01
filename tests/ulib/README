@@ -1,8 +1,8 @@
 See http://www.debian.org/ for information about Debian GNU/Linux.
 Four Debian releases are available on the main site:
 
-Debian 6.0.6, or squeeze.  Access this release through dists/stable
-Debian 6.0.6 was released Saturday, 29 September 2012.
+Debian 6.0.7, or squeeze.  Access this release through dists/stable
+Debian 6.0.7 was released Saturday, 23 February 2013.
 
 Testing, or wheezy.  Access this release through dists/testing.  The
 current tested development snapshot is named wheezy.  Packages which

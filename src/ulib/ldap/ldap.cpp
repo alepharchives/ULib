@@ -307,8 +307,6 @@ const char* ULDAP::error()
    "LDAP_REFERRAL_LIMIT_EXCEEDED"         // 97 0x61
    };
 
-   static char buffer[1024];
-
    char* descr = ldap_err2string(result);
 
    /* get a meaningful error string back from the security library
@@ -319,9 +317,11 @@ const char* ULDAP::error()
    if (descr == 0) descr = (char*)ldapssl_err2string(result);
 #endif
 
-   (void) sprintf(buffer, "%s (%d, %s)", (result >= 0 && result < 97 ? errlist[result] : ""), result, descr);
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   U_RETURN(buffer);
+   (void) sprintf(u_buffer, "%s (%d, %s)", (result >= 0 && result < 97 ? errlist[result] : ""), result, descr);
+
+   U_RETURN(u_buffer);
 }
 
 #if defined(__MINGW32__) && defined(HAVE_WINLDAP_H)

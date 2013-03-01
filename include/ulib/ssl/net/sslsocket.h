@@ -261,9 +261,9 @@ protected:
    static const char* protocol_version;
 
    static void        info_callback(const SSL* ssl, int where, int ret);
-   static const char* status(SSL* ssl, int ret, bool _flag, char* buffer, uint32_t buffer_size);
+   static const char* status(SSL* ssl, int ret, bool _flag, char* buffer = u_buffer, uint32_t buffer_size = U_MAX_SIZE_PREALLOCATE);
 
-          const char* status(bool _flag) const { return status(ssl, ret, _flag, 0, 0); }
+          const char* status(bool _flag) const { return status(ssl, ret, _flag); }
 
    static SSL_CTX* getClientContext() { return getContext(0, false, 0); }
    static SSL_CTX* getServerContext() { return getContext(0, true,  0); }

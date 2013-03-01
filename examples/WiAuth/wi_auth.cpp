@@ -2672,10 +2672,22 @@
    
       // $1 -> ap (without localization => '@')
       // $2 -> public address to contact the access point
+      // $3 -> out of memory condition
    
       if (setAccessPoint(false))
          {
-         U_LOGGER("*** ON AP(%.*s:%.*s) THE FIREWALL IS NOT ALIGNED ***", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname));
+         uint32_t n = UHTTP::form_name_value->size();
+   
+         if (n == 4) U_LOGGER("*** ON AP(%.*s:%.*s) THE FIREWALL IS NOT ALIGNED ***", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname));
+         else
+            {
+            UString msg(200U);
+   
+            UHTTP::getFormValue(msg, U_CONSTANT_TO_PARAM("msg"), 0, 5, n);
+   
+            U_LOGGER("*** ON AP(%.*s:%.*s) NODOG IS OUT OF MEMORY *** %.*s",
+                           U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(*hostname), U_STRING_TO_TRACE(msg));
+            }
          }
    
    #ifndef U_MANAGED_BY_MAIN_BASH
@@ -2983,10 +2995,24 @@
    
       request.snprintf("/login_request?%.*s", U_HTTP_QUERY_TO_TRACE);
    
-      USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")), false,
-                                        title_default->data(), 0, 0,
-                                        url_banner_ap->data(), ap_ref->data(), help_url->data(), wallet_url->data(),
-                                        ap->c_str(), request.data(), url_banner_comune->data(), ap_ref->data());
+      if (UStringExt::startsWith(*title_default, U_CONSTANT_TO_PARAM("Firenze ")))
+         {
+         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")), false,
+                                           title_default->data(), 0, 0,
+                                           url_banner_ap->data(), ap_ref->data(),
+                                           help_url->data(), wallet_url->data(),
+                                           ap->c_str(), request.data(),
+                                           url_banner_comune->data(), ap_ref->data());
+         }
+      else if (UStringExt::startsWith(*title_default, U_CONSTANT_TO_PARAM("VillaBorbone ")))
+         {
+         USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")), false,
+                                           title_default->data(), 0, 0,
+                                           request.data(),
+                                           ap->c_str(),
+                                           wallet_url->data(),
+                                           help_url->data());
+         }
    #endif
    }
    

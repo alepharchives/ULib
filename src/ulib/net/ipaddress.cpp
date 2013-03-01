@@ -118,6 +118,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
 {
    U_TRACE(1, "UIPAddress::set(%p)", &cOtherAddr)
 
+   strHostName    = cOtherAddr.strHostName;
    iAddressType   = cOtherAddr.iAddressType;
    iAddressLength = cOtherAddr.iAddressLength;
 
@@ -137,8 +138,14 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       pcAddress.i = cOtherAddr.pcAddress.i;
       }
 
-   if ((U_ipaddress_HostNameUnresolved(this)   = U_ipaddress_HostNameUnresolved(&cOtherAddr))   == false) strHostName = cOtherAddr.strHostName;
-   if ((U_ipaddress_StrAddressUnresolved(this) = U_ipaddress_StrAddressUnresolved(&cOtherAddr)) == false) (void) u__strcpy(pcStrAddress, cOtherAddr.pcStrAddress);
+   uint32_t n = u__strlen(cOtherAddr.pcStrAddress);
+
+   if (n) U__MEMCPY(pcStrAddress, cOtherAddr.pcStrAddress, n);
+
+   pcStrAddress[n] = '\0';
+
+   U_ipaddress_HostNameUnresolved(this)   = U_ipaddress_HostNameUnresolved(&cOtherAddr);
+   U_ipaddress_StrAddressUnresolved(this) = U_ipaddress_StrAddressUnresolved(&cOtherAddr);
 
    U_INTERNAL_DUMP("addr = %u", getInAddr())
 }
@@ -349,25 +356,32 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 /* generated via a call to inet_ntop().                                       */
 /******************************************************************************/
 
+char* UIPAddress::resolveStrAddress(int iAddressType, const void* src, char* ip)
+{
+   U_TRACE(1, "UIPAddress::resolveStrAddress(%d,%p,%p)", iAddressType, src, ip)
+
+   char* result = 0;
+
+#ifdef HAVE_INET_NTOP
+   result = (char*) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, src, ip, U_INET_ADDRSTRLEN);
+#else
+   result = U_SYSCALL(inet_ntoa, "%u", *((struct in_addr*)src));
+
+   if (result) (void) u__strcpy(ip, result);
+#endif
+
+   return result;
+}
+
 void UIPAddress::resolveStrAddress()
 {
-   U_TRACE(1, "UIPAddress::resolveStrAddress()")
+   U_TRACE(0, "UIPAddress::resolveStrAddress()")
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(U_ipaddress_StrAddressUnresolved(this))
 
-   const char* result = 0;
-
-#ifdef HAVE_INET_NTOP
-   result = U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, pcAddress.p, pcStrAddress, U_INET_ADDRSTRLEN);
-#else
-   result = U_SYSCALL(inet_ntoa, "%u", *((struct in_addr*)pcAddress.p));
-
-   if (result) (void) u__strcpy(pcStrAddress, result);
-#endif
-
-   if (result) U_ipaddress_StrAddressUnresolved(this) = false;
+   if (resolveStrAddress(iAddressType, pcAddress.p, pcStrAddress)) U_ipaddress_StrAddressUnresolved(this) = false;
 }
 
 /****************************************************************************/
@@ -558,13 +572,14 @@ bool UIPAllow::parseMask(const UString& spec)
 {
    U_TRACE(1, "UIPAllow::parseMask(%.*S)", U_STRING_TO_TRACE(spec))
 
-   /* get bit before slash */
+   // get bit before slash
 
-   uint32_t    addr_len = spec.find('/');
-   const char* addr_str = (addr_len == U_NOT_FOUND ? spec.c_str()
-                                                   : spec.c_strndup(0, addr_len));
+   uint32_t addr_len = spec.find('/');
+   char     addr_str[U_INET_ADDRSTRLEN];
 
-   /* extract and parse addr part */
+   spec.copy(addr_str, addr_len);
+
+   // extract and parse addr part
 
    struct in_addr ia;
 
@@ -574,23 +589,18 @@ bool UIPAllow::parseMask(const UString& spec)
 
    U_INTERNAL_ASSERT(u_isIPv4Addr(addr_str, (addr_len == U_NOT_FOUND ? spec.size() : addr_len)))
 
-   if (addr_len != U_NOT_FOUND) U_SYSCALL_VOID(free, "%p", (void*)addr_str);
-
    if (result == 0) U_RETURN(false);
 
    addr = ia.s_addr;
 
    in_addr_t allones = 0xffffffffUL;
 
-   if (addr_len == U_NOT_FOUND)
-      {
-      mask = allones;
-      }
+   if (addr_len == U_NOT_FOUND) mask = allones;
    else
       {
       const char* mask_str = spec.c_pointer(addr_len + 1);
 
-      /* find mask length as a number of bits */
+      // find mask length as a number of bits
 
       int mask_bits = atoi(mask_str);
 
@@ -602,10 +612,10 @@ bool UIPAllow::parseMask(const UString& spec)
          U_RETURN(false);
          }
 
-      /* Make a network-endian mask with the top mask_bits set */
+      // Make a network-endian mask with the top mask_bits set
 
-      if (mask_bits == 32) mask = allones;
-      else                 mask = htonl(~(allones >> mask_bits));
+      mask = (mask_bits == 32 ? allones
+                              : htonl(~(allones >> mask_bits)));
 
       U_INTERNAL_DUMP("mask = %B", mask)
       }

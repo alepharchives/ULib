@@ -11,7 +11,7 @@
 //
 // ============================================================================
  
-#include <ulib/string.h>
+#include <ulib/file.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/container/hash_map.h>
 
@@ -76,6 +76,18 @@ void ULib_init()
 
    U_INTERNAL_DUMP("u_progname(%u) = %.*S u_cwd(%u) = %.*S", u_progname_len, u_progname_len, u_progname, u_cwd_len, u_cwd_len, u_cwd)
 
+   // allocation from memory pool
+
+   u_buffer =      (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
+
+#ifdef DEBUG
+   UObjectIO::init((char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE)), U_MAX_SIZE_PREALLOCATE);
+#endif
+
+   UString::ptrbuf =
+   UString::appbuf = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
+   UFile::cwd_save = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
+
    UInterrupt::init();
 
    // TMPDIR is the canonical Unix environment variable which points to user scratch space. Most Unix utilities will honor the setting of this
@@ -87,10 +99,6 @@ void ULib_init()
    u_tmpdir = (const char*) U_SYSCALL(getenv, "%S", "TMPDIR");
 
    if (u_tmpdir == NullPtr) u_tmpdir = "/tmp";
-
-#ifdef DEBUG
-   UObjectIO::init();
-#endif
 
 #ifdef __MINGW32__
    WSADATA wsaData;
@@ -137,7 +145,7 @@ void ULib_init()
 
    U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
 
-   UHashMap<void*>::pkey               = u.p2;
+   UHashMap<void*>::pkey = u.p2;
 
    U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
 

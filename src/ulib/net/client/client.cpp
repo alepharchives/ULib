@@ -238,7 +238,11 @@ bool UClient_Base::connect()
             {
             logbuf.setEmpty();
 
-            socket->getRemoteInfo(logbuf);
+            U_ipaddress_StrAddressUnresolved(&(socket->cRemoteAddress)) = true;
+
+            socket->cRemoteAddress.resolveStrAddress();
+
+            USocketExt::setRemoteInfo(socket, logbuf);
             }
          else if (logbuf.empty())
             {
@@ -275,14 +279,14 @@ bool UClient_Base::setUrl(const UString& location)
       char* ptr;
       char* dest;
       uint32_t len;
-      char _buffer[U_PATH_MAX];
+      char buf[U_PATH_MAX];
 
       const char*  src =       uri.data();
       const char* _end = src + uri.size();
 
       U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
 
-      ptr = dest = _buffer;
+      ptr = dest = buf;
 
       while (src < _end)
          {
@@ -304,7 +308,7 @@ bool UClient_Base::setUrl(const UString& location)
 
       U__MEMCPY(dest, location.data(), len);
 
-      (void) uri.replace(_buffer, dest - ptr + len);
+      (void) uri.replace(buf, dest - ptr + len);
 
       U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
 

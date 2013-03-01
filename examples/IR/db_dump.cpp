@@ -26,7 +26,7 @@ public:
          {
          UPosting::printDB(std::cout);
 
-         UApplication::exit_value = 0;
+         IR::deleteDB();
          }
       }
 

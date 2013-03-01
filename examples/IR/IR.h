@@ -108,12 +108,22 @@ public:
       ((URDB*)cdb_words)->closeReorganize();
       }
 
-   void deleteDB()
+   void deleteDB(bool brdb = false)
       {
-      U_TRACE(5, "IR::deleteDB()")
+      U_TRACE(5, "IR::deleteDB(%b)", brdb)
 
-      delete (U_CDB_CLASS*)cdb_names;
-      delete (U_CDB_CLASS*)cdb_words;
+      if (brdb)
+         {
+         delete (URDB*)cdb_names;
+         delete (URDB*)cdb_words;
+         }
+      else
+         {
+         delete cdb_names;
+         delete cdb_words;
+         }
+
+      UApplication::exit_value = 0;
       }
 
    void setBadWords();

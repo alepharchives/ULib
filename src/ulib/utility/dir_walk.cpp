@@ -390,13 +390,17 @@ U_NO_EXPORT void UDirWalk::vectorPush()
    uint32_t len    = pthis->pathlen;
    const char* ptr = pthis->pathname;
 
-   if (                 ptr[0] == '.' &&
-       IS_DIR_SEPARATOR(ptr[1]))
+   if (ptr[0] == '.')
       {
-      U_INTERNAL_ASSERT_MAJOR(len, 2)
+      if (len == 1) return;
 
-      ptr += 2;
-      len -= 2;
+      if (IS_DIR_SEPARATOR(ptr[1]))
+         {
+         U_INTERNAL_ASSERT_MAJOR(len, 2)
+
+         ptr += 2;
+         len -= 2;
+         }
       }
 
    UString str((void*)ptr, len);

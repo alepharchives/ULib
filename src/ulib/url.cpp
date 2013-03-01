@@ -182,9 +182,7 @@ uint32_t Url::getPort(char* buffer, uint32_t size)
       if (size &&
           size <= 5)
          {
-         (void) url.copy(buffer, size, host_end + 1);
-
-         buffer[size] = '\0';
+         url.copy(buffer, size, host_end + 1);
 
          U_RETURN(size);
          }

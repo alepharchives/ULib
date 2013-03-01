@@ -41,8 +41,7 @@ public:
          // register to constant database (CDB)
 
          IR::closeCDB(false);
-
-         UApplication::exit_value = 0;
+         IR::deleteDB();
          }
       }
 

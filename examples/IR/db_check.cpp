@@ -41,7 +41,7 @@ public:
             (void) write(1, U_CONSTANT_TO_PARAM("OK\n"));
             }
 
-         UApplication::exit_value = 0;
+         IR::deleteDB();
          }
       }
 

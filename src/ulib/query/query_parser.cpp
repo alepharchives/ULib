@@ -898,7 +898,7 @@ void UQueryParser::evaluate(UStringRep* _word, bool positive)
 
       u_buffer[u_buffer_len++] = (result ? '1' : '0');
 
-      U_INTERNAL_ASSERT_MINOR(u_buffer_len, sizeof(u_buffer))
+      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_MAX_SIZE_PREALLOCATE)
       }
 
    /*

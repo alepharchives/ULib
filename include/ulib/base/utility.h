@@ -45,16 +45,19 @@
 #  include <sys/sched.h>
 #endif
 
-#ifndef CPU_SETSIZE
+#ifndef HAVE_CPU_SET_T
 typedef uint64 cpu_set_t;
+#endif
+
+#ifdef CPU_SETSIZE
+#  define CPUSET_BITS(set) ((set)->__bits)
+#else
 #  define CPU_SETSIZE                   (sizeof(cpu_set_t) * 8)
 #  define CPU_ISSET(index, cpu_set_ptr) (*(cpu_set_ptr)  &  (1ULL << (index)))
 #  define CPU_SET(index, cpu_set_ptr)   (*(cpu_set_ptr) |=  (1ULL << (index)))
 #  define CPU_ZERO(cpu_set_ptr)         (*(cpu_set_ptr)  = 0)
 #  define CPU_CLR(index, cpu_set_ptr)   (*(cpu_set_ptr) &= ~(1ULL << (index)))
 #  define CPUSET_BITS(set) (set)
-#else
-#  define CPUSET_BITS(set) ((set)->__bits)
 #endif
 
 #ifdef __cplusplus
@@ -87,7 +90,6 @@ extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0
 
 U_EXPORT int         u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
 U_EXPORT int         u_get_num_random(int range);
-U_EXPORT void        u_setHOME(const char* restrict dir);
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix);
 U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n) __pure;
 U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
@@ -96,7 +98,7 @@ U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restr
 U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
 U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 
-U_EXPORT char*       u_memoryDump(                    unsigned char* restrict cp, uint32_t n);
+U_EXPORT char*       u_memoryDump( char* restrict bp, unsigned char* restrict cp, uint32_t n);
 U_EXPORT uint32_t    u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
 
 #if defined(HAVE_MEMMEM) && !defined(__USE_GNU)

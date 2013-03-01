@@ -520,14 +520,9 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool _flag, char* buffer, ui
 {
    U_TRACE(1, "USSLSocket::status(%p,%d,%b,%p,%u)", _ssl, _ret, _flag, buffer, buffer_size)
 
-   if (buffer == 0)
-      {
-      static char lbuffer[4096];
-
-      buffer      = lbuffer;
-      buffer_size = 4096;
-      }
-
+   U_INTERNAL_ASSERT_POINTER(buffer)
+   U_INTERNAL_ASSERT_MAJOR(buffer_size, 0)
+   
    const char* descr  = "SSL_ERROR_NONE";
    const char* errstr = "ok";
 
@@ -610,16 +605,9 @@ const char* USSLSocket::status(SSL* _ssl, int _ret, bool _flag, char* buffer, ui
          }
       }
 
-   uint32_t len, buffer_len = u__snprintf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
+   uint32_t len = u__snprintf(buffer, buffer_size, "(%d, %s) - %s", _ret, descr, errstr);
 
-   char* sslerr = UServices::getOpenSSLError(0, 0, &len);
-
-   if (len)
-      {
-      buffer[buffer_len++] = ' ';
-
-      U__MEMCPY((void*)(buffer + buffer_len), sslerr, len+1);
-      }
+   (void) UServices::getOpenSSLError(buffer+len, buffer_size-len);
 
    U_RETURN((const char*)buffer);
 }
@@ -783,7 +771,7 @@ loop:
 
    pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-   U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false, 0, 0))
+   U_DUMP("status = %.*S", 512, status(ssl, pcNewConnection->ret, false))
 
    U_INTERNAL_DUMP("count = %u", count)
 
@@ -836,7 +824,7 @@ loop:
          {
          ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-         U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
+         U_DUMP("status = %.*S", 512, status(ssl, ret, false))
 
               if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
          else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
@@ -913,7 +901,7 @@ loop:
 
    ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-   U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
+   U_DUMP("status = %.*S", 512, status(ssl, ret, false))
 
         if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
    else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
@@ -959,7 +947,7 @@ loop:
 
    ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
-   U_DUMP("status = %.*S", 512, status(ssl, ret, false, 0, 0))
+   U_DUMP("status = %.*S", 512, status(ssl, ret, false))
 
         if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
    else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }

@@ -75,6 +75,7 @@ class UUnixSocket;
 class USmtpClient;
 class UImapClient;
 class UPop3Client;
+class UClient_Base;
 class UServer_Base;
 class SocketAddress;
 class UClientImage_Base;
@@ -347,19 +348,6 @@ public:
 
       return cRemoteAddress;
       }
-
-   const char* getRemoteInfo()
-      {
-      U_TRACE(0, "USocket::getRemoteInfo()")
-
-      U_CHECK_MEMORY
-
-      const char* address = (iRemotePort ? cRemoteAddress.getAddressString() : "localhost");
-
-      U_RETURN(address);
-      }
-
-   void  getRemoteInfo(UString& buffer, const char* address = 0);
 
    /**
    This method manage the buffer of the socket connection
@@ -688,6 +676,7 @@ private:
                       friend class USmtpClient;
                       friend class UImapClient;
                       friend class UPop3Client;
+                      friend class UClient_Base;
                       friend class UServer_Base;
                       friend class UClientImage_Base;
                       friend class UStreamPlugIn;

@@ -24,10 +24,6 @@
 #  include <ulib/debug/common.h>
 #  include <ulib/debug/objectDB.h>
 #  include <ulib/debug/error_memory.h>
-
-#  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init_ulib(argv), u_debug_init(), ULib_init()
-#else
-#  define U_ULIB_INIT(argv)   U_SET_LOCATION_INFO, u_init_ulib(argv),                 ULib_init()
 #endif
 
 #if !defined(HAVE_CONFIG_H) && !defined(U_LIBEXECDIR)
@@ -73,5 +69,7 @@ U_EXPORT void ULib_init();
 #ifdef USE_LIBSSL
 U_EXPORT void ULib_init_openssl();
 #endif
+
+#define U_ULIB_INIT(argv) U_SET_LOCATION_INFO, u_init_ulib(argv), ULib_init()
 
 #endif

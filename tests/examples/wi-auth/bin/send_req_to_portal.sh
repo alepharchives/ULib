@@ -28,8 +28,8 @@ do_cmd() {
 	#USIMERR="error.sim"
 	 export UTRACE UOBJDUMP USIMERR
 
-#	eval wget "http://wifi-aaa.comune.fi.it/$2" >$TMPFILE 2>/dev/null
-	eval $CLIENT_HTTP "http://wifi-aaa.comune.fi.it/$2" >$TMPFILE 2>/dev/null
+ 	eval $CLIENT_HTTP "http://wifi-aaa.comune.fi.it/$2" >$TMPFILE 2>/dev/null
+#	eval $CLIENT_HTTP "http://auth.t-unwired.com/$2" >$TMPFILE 2>/dev/null
 
 #	if [ $? -eq 0 ]; then
  		rm -f $TMPFILE

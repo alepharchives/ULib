@@ -19,11 +19,9 @@
 // default behaviour
 
 template <class T>
-inline void u_construct(T* ptr)
+inline void u_construct(T** ptr)
 {
    U_TRACE(0, "u_construct<T>(%p)", ptr)
-
-// new ((void*)ptr) T();
 }
 
 template <class T>
@@ -39,8 +37,6 @@ inline void u_destroy(T* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-// ptr->~T();
-
    delete ptr;
 }
 
@@ -53,11 +49,11 @@ inline void u_destroy(T** ptr, uint32_t n)
 }
 
 template <>
-inline void u_construct(UStringRep* rep)
+inline void u_construct(UStringRep** prep)
 {
-   U_TRACE(0, "u_construct<UStringRep*>(%p)", rep)
+   U_TRACE(0, "u_construct<UStringRep*>(%p)", prep)
 
-   rep->hold(); // NB: si incrementa la reference della stringa...
+   (*prep)->hold();
 }
 
 template <>
@@ -65,7 +61,7 @@ inline void u_construct(UStringRep* rep, uint32_t n)
 {
    U_TRACE(0, "u_construct<UStringRep*>(%p,%u)", rep, n)
 
-   rep->references += n; // NB: si incrementa la reference della stringa...
+   rep->references += n;
 
    U_INTERNAL_DUMP("references = %d", rep->references + 1)
 }
@@ -75,7 +71,7 @@ inline void u_destroy(UStringRep* rep)
 {
    U_TRACE(0, "u_destroy<UStringRep*>(%p)", rep)
 
-   rep->release(); // NB: si decrementa la reference della stringa...
+   rep->release();
 }
 
 template <>
@@ -83,7 +79,7 @@ inline void u_destroy(UStringRep** rep, uint32_t n)
 {
    U_TRACE(0, "u_destroy<UStringRep*>(%p,%u)", rep, n)
 
-   for (uint32_t i = 0; i < n; ++i) rep[i]->release(); // NB: si decrementa la reference della stringa...
+   for (uint32_t i = 0; i < n; ++i) rep[i]->release();
 }
 
 #endif

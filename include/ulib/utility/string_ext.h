@@ -88,6 +88,8 @@ public:
    static UString dirname( const UString& s);
    static UString basename(const UString& s);
 
+   static uint32_t getBaseNameLen(const UString& s) __pure;
+
    // check if string s1 start with string s2
 
    static bool startsWith(const UString& s1, const UString& s2)

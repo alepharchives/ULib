@@ -46,6 +46,7 @@ case "$1" in
 		done
 
 		daemon "$exepath1 $exeargs1 >$outfile1 2>$errfile1 &"
+ 		sleep 2
  		daemon "$exepath2 $exeargs2 >$outfile2 2>$errfile2 &"
 
 		echo ;;
@@ -54,16 +55,18 @@ case "$1" in
 
 		echo $"Stopping $prog: "
 
-		if [ -f $pidfile1 ] ; then
-			kill `cat $pidfile1`
-		else
-			killproc $exepath1
-		fi
-
 		if [ -f $pidfile2 ] ; then
 			kill `cat $pidfile2`
 		else
 			killproc $exepath2
+		fi
+
+		sleep 2
+
+		if [ -f $pidfile1 ] ; then
+			kill `cat $pidfile1`
+		else
+			killproc $exepath1
 		fi
 
 		rm -f $pidfile1 $pidfile2
@@ -79,7 +82,7 @@ case "$1" in
 		exit $? ;;
 
 	restart)
-		$0 stop ; sleep 1 ; $0 start
+		$0 stop ; sleep 2 ; $0 start
 		;;
 
 	*)

@@ -33,7 +33,7 @@
  * ---------------------------------------------------------------------------
  */
 
-uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
+uint32_t u_sprintc(char* restrict _buffer, unsigned char c, bool json)
 {
    U_INTERNAL_TRACE("u_sprintc(%d,%d)", c, json)
 
@@ -41,56 +41,56 @@ uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
       {
       case '\r':
          {
-         *buffer++ = '\\';
-         *buffer   = 'r';
+         *_buffer++ = '\\';
+         *_buffer   = 'r';
 
          return 2;
          }
 
       case '\n':
          {
-         *buffer++ = '\\';
-         *buffer   = 'n';
+         *_buffer++ = '\\';
+         *_buffer   = 'n';
 
          return 2;
          }
 
       case '\t':
          {
-         *buffer++ = '\\';
-         *buffer   = 't';
+         *_buffer++ = '\\';
+         *_buffer   = 't';
 
          return 2;
          }
 
       case '\\':
          {
-         *buffer++ = '\\';
-         *buffer   = '\\';
+         *_buffer++ = '\\';
+         *_buffer   = '\\';
 
          return 2;
          }
 
       case '"':
          {
-         *buffer++ = '\\';
-         *buffer   = '"';
+         *_buffer++ = '\\';
+         *_buffer   = '"';
 
          return 2;
          }
 
       case '\b':
          {
-         *buffer++ = '\\';
-         *buffer   = 'b';
+         *_buffer++ = '\\';
+         *_buffer   = 'b';
 
          return 2;
          }
 
       case '\f':
          {
-         *buffer++ = '\\';
-         *buffer   = 'f';
+         *_buffer++ = '\\';
+         *_buffer   = 'f';
 
          return 2;
          }
@@ -101,8 +101,8 @@ uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
          if (json &&
              c == '/')
             {
-            *buffer++ = '\\';
-            *buffer   = '/';
+            *_buffer++ = '\\';
+            *_buffer   = '/';
 
             return 2;
             }
@@ -117,21 +117,21 @@ uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
                {
                /* \u four-hex-digits (unicode char) */
 
-               *buffer++ = '\\';
-               *buffer++ = 'u';
-               *buffer++ = '0';
-               *buffer++ = '0';
-               *buffer++ = u_hex_upper[((c >> 4) & 0x0F)];
-               *buffer   = u_hex_upper[( c       & 0x0F)];
+               *_buffer++ = '\\';
+               *_buffer++ = 'u';
+               *_buffer++ = '0';
+               *_buffer++ = '0';
+               *_buffer++ = u_hex_upper[((c >> 4) & 0x0F)];
+               *_buffer   = u_hex_upper[( c       & 0x0F)];
 
                return 6;
                }
 
             /* \DDD number formed of 1-3 octal digits */
 
-            cp = buffer + 4;
+            cp = _buffer + 4;
 
-            *buffer = '\\';
+            *_buffer = '\\';
 
             do {
                *--cp = (c & 7) + '0';
@@ -140,12 +140,12 @@ uint32_t u_sprintc(char* restrict buffer, unsigned char c, bool json)
                }
             while (c);
 
-            while (--cp > buffer) *cp = '0';
+            while (--cp > _buffer) *cp = '0';
 
             return 4;
             }
 
-         *buffer = c;
+         *_buffer = c;
 
          return 1;
          }

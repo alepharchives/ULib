@@ -40,7 +40,7 @@ public:
             {
             UPosting::tbl_words->setSpace(UPosting::tbl_words_space);
 
-            if (cdb_words->writeTo(UPosting::tbl_words)) UApplication::exit_value = 0;
+            if (cdb_words->writeTo(UPosting::tbl_words)) IR::deleteDB();
             }
          }
       }

@@ -26,16 +26,16 @@ void UDialog::initialize()
 {
    U_TRACE(0, "UDialog::initialize()")
 
-   U_INTERNAL_ASSERT_EQUALS(path_dialog,0)
+   U_INTERNAL_ASSERT_EQUALS(path_dialog, 0)
 
-   static char path[U_PATH_MAX];
+   char path[U_PATH_MAX];
 
    if ((xdialog = true,  u_pathfind(path, 0, 0, "Xdialog", R_OK | X_OK)) ||
        (xdialog = false, u_pathfind(path, 0, 0,  "dialog", R_OK | X_OK)))
       {
-      path_dialog = path;
+      path_dialog = strdup(path);
 
-      U_INTERNAL_ASSERT_MINOR(u__strlen(path_dialog),U_PATH_MAX)
+      U_INTERNAL_ASSERT_MINOR(u__strlen(path_dialog), U_PATH_MAX)
       }
 }
 

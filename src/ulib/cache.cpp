@@ -93,10 +93,10 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
    if (_y.stat() &&
        _x.creat(O_RDWR))
       {
-      UDirWalk dirwalk;
       bool exist = true;
       UVector<UString> vec1(256), vec2;
       uint32_t i, n, size = 0, hsize = 0;
+      UDirWalk dirwalk(_y.getPath().c_str());
 
       if (( _x.size() == 0                          ||
            (_x.fstat(), _x.st_mtime < _y.st_mtime)) &&
@@ -104,18 +104,13 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
          {
          exist = false;
 
-         UString content, name;
-         char buffer[U_PATH_MAX];
-         char* ptr = buffer + u__snprintf(buffer, sizeof(buffer), "%s/", _y.getPathRelativ());
-         uint32_t buffer_size = ptr - buffer;
+         UString item, content;
 
          for (i = 0; i < n; ++i)
             {
-            name = vec1[i];
+            item = vec1[i];
 
-            (void) u__snprintf(ptr, buffer_size, "%.*s", U_STRING_TO_TRACE(name));
-
-            _y.setPath(buffer);
+            _y.setPath(item);
 
             content = _y.getContent();
 
@@ -123,7 +118,7 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
                {
                vec2.push_back(content);
 
-               size += sizeof(UCache::cache_hash_table_entry) + name.size() + _y.getSize() + 1; // NB: + null-terminator...
+               size += sizeof(UCache::cache_hash_table_entry) + UStringExt::getBaseNameLen(item) + _y.getSize() + 1; // NB: + null-terminator...
                }
             }
 
@@ -142,13 +137,15 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
          U_INTERNAL_ASSERT_EQUALS(info->hsize, hsize)
          U_INTERNAL_ASSERT_EQUALS(info->size, size - sizeof(UCache::cache_info))
 
-         for (i = 0, n = vec2.size(); i < n; ++i) addContent(vec1[i], vec2[i]);
+         for (i = 0, n = vec2.size(); i < n; ++i) addContent(UStringExt::basename(vec1[i]), vec2[i]);
 
          U_INTERNAL_DUMP("hsize = %u writer = %u oldest = %u unused = %u size = %u", info->hsize, info->writer, info->oldest, info->unused, info->size)
 
          U_INTERNAL_ASSERT_EQUALS(info->writer, info->size)
 
-         (void) U_SYSCALL(msync, "%p,%u,%d", (char*)info, sizeof(UCache::cache_info) + info->size, MS_SYNC); // flushes changes made to memory mapped file back to disk
+         // flushes changes made to memory mapped file back to disk
+
+         (void) U_SYSCALL(msync, "%p,%u,%d", (char*)info, sizeof(UCache::cache_info) + info->size, MS_SYNC);
          }
 
       U_RETURN(true);

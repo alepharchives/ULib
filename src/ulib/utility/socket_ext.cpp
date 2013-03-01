@@ -32,6 +32,17 @@
 
 vPFi USocketExt::byte_read_hook; // it allows the generation of a progress meter during upload...
 
+void USocketExt::setRemoteInfo(USocket* s, UString& logbuf)
+{
+   U_TRACE(0, "USocketExt::setRemoteInfo(%p,%.*S)", s, U_STRING_TO_TRACE(logbuf))
+
+   UString x(100U);
+
+   x.snprintf("%2d '%s:%u'", s->iSockDesc, s->cRemoteAddress.pcStrAddress, s->iRemotePort);
+
+   (void) logbuf.insert(0, x);
+}
+
 // Socket I/O
 
 // read while not received almost count data

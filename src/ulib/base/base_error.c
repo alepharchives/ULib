@@ -48,6 +48,8 @@ void u_printError(void)
 #endif
 }
 
+static char err_buffer[256];
+
 /*
 Maps errno number to an error message string, the contents of which are implementation defined.
 The returned string is only guaranteed to be valid only until the next call to function.
@@ -116,7 +118,7 @@ const char* u_getSysError(uint32_t* restrict len)
    ENTRY(EAGAIN, "EAGAIN", "No more processes"),
 #endif
 #if defined(ENOMEM)
-   ENTRY(ENOMEM, "ENOMEM", "Not enough space"),
+   ENTRY(ENOMEM, "ENOMEM", "Cannot allocate memory"),
 #endif
 #if defined(EACCES)
    ENTRY(EACCES, "EACCES", "Permission denied"),
@@ -464,7 +466,6 @@ const char* u_getSysError(uint32_t* restrict len)
 };
 
    static int  nerr = sizeof(error_table) / sizeof(error_table[0]);
-   static char buffer[256];
 
 #ifdef EVMSERR
    /* This is not in the table, because the numeric value of EVMSERR (32767) lies outside the range of sys_errlist[]. */
@@ -509,9 +510,9 @@ const char* u_getSysError(uint32_t* restrict len)
          }
       }
 
-   *len = snprintf(buffer, sizeof(buffer), "%s (%d, %s)", name, errno, msg);
+   *len = snprintf(err_buffer, sizeof(err_buffer), "%s (%d, %s)", name, errno, msg);
 
-   return buffer;
+   return err_buffer;
 }
 
 /*
@@ -689,7 +690,6 @@ const char* u_getSysSignal(int signo, uint32_t* restrict len)
 };
 
    static int  nsig = sizeof(signal_table) / sizeof(signal_table[0]);
-   static char buffer[256];
 
    const char* restrict msg = "Unknown signal";
    const char* restrict name = "???";
@@ -729,9 +729,9 @@ const char* u_getSysSignal(int signo, uint32_t* restrict len)
          }
       }
 
-   *len = snprintf(buffer, sizeof(buffer), "%s (%d, %s)", name, signo, msg);
+   *len = snprintf(err_buffer, sizeof(err_buffer), "%s (%d, %s)", name, signo, msg);
 
-   return buffer;
+   return err_buffer;
 }
 
 #undef  ENTRY
@@ -797,7 +797,6 @@ const char* u_getExitStatus(int exitno, uint32_t* restrict len)
 };
 
    static int  nval = sizeof(exit_value_table) / sizeof(exit_value_table[0]);
-   static char buffer[256];
 
    const char* restrict msg;
    const char* restrict name;
@@ -842,9 +841,9 @@ const char* u_getExitStatus(int exitno, uint32_t* restrict len)
          }
       }
 
-   *len = snprintf(buffer, 256, "%s (%d, %s)", name, exitno, msg);
+   *len = snprintf(err_buffer, 256, "%s (%d, %s)", name, exitno, msg);
 
-   return buffer;
+   return err_buffer;
 }
 
 void u_execOnExit(void)

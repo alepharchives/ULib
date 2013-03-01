@@ -78,31 +78,16 @@ public:
 
    // WAIT
 
-   void wait()
-      {
-      U_TRACE(0, "UProcess::wait()")
-
-      U_CHECK_MEMORY
-
-      if (running)
-         {
-         waitpid(_pid, &status, 0);
-
-         running = false;
-         }
-
-      U_DUMP("status = %d, %S", status, exitInfo())
-      }
-
-   int waitAll();
+   void wait();
+   int  waitAll();
 
    static int waitpid(pid_t pid = -1, int* status = 0, int options = WNOHANG);
 
    // STATUS CHILD
 
-   static char* exitInfo(int status);
+   static char* exitInfo(char* buffer, int status);
 
-          char* exitInfo() const { return exitInfo(status); }
+          char* exitInfo(char* buffer) const { return exitInfo(buffer, status); }
 
    static int exitValue(int _status)
       {

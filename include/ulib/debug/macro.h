@@ -173,6 +173,7 @@
                                                  obj = U_NEW_VECTOR(n,type,p), \
                                                  UObjectDB::flag_ulib_object = false
 
+#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)  UMemoryPool::writeInfoTo(fmt,args);
 
 // Dump argument for exec()...
 
@@ -257,6 +258,8 @@ if (envp) \
 
 #  define U_NEW_ULIB_OBJECT(obj,args...)         obj = new args
 #  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type,p) obj = u_new_vector<type>(n,p)
+
+#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 
 #  define U_DUMP_ATTRS(attrs)
 #  define U_DUMP_EXEC(argv, envp)

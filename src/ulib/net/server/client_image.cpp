@@ -129,7 +129,6 @@ UClientImage_Base::UClientImage_Base()
 
    start = count = 0;
    state = sfd = bclose = 0;
-   client_address = 0;
 
    U_INTERNAL_DUMP("socket = %p", socket)
 
@@ -484,11 +483,14 @@ bool UClientImage_Base::newConnection()
       bool berror = false;
       UString tmp(U_CAPACITY);
 
-      socket->getRemoteInfo(*logbuf, client_address);
+      USocketExt::setRemoteInfo(socket, *logbuf);
 
       if (ULog::prefix) tmp.snprintf(ULog::prefix);
 
-      tmp.snprintf_add("New client connected from %.*s, %s clients currently connected\n", U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection());
+      char buffer[32];
+
+      tmp.snprintf_add("New client connected from %.*s, %s clients currently connected\n",
+                        U_STRING_TO_TRACE(*logbuf), UServer_Base::getNumConnection(buffer));
 
       if (msg_welcome)
          {
@@ -664,22 +666,7 @@ int UClientImage_Base::handlerError(int sock_state)
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   U_INTERNAL_DUMP("fd = %d sock_fd = %d client_address = %S", UEventFd::fd, socket->iSockDesc, client_address)
-
-#ifdef DEBUG
-   if (client_address == 0)
-      {
-      if (UServer_Base::isLog())
-         {
-         U_INTERNAL_ASSERT_POINTER(logbuf)
-
-         UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s, fd = %d sock_fd = %d sfd = %d count = %u UEventFd::op_mask = %B bclose = %B\n",
-            U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(*logbuf), UEventFd::fd, socket->iSockDesc, sfd, count, UEventFd::op_mask, bclose);
-         }
-
-      U_ERROR("UClientImage_Base::handlerError(): client_address null");
-      }
-#endif
+   U_INTERNAL_DUMP("fd = %d sock_fd = %d", UEventFd::fd, socket->iSockDesc)
 
    UServer_Base::pClientImage = this;
 
@@ -694,17 +681,21 @@ int UClientImage_Base::handlerError(int sock_state)
       U_RETURN(U_NOTIFIER_DELETE);
       }
 
-#if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT)
+#if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UServer_Base::isLog())
       {
       U_INTERNAL_ASSERT_POINTER(logbuf)
 
-      UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s\n",
-                                    U_STRING_TO_TRACE(*UServer_Base::mod_name), U_STRING_TO_TRACE(*logbuf));
+      UServer_Base::log->log("%.*sdetected anomalous epoll event on %.*s, sock_fd = %d sfd = %d count = %u UEventFd::op_mask = %B bclose = %B\n",
+            U_STRING_TO_TRACE(*UServer_Base::mod_name),
+            U_STRING_TO_TRACE(*logbuf), socket->iSockDesc, sfd, count, UEventFd::op_mask, bclose);
       }
 
-   U_RETURN(U_NOTIFIER_OK);
+   U_ERROR("UClientImage_Base::handlerError(): fd null - %.*s, sock_fd = %d sfd = %d count = %u UEventFd::op_mask = %B bclose = %B",
+            U_STRING_TO_TRACE(*logbuf), socket->iSockDesc, sfd, count, UEventFd::op_mask, bclose);
 #endif
+
+   U_RETURN(U_NOTIFIER_OK);
 }
 
 int UClientImage_Base::handlerRead()
@@ -1003,8 +994,7 @@ void UClientImage_Base::handlerDelete()
 
    // NB: to reuse object...
 
-   UEventFd::fd   = 0;
-   client_address = 0;
+   UEventFd::fd = 0;
 
    U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, U_READ_IN)
 #ifdef HAVE_ACCEPT4

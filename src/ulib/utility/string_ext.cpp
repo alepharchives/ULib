@@ -1063,13 +1063,25 @@ UString UStringExt::basename(const UString& s)
 {
    U_TRACE(0, "UStringExt::basename(%.*S)", U_STRING_TO_TRACE(s))
 
-   uint32_t pos = s.rfind('/'); // Find last '/' */
+   uint32_t pos = s.rfind('/'); // Find last '/'
 
    if (pos == U_NOT_FOUND) return s;
 
    UString result = s.substr(pos+1);
 
    U_RETURN_STRING(result);
+}
+
+__pure uint32_t UStringExt::getBaseNameLen(const UString& s)
+{
+   U_TRACE(0, "UStringExt::getBaseNameLen(%.*S)", U_STRING_TO_TRACE(s))
+
+   uint32_t len = s.size(),
+            pos = s.rfind('/'); // Find last '/'
+
+   if (pos != U_NOT_FOUND) len -= pos + 1;
+
+   U_RETURN(len);
 }
 
 UString UStringExt::suffix(const UString& s, char sep)
@@ -1307,15 +1319,17 @@ UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz 
       if (space == 0) space = sz * 4;
       }
 
+#ifdef USE_LIBZ // decompress with zlib
    UString result(space);
 
-#ifdef USE_LIBZ // decompress with zlib
    result.rep->_length = u_gz_inflate(ptr, sz, result.rep->data());
 
    U_INTERNAL_DUMP("u_gz_inflate() = %d", result.rep->_length)
-#endif
 
    U_RETURN_STRING(result);
+#else
+   U_RETURN_STRING(UString::getStringNull());
+#endif
 }
 
 // convert letter to upper or lower case

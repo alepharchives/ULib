@@ -228,13 +228,7 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
 {
    U_TRACE(0, "UServices::getOpenSSLError(%p,%u,%p)", buffer, buffer_size, psize)
 
-   if (buffer == 0)
-      {
-      static char lbuffer[4096];
-
-      buffer      = lbuffer;
-      buffer_size = 4096;
-      }
+   U_INTERNAL_ASSERT_POINTER(buffer)
 
    long i;
    uint32_t size = 0;
@@ -249,9 +243,9 @@ char* UServices::getOpenSSLError(char* buffer, uint32_t buffer_size, uint32_t* p
       U_INTERNAL_DUMP("buf = %.*S", u__strlen(_buf), _buf)
 
       ptr  += size;
-      size += u__snprintf(ptr, buffer_size - (ptr - buffer), "(%ld, %s)", i, _buf);
+      size += u__snprintf(ptr, buffer_size - (ptr - buffer), " (%ld, %s)", i, _buf);
 
-      U_INTERNAL_ASSERT_MINOR(size,buffer_size)
+      U_INTERNAL_ASSERT_MINOR(size, buffer_size)
       }
 
    if (psize) *psize = size;
@@ -311,13 +305,13 @@ const char* UServices::verify_status(long result)
       case X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY:   descr = "X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY"; break;
       }
 
-   static char buffer[512];
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   (void) sprintf(buffer, "(%ld, %s) - %s", result, descr, X509_verify_cert_error_string(result));
+   (void) sprintf(u_buffer, "(%ld, %s) - %s", result, descr, X509_verify_cert_error_string(result));
 
-   U_INTERNAL_DUMP("buffer = %S", buffer)
+   U_INTERNAL_DUMP("u_buffer = %S", u_buffer)
 
-   U_RETURN(buffer);
+   U_RETURN(u_buffer);
 }
 
 int UServices::X509Callback(int ok, X509_STORE_CTX* ctx)

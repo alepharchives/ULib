@@ -420,9 +420,9 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       }
 }
 
-uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
+void UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 {
-   U_TRACE(1, "UStringRep::copy(%p,%u,%u)", s, n, pos)
+   U_TRACE(0, "UStringRep::copy(%p,%u,%u)", s, n, pos)
 
    U_CHECK_MEMORY
 
@@ -430,11 +430,11 @@ uint32_t UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 
    if (n > (_length - pos)) n = (_length - pos);
 
-   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
 
    U__MEMCPY(s, str + pos, n);
 
-   U_RETURN(n);
+   s[n] = '\0';
 }
 
 void UStringRep::trim()
@@ -778,9 +778,9 @@ UString UString::copy() const
 
 // how much space we preallocate
 
-#define U_HOW_MUCH_PREALLOCATE(sz1,sz2) \
-            (sz1 <= U_CAPACITY        ? sz2 : \
-             sz1 >= (2 * 1024 * 1024) ? sz1 : (sz1 * 2) + (3 * PAGESIZE))
+#define U_HOW_MUCH_PREALLOCATE(sz1,sz2,sz3) \
+            (sz1 <= U_CAPACITY ? sz2 : \
+             sz1 >= sz3        ? sz1 : (sz1 * 2) + (3 * PAGESIZE))
 
 // SERVICES
 
@@ -788,7 +788,7 @@ UString::UString(uint32_t n)
 {
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n)
 
-   rep = UStringRep::create(0U, U_HOW_MUCH_PREALLOCATE(n,n), 0);
+   rep = UStringRep::create(0U, U_HOW_MUCH_PREALLOCATE(n,n,n), 0);
 
    U_INTERNAL_DUMP("this = %p rep = %p rep->memory._this = %p", this, rep, rep->memory._this)
 
@@ -845,7 +845,7 @@ void UString::setBuffer(uint32_t n)
       }
    else
       {
-      _set(UStringRep::create(0U, U_HOW_MUCH_PREALLOCATE(n,n), 0));
+      _set(UStringRep::create(0U, U_HOW_MUCH_PREALLOCATE(n,n,n), 0));
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -863,7 +863,7 @@ bool UString::reserve(uint32_t n)
 
    if (rep->_capacity >= n) U_RETURN(false);
 
-   _set(UStringRep::create(rep->_length, U_HOW_MUCH_PREALLOCATE(n,U_CAPACITY), rep->str));
+   _set(UStringRep::create(rep->_length, U_HOW_MUCH_PREALLOCATE(n,U_CAPACITY,2*1024*1024), rep->str));
 
    U_INTERNAL_ASSERT(invariant())
 
@@ -1020,7 +1020,7 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
    if (rep->references ||
        sz1 > rep->_capacity)
       {
-      r = UStringRep::create(sz, U_HOW_MUCH_PREALLOCATE(sz1,U_CAPACITY), str);
+      r = UStringRep::create(sz, U_HOW_MUCH_PREALLOCATE(sz1,U_CAPACITY,2*1024*1024), str);
 
       _set(r);
 
@@ -1673,8 +1673,8 @@ void UStringRep::write(ostream& os) const
 
 // OPTMIZE APPEND (BUFFERED)
 
-char  UString::appbuf[1024];
-char* UString::ptrbuf = appbuf;
+char* UString::appbuf;
+char* UString::ptrbuf;
 
 U_EXPORT istream& operator>>(istream& in, UString& str)
 {

@@ -26,38 +26,33 @@
 #  define U_openmode std::ios_base::out
 #endif
 
+char*       UObjectIO::buffer_output;
+uint32_t    UObjectIO::buffer_output_sz;
+uint32_t    UObjectIO::buffer_output_len;
 ostrstream* UObjectIO::os;
 istrstream* UObjectIO::is;
-uint32_t    UObjectIO::buffer_output_len;
-char        UObjectIO::buffer_output[U_BUFSZ_OBJ_IO];
 
-// gestione conversione oggetti in const char*...
+// manage representation object => string
 
-void UObjectIO::init()
+void UObjectIO::init(char* t, uint32_t sz)
 {
-   U_INTERNAL_TRACE("UObjectIO::init()")
+   U_INTERNAL_TRACE("UObjectIO::init(%p,%u)", t, sz)
+
+   buffer_output    = t;
+   buffer_output_sz = sz;
 
 #ifdef HAVE_OLD_IOSTREAM
-   os = new ostrstream(buffer_output, U_BUFSZ_OBJ_IO);
+   os = new ostrstream(buffer_output, buffer_output_sz);
 #else
    static char place[sizeof(ostrstream)];
 
-   os = (ostrstream*) new(place) ostrstream(buffer_output, U_BUFSZ_OBJ_IO);
+   os = (ostrstream*) new(place) ostrstream(buffer_output, buffer_output_sz);
 #endif
 }
 
 void UObjectIO::input(char* t, uint32_t tlen)
 {
    U_INTERNAL_TRACE("UObjectIO::input(%s,%u)", t, tlen)
-
-   if (is)
-      {
-#  ifdef HAVE_OLD_IOSTREAM
-      delete is;
-#  else
-      is->~istrstream();
-#  endif
-      }
 
 #ifdef HAVE_OLD_IOSTREAM
    is = new istrstream(t, tlen);
@@ -78,7 +73,7 @@ void UObjectIO::output()
 
    U_INTERNAL_PRINT("os->pcount() = %d", buffer_output_len)
 
-   U_INTERNAL_ASSERT_MINOR(buffer_output_len,U_BUFSZ_OBJ_IO)
+   U_INTERNAL_ASSERT_MINOR(buffer_output_len, buffer_output_sz)
 
    buffer_output[buffer_output_len] = '\0';
 

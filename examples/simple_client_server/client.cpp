@@ -160,8 +160,10 @@ public:
       // manage connection
 
       buffer.reserve(100);
+
       pcClientSocket->setTimeoutRCV();
-      pcClientSocket->getRemoteInfo(buffer);
+
+      USocketExt::setRemoteInfo(pcClientSocket, buffer);
 
       LOG_MSGb("client connected to");
 

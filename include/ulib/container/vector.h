@@ -457,7 +457,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::replace(%u,%p)", pos, elem)
 
-      u_construct<T>((T*)elem);
+      u_construct<T>(&elem);
       u_destroy<T>((T*)vec[pos]);
 
       UVector<void*>::replace(pos, elem);
@@ -469,7 +469,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::push(%p)", elem)
 
-      u_construct<T>(elem);
+      u_construct<T>(&elem);
 
       UVector<void*>::push(elem);
       }
@@ -500,7 +500,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::insert(%u,%p)", pos, elem)
 
-      u_construct<T>(elem);
+      u_construct<T>(&elem);
 
       UVector<void*>::insert(pos, elem);
       }
@@ -580,7 +580,7 @@ public:
 
       if (nextTail != head)
          {
-         u_construct<T>(elem);
+         u_construct<T>(&elem);
 
          vec[tail] = elem;
 
@@ -636,7 +636,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
       U_INTERNAL_ASSERT(_length <= _capacity)
 
-      u_construct<T>(elem);
+      u_construct<T>(&elem);
 
       if (++_length == _capacity) reserve(_capacity * 2);
 
@@ -770,9 +770,9 @@ public:
 
       if (is.good())
          {
-         streambuf* sb = is.rdbuf();
+         T* _elem = U_NEW(T);
 
-         T elem;
+         streambuf* sb = is.rdbuf();
 
          c = sb->sbumpc(); // skip '[' or '('
 
@@ -797,10 +797,13 @@ public:
 
             sb->sputbackc(c);
 
-            is >> elem;
+            is >> *_elem;
 
-            v.push(&elem);
+            if (is.bad()) is.clear();
+            else          v.push(_elem);
             }
+
+         u_destroy<T>(_elem);
          }
 
       if (c == EOF) is.setstate(ios::eofbit);

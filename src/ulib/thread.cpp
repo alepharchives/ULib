@@ -414,9 +414,9 @@ void UThread::execHandler(UThread* th)
    th->close();
 }
 
-bool UThread::start()
+bool UThread::start(uint32_t timeoutMS)
 {
-   U_TRACE(1, "UThread::start()")
+   U_TRACE(1, "UThread::start(%u)", timeoutMS)
 
    U_INTERNAL_ASSERT_EQUALS(priv->_tid, 0)
 
@@ -430,11 +430,16 @@ bool UThread::start()
 
    if (U_SYSCALL(pthread_create, "%p,%p,%p,%p", &(priv->_tid), &(priv->_attr), (exec_t)execHandler, this) == 0)
       {
-      /* give at the thread the time to initialize... */
+      if (timeoutMS)
+         {
+         /* give at the thread the time to initialize... */
 
-      struct timespec ts = { 0L, 50L * 1000000L };
+         struct timespec ts = { 0L, 1000000L };
 
-      (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+         ts.tv_nsec *= (long)timeoutMS;
+
+         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+         }
 
       U_RETURN(true);
       }

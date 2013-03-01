@@ -221,6 +221,7 @@ enum AffermationType {
 #define U_gif  'g' /* image/gif */
 #define U_png  'p' /* image/png */
 #define U_jpg  'J' /* image/jpg */
+#define U_ico  'i' /* image/x-icon */
 #define U_ssi  's' /* SSI */
 #define U_gz   'z' /* gzip */
 

@@ -84,8 +84,8 @@
   64 sizeof(UPCRE)
   64 sizeof(UCommand)
   64 sizeof(UApplication)
+  64 sizeof(UClientImage<UTCPSocket>)
   72 sizeof(UMimePKCS7)
-  72 sizeof(UClientImage<UTCPSocket>)
   80 sizeof(UZIP)
   88 sizeof(UMimeMultipartMsg)
   96 sizeof(UMimeMessage)
@@ -100,17 +100,17 @@
  176 sizeof(USSLSocket)
  184 sizeof(ULog)
  184 sizeof(UFile)
- 192 sizeof(URDBClient<UTCPSocket>)
+ 184 sizeof(URDBClient<UTCPSocket>)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
  232 sizeof(USmtpClient)
+ 240 sizeof(UHttpClient<UTCPSocket>)
  256 sizeof(UFileConfig)
- 256 sizeof(UHttpClient<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_5
 
  296 sizeof(UCDB)
- 304 sizeof(UModNoCatPeer: 64bit) <==
+ 304 sizeof(UModNoCatPeer)
  304 sizeof(USOAPClient<UTCPSocket>)
  360 sizeof(UFtpClient)
  512 sizeof(URDB)
@@ -134,13 +134,13 @@
    8 sizeof(UPKCS7)
    8 sizeof(UTimeVal)
   12 sizeof(UProcess)
-  12 sizeof(USemaphore)
   12 sizeof(URDBServer)
   12 sizeof(UVector<UString>)
   12 sizeof(UServer<UTCPSocket>)
   16 sizeof(UTimeDate)
   16 sizeof(UXMLParser)
   16 sizeof(UQueryNode)
+  16 sizeof(USemaphore)
   16 sizeof(USOAPFault)
   16 sizeof(UTokenizer)
   16 sizeof(UStringRep) <==
@@ -161,25 +161,27 @@
   32 sizeof(UOptions)
   32 sizeof(UHashMap<UString>)
   36 sizeof(Url)
-  36 sizeof(UApplication)
   36 sizeof(UMimeHeader)
-  36 sizeof(UHTTP::UFileCacheData) <==
--------------------------
-   U_STACK_TYPE_2
-
+  36 sizeof(UApplication)
   40 sizeof(UPCRE)
   40 sizeof(UCommand)
   40 sizeof(UMimePKCS7)
+  40 sizeof(UHTTP::UFileCacheData) <==
+-------------------------
+   U_STACK_TYPE_2
+
   44 sizeof(UZIP)
+  44 sizeof(UClientImage<UTCPSocket>)
   48 sizeof(UIPAddress)
-  48 sizeof(UClientImage<UTCPSocket>) <==
+  56 sizeof(UMimeMessage)
+  64
 -------------------------
    U_STACK_TYPE_3
 
-  56 sizeof(UMimeMessage)
   68 sizeof(USOAPParser)
   80 sizeof(UMimeMultipart)
   80 sizeof(UMimeMultipartMsg)
+ 116 sizeof(URDBClient<UTCPSocket>)
  120 sizeof(ULog)
  120 sizeof(UFile)
  120 sizeof(URDBClient<UTCPSocket>)
@@ -191,11 +193,11 @@
    U_STACK_TYPE_4
 
  144 sizeof(USSLSocket)
- 156 sizeof(UHttpClient<UTCPSocket>)
+ 148 sizeof(UHttpClient<UTCPSocket>)
  172 sizeof(UFileConfig)
  176 sizeof(USmtpClient)
  180 sizeof(USOAPClient<UTCPSocket>)
- 196 sizeof(UModNoCatPeer: 32bit)
+ 196 sizeof(UModNoCatPeert)
  200 sizeof(UCDB)
  256
 -------------------------
@@ -235,14 +237,13 @@
 #  endif
 #else
 #     define U_STACK_TYPE_0   4U
+#     define U_STACK_TYPE_3  64U
 #  ifndef DEBUG
 #     define U_STACK_TYPE_1  16U
-#     define U_STACK_TYPE_2  36U
-#     define U_STACK_TYPE_3  48U
+#     define U_STACK_TYPE_2  40U
 #  else
 #     define U_STACK_TYPE_1 (16U+4U)
-#     define U_STACK_TYPE_2 (36U+4U)
-#     define U_STACK_TYPE_3 (48U+4U)
+#     define U_STACK_TYPE_2 (40U+4U)
 #  endif
 #endif
 
@@ -274,6 +275,7 @@
 
 class UStringRep;
 class UServer_Base;
+class UNoCatPlugIn;
 class UStackMemoryPool;
 
 class U_EXPORT UMemoryPool {
@@ -291,15 +293,17 @@ public:
    static void* _malloc(         uint32_t   num, uint32_t type_size = 1, bool bzero = false);
    static void* _malloc(         uint32_t* pnum, uint32_t type_size = 1, bool bzero = false);
 
-#if defined(DEBUG) || defined(U_TEST)
+#ifdef DEBUG
    static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
-#  ifdef DEBUG
+
    static void printInfo(std::ostream& os);
-#  endif
+   static void writeInfoTo(const char* format, ...);
 #endif
 
 private:
    static void deallocate(void* ptr, uint32_t length);
+
+   static void addMemoryBlocks(     int stack_index, uint32_t n);
    static void allocateMemoryBlocks(int stack_index, uint32_t n);
 
 #if defined(ENABLE_MEMPOOL) && defined(__linux__) && defined(DEBUG)
@@ -311,6 +315,7 @@ private:
 
    friend class UStringRep;
    friend class UServer_Base;
+   friend class UNoCatPlugIn;
    friend class UStackMemoryPool;
 };
 
@@ -382,10 +387,10 @@ template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 #if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
 #  define U_MEMORY_ALLOCATOR
 #  define U_MEMORY_DEALLOCATOR
-#  define U_MALLOC(  sz)               malloc(sz);
-#  define U_MALLOC_TYPE(  type) (type*)malloc(sizeof(type));
-#  define U_FREE(ptr,sz)               free(ptr);
-#  define U_FREE_TYPE(ptr,type)        free(ptr);
+#  define U_MALLOC(  sz)               malloc(sz)
+#  define U_MALLOC_TYPE(  type) (type*)malloc(sizeof(type))
+#  define U_FREE(ptr,sz)               free(ptr)
+#  define U_FREE_TYPE(ptr,type)        free(ptr)
 #else
 #  ifdef ENABLE_NEW_VECTOR
 #     define U_MEMORY_ALLOCATOR \
@@ -406,10 +411,10 @@ void  operator delete[](void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_S
 void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
 void  operator delete[](void* _ptr, size_t sz) {                                                  UMemoryPool::_free( _ptr, sz); }
 #  endif
-#  define U_MALLOC(  sz)               UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);
-#  define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);
-#  define U_FREE(ptr,sz)              {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE);}
-#  define U_FREE_TYPE(ptr,type)       {UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE);}
+#  define U_MALLOC(  sz)               UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE)
+#  define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE)
+#  define U_FREE(ptr,sz)               UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sz));          U_INTERNAL_ASSERT(sz          <=U_MAX_SIZE_PREALLOCATE) 
+#  define U_FREE_TYPE(ptr,type)        UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE) 
 #endif
 
 #endif

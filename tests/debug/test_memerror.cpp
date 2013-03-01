@@ -40,7 +40,6 @@ protected:
 int U_EXPORT main(int argc, char* argv[])
 {
    u_init_ulib(argv);
-   u_debug_init();
 
    U_TRACE(5, "main(%d,%p)", argc, argv)
 

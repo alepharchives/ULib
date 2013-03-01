@@ -19,12 +19,15 @@
 #ifndef ENABLE_THREAD
 #  define U_LOCKFILE
 #  include <ulib/file.h>
+#  ifdef __MINGW32__
+typedef HANDLE sem_t;
+#  else
 typedef int sem_t;
+#  endif
 #endif
 
 #ifdef __MINGW32__
 typedef DWORD  timeout_t;
-typedef HANDLE sem_t;
 #  define MAX_SEM_VALUE 1000000
 #else
 typedef time_t timeout_t;

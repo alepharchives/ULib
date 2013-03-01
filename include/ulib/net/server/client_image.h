@@ -152,7 +152,6 @@ public:
 protected:
    uint32_t start, count;
    int state, sfd, bclose;
-   const char* client_address;
 
    static UString* msg_welcome;
 

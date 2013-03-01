@@ -213,14 +213,14 @@ U_NO_EXPORT const char* UPCRE::status(int num)
       case -6: descr = "PCRE_ERROR_NOMEMORY";     break;
       case -7: descr = "PCRE_ERROR_NOSUBSTRING";  break;
 
-      default: descr = "Code unknown"; break;
+      default: descr = "Code unknown";            break;
       }
 
-   static char buffer[128];
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   (void) sprintf(buffer, "(%d, %s)", num, descr);
+   (void) sprintf(u_buffer, "(%d, %s)", num, descr);
 
-   U_RETURN(buffer);
+   U_RETURN(u_buffer);
 }
 
 /* compile the expression */

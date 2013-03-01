@@ -10,11 +10,11 @@ rm -f nocat.log uclient.log /tmp/firewall.err /tmp/nodog.log /tmp/mod_nocat.err 
 		trace.*uclient*.[0-9]* object.*uclient*.[0-9]* stack.*uclient*.[0-9]* mempool*uclient*.[0-9]* \
 		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* mempool*userver_tcp*.[0-9]* \
  		nocat/trace.*userver_tcp*.[0-9]* nocat/object.*userver_tcp*.[0-9]* nocat/stack.*userver_tcp*.[0-9]* nocat/mempool*userver_tcp*.[0-9]* \
- 		/usr/lib/nodog/trace.*userver_tcp*.[0-9]* /usr/lib/nodog/object.*userver_tcp*.[0-9]* /usr/lib/nodog/stack.*userver_tcp*.[0-9]* /usr/lib/nodog/mempool*userver_tcp*.[0-9]*
+ 		/usr/lib/nodog*/trace.*userver_tcp*.[0-9]* /usr/lib/nodog*/object.*userver_tcp*.[0-9]* /usr/lib/nodog*/stack.*userver_tcp*.[0-9]* /usr/lib/nodog*/mempool*userver_tcp*.[0-9]*
 #		$DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]*
 
- UTRACE="0 10M 0"
- UOBJDUMP="0 5M 10"
+ UTRACE="0 100M 1"
+#UOBJDUMP="0 5M 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 

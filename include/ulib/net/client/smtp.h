@@ -153,8 +153,6 @@ protected:
    SMTPClientStatus state;
    int response;
 
-   static char buffer[128];
-
 private:
    void setStateFromResponse() U_NO_EXPORT;
    bool syncCommand(const char* format, ...) U_NO_EXPORT; // Send a command to the SMTP server and wait for a response

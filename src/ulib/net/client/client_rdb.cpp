@@ -36,11 +36,11 @@ U_NO_EXPORT const char* URDBClient_Base::status()
       default:  descr = "Code unknown"; break;
       }
 
-   static char _buf[128];
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   (void) sprintf(_buf, "(%d, %s)", nResponseCode, descr);
+   (void) sprintf(u_buffer, "(%d, %s)", nResponseCode, descr);
 
-   U_RETURN(_buf);
+   U_RETURN(u_buffer);
 }
 
 bool URDBClient_Base::readResponse()

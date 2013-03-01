@@ -492,9 +492,35 @@ loop:
    U_RETURN(result);
 }
 
+void UProcess::wait()
+{
+   U_TRACE(0, "UProcess::wait()")
+
+   U_CHECK_MEMORY
+
+   if (running)
+      {
+      waitpid(_pid, &status, 0);
+
+      running = false;
+      }
+
+#ifdef DEBUG
+   char buffer[128];
+
+   (void) exitInfo(buffer, status);
+
+   U_INTERNAL_DUMP("status = %d, %S", status, buffer)
+#endif
+}
+
 int UProcess::waitAll()
 {
    U_TRACE(1, "UProcess::waitAll()")
+
+#if DEBUG
+   char buffer[128];
+#endif
 
    wait();
 
@@ -509,34 +535,32 @@ int UProcess::waitAll()
          result = U_FAILED_SOME;
          }
 
-      U_DUMP("result = %b status = %d, %S", result, status, exitInfo())
+      U_DUMP("result = %b status = %d, %S", result, status, exitInfo(buffer))
       }
 
    U_RETURN(result);
 }
 
-char* UProcess::exitInfo(int _status)
+char* UProcess::exitInfo(char* buffer, int _status)
 {
-   U_TRACE(0, "UProcess::exitInfo(%d)", _status)
+   U_TRACE(0, "UProcess::exitInfo(%p,%d)", buffer, _status)
 
    uint32_t n = 0;
 
-   static char buffer[128];
-
    if (WIFEXITED(_status))
       {
-      n = u__snprintf(buffer, sizeof(buffer), "Exit %d", WEXITSTATUS(_status));
+      n = u__snprintf(buffer, 128, "Exit %d", WEXITSTATUS(_status));
       }
    else if (WIFSIGNALED(_status))
       {
 #  ifndef WCOREDUMP
 #  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
-      n = u__snprintf(buffer, sizeof(buffer), "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
+      n = u__snprintf(buffer, 128, "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
       }
    else if (WIFSTOPPED(_status))
       {
-      n = u__snprintf(buffer, sizeof(buffer), "Signal %Y", WSTOPSIG(_status));
+      n = u__snprintf(buffer, 128, "Signal %Y", WSTOPSIG(_status));
       }
 #  ifndef WIFCONTINUED
 #  define WIFCONTINUED(status)  ((status) == 0xffff)
@@ -545,6 +569,8 @@ char* UProcess::exitInfo(int _status)
       {
       U__MEMCPY(buffer, "SIGCONT", (n = U_CONSTANT_SIZE("SIGCONT")));
       }
+
+   U_INTERNAL_ASSERT_MINOR(n, 128)
 
    buffer[n] = '\0';
 

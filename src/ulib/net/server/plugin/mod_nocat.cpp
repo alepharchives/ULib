@@ -51,6 +51,7 @@ fd_set*                    UNoCatPlugIn::paddrmask;
 uint32_t                   UNoCatPlugIn::nfds;
 uint32_t                   UNoCatPlugIn::num_radio;
 uint32_t                   UNoCatPlugIn::total_connections;
+uint32_t                   UNoCatPlugIn::num_peers_preallocate;
 uint64_t                   UNoCatPlugIn::traffic_available;
 UString*                   UNoCatPlugIn::ip;
 UString*                   UNoCatPlugIn::host;
@@ -74,6 +75,7 @@ UCommand*                  UNoCatPlugIn::uclient;
 UCommand*                  UNoCatPlugIn::uploader;
 UDirWalk*                  UNoCatPlugIn::dirwalk;
 UIptAccount*               UNoCatPlugIn::ipt;
+UModNoCatPeer*             UNoCatPlugIn::peers_preallocate;
 const UString*             UNoCatPlugIn::label_to_match;
 UVector<Url*>*             UNoCatPlugIn::vauth_url;
 UVector<Url*>*             UNoCatPlugIn::vinfo_url;
@@ -725,7 +727,9 @@ retry:
       if (pid > 0 &&
           status)
          {
-         U_SRV_LOG("Child (pid %d) exited with value %d (%s)", pid, status, UProcess::exitInfo(status));
+         char buffer[128];
+
+         U_SRV_LOG("Child (pid %d) exited with value %d (%s)", pid, status, UProcess::exitInfo(buffer, status));
 
          goto retry;
          }
@@ -1038,7 +1042,9 @@ retry:
       if (pid > 0 &&
           status)
          {
-         U_SRV_LOG("Child (pid %d) exited with value %d (%s)", pid, status, UProcess::exitInfo(status));
+         char buffer[128];
+
+         U_SRV_LOG("Child (pid %d) exited with value %d (%s)", pid, status, UProcess::exitInfo(buffer, status));
 
          goto retry;
          }
@@ -1467,21 +1473,71 @@ UModNoCatPeer* UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 {
    U_TRACE(0, "UNoCatPlugIn::creatNewPeer(%u)", index_AUTH)
 
-   UModNoCatPeer* peer = U_NEW(UModNoCatPeer);
+   UModNoCatPeer* peer;
+
+   if (num_peers_preallocate) peer = peers_preallocate + --num_peers_preallocate;
+   else
+      {
+      num_peers_preallocate = 512;
+
+      U_NEW_VECTOR_ULIB_OBJECT(peers_preallocate, num_peers_preallocate, UModNoCatPeer, 0);
+
+      if (peers_preallocate)
+         {
+         peer = peers_preallocate + --num_peers_preallocate;
+
+      // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.creatNewPeer", 0)
+         }
+      else
+         {
+         unsigned long vsz, rss;
+
+         u_get_memusage(&vsz, &rss);
+
+         double _vsz = (double)vsz / (1024.0 * 1024.0),
+                _rss = (double)rss / (1024.0 * 1024.0);
+
+         // send msg to portal
+
+         UString msg(200U);
+
+         msg.snprintf("/error_ap?ap=%.*s@%.*s&public=%.*s:%u&msg="
+                                 "address+space+usage:+%.2f+MBytes+-+"
+                                           "rss+usage:+%.2f+MBytes",
+                        U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*hostname), U_STRING_TO_TRACE(*ip), UServer_Base::port, _vsz, _rss);
+
+         (void) sendMsgToPortal(*uclient, msg);
+
+         U_SRV_LOG("*** NODOG OUT OF MEMORY *** "
+                     "address space usage: %.2f MBytes - "
+                               "rss usage: %.2f MBytes", _vsz, _rss);
+
+         peer = U_NEW(UModNoCatPeer);
+
+         if (peer == 0)
+            {
+            U_ERROR("cannot allocate %u bytes (%u KB) of memory. Going down - "
+                        "address space usage: %.2f MBytes - "
+                                  "rss usage: %.2f MBytes\n",
+                        sizeof(UModNoCatPeer),
+                        sizeof(UModNoCatPeer) / 1024, _vsz, _rss);
+            }
+
+         num_peers_preallocate = 0;
+         }
+      }
 
    U_peer_allowed(peer) = false;
    *((UIPAddress*)peer) = UServer_Base::pClientImage->socket->remoteIPAddress();
 
-   if (U_ipaddress_StrAddressUnresolved(peer)) peer->UIPAddress::resolveStrAddress();
-
    (void) peer->ip.assign(peer->UIPAddress::pcStrAddress);
 
-   U_ASSERT(peer->ip == UServer_Base::getClientAddress())
+   U_ASSERT(peer->ip == UServer_Base::client_address)
 
    peer->mac = UServer_Base::getMacAddress(peer->UIPAddress::pcStrAddress);
 
-   if (peer->mac.empty() && ip->equal(UServer_Base::getClientAddress())) peer->mac = UServer_Base::getMacAddress(extdev->data());
-   if (peer->mac.empty())                                                peer->mac = *str_without_mac;
+   if (peer->mac.empty() && ip->equal(UServer_Base::client_address)) peer->mac = UServer_Base::getMacAddress(extdev->data());
+   if (peer->mac.empty())                                            peer->mac = *str_without_mac;
 
    setNewPeer(peer, index_AUTH);
 
@@ -1492,7 +1548,7 @@ void UNoCatPlugIn::checkOldPeer(UModNoCatPeer* peer)
 {
    U_TRACE(0, "UNoCatPlugIn::checkOldPeer(%p)", peer)
 
-   UString mac = UServer_Base::getMacAddress(UServer_Base::getClientAddress()); // NB: get mac from arp cache...
+   UString mac = UServer_Base::getMacAddress(UServer_Base::client_address); // NB: get mac from arp cache...
 
    if (mac != peer->mac      &&
        (mac.empty() == false ||
@@ -2143,7 +2199,7 @@ int UNoCatPlugIn::handlerInit()
 
    peers = U_NEW(UHashMap<UModNoCatPeer*>);
 
-   peers->allocate();
+   peers->allocate(U_GET_NEXT_PRIME_NUMBER(1024));
 
    openlist       = U_NEW(UVector<UString>);
    status_content = U_NEW(UString(U_CAPACITY));
@@ -2170,6 +2226,11 @@ int UNoCatPlugIn::handlerInit()
 int UNoCatPlugIn::handlerFork()
 {
    U_TRACE(0, "UNoCatPlugIn::handlerFork()")
+
+#if defined(ENABLE_MEMPOOL) && !defined(__MINGW32__) && !defined(ENABLE_THREAD) // && !defined(DEBUG)
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),         1046);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE),    9);
+#endif
 
    uint32_t i, n;
 
@@ -2279,8 +2340,6 @@ int UNoCatPlugIn::handlerFork()
 
          U_ipaddress_StrAddressUnresolved(peer) = false;
 
-         peer->UIPAddress::pcStrAddress[peer->ip.size()] = '\0';
-
          U_INTERNAL_DUMP("peer->UIPAddress::pcStrAddress = %S", peer->UIPAddress::pcStrAddress)
 
          setNewPeer(peer, getIndexAUTH(peer->UIPAddress::pcStrAddress));
@@ -2309,7 +2368,7 @@ int UNoCatPlugIn::handlerRequest()
       UModNoCatPeer* peer = 0;
       UString _host(U_HTTP_HOST_TO_PARAM), buffer(U_CAPACITY), request_uri = UHTTP::getRequestURI();
 
-      U_INTERNAL_DUMP("_host = %.*S UServer_Base::getClientAddress() = %S", U_STRING_TO_TRACE(_host), UServer_Base::getClientAddress())
+      U_INTERNAL_DUMP("_host = %.*S UServer_Base::client_address = %S", U_STRING_TO_TRACE(_host), UServer_Base::client_address)
 
 #  if !defined(HAVE_PTHREAD_H) || !defined(ENABLE_THREAD)
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
@@ -2326,7 +2385,7 @@ int UNoCatPlugIn::handlerRequest()
       // d) /logout - logout specific user
       // ----------------------------------------------
 
-      uint32_t index_AUTH = vauth_ip->contains(UServer_Base::getClientAddress());
+      uint32_t index_AUTH = vauth_ip->contains(UServer_Base::client_address);
 
       if (index_AUTH != U_NOT_FOUND)
          {
@@ -2481,7 +2540,7 @@ int UNoCatPlugIn::handlerRequest()
           * it was decided to give it one.
           */
 
-         U_SRV_LOG("Detected strange initial WiFi request (iPhone) from peer: IP %s", UServer_Base::getClientAddress());
+         U_SRV_LOG("Detected strange initial WiFi request (iPhone) from peer: IP %s", UServer_Base::client_address);
 
          setHTTPResponse(*str_IPHONE_SUCCESS);
 
@@ -2497,9 +2556,9 @@ int UNoCatPlugIn::handlerRequest()
       // h) /login_validate - before authorization ticket with info
       // ---------------------------------------------------------------
 
-      index_AUTH = getIndexAUTH(UServer_Base::getClientAddress());
+      index_AUTH = getIndexAUTH(UServer_Base::client_address);
       url        = *((*vauth_url)[index_AUTH]);
-      peer       = (*peers)[UServer_Base::getClientAddress()];
+      peer       = (*peers)[UServer_Base::client_address];
 
       if (U_HTTP_URI_OR_ALIAS_STRNEQ(request_uri, "/cpe"))
          {
@@ -2532,7 +2591,7 @@ int UNoCatPlugIn::handlerRequest()
             goto set_redirection_url;
             }
 
-         UString uid;
+         UString _uid;
          uint32_t len    = data.size() - U_CONSTANT_SIZE("uid=");
          const char* ptr = data.data() + U_CONSTANT_SIZE("uid=");
 
@@ -2540,12 +2599,12 @@ int UNoCatPlugIn::handlerRequest()
 
          len = buffer.find('&');
 
-         if (len == U_NOT_FOUND) (void) uid.replace(buffer);
-         else                    (void) uid.assign(ptr, len);
+         if (len == U_NOT_FOUND) (void) _uid.replace(buffer);
+         else                    (void) _uid.assign(ptr, len);
 
-         U_SRV_LOG("AUTH request to validate login request for uid %.*S from peer: IP %s", U_STRING_TO_TRACE(uid), UServer_Base::getClientAddress());
+         U_SRV_LOG("AUTH request to validate login request for uid %.*S from peer: IP %s", U_STRING_TO_TRACE(_uid), UServer_Base::client_address);
 
-         if (vLoginValidate->isContained(uid) == false) vLoginValidate->push(uid);
+         if (vLoginValidate->isContained(_uid) == false) vLoginValidate->push(_uid);
 
          (void) buffer.assign(U_HTTP_QUERY_TO_PARAM); // NB: we resend the same data to portal... (as redirect field)
 
@@ -2568,7 +2627,7 @@ int UNoCatPlugIn::handlerRequest()
 
          if (data.empty())
             {
-            U_SRV_LOG("Invalid ticket from peer: IP %s", UServer_Base::getClientAddress());
+            U_SRV_LOG("Invalid ticket from peer: IP %s", UServer_Base::client_address);
 
             goto set_redirection_url;
             }
@@ -2597,7 +2656,7 @@ int UNoCatPlugIn::handlerRequest()
           U_http_version == '1' &&
           _host          == peer->gateway)
          {
-         U_SRV_LOG("Missing ticket from peer: IP %s", UServer_Base::getClientAddress());
+         U_SRV_LOG("Missing ticket from peer: IP %s", UServer_Base::client_address);
          }
 
 set_redirection_url:

@@ -403,19 +403,6 @@ void USocket::setRemote()
       }
 }
 
-void USocket::getRemoteInfo(UString& result, const char* address)
-{
-   U_TRACE(0, "USocket::getRemoteInfo(%.*S,%S)", U_STRING_TO_TRACE(result), address)
-
-   UString buffer(100U);
-
-   if (address == 0) address = getRemoteInfo();
-
-   buffer.snprintf("%2d '%s:%u'", iSockDesc, address, iRemotePort);
-
-   (void) result.insert(0, buffer);
-}
-
 bool USocket::connect()
 {
    U_TRACE(1, "USocket::connect()")

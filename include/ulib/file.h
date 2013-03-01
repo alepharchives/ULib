@@ -321,8 +321,21 @@ public:
 
    bool stat();
 
-#ifndef __MINGW32__
-   void lstat()
+#ifdef __MINGW32__
+   bool slink() const { return false; }
+#else
+   bool slink() const
+      {
+      U_TRACE(0, "UFile::slink()")
+
+      U_CHECK_MEMORY
+
+      bool result = S_ISLNK(st_mode);
+
+      U_RETURN(result);
+      }
+
+   bool lstat()
       {
       U_TRACE(1, "UFile::lstat()")
 
@@ -332,7 +345,9 @@ public:
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-      (void) U_SYSCALL(lstat, "%S,%p", path_relativ, (struct stat*)this);
+      bool result = (U_SYSCALL(lstat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0);
+
+      U_RETURN(result);
       }
 #endif
 
@@ -725,14 +740,14 @@ public:
    static int getSysParam(const char* name);
    static int setSysParam(const char* name, int value, bool force = false);
 
-   bool write(const char* data, uint32_t sz, bool append,         bool bmkdirs);
+   bool write(const char* data, uint32_t sz, bool append = false, bool bmkdirs = false);
    bool write(const UString& data,           bool append = false, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), append, bmkdirs); }
 
-   static bool writeTo(const UString& path,  const char* data, uint32_t sz, bool append,         bool bmkdirs);
+   static bool writeTo(const UString& path,  const char* data, uint32_t sz, bool append = false, bool bmkdirs = false);
    static bool writeTo(const UString& path,  const UString& data,           bool append = false, bool bmkdirs = false)
       { return writeTo(path, U_STRING_TO_PARAM(data), append, bmkdirs); }
 
-   static bool writeToTmpl(const char* tmpl, const char* data, uint32_t sz, bool append,         bool bmkdirs);
+   static bool writeToTmpl(const char* tmpl, const char* data, uint32_t sz, bool append = false, bool bmkdirs = false);
    static bool writeToTmpl(const char* tmpl, const UString& data,           bool append = false, bool bmkdirs = false)
       { return writeToTmpl(tmpl, U_STRING_TO_PARAM(data), append, bmkdirs); }
 
@@ -868,7 +883,7 @@ protected:
    static char*    pfree;
    static uint32_t nfree;
 
-   static char     cwd_save[U_PATH_MAX];
+   static char*    cwd_save;
    static uint32_t cwd_save_len;
 
    void substitute(UFile& file);
@@ -894,6 +909,7 @@ private:
    friend class UStringRep;
    friend class UStringExt;
    friend class UMemoryPool;
+   friend void  ULib_init();
 };
 
 #endif

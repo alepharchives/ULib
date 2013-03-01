@@ -1,4 +1,4 @@
-/** ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ulibase - c library
@@ -406,22 +406,6 @@ void u_never_need_group(void)
 #endif
 }
 
-void u_setHOME(const char* restrict dir)
-{
-   static char buffer[128];
-
-   U_INTERNAL_TRACE("u_setHOME(%s)", dir)
-
-   U_INTERNAL_ASSERT_POINTER(dir)
-
-   if (strcmp(buffer + U_CONSTANT_SIZE("HOME="), dir))
-      {
-      (void) snprintf(buffer, sizeof(buffer), "HOME=%s", dir);
-
-      (void) putenv(buffer);
-      }
-}
-
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
 
 bool u_runAsUser(const char* restrict user, bool change_dir)
@@ -441,8 +425,6 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
       {
       return false;
       }
-
-   u_setHOME(pw->pw_dir);
 
    (void) u__strncpy(u_user_name, user, (u_user_name_len = u__strlen(user))); /* change user name */
 
@@ -733,18 +715,19 @@ iteration:
    return (bp - start_buffer);
 }
 
-char* u_memoryDump(unsigned char* restrict cp, uint32_t n)
+char* u_memoryDump(char* restrict bp, unsigned char* restrict cp, uint32_t n)
 {
    uint32_t written;
-   static char buffer[4096];
 
-   U_INTERNAL_TRACE("u_memoryDump(%p,%u)", cp, n)
+   U_INTERNAL_TRACE("u_memoryDump(%p,%p,%u)", bp, cp, n)
 
-   written = u_memory_dump(buffer, cp, n);
+   written = u_memory_dump(bp, cp, n);
 
-   buffer[written] = '\0';
+   U_INTERNAL_ASSERT_MINOR(written, 4096)
 
-   return buffer;
+   bp[written] = '\0';
+
+   return bp;
 }
 
 /* get the number of the processors including offline CPUs */
@@ -870,6 +853,7 @@ int u_get_num_cpu(void)
 
 void u_bind2cpu(pid_t pid, int n)
 {
+#ifdef HAVE_SCHED_GETAFFINITY
    cpu_set_t cpuset;
 
    U_INTERNAL_TRACE("u_bind2cpu(%d,%d)", pid, n)
@@ -885,7 +869,6 @@ void u_bind2cpu(pid_t pid, int n)
 
    CPU_SET(n, &cpuset);
 
-#ifdef HAVE_SCHED_GETAFFINITY
    (void) sched_setaffinity(pid, sizeof(cpuset), &cpuset);
 #endif
 }

@@ -207,7 +207,9 @@ __declspec(dllexport) int fsync(int fd);
 #define ITIMER_PROF   2
 #define RLIMIT_DATA   2    /* max data size */
 #define RLIMIT_STACK  3    /* max stack size */
-#define MS_SYNC       4
+#define MS_SYNC       4    /* Synchronous memory sync */
+#define MS_ASYNC      1    /* Sync memory asynchronously */
+#define MS_INVALIDATE 2    /* Invalidate the caches  */
 #define PROT_NONE     0x0  /* page can not be accessed */
 #define PROT_READ     0x1  /* page can be read */
 #define PROT_WRITE    0x2  /* Page can be written */

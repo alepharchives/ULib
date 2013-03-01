@@ -79,6 +79,7 @@
 int                               UServer_Base::sfd;
 int                               UServer_Base::port;
 int                               UServer_Base::bclose;
+int                               UServer_Base::iAddressType;
 int                               UServer_Base::iBackLog = SOMAXCONN;
 int                               UServer_Base::timeoutMS = -1;
 int                               UServer_Base::cgi_timeout;
@@ -96,6 +97,7 @@ bool                              UServer_Base::enable_rfc1918_filter;
 bool                              UServer_Base::set_realtime_priority;
 bool                              UServer_Base::flag_use_tcp_optimization;
 ULog*                             UServer_Base::log;
+char*                             UServer_Base::client_address;
 pid_t                             UServer_Base::pid;
 time_t                            UServer_Base::expire;
 time_t                            UServer_Base::last_event;
@@ -189,18 +191,14 @@ public:
    UTimeThread() : UThread(true, false) {}
 
 #ifdef DEBUG
-   UTimeVal before;
+   long delta;
+   UTimeVal before, after;
 #endif
    int watch_counter;
 
    virtual void run()
       {
       U_TRACE(0, "UTimeThread::run()")
-
-#  ifdef DEBUG
-      long delta;
-      UTimeVal after;
-#  endif
 
       U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (pid %u)", UThread::getTID());
 
@@ -405,15 +403,21 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
    U_INTERNAL_ASSERT_EQUALS(pthis,0)
    U_INTERNAL_ASSERT_EQUALS(senvironment,0)
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__) && !defined(DEBUG)
-   // the value are based on uclient.test
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1),          608);
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2),         3718);
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_3),         3677);
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4),         7776);
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),         3680);
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_6),           96);
-   UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE),  606);
+#if defined(ENABLE_MEMPOOL) && !defined(__MINGW32__) // && !defined(DEBUG)
+#  ifndef ENABLE_THREAD
+   // the value are based on nodog
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1),        180);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2),         50);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),        250);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE), 72);
+#  else
+   // the value are based on WiAuth portal
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1),         238);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2),         336);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4),         344);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),        2085);
+   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE), 121);
+#  endif
 #endif
 
    server        = U_NEW(UString);
@@ -467,6 +471,12 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
       }
 
    if (cfg) loadConfigParam(*cfg);
+
+#ifdef ENABLE_IPV6
+   if (UClientImage_Base::bIPv6) iAddressType = AF_INET6;
+   else
+#endif
+                                 iAddressType = AF_INET;
 }
 
 UServer_Base::~UServer_Base()
@@ -732,7 +742,15 @@ next:
 
          struct passwd* pw = (struct passwd*) U_SYSCALL(getpwnam, "%S", as_user->data());
 
-         if (pw && pw->pw_dir) u_setHOME(pw->pw_dir);
+         if (pw &&
+             pw->pw_dir)
+            {
+            char* buffer = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_PATH_MAX));
+
+            (void) snprintf(buffer, U_PATH_MAX, "HOME=%s", pw->pw_dir);
+
+            (void) U_SYSCALL(putenv, "%S", buffer);
+            }
          }
       }
 
@@ -1366,7 +1384,7 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1)
       U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1+26+1)
 
-      ((UTimeThread*)u_pthread_time)->start();
+      ((UTimeThread*)u_pthread_time)->start(50);
 #  endif
 
       if (log_shared)
@@ -1388,19 +1406,19 @@ void UServer_Base::init()
 
    U_INTERNAL_DUMP("n = %u UNotifier::max_connection = %u", n, UNotifier::max_connection)
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__) && !defined(DEBUG)
-   int stack_obj[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+#if defined(ENABLE_MEMPOOL) && defined(__linux__) && defined(HAVE_ARCH64) && defined(ENABLE_THREAD) && !defined(DEBUG)
+   int num_mem_block[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
-   if (isLog()) stack_obj[U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5)]             = n; // logbuf => UString(200U)
-                stack_obj[U_SIZE_TO_STACK_INDEX(sizeof(UClientImage_Base))] += n;
+   if (isLog()) num_mem_block[U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5)]             = n; // logbuf => UString(200U)
+                num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(UClientImage_Base))] += n;
 
 #  ifdef USE_LIBSSL
-   if (bssl) stack_obj[U_SIZE_TO_STACK_INDEX(sizeof(USSLSocket))] += n;
+   if (bssl) num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(USSLSocket))] += n;
    else
 #  endif
-             stack_obj[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
+             num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
 
-   for (uint32_t i = 1; i < U_NUM_STACK_TYPE; ++i) if (stack_obj[i]) UMemoryPool::allocateMemoryBlocks(i, stack_obj[i]);
+   for (uint32_t stack_type = 1; stack_type < U_NUM_STACK_TYPE; ++stack_type) if (stack_obj[i]) UMemoryPool::allocateMemoryBlocks(stack_type, num_mem_block[i]);
 #endif
 
    pthis->preallocate();
@@ -1498,7 +1516,7 @@ U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
 {
    U_TRACE(0, "UServer_Base::logMemUsage(%S)", signame)
 
-   U_INTERNAL_ASSERT(isLog)
+   U_INTERNAL_ASSERT(isLog())
 
    unsigned long vsz, rss;
 
@@ -1601,6 +1619,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
 #     endif
 #     endif
+   // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.sigTERM", 0) // to get the value to based WiAuth portal
 #  endif
 
       U_EXIT(0);
@@ -1691,9 +1710,9 @@ try_accept:
 
    U_INTERNAL_ASSERT(csocket->isConnected())
 
-   pClientIndex->client_address = csocket->remoteIPAddress().getAddressString();
+   client_address = UIPAddress::resolveStrAddress(iAddressType, csocket->cRemoteAddress.pcAddress.p, csocket->cRemoteAddress.pcStrAddress);
 
-   U_INTERNAL_DUMP("client_address = %S", pClientIndex->client_address)
+   U_INTERNAL_DUMP("client_address = %S", client_address)
 
    if (vallow_IP &&
        pClientIndex->isAllowed(*vallow_IP) == false)
@@ -1703,7 +1722,7 @@ try_accept:
       // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
       // immediately. A warning is logged on the server but nothing is sent to the client.
 
-      U_SRV_LOG("New client connected from %S, connection denied by Access Control List", pClientIndex->client_address);
+      U_SRV_LOG("New client connected from %S, connection denied by Access Control List", client_address);
 
       goto error;
       }
@@ -1717,7 +1736,7 @@ try_accept:
         pClientIndex->isAllowed(*vallow_IP_prv) == false))
       {
       U_SRV_LOG("New client connected from %S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
-                  pClientIndex->client_address); 
+                 client_address); 
 
       goto error;
       }
@@ -1725,7 +1744,7 @@ try_accept:
 #if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    if (csocket->iSockDesc >= FD_SETSIZE)
       {
-      U_SRV_LOG("New client connected from %S, connection denied by FD_SETSIZE (%d)", pClientIndex->client_address, FD_SETSIZE);
+      U_SRV_LOG("New client connected from %S, connection denied by FD_SETSIZE (%d)", client_address, FD_SETSIZE);
 
       goto error;
       }
@@ -1736,7 +1755,7 @@ try_accept:
        --UNotifier::num_connection;
 
       U_SRV_LOG("New client connected from %S, connection denied by MAX_KEEP_ALIVE (%d)",
-                  pClientIndex->client_address, UNotifier::max_connection - UNotifier::min_connection);
+                client_address, UNotifier::max_connection - UNotifier::min_connection);
 
       goto error;
       }
@@ -1774,10 +1793,12 @@ retry:
 
          if (pid > 0)
             {
+            char buffer[128];
+
             --UNotifier::num_connection;
 
             U_SRV_LOG("Child (pid %d) exited with value %d (%s), down to %u children",
-                              pid, status, UProcess::exitInfo(status), UNotifier::num_connection - UNotifier::min_connection);
+                              pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
 
             goto retry;
             }
@@ -1814,8 +1835,6 @@ retry:
          }
 #  endif
 
-      U_INTERNAL_ASSERT_POINTER(pClientIndex->client_address)
-
       if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE) pClientIndex->handlerDelete();
       else
          {
@@ -1846,23 +1865,21 @@ check:
    U_RETURN(U_NOTIFIER_OK);
 }
 
-const char* UServer_Base::getNumConnection()
+const char* UServer_Base::getNumConnection(char* buffer)
 {
-   U_TRACE(0, "UServer_Base::getNumConnection()")
-
-   static char buffer[32];
+   U_TRACE(0, "UServer_Base::getNumConnection(%p)", buffer)
 
    char* ptr = buffer;
 
    if (isPreForked()) *ptr++ = '(';
 
-   uint32_t noutput = u__snprintf(ptr, sizeof(buffer), "%u", UNotifier::num_connection - UNotifier::min_connection - 1);
+   uint32_t noutput = u__snprintf(ptr, 32, "%u", UNotifier::num_connection - UNotifier::min_connection - 1);
 
    if (isPreForked())
       {
       U_INTERNAL_ASSERT_MAJOR(U_TOT_CONNECTION, 0)
 
-      (void) u__snprintf(ptr+noutput, sizeof(buffer), "/%u)", U_TOT_CONNECTION - 1);
+      (void) u__snprintf(ptr+noutput, 32, "/%u)", U_TOT_CONNECTION - 1);
       }
 
    U_RETURN(buffer);
@@ -1881,8 +1898,10 @@ void UServer_Base::handlerCloseConnection(UClientImage_Base* ptr)
       U_INTERNAL_ASSERT_MAJOR(ptr->UEventFd::fd, 0)
       U_ASSERT_EQUALS(ptr->UEventFd::fd, ptr->logbuf->strtol())
 
+      char buffer[32];
+
       U_SRV_LOG("%s close connection from %.*s, %s clients still connected",
-                     (ptr->socket->isOpen() ? "Server" : "Client"), U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection());
+                     (ptr->socket->isOpen() ? "Server" : "Client"), U_STRING_TO_TRACE(*(ptr->logbuf)), getNumConnection(buffer));
 
       ptr->logbuf->setEmpty();
       }
@@ -1990,22 +2009,22 @@ void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
 
+#ifndef __MINGW32__
    if (user)
       {
-#  ifndef __MINGW32__
       if (u_runAsUser(user, false) == false)
          {
          U_ERROR("set user %S context failed...", user);
          }
 
       U_SRV_LOG("Server run with user %S permission", user);
-#  endif
       }
+#endif
 
    if (isLog()) ULog::log("Waiting for connection\n");
 
 #if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (preforked_num_kids == -1) ((UThread*)(UNotifier::pthread = U_NEW(UClientThread)))->start();
+   if (preforked_num_kids == -1) ((UThread*)(UNotifier::pthread = U_NEW(UClientThread)))->start(50);
 #endif
 
    U_INTERNAL_DUMP("UNotifier::min_connection = %d", UNotifier::min_connection)
@@ -2144,6 +2163,10 @@ void UServer_Base::run()
 
       U_INTERNAL_DUMP("nkids = %d baffinity = %b", nkids, baffinity)
 
+#  if defined(ENABLE_MEMPOOL) && !defined(__MINGW32__) && !defined(ENABLE_THREAD)
+   // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.beforeFork", 0) // to get the value to based nodog
+#  endif
+
       while (flag_loop)
          {
          u_need_root(false);
@@ -2245,13 +2268,15 @@ void UServer_Base::run()
          if (pid > 0 &&
              flag_loop) // check for SIGTERM event...
             {
+            char buffer[128];
+
             --i;
 
             baffinity = false;
 
             U_INTERNAL_DUMP("down to %u children", i)
 
-            U_SRV_LOG("Child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(status), i);
+            U_SRV_LOG("Child (pid %d) exited with value %d (%s), down to %u children", pid, status, UProcess::exitInfo(buffer, status), i);
             }
 
          /* Another little safety brake here: since children should not exit
@@ -2271,6 +2296,8 @@ void UServer_Base::run()
       }
 
 #ifdef DEBUG
+// U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.beforeExit", 0) // to get the value to based WiAuth portal
+
    pthis->deallocate();
 #endif
 }

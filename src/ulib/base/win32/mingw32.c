@@ -151,7 +151,7 @@ char* realpath(const char* name, char* resolved_path)
 
 char* u_slashify(const char* src, char slash_from, char slash_to)
 {
-   static char u_slashify_buffer[U_PATH_MAX]; /* NB: we cannot use u_buffer, is used by u_ftw... */
+   static char u_slashify_buffer[U_PATH_MAX];
 
    char* dst = u_slashify_buffer;
 

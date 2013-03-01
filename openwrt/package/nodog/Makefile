@@ -45,7 +45,7 @@ endef
 NODOG_OPTIONS:= --with-ssl --with-libz \
 					 --without-expat --without-magic \
 					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
-					 --disable-memory-pool --disable-gcc-optimized --disable-thread --disable-HCRS \
+					 --disable-gcc-optimized --disable-thread --disable-HCRS \
 					 --enable-static-module="mod_proxy mod_nocat mod_http" \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
 

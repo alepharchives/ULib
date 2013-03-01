@@ -263,7 +263,7 @@ public:
       {
       U_TRACE(0, "UTree<T*>::setRoot(%p)", __elem)
 
-      u_construct<T>(__elem);
+      u_construct<T>(&__elem);
 
       UTree<void*>::setRoot(__elem);
       }
@@ -274,7 +274,7 @@ public:
       {
       U_TRACE(0, "UTree<T*>::push(%p)", __elem)
 
-      u_construct<T>(__elem);
+      u_construct<T>(&__elem);
 
       return (UTree<T*>*) UTree<void*>::push(__elem);
       }
@@ -316,7 +316,7 @@ public:
       {
       U_TRACE(0, "UTree<T*>::insert(%u,%p)", pos, __elem)
 
-      u_construct<T>(__elem);
+      u_construct<T>(&__elem);
 
       return (UTree<T*>*) UTree<void*>::insert(pos, __elem);
       }

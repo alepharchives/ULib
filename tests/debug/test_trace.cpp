@@ -71,12 +71,10 @@ static RETSIGTYPE manage_alarm(int signo)
 
 int U_EXPORT main(int argc, char* argv[])
 {
-   u_init_ulib(argv);
-
                   putenv("UTRACE=1 5M 0");     // for test trace
    if (argc >= 2) putenv("USIMERR=error.sim"); // for test simulation error
 
-   u_debug_init();
+   u_init_ulib(argv);
 
    U_TRACE(5,"main(%d)",argc)
 

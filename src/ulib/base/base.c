@@ -92,9 +92,9 @@ uint32_t             u_num_line;
 const char* restrict u_name_file;
 const char* restrict u_name_function;
 
-/* Temporary buffer: for example is used by u_ftw */
-char     u_buffer[4096];
-uint32_t u_buffer_len; /* signal that is busy */
+/* Temporary buffer */
+char*    u_buffer;
+uint32_t u_buffer_len; /* signal that is busy if != 0 */
 
 /* Time services */
 bool   u_daylight;
@@ -474,6 +474,10 @@ void u_init_ulib(char** restrict argv)
    (void) atexit(u_exit);
 
    (void) u_setStartTime();
+
+#ifdef DEBUG
+   u_debug_init();
+#endif
 }
 
 /*
@@ -1750,6 +1754,10 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
             if (width >= 10 &&
                 u_pthread_time)
                {
+#           ifdef DEBUG
+               char buf[4096];
+#           endif
+
                /*
                NB: optimization if it is enough a time resolution of one second...
 
@@ -1764,7 +1772,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                   char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
                   char  null3[1];  // 123456789012345678901234567890
                } shared_data;
-               
+
                u_now = &(ptr_shared_data->_timeval);
                */
 
@@ -1789,7 +1797,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                U_INTERNAL_ERROR(u_isBinary((const unsigned char*)bp, len) == false,
                                 "binary data at date time optimization:\n"
                                 "--------------------------------------\n"
-                                "%s", u_memoryDump((unsigned char*)bp, len));
+                                "%s", u_memoryDump(buf, (unsigned char*)bp, len));
 
                bp  += len;
                ret += len;

@@ -62,7 +62,7 @@ bool UGeoIPPlugIn::setCountryCode()
    bGEOIP_CITY_EDITION_REV1 = false;
    country_code = country_name = org = 0;
 
-   ipnum = U_SYSCALL(_GeoIP_lookupaddress, "%s", UServer_Base::getClientAddress());
+   ipnum = U_SYSCALL(_GeoIP_lookupaddress, "%s", UServer_Base::client_address);
 
    if (ipnum)
       {
@@ -86,7 +86,7 @@ bool UGeoIPPlugIn::setCountryCode()
                   country_name = GeoIP_country_name[country_id];
 
                   U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i],
-                                          UServer_Base::getClientAddress(), country_code, country_name);
+                                          UServer_Base::client_address, country_code, country_name);
                   }
                }
             else if (GEOIP_REGION_EDITION_REV0 == i || GEOIP_REGION_EDITION_REV1 == i)
@@ -96,7 +96,7 @@ bool UGeoIPPlugIn::setCountryCode()
                if (region)
                   {
                   U_SRV_LOG_WITH_ADDR("%s: IP %S is from %s, %s for", GeoIPDBDescription[i],
-                                          UServer_Base::getClientAddress(), region->country_code, region->region);
+                                          UServer_Base::client_address, region->country_code, region->region);
 
                   U_SYSCALL_VOID(GeoIPRegion_delete, "%p", region);
                   }

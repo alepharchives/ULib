@@ -44,6 +44,8 @@ public:
    static UString getNetworkAddress(int fd, const char* device);        // eth0
    static UString getNetworkDevice(         const char* exclude);       // eth0
 
+   static void setRemoteInfo(USocket* s, UString& logbuf);
+
    static vPFi byte_read_hook; // it allows the generation of a progress meter during upload...
 
    /**
@@ -59,7 +61,9 @@ public:
 
    // read while not received token, return position of token in buffer
 
-   static uint32_t readWhileNotToken(USocket* s, UString& buffer, const char* token, uint32_t token_len, uint32_t max_read = 10, int timeoutMS = -1, uint32_t time_limit = 0);
+   static uint32_t readWhileNotToken(USocket* s, UString& buffer,
+                                     const char* token, uint32_t token_len,
+                                     uint32_t max_read = 10, int timeoutMS = -1, uint32_t time_limit = 0);
 
    // read while received data
 
@@ -97,9 +101,9 @@ public:
       {
       U_TRACE(0, "USocketExt::vsyncCommand(%p,%S)", s, format)
 
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return vsyncCommand(s, u_buffer, sizeof(u_buffer), format, argp);
+      return vsyncCommand(s, u_buffer, U_MAX_SIZE_PREALLOCATE, format, argp);
       }
 
    static int vsyncCommand(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp);
@@ -110,9 +114,9 @@ public:
       {
       U_TRACE(0, "USocketExt::readLineReply(%p)", s)
 
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return readLineReply(s, u_buffer, sizeof(u_buffer));
+      return readLineReply(s, u_buffer, U_MAX_SIZE_PREALLOCATE);
       }
 
    static int readLineReply(USocket* s, char* buffer, uint32_t buffer_size);
@@ -134,9 +138,9 @@ public:
       {
       U_TRACE(0, "USocketExt::vsyncCommandML(%p,%S)", s, format)
 
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return vsyncCommandML(s, u_buffer, sizeof(u_buffer), format, argp);
+      return vsyncCommandML(s, u_buffer, U_MAX_SIZE_PREALLOCATE, format, argp);
       }
 
    static int vsyncCommandML(USocket* s, char* buffer, uint32_t buffer_size, const char* format, va_list argp);
@@ -147,9 +151,9 @@ public:
       {
       U_TRACE(0, "USocketExt::readMultilineReply(%p)", s)
 
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len,0)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return readMultilineReply(s, u_buffer, sizeof(u_buffer));
+      return readMultilineReply(s, u_buffer, U_MAX_SIZE_PREALLOCATE);
       }
 
    static int readMultilineReply(USocket* s, char* buffer, uint32_t buffer_size);

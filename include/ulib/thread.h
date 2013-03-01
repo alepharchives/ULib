@@ -90,7 +90,7 @@ public:
     */
 
    void stop();
-   bool start();
+   bool start(uint32_t timeoutMS = 0);
 
    /**
     * Start a new thread as "detached". This is an alternative

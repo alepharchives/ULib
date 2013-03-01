@@ -638,8 +638,9 @@ AC_HEADER_TIME
 AC_HEADER_MAJOR
 AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
-AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h string.h netpacket/packet.h sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h \
-						semaphore.h sys/syscall.h sysexits.h termios.h streambuf.h \
+AC_CHECK_HEADERS([assert.h byteswap.h endian.h execinfo.h ndir.h dirent.h ndir.h string.h netpacket/packet.h \
+						sched.h stdint.h semaphore.h sysexits.h termios.h streambuf.h \
+						sys/dir.h sys/ndir.h sys/ioctl.h sys/sendfile.h sys/sched.h sys/syscall.h \
 						linux/netfilter_ipv4/ipt_ACCOUNT.h libnetfilter_conntrack/libnetfilter_conntrack.h])
 
 AC_CHECK_HEADERS([sys/inotify.h mcheck.h])
@@ -670,14 +671,10 @@ AC_STRUCT_TM
 AC_HEADER_STAT
 AC_MEMBER_SI_ADDR
 AC_STRUCT_ST_BLOCKS
-AC_CHECK_TYPE([struct iphdr],[AC_DEFINE(HAVE_IPHDR, 1, [struct iphdr needed for IPv6 support])],[],
-[#include <netinet/ip.h>])
-AC_CHECK_MEMBER(struct dirent.d_reclen,AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[define if you have d_reclen in struct dirent]),,
-[ #include <dirent.h> ])
-AC_CHECK_MEMBER(struct dirent.d_namlen,AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define if you have d_namlen in struct dirent]),,
-[ #include <dirent.h> ])
-AC_CHECK_MEMBER(struct tm.tm_gmtoff,AC_DEFINE(TM_HAVE_TM_GMTOFF,1,[define if you have tm_gmtoff in struct tm]),,
-[ #include <time.h> ])
+AC_CHECK_TYPE([struct iphdr],[AC_DEFINE(HAVE_IPHDR,1,[struct iphdr needed for IPv6 support])],[],[#include <netinet/ip.h>])
+AC_CHECK_MEMBER([struct dirent.d_reclen],AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[define if you have d_reclen in struct dirent]),[],[ #include <dirent.h> ])
+AC_CHECK_MEMBER([struct dirent.d_namlen],AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[define if you have d_namlen in struct dirent]),[],[ #include <dirent.h> ])
+AC_CHECK_MEMBER([struct tm.tm_gmtoff],AC_DEFINE(TM_HAVE_TM_GMTOFF,1,[define if you have tm_gmtoff in struct tm]),[],[ #include <time.h> ])
 
 TWOCAN_CONF_MSG(Checking for types, and defing if needed)
 
@@ -696,6 +693,7 @@ AC_CHECK_SIZEOF(__int64)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(ptrdiff_t)
 AC_CHECK_FUNCS([memcmp memcpy memmove memset memrchr])
+AC_CHECK_TYPE([cpu_set_t], [AC_DEFINE_UNQUOTED(HAVE_CPU_SET_T,1,[define if exist type cpu_set_t])],[],[#include <sched.h>])
 
 # SECTION 8: checks for variables
 
@@ -1058,17 +1056,17 @@ case "$target_os" in
 	mingw32*)
 	;;
 	cygwin*)
-	AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
+		AC_DEFINE(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])
 	;;
 	*)
-	AC_CHECK_TYPE([siginfo_t], [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])], [], [#include <signal.h>])
-	if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes"; then
-		AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
-		CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
-	fi
-	if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
-		LDFLAGS="${LDFLAGS} -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
-	fi
+		AC_CHECK_TYPE([siginfo_t], [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])], [], [#include <signal.h>])
+		if test "$ac_cv_cxx_visibility_inlines_hidden_flag" = "yes"; then
+			AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
+			CXXFLAGS="${CXXFLAGS} -fvisibility=hidden -fvisibility-inlines-hidden"
+		fi
+		if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
+			LDFLAGS="${LDFLAGS} -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
+		fi
 	;;
 esac
 

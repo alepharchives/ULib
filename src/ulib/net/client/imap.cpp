@@ -178,11 +178,11 @@ U_NO_EXPORT const char* UImapClient::status()
       default:                      descr2 = "???";                  break;
       }
 
-   static char _buffer[128];
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   (void) sprintf(_buffer, "%s - (%d, %s)", descr1, response, descr2);
+   (void) sprintf(u_buffer, "%s - (%d, %s)", descr1, response, descr2);
 
-   U_RETURN(_buffer);
+   U_RETURN(u_buffer);
 }
 
 bool UImapClient::_connectServer(const UString& server, int port, uint32_t timeoutMS)
@@ -191,6 +191,7 @@ bool UImapClient::_connectServer(const UString& server, int port, uint32_t timeo
 
 #ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
+
    ((USSLSocket*)this)->setActive(false);
 #endif
 

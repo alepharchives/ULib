@@ -118,11 +118,10 @@ public:
             file_to_del.callForAllEntry(parse);
             }
 
-         // register to constant database (CDB)
+         // register to database (RDB)
 
          IR::closeCDB(true);
-
-         UApplication::exit_value = 0;
+         IR::deleteDB(true);
          }
       }
 

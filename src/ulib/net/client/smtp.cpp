@@ -17,8 +17,6 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/utility/socket_ext.h>
 
-char USmtpClient::buffer[128];
-
 const UString* USmtpClient::str_empty;
 const UString* USmtpClient::str_address;
 const UString* USmtpClient::str_subject;
@@ -93,9 +91,14 @@ char* USmtpClient::status()
       default:                            descr = "???";                               break;
       }
 
-   if (descr) (void) sprintf(buffer, "(%d, %s)", response, descr);
+   if (descr)
+      {
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   U_RETURN(buffer);
+      (void) sprintf(u_buffer, "(%d, %s)", response, descr);
+      }
+
+   U_RETURN(u_buffer);
 }
 
 bool USmtpClient::_connectServer(const UString& server, int port, uint32_t timeoutMS)
@@ -104,6 +107,7 @@ bool USmtpClient::_connectServer(const UString& server, int port, uint32_t timeo
 
 #ifdef USE_LIBSSL
    U_INTERNAL_ASSERT(Socket::isSSL())
+
    ((USSLSocket*)this)->setActive(false);
 #endif
 
@@ -111,7 +115,11 @@ bool USmtpClient::_connectServer(const UString& server, int port, uint32_t timeo
       {
       response = CONNREFUSED;
 
-      (void) u__snprintf(buffer, sizeof(buffer), "Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, 0); // NB: the last argument (0) is necessary...
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      // NB: the last argument (0) is necessary...
+
+      (void) u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, "Sorry, couldn't connect to server '%.*s:%d'%R", U_STRING_TO_TRACE(server), port, 0);
       }
    else
       {

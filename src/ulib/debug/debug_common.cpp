@@ -34,7 +34,6 @@
 #  include <ulib/internal/memory_pool.h>
 #endif
 
-#include <fstream>
 #include <errno.h>
 
 static const char* __restrict__ uid = "@(#) " PACKAGE_NAME " " ULIB_VERSION " " PLATFORM_VAR " (" __DATE__ ")";
@@ -49,25 +48,17 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
       {
       u_recursion = true;
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)
-      char name[128];
-
-      (void) u__snprintf(name, sizeof(name), "mempool.%N.%P", 0);
-
-      std::ofstream of(name);
-
-      UMemoryPool::printInfo(of);
-#  endif
-
       UError::stackDump();
 
       UObjectDB::close();
 
       u_trace_close();
+
+      U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P", 0)
       }
 }
 
-void U_EXPORT u_debug_init(void)
+extern "C" void U_EXPORT u_debug_init(void)
 {
    U_INTERNAL_TRACE("u_debug_init()")
 
@@ -221,13 +212,13 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
 
    if (flag_trace_active == false)
       {
-      char _buffer[64];
-      uint32_t bytes_written = u__snprintf(_buffer, sizeof(_buffer), "%W%N%W: %WWARNING: %W",BRIGHTCYAN,RESET,YELLOW,RESET);
+      char buf[64];
+      uint32_t bytes_written = u__snprintf(buf, sizeof(buf), "%W%N%W: %WWARNING: %W",BRIGHTCYAN,RESET,YELLOW,RESET);
 
       (void) lseek(u_printf_fileno, 0, SEEK_END);
 
-      (void) write(u_printf_fileno, _buffer, bytes_written);
-      (void) write(u_printf_fileno,  buffer, iov[1].iov_len);
+      (void) write(u_printf_fileno, buf, bytes_written);
+      (void) write(u_printf_fileno, buffer, iov[1].iov_len);
       }
 
    iov[1].iov_len = u__snprintf(buffer, sizeof(buffer), " = -1%R", 0); // NB: the last argument (0) is necessary...

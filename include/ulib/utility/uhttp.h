@@ -184,7 +184,7 @@ public:
 
    static UFile*   file;
    static UFile*   apache_like_log;
-   static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile;
+   static bool     virtual_host, enable_caching_by_proxy_servers, telnet_enable, bsendfile, nostat;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
 
    static int  manageRequest();
@@ -587,7 +587,6 @@ public:
    public:
 
    iPFpv runDynamicPage;
-   bool alias;
 
    // COSTRUTTORI
 
@@ -596,7 +595,6 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UServletPage, "")
 
       runDynamicPage = 0;
-      alias          = false;
       }
 
    ~UServletPage()
@@ -612,9 +610,6 @@ public:
    UServletPage(const UServletPage&) : UDynamic() {}
    UServletPage& operator=(const UServletPage&)   { return *this; }
    };
-
-   static UStringRep*   usp_page_key;
-   static UServletPage* usp_page_to_check;
 
    static UServletPage* getUSP(const UString& key);
 
@@ -820,6 +815,7 @@ public:
    mode_t mode;             // file type
    int mime_index;          // index file mime type
    int fd;                  // file descriptor
+   bool link;               // true => ptr point to another entry
 
    // COSTRUTTORI
 
@@ -828,42 +824,18 @@ public:
 
    // STREAM
 
+   friend U_EXPORT istream& operator>>(istream& is,       UFileCacheData& d);
+   friend U_EXPORT ostream& operator<<(ostream& os, const UFileCacheData& d);
+
 #ifdef DEBUG
-   friend ostream& operator<<(ostream& os, const UFileCacheData& d)
-      {
-      U_TRACE(0, "UFileCacheData::operator<<(%p,%p)", &os, &d)
-
-      os.put('{');
-      os.put(' ');
-   // os << d.ptr;
-   // os.put(' ');
-   // os << d.array;
-   // os.put(' ');
-      os << d.mtime;
-      os.put(' ');
-      os << d.expire;
-      os.put(' ');
-      os << d.size;
-      os.put(' ');
-      os << d.wd;
-      os.put(' ');
-      os << d.mode;
-      os.put(' ');
-      os << d.mime_index;
-      os.put(' ');
-      os << d.fd;
-      os.put(' ');
-      os.put('}');
-
-      return os;
-      }
-
    const char* dump(bool reset) const U_EXPORT;
 #endif
 
    private:
    UFileCacheData(const UFileCacheData&)            {}
    UFileCacheData& operator=(const UFileCacheData&) { return *this; }
+
+   template <class T> friend void u_construct(T**);
    };
 
    static int inotify_wd;
@@ -926,31 +898,29 @@ private:
    static void checkInotifyForCache(int wd, char* name, uint32_t len) U_NO_EXPORT;
 #endif
 
+   static void checkPath() U_NO_EXPORT;
    static void in_CREATE() U_NO_EXPORT;
    static void in_DELETE() U_NO_EXPORT;
+   static void deleteSession() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
+   static void manageDataForCache() U_NO_EXPORT;
    static void processRewriteRule() U_NO_EXPORT;
+   static bool processAuthorization() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
-   static void checkPath(bool bnostat) U_NO_EXPORT;
+   static bool checkGetRequestIfModified() U_NO_EXPORT;
+   static bool isRequestTooLarge(UString& buffer) U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool runDynamicPage(UString* penvironment) U_NO_EXPORT;
-   static void manageBufferResize(const char* rpointer1, const char* rpointer2) U_NO_EXPORT;
-
-   static void deleteSession() U_NO_EXPORT;
-   static void manageDataForCache() U_NO_EXPORT;
-   static bool processAuthorization() U_NO_EXPORT;
-   static bool checkGetRequestIfModified() U_NO_EXPORT;
-   static bool isAlias(UServletPage* usp_page) U_NO_EXPORT;
-   static bool isRequestTooLarge(UString& buffer) U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static void checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
-   static void checkIfAlias(UStringRep* key, void* value) U_NO_EXPORT;
+   static void checkIfLink(UStringRep* key, void* value) U_NO_EXPORT;
    static bool checkGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static void add_HTTP_Variables(UStringRep* key, void* value) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static void processGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
    static int  checkGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
+   static void manageBufferResize(const char* rpointer1, const char* rpointer2) U_NO_EXPORT;
    static void checkDataSession(const UString& token, time_t expire, bool check) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header, UString& ext) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2, uint32_t endHeader, UString& ext) U_NO_EXPORT;
@@ -960,5 +930,44 @@ private:
 
    friend class UHttpPlugIn;
 };
+
+template <> inline void u_construct(UHTTP::UFileCacheData** _elem)
+{
+   U_TRACE(0, "u_construct<UFileCacheData>(%p)", _elem)
+
+   if (UHTTP::cache_file_store)
+      {
+      UHTTP::UFileCacheData* ptr = *_elem;
+
+      UHTTP::file_data = U_NEW(UHTTP::UFileCacheData(*ptr));
+
+      U_INTERNAL_DUMP("UHTTP::file_data = %p ptr = %p", UHTTP::file_data, ptr)
+
+      UHTTP::file_data->array      = ptr->array;      // content, header, gzip(content, header)
+      UHTTP::file_data->mtime      = ptr->mtime;      // time of last modification
+      UHTTP::file_data->expire     = ptr->expire;     // expire time of the entry
+      UHTTP::file_data->size       = ptr->size;       // size content
+      UHTTP::file_data->mime_index = ptr->mime_index; // index file mime type
+
+      *_elem = UHTTP::file_data;
+      }
+}
+
+template <> inline void u_destroy(UHTTP::UFileCacheData* _elem)
+{
+   U_TRACE(0, "u_destroy<UFileCacheData>(%p)", _elem)
+
+   U_INTERNAL_ASSERT_POINTER(_elem)
+
+   // NB: we check if we are at the end of UHashMap<UHTTP::UFileCacheData*>::operator>>()...
+
+   if (UHTTP::file_data &&
+       UHTTP::cache_file_store)
+      {
+      _elem->ptr = _elem->array = 0;
+      }
+
+   delete _elem;
+}
 
 #endif

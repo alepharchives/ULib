@@ -349,7 +349,7 @@ public:
       {
       U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(*_key), _elem)
 
-      u_construct<T>(_elem);
+      u_construct<T>(&_elem);
 
       if (node)
          {
@@ -371,7 +371,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(node)
 
-      u_construct<T>(_elem);
+      u_construct<T>(&_elem);
         u_destroy<T>((T*)node->elem);
 
       UHashMap<void*>::replaceAfterFind(_elem);
@@ -524,26 +524,26 @@ public:
       U_INTERNAL_DUMP("_length = %u", _length)
       }
 
-   void assign(UHashMap<T*>& h)
+   void assign(UHashMap<T*>& t)
       {
-      U_TRACE(0, "UHashMap<T*>::assign(%p)", &h)
+      U_TRACE(0, "UHashMap<T*>::assign(%p)", &t)
 
       U_INTERNAL_ASSERT_EQUALS(gperf,0)
-      U_INTERNAL_ASSERT_DIFFERS(this, &h)
-      U_INTERNAL_ASSERT_EQUALS(ignore_case, h.ignore_case)
+      U_INTERNAL_ASSERT_DIFFERS(this, &t)
+      U_INTERNAL_ASSERT_EQUALS(ignore_case, t.ignore_case)
 
       clear();
 
-      if (h._length)
+      if (t._length)
          {
          T* _elem;
          UHashMapNode** ptr;
 
-         allocate(h._capacity);
+         allocate(t._capacity);
 
-         for (index = 0; index < h._capacity; ++index)
+         for (index = 0; index < t._capacity; ++index)
             {
-            node = h.table[index];
+            node = t.table[index];
 
             if (node)
                {
@@ -558,23 +558,111 @@ public:
 
                   U_INTERNAL_DUMP("_elem = %p", _elem)
 
-                  U_ASSERT_EQUALS(_elem, h[node->key])
+                  U_ASSERT_EQUALS(_elem, t[node->key])
 
-                  u_construct<T>(_elem);
+                  u_construct<T>(&_elem);
                   }
                while ((node = node->next));
                }
             }
 
-         _length = h._length;
+         _length = t._length;
          }
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
-      U_INTERNAL_ASSERT_EQUALS(_length, h._length)
+      U_INTERNAL_ASSERT_EQUALS(_length, t._length)
       }
 
    // STREAMS
+
+   friend istream& operator>>(istream& is, UHashMap<T*>& t)
+      {
+      U_TRACE(0+256, "UHashMap<T*>::operator>>(%p,%p)", &is, &t)
+
+      U_INTERNAL_ASSERT_MAJOR(t._capacity, 0)
+
+      int c = EOF;
+
+      if (is.good())
+         {
+         T* _elem = U_NEW(T);
+         UString key(U_CAPACITY);
+
+         streambuf* sb = is.rdbuf();
+
+         // NB: we need this way for plugin...
+
+         int terminator = EOF;
+
+         if (is.peek() == '{' ||
+             is.peek() == '[')
+            {
+            c = sb->sbumpc(); // skip '{' or '['
+
+            terminator = (c == '{' ? '}' : ']');
+            }
+
+         do {
+            do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
+
+         // U_INTERNAL_DUMP("c = %C", c)
+
+            if (terminator == c) break;
+
+            if (terminator == EOF &&
+                (c == '}' || c == ']'))
+               {
+               break;
+               }
+
+            if (c == EOF) break;
+
+            if (c == '#')
+               {
+               do { c = sb->sbumpc(); } while (c != '\n' && c != EOF); // skip line comment
+
+               continue;
+               }
+
+            U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
+
+            sb->sputbackc(c);
+
+            key.get(is);
+
+            U_INTERNAL_ASSERT(key)
+            U_INTERNAL_ASSERT(key.isNullTerminated())
+
+            do { c = sb->sbumpc(); } while (u__isspace(c) && c != EOF); // skip white-space
+
+         // U_INTERNAL_DUMP("c = %C", c)
+
+            if (c == EOF) break;
+
+            U_INTERNAL_ASSERT_EQUALS(u__isspace(c),false)
+
+            sb->sputbackc(c);
+
+            is >> *_elem;
+
+            if (is.bad()) is.clear();
+            else          t.insert(key, _elem);
+            }
+         while (c != EOF);
+
+         u_destroy<T>(_elem);
+         }
+
+      if (c == EOF) is.setstate(ios::eofbit);
+
+   // NB: we can load an empty table
+   // -------------------------------------------------
+   // if (t._length == 0) is.setstate(ios::failbit);
+   // -------------------------------------------------
+
+      return is;
+      }
 
    friend ostream& operator<<(ostream& _os, const UHashMap<T*>& t)
       {
