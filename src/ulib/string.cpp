@@ -103,6 +103,11 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 #else
    if (capacity <= U_CAPACITY)
       {
+#  ifdef DEBUG
+      UMemoryPool::obj_class = "UStringRep";
+      UMemoryPool::func_call = __PRETTY_FUNCTION__;
+#  endif
+
       if (capacity == U_CAPACITY) r = (UStringRep*) UMemoryPool::pop(9);
       else
          {
@@ -151,6 +156,10 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
          }
 
       _ptr = (char*)(r + 1);
+
+#  ifdef DEBUG
+      UMemoryPool::obj_class = UMemoryPool::func_call = 0;
+#  endif
       }
    else
       {
@@ -642,7 +651,7 @@ void UStringRep::size_adjust(uint32_t value)
       }
 #endif
 
-   _length = (value == U_NOT_FOUND ? u__strlen(str) : value);
+   _length = (value == U_NOT_FOUND ? u__strlen(str, __PRETTY_FUNCTION__) : value);
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -651,7 +660,7 @@ UString::UString(const char* t)
 {
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", t)
 
-   uint32_t len = (t ? u__strlen(t) : 0);
+   uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
 
    if (len) rep = U_NEW(UStringRep(t, len));
    else     _copy(UStringRep::string_rep_null);
@@ -727,13 +736,13 @@ UString UString::substr(const char* t, uint32_t tlen) const
 char* UString::c_strdup() const                             { return strndup(rep->str, rep->_length); }
 char* UString::c_strndup(uint32_t pos, uint32_t n) const    { return strndup(rep->str + pos, rep->fold(pos, n)); }
 
-UString& UString::assign(const char* s)                     { return assign(s, u__strlen(s)); }
-UString& UString::append(const char* s)                     { return append(s, u__strlen(s)); }
+UString& UString::assign(const char* s)                     { return assign(s, u__strlen(s, __PRETTY_FUNCTION__)); }
+UString& UString::append(const char* s)                     { return append(s, u__strlen(s, __PRETTY_FUNCTION__)); }
 UString& UString::append(UStringRep* _rep)                  { return append(_rep->str, _rep->_length); }
 UString& UString::append(const UString& str)                { return append(str.data(), str.size()); }
 
 __pure bool UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
-__pure bool UString::equal(const char* s) const             { return rep->equal(s, u__strlen(s)); }
+__pure bool UString::equal(const char* s) const             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
 __pure bool UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
 __pure bool UString::equalnocase(const UString& str) const  { return equalnocase(str.rep); }
 
@@ -1100,7 +1109,7 @@ void UString::setNullTerminated() const
       rep->setNullTerminated();
       }
 
-   U_INTERNAL_ASSERT_EQUALS(u__strlen(rep->str), rep->_length)
+   U_INTERNAL_ASSERT_EQUALS(u__strlen(rep->str, __PRETTY_FUNCTION__), rep->_length)
 }
 
 void UString::resize(uint32_t n, unsigned char c)
@@ -1876,7 +1885,7 @@ U_EXPORT UString operator+(const UString& lhs, const UString& rhs)
 
 U_EXPORT UString operator+(const char* lhs, const UString& rhs)
 {
-   uint32_t len = u__strlen(lhs);
+   uint32_t len = u__strlen(lhs, __PRETTY_FUNCTION__);
    UString str(len + rhs.size());
 
    (void) str.append(lhs, len);
@@ -1899,7 +1908,7 @@ U_EXPORT UString operator+(const UString& lhs, char rhs)
 { UString str(lhs); (void) str.append(1U, rhs); return str; }
 
 U_EXPORT UString operator+(const UString& lhs, const char* rhs)
-{ UString str(lhs); (void) str.append(rhs, u__strlen(rhs)); return str; }
+{ UString str(lhs); (void) str.append(rhs, u__strlen(rhs, __PRETTY_FUNCTION__)); return str; }
 
 #if defined(DEBUG) || defined(U_TEST)
 #  include <ulib/internal/objectIO.h>

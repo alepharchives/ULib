@@ -51,6 +51,7 @@ rm -rf rsignserver_rpc.log RSIGN/log \
 
 DIR_CMD="../../examples/userver"
 
+$SLEEP
 start_prg_background userver_ssl -c rsignserver_rpc.cfg
 $SLEEP
 

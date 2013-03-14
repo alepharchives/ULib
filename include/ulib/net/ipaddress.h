@@ -59,6 +59,7 @@ class USocketExt;
 class UNoCatPlugIn;
 class UClient_Base;
 class UServer_Base;
+class UClientImage_Base;
 
 template <class T> class UVector;
 
@@ -120,7 +121,7 @@ public:
       {
       U_TRACE(0, "UIPAllow::isAllowed(%S)", ip_client)
 
-      U_INTERNAL_ASSERT(u_isIPv4Addr(ip_client,u__strlen(ip_client)))
+      U_INTERNAL_ASSERT(u_isIPv4Addr(ip_client, u__strlen(ip_client, __PRETTY_FUNCTION__)))
 
       struct in_addr ia;
 
@@ -352,6 +353,7 @@ private:
    friend class UNoCatPlugIn;
    friend class UClient_Base;
    friend class UServer_Base;
+   friend class UClientImage_Base;
 };
 
 #endif

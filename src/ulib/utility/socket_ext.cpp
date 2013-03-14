@@ -594,7 +594,7 @@ UString USocketExt::getNetworkInterfaceName(const char* ip)
 {
    U_TRACE(1, "USocketExt::getNetworkInterfaceName(%S)", ip)
 
-   U_INTERNAL_ASSERT(u_isIPv4Addr(ip,u__strlen(ip)))
+   U_INTERNAL_ASSERT(u_isIPv4Addr(ip,u__strlen(ip, __PRETTY_FUNCTION__)))
 
    UString result(100U);
 
@@ -639,7 +639,7 @@ UString USocketExt::getMacAddress(int fd, const char* device_or_ip)
    UString result(100U);
 
 #if !defined(__MINGW32__) && defined(HAVE_SYS_IOCTL_H)
-   if (u_isIPv4Addr(device_or_ip, u__strlen(device_or_ip)))
+   if (u_isIPv4Addr(device_or_ip, u__strlen(device_or_ip, __PRETTY_FUNCTION__)))
       {
       FILE* arp = (FILE*) U_SYSCALL(fopen, "%S,%S", "/proc/net/arp", "r");
 

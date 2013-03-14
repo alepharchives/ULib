@@ -154,7 +154,7 @@ int UFile::open(const char* _pathname, int flags, mode_t mode)
    U_TRACE(1, "UFile::open(%S,%d,%d)", _pathname, flags, mode)
 
    U_INTERNAL_ASSERT_POINTER(_pathname)
-   U_INTERNAL_ASSERT_MAJOR(u__strlen(_pathname), 0)
+   U_INTERNAL_ASSERT_MAJOR(u__strlen(_pathname, __PRETTY_FUNCTION__), 0)
 
    // NB: we centralize here O_BINARY...
 
@@ -256,7 +256,7 @@ bool UFile::chdir(const char* path, bool flag_save)
       else if (IS_DIR_SEPARATOR(path[0]) == false) u_getcwd();
       else
          {
-         u_cwd_len = u__strlen(path);
+         u_cwd_len = u__strlen(path, __PRETTY_FUNCTION__);
 
          U_INTERNAL_ASSERT_MINOR(u_cwd_len, U_PATH_MAX)
 
@@ -409,10 +409,14 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
    if (*plength >= (256U * 1024U * 1024U)) // NB: to save some swap pressure...
       {
 #if defined(__linux__) && defined(ENABLE_THREAD)
-   try_from_file_system:
+try_from_file_system:
 #endif
       UFile tmp;
       char _template[32];
+
+#  ifdef DEBUG
+      U_WARNING("we are going to allocate from file system %u bytes (%u KB) (pid %P)", *plength, *plength / 1024);
+#  endif
 
       // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
       // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
@@ -441,7 +445,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
          U_ERROR("cannot allocate %u bytes (%u KB) of memory. Going down - ",
                   "address space usage: %.2f MBytes - "
-                            "rss usage: %.2f MBytes\n",
+                            "rss usage: %.2f MBytes",
                   *plength, *plength / 1024, (double)vsz / (1024.0 * 1024.0),
                                              (double)rss / (1024.0 * 1024.0));
          }
@@ -452,6 +456,18 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    if (pfree == 0)
       {
+#  ifdef DEBUG
+      unsigned long vsz, rss;
+
+      u_get_memusage(&vsz, &rss);
+
+      U_WARNING("we are going to allocate 256 MB (pid %P) - "
+                 "address space usage: %.2f MBytes - "
+                           "rss usage: %.2f MBytes",
+                        (double)vsz / (1024.0 * 1024.0),
+                        (double)rss / (1024.0 * 1024.0));
+#  endif
+
       nfree = (256U * 1024U * 1024U);
       pfree = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, nfree, prot, U_MAP_ANON, -1, 0);
 
@@ -464,6 +480,10 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    if (*plength > nfree)
       {
+#  ifdef DEBUG
+      U_WARNING("we are going to allocate %u bytes (%u KB) (pid %P) - nfree = %u", *plength, *plength / 1024, nfree);
+#  endif
+
       _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, U_MAP_ANON, -1, 0);
 
       if (_ptr == (char*)MAP_FAILED)
@@ -486,6 +506,10 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
 #else
+#  ifdef DEBUG
+   U_WARNING("we are going to malloc %u bytes (%u KB) (pid %P)", *plength, *plength / 1024);
+#  endif
+
    _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
 #endif
 
@@ -600,29 +624,32 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
 
    if (bsize) readSize();
 
-   if (bmap ||
-       st_size > (off_t)(4L * PAGESIZE))
+   if (st_size)
       {
-      int                   prot  = PROT_READ;
-      if (brdonly == false) prot |= PROT_WRITE;
+      if (bmap ||
+          st_size > (off_t)(4L * PAGESIZE))
+         {
+         int                   prot  = PROT_READ;
+         if (brdonly == false) prot |= PROT_WRITE;
 
-      (void) memmap(prot, &fileContent, 0, st_size);
-      }
-   else
-      {
-      UString tmp(st_size);
+         (void) memmap(prot, &fileContent, 0, st_size);
+         }
+      else
+         {
+         UString tmp(st_size);
 
-      char* ptr = tmp.data();
+         char* ptr = tmp.data();
 
-      ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
+         ssize_t value = U_SYSCALL(pread, "%d,%p,%u,%u", fd, ptr, st_size, 0);
 
-      if (value < 0L) value = 0L;
+         if (value < 0L) value = 0L;
 
-      ptr[value] = '\0'; // NB: in this way we can use the UString method data()...
+         ptr[value] = '\0'; // NB: in this way we can use the UString method data()...
 
-      tmp.size_adjust(value);
+         tmp.size_adjust(value);
 
-      fileContent = tmp;
+         fileContent = tmp;
+         }
       }
 
    U_RETURN_STRING(fileContent);
@@ -1236,7 +1263,7 @@ bool UFile::_rename(const char* newpath)
    if (result)
       {
       path_relativ     =  (char*) newpath;
-      path_relativ_len = u__strlen(newpath);
+      path_relativ_len = u__strlen(newpath, __PRETTY_FUNCTION__);
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 

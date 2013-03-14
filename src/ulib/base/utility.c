@@ -77,18 +77,19 @@ uint32_t u_ptr2int(void* ptr)
    return (uint32_t)((unsigned long)ptr);
 }
 
-size_t u__strlen(const char* restrict s)
+size_t u__strlen(const char* restrict s, const char* called_by_function)
 {
-   U_INTERNAL_TRACE("u__strlen(%s)", s)
+   U_INTERNAL_TRACE("u__strlen(%s,%s)", s, called_by_function)
 
-   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(called_by_function)
+   U_INTERNAL_ASSERT_POINTER_MSG(s,called_by_function)
 
    return strlen(s);
 }
 
 char* u__strcpy(char* restrict dest, const char* restrict src)
 {
-   size_t n = u__strlen(src);
+   size_t n = strlen(src);
 
    U_INTERNAL_TRACE("u__strcpy(%p,%p,%lu)", dest, src, n)
 
@@ -426,7 +427,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
       return false;
       }
 
-   (void) u__strncpy(u_user_name, user, (u_user_name_len = u__strlen(user))); /* change user name */
+   (void) u__strncpy(u_user_name, user, (u_user_name_len = u__strlen(user, __PRETTY_FUNCTION__))); /* change user name */
 
    if (change_dir &&
        pw->pw_dir &&
@@ -1258,7 +1259,12 @@ const char* u_delimit_token(const char* restrict s, const char** restrict p, con
 
    U_INTERNAL_PRINT("s = %p end = %p", s, end)
 
-   if (s == end) return ++end;
+   if (s == end)
+      {
+      *p = 0;
+
+      return ++end;
+      }
 
    *p = s++;
     c = **p;
@@ -1334,7 +1340,8 @@ uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char*
 }
 
 /*
- * Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT
+ * Match STRING against the filename pattern MASK, returning true if it matches,
+ * false if not, inversion if flags contain FNM_INVERT
  *
  * '?' matches any single character
  * '*' matches any string, including the empty string
@@ -1986,7 +1993,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
       {
       u__strcpy(result, dot_path);
 
-      result_len = u__strlen(result);
+      result_len = u__strlen(result, __PRETTY_FUNCTION__);
 
       if (result[result_len - 1] != PATH_SEPARATOR)
          {
@@ -2020,7 +2027,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
 {
    static char program_w32[MAX_FILENAME_LEN + 1];
 
-   int len = u__strlen(program);
+   int len = u__strlen(program, __PRETTY_FUNCTION__);
 
    U_INTERNAL_TRACE("u_check_for_suffix_exe(%s)", program)
 
@@ -2052,7 +2059,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
       {
       path = getenv("PATH");
 
-      if (path) path_len = u__strlen(path);
+      if (path) path_len = u__strlen(path, __PRETTY_FUNCTION__);
       else
          {
          path     = U_PATH_DEFAULT;
@@ -2165,7 +2172,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing slashes */
 
-   p = lpath + u__strlen(lpath) - 1;
+   p = lpath + u__strlen(lpath, __PRETTY_FUNCTION__) - 1;
 
    if ( p > lpath &&
        *p == '/')
@@ -2196,7 +2203,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove trailing "/" or "/." */
 
-   len = u__strlen(lpath);
+   len = u__strlen(lpath, __PRETTY_FUNCTION__);
 
    if (len < 2) goto end;
 
@@ -2351,7 +2358,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
 
       if (u_pathfind(pathbuf, 0, 0, argv[1], R_OK | X_OK) == false) return -1;
 
-      U_INTERNAL_ASSERT_MINOR(u__strlen(pathbuf), pathbuf_size)
+      U_INTERNAL_ASSERT_MINOR(u__strlen(pathbuf, __PRETTY_FUNCTION__), pathbuf_size)
       }
 
    return result;
@@ -2379,7 +2386,7 @@ int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict passwor
 
    buf[size-1] = '\0';
 
-   size = u__strlen(buf);
+   size = u__strlen(buf, __PRETTY_FUNCTION__);
 
    U_INTERNAL_PRINT("buf(%d) = %.*s", size, U_min(size,128), buf)
 

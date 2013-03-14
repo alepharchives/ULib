@@ -1530,7 +1530,7 @@ void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffe
    U_TRACE(0, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
 
    U_INTERNAL_ASSERT_POINTER(token)
-   U_INTERNAL_ASSERT(u__strlen(token) == U_TOKEN_NM)
+   U_INTERNAL_ASSERT(u__strlen(token, __PRETTY_FUNCTION__) == U_TOKEN_NM)
 
    uint32_t start = buffer.size();
 

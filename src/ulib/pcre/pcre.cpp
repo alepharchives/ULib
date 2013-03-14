@@ -282,7 +282,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
    if (sub_vec)         UMemoryPool::_free(sub_vec,      sub_len, sizeof(int));
        sub_vec = (int*) UMemoryPool::_malloc((uint32_t*)&sub_len, sizeof(int));
 
-   if (stuff_len == 0) stuff_len = u__strlen(stuff);
+   if (stuff_len == 0) stuff_len = u__strlen(stuff, __PRETTY_FUNCTION__);
 
    int num = U_SYSCALL(pcre_exec, "%p,%p,%S,%u,%d,%d,%p,%d", p_pcre, p_pcre_extra, stuff, stuff_len, offset, options, sub_vec, sub_len);
 
@@ -329,7 +329,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
       U_INTERNAL_ASSERT_EQUALS(resultset,0)
 
-      resultset = U_NEW(UVector<UString>);
+      U_NEW_DBG(UVector<UString>, resultset, UVector<UString>);
 
       for (i = 1; i < num; ++i)
          {

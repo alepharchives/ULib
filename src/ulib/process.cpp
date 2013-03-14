@@ -305,7 +305,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
       {
       bool flag;
       w32_cmd = buffer1;
-      int len = u__strlen(pathname);
+      int len = u__strlen(pathname, __PRETTY_FUNCTION__);
 
       if (len)
          {
@@ -318,7 +318,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
          {
          w32_cmd[index++] = ' ';
 
-         len = u__strlen(argv[i]);
+         len = u__strlen(argv[i], __PRETTY_FUNCTION__);
 
          if (len)
             {
@@ -351,7 +351,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
       for (int len, i = 0; envp[i]; ++i, ++index)
          {
-         len = u__strlen(envp[i]);
+         len = u__strlen(envp[i], __PRETTY_FUNCTION__);
 
          if (len)
             {

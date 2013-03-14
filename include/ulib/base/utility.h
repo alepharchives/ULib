@@ -23,7 +23,7 @@
 #  ifdef _DIRENT_HAVE_D_NAMLEN
 #     define NAMLEN(dirent) (dirent)->d_namlen
 #  else
-#     define NAMLEN(dirent) u__strlen((dirent)->d_name)
+#     define NAMLEN(dirent) u__strlen((dirent)->d_name, __PRETTY_FUNCTION__)
 #  endif
 #else
 #  define dirent direct
@@ -110,13 +110,13 @@ U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, s
 #ifdef DEBUG
 U_EXPORT uint32_t u_ptr2int(void* ptr);
 /* NB: u_strlen() and u_memcpy conflit with /usr/include/unicode/urename.h */
-U_EXPORT size_t   u__strlen(const char* restrict s);
+U_EXPORT size_t   u__strlen(const char* restrict s, const char* function);
 U_EXPORT char*    u__strcpy( char* restrict dest, const char* restrict src);
 U_EXPORT void*    u__memcpy( void* restrict dest, const void* restrict src, size_t n, const char* function);
 U_EXPORT char*    u__strncpy(char* restrict dest, const char* restrict src, size_t n);
 #else
 #  define u_ptr2int(x)               ((long)x)
-#  define u__strlen(s)                      strlen((s))
+#  define u__strlen(s,func)                 strlen((s))
 #  define u__strcpy(dest,src)               strcpy( (dest),(src))
 #  define u__memcpy(dest,src,n,func) (void) memcpy( (dest),(src),(n))
 #  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))

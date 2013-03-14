@@ -269,6 +269,27 @@ void UOptions::load(const UString& str)
 
    U_CHECK_MEMORY
 
+#if defined(ENABLE_MEMPOOL) && defined(__linux__)   // NB: check if we want some preallocation for memory pool...
+   char* ptr = U_SYSCALL(getenv, "%S", "UMEMPOOL"); // NB: start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
+
+   if (ptr)
+      {
+      char* endptr;
+      uint32_t value;
+
+      for (uint32_t i = 1; i < U_NUM_STACK_TYPE; ++i)
+         {
+         value = strtol(ptr, &endptr, 10);
+
+         if (endptr == ptr) break;
+
+         ptr = endptr + 1;
+
+         if (value) UMemoryPool::addMemoryBlocks(i, value);
+         }
+      }
+#endif
+
    UVector<UString> vec(126);
 
    char* idx;
@@ -405,7 +426,7 @@ void UOptions::printHelp(vPF func)
 
       ptr += 4;
 
-      name_len = u__strlen(ptr_long_options->name);
+      name_len = u__strlen(ptr_long_options->name, __PRETTY_FUNCTION__);
 
       U__MEMCPY(ptr, ptr_long_options->name, name_len); 
 
@@ -439,7 +460,7 @@ void UOptions::printHelp(vPF func)
          (void) u__strcpy(ptr, (i ? "Show version information"
                                   : "Show help about options"));
 
-         ptr += u__strlen(ptr);
+         ptr += u__strlen(ptr, __PRETTY_FUNCTION__);
          }
       else
          {
@@ -825,7 +846,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
             if (optarg)
                {
-               UStringRep::assign(item[longindex - 2].value, optarg, u__strlen(optarg));
+               UStringRep::assign(item[longindex - 2].value, optarg, u__strlen(optarg, __PRETTY_FUNCTION__));
                }
             else
                {

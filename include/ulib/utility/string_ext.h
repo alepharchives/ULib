@@ -39,7 +39,7 @@ public:
       {
       U_TRACE(0, "UStringExt::isDelimited(%.*S,%S)", U_STRING_TO_TRACE(s), delimiter)
 
-      U_INTERNAL_ASSERT_EQUALS(u__strlen(delimiter), 2)
+      U_INTERNAL_ASSERT_EQUALS(u__strlen(delimiter, __PRETTY_FUNCTION__), 2)
 
       if (s.first_char() != delimiter[0] ||
           s.last_char()  != delimiter[1] ||

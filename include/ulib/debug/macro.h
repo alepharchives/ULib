@@ -160,10 +160,13 @@
 
 // Manage location info for object allocation
 
-#  define U_ALLOCA(args...)                       U_SET_LOCATION_INFO; args
-
 #  define U_NEW(args...)                         (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
+#  define U_ALLOCA(args...)                       U_SET_LOCATION_INFO;                                        args
 #  define U_NEW_VECTOR(n,type,p)                 (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, u_new_vector<type>(n,p))
+#  define U_NEW_DBG(CLASS,obj,args...)           (UMemoryPool::obj_class = #CLASS, \
+                                                  UMemoryPool::func_call = __PRETTY_FUNCTION__, \
+                                                  obj = U_NEW(args), \
+                                                  UMemoryPool::obj_class = UMemoryPool::func_call = 0)
 
 #  define U_NEW_ULIB_OBJECT(obj,args...)         UObjectDB::flag_ulib_object = true, \
                                                  obj = U_NEW(args), \
@@ -255,6 +258,7 @@ if (envp) \
 #  define U_NEW(args...)                       new args
 #  define U_ALLOCA(args...)                        args
 #  define U_NEW_VECTOR(n,type,p)               u_new_vector<type>(n,p)
+#  define U_NEW_DBG(CLASS,obj,args...)           obj = new args
 
 #  define U_NEW_ULIB_OBJECT(obj,args...)         obj = new args
 #  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type,p) obj = u_new_vector<type>(n,p)

@@ -280,6 +280,7 @@ THREAD_LIBS = @THREAD_LIBS@
 ULIB = @ULIB@
 ULIB_CFLAGS = @ULIB_CFLAGS@
 ULIB_CPPFLAGS = @ULIB_CPPFLAGS@
+ULIB_CXX = @ULIB_CXX@
 ULIB_CXXFLAGS = @ULIB_CXXFLAGS@
 ULIB_LDFLAGS = @ULIB_LDFLAGS@
 ULIB_LIBS = @ULIB_LIBS@
@@ -849,7 +850,7 @@ info: info-recursive
 
 info-am:
 
-install-data-am: install-aclocalDATA
+install-data-am: install-aclocalDATA install-data-local
 
 install-dvi: install-dvi-recursive
 
@@ -908,14 +909,15 @@ uninstall-am: uninstall-aclocalDATA
 	distclean-hdr distclean-libtool distclean-tags distcleancheck \
 	distdir distuninstallcheck dvi dvi-am html html-am info \
 	info-am install install-aclocalDATA install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-recursive \
-	uninstall uninstall-aclocalDATA uninstall-am
+	install-data-am install-data-local install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-recursive uninstall uninstall-aclocalDATA \
+	uninstall-am
 
 
 dist-hook:
@@ -961,6 +963,7 @@ dist-hook:
   		$(distdir)/src/ulib/net/server/plugin/*/.deps \
   		$(distdir)/src/ulib/net/server/plugin/*/.libs \
   		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/usp/usp_compile.sh \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator \
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.so \
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.usp \
@@ -968,6 +971,10 @@ dist-hook:
 
 README.html: README.md
 	@Markdown.pl README.md > README.html
+
+install-data-local:
+	@${INSTALL} -m 777 $(top_builddir)/libtool ${bindir}/usp_libtool.sh; \
+	 ${INSTALL} -m 777 $(top_builddir)/src/ulib/net/server/plugin/usp/usp_compile.sh ${bindir}
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

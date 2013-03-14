@@ -162,6 +162,7 @@ public:
       U_RETURN(result);
       }
 
+   static bool isMobile() __pure;
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
 

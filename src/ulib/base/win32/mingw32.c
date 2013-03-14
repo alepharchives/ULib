@@ -272,15 +272,15 @@ int unlink_w32(const char* path)
    return ret;
 }
 
-int mkstemp(char* tmplate)
+int mkstemp(char* tmpl)
 {
-   int ret, iLen = u__strlen(tmplate);
+   int ret, iLen = u__strlen(tmpl, __PRETTY_FUNCTION__);
 
-   U_INTERNAL_TRACE("mkstemp(%s)", tmplate)
+   U_INTERNAL_TRACE("mkstemp(%s)", tmpl)
 
    if (iLen >= 6)
       {
-      char* pChr = tmplate + iLen - 6;
+      char* pChr = tmpl + iLen - 6;
 
       srand(u_now->tv_sec);
 
@@ -310,7 +310,7 @@ int mkstemp(char* tmplate)
       return -1;
       }
 
-   ret = _open(tmplate, _O_CREAT | _O_EXCL | _O_BINARY, _S_IREAD | _S_IWRITE);
+   ret = _open(tmpl, _O_CREAT | _O_EXCL | _O_BINARY, _S_IREAD | _S_IWRITE);
 
    U_INTERNAL_PRINT("ret = %d", ret)
 
@@ -1896,7 +1896,7 @@ const char* getSysError_w32(unsigned* len)
    if (ret == 0) lenMsg = 0;
    else
       {
-      lenMsg = u__strlen(pBuffer);
+      lenMsg = u__strlen(pBuffer, __PRETTY_FUNCTION__);
 
       U_INTERNAL_ASSERT_MINOR(lenMsg, sizeof(buffer))
 
@@ -1917,7 +1917,7 @@ const char* getSysError_w32(unsigned* len)
 
    LocalFree(pBuffer);
 
-   *len = u__strlen(buffer);
+   *len = u__strlen(buffer, __PRETTY_FUNCTION__);
 
    U_INTERNAL_PRINT("ret = %s", buffer)
 

@@ -57,7 +57,7 @@ public:
 
       // query to Search Engine
 
-      UString body(10U + u__strlen(uid));
+      UString body(10U + u__strlen(uid, __PRETTY_FUNCTION__));
 
       body.snprintf("query=%s", uid);
 

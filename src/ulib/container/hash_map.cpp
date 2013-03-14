@@ -478,7 +478,7 @@ void* UHashMap<void*>::operator[](const char* _key)
    U_INTERNAL_ASSERT_POINTER(pkey)
 
    pkey->str     =           _key;
-   pkey->_length = u__strlen(_key);
+   pkey->_length = u__strlen(_key, __PRETTY_FUNCTION__);
 
    return at(pkey);
 }
@@ -490,7 +490,7 @@ UString UHashMap<UString>::operator[](const char* _key)
    U_INTERNAL_ASSERT_POINTER(pkey)
 
    pkey->str     =           _key;
-   pkey->_length = u__strlen(_key);
+   pkey->_length = u__strlen(_key, __PRETTY_FUNCTION__);
 
    return at(pkey);
 }
@@ -502,7 +502,7 @@ void* UHashMap<void*>::erase(const char* _key)
    U_INTERNAL_ASSERT_POINTER(pkey)
 
    pkey->str     =           _key;
-   pkey->_length = u__strlen(_key);
+   pkey->_length = u__strlen(_key, __PRETTY_FUNCTION__);
 
    return erase(pkey);
 }

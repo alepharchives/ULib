@@ -2,7 +2,7 @@
 
 MAINTAINERCLEANFILES = Makefile.in
 
-EXTRA_DIST = *.usp usp2so.sh *.cpp README.alldemos
+EXTRA_DIST = *.usp usp2so.sh *.cpp README.alldemos usp_compile.sh.in
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
@@ -15,7 +15,7 @@ usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 bin_PROGRAMS = usp_translator
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out
+	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out usp_compile.sh
 
 ## usp section
 ## ----------------------------------------------------------------------------------------------------

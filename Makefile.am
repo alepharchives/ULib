@@ -65,6 +65,7 @@ dist-hook:
   		$(distdir)/src/ulib/net/server/plugin/*/.deps \
   		$(distdir)/src/ulib/net/server/plugin/*/.libs \
   		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
+  		$(distdir)/src/ulib/net/server/plugin/usp/usp_compile.sh \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator \
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.so \
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.usp \
@@ -73,33 +74,6 @@ dist-hook:
 README.html: README.md
 	@Markdown.pl README.md > README.html
 
-##install-data-local:
-##	 @if test -f /etc/ld.so.conf \
-##     -a `echo $(libdir) | grep ^/usr`XXX != "XXX" ; then \
-##      if ! grep -q "$(libdir)" /etc/ld.so.conf; then \
-##         echo "------------------------------------------------------------------------------" ;\
-##         echo "Hmm, looks like you forgot to add $(libdir) to /etc/ld.so.conf." ;\
-##         echo "I'll try to fix it for you (but pay attention to libtool's output" ;\
-##         echo "next time, ok?)" ;\
-##         echo "$(libdir)" >> /etc/ld.so.conf && \
-##            echo "Ok, all fixed." \
-##            || \
-##            (echo "" ;\
-##            echo "Well, that didn't work.  Remember to add $(libdir) to" ;\
-##            echo "/etc/ld.so.conf if you want to use this library.") ;\
-##         echo "------------------------------------------------------------------------------" ;\
-##         ldconfig ;\
-##      fi ;\
-##   fi
-
-##if PLUGIN
-##install-exec-hook:
-##	@cd $(top_builddir)/src/ulib/net/server/plugin; \
-##	 if [ ! -f .libs/mod_rpc.so ]; then \
-##	   make .libs/mod_rpc.so   >/dev/null 2>/dev/null; \
-##	   make .libs/mod_tsa.so   >/dev/null 2>/dev/null; \
-##	   make .libs/mod_http.so  >/dev/null 2>/dev/null; \
-##	   make .libs/mod_soap.so  >/dev/null 2>/dev/null; \
-##	   make .libs/mod_proxy.so >/dev/null 2>/dev/null; \
-##	 fi
-##endif
+install-data-local:
+	@${INSTALL} -m 777 $(top_builddir)/libtool ${bindir}/usp_libtool.sh; \
+	 ${INSTALL} -m 777 $(top_builddir)/src/ulib/net/server/plugin/usp/usp_compile.sh ${bindir}

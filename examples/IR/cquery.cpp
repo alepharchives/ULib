@@ -304,7 +304,7 @@ void Query::run(const char* ptr)
 {
    U_TRACE(5, "Query::run(%S)", ptr)
 
-   *UPosting::word = UStringExt::removeEscape(UStringExt::trim(ptr, u__strlen(ptr)));
+   *UPosting::word = UStringExt::removeEscape(UStringExt::trim(ptr, u__strlen(ptr, __PRETTY_FUNCTION__)));
 
    U_INTERNAL_DUMP("UPosting::word = %.*S", U_STRING_TO_TRACE(*UPosting::word))
 

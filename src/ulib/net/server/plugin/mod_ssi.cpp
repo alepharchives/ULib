@@ -308,15 +308,16 @@ U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& 
    U_RETURN_STRING(pathname);
 }
 
-U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_level)
+U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_level, bool bssi)
 {
-   U_TRACE(0, "USSIPlugIn::getInclude(%.*S,%d)", U_STRING_TO_TRACE(include), include_level)
+   U_TRACE(0, "USSIPlugIn::getInclude(%.*S,%d,%b)", U_STRING_TO_TRACE(include), include_level, bssi)
 
    UString content = include;
 
    U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*UHTTP::file))
 
-   if (u_endsWith(U_FILE_TO_PARAM(*UHTTP::file), U_CONSTANT_TO_PARAM(".shtml")))
+   if (bssi ||
+       u_endsWith(U_FILE_TO_PARAM(*UHTTP::file), U_CONSTANT_TO_PARAM(".shtml")))
       {
       if (include_level < 16) content = processSSIRequest(content, include_level + 1);
       else
@@ -847,7 +848,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             if (include.empty()) x = *errmsg;
             else
                {
-               x = getInclude(include, include_level);
+               x = getInclude(include, include_level, bfile);
 
                include.clear();
                }
@@ -1076,6 +1077,8 @@ int USSIPlugIn::handlerRequest()
 
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
+
+      if (UHTTP::isMobile()) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_USER_AGENT_MOBILE=1\n"));
 
       *errmsg              = *str_errmsg_default;
       *timefmt             = *str_timefmt_default;

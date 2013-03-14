@@ -113,7 +113,7 @@ public:
       U_TRACE(0, "UCommand::addArgument(%S)", argument)
 
       U_INTERNAL_ASSERT_POINTER(argv_exec)
-      U_INTERNAL_ASSERT(u_isText((const unsigned char*)argument, u__strlen(argument)))
+      U_INTERNAL_ASSERT(u_isText((const unsigned char*)argument, u__strlen(argument, __PRETTY_FUNCTION__)))
 
       argv_exec[++ncmd] = (char*) argument;
       argv_exec[ncmd+1] = 0;
@@ -129,7 +129,7 @@ public:
 
       U_INTERNAL_ASSERT_RANGE(2,n,ncmd)
       U_INTERNAL_ASSERT_POINTER(argv_exec)
-      U_INTERNAL_ASSERT(u_isText((const unsigned char*)argument, u__strlen(argument)))
+      U_INTERNAL_ASSERT(u_isText((const unsigned char*)argument, u__strlen(argument, __PRETTY_FUNCTION__)))
 
       argv_exec[n] = (char*) argument;
       }
@@ -140,7 +140,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(argv_exec)
       U_INTERNAL_ASSERT_EQUALS(argv_exec[ncmd+1],0)
-      U_INTERNAL_ASSERT(u_isText((const unsigned char*)argument, u__strlen(argument)))
+      U_INTERNAL_ASSERT(u_isText((const unsigned char*)argument, u__strlen(argument, __PRETTY_FUNCTION__)))
 
       argv_exec[ncmd] = (char*) argument;
       }
@@ -155,7 +155,7 @@ public:
       U_TRACE(0, "UCommand::setFileArgument(%S)", pathfile)
 
       U_INTERNAL_ASSERT_POINTER(argv_exec)
-      U_INTERNAL_ASSERT(u_isText((const unsigned char*)pathfile, u__strlen(pathfile)))
+      U_INTERNAL_ASSERT(u_isText((const unsigned char*)pathfile, u__strlen(pathfile, __PRETTY_FUNCTION__)))
 
       U_INTERNAL_DUMP("ncmd = %d", ncmd)
 
@@ -214,7 +214,7 @@ public:
 
       char* result = (argv_exec ? argv_exec[(isShellScript() ? 2 : 0)] : 0);
 
-      U_INTERNAL_ASSERT(u_isText((const unsigned char*)result, u__strlen(result)))
+      U_INTERNAL_ASSERT(u_isText((const unsigned char*)result, u__strlen(result, __PRETTY_FUNCTION__)))
 
       U_RETURN(result);
       }

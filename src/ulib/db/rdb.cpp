@@ -334,11 +334,11 @@ U_NO_EXPORT void URDB::htInsert()
 
 // open a Reliable DataBase
 
-bool URDB::open(uint32_t log_size, bool btruncate, bool brdonly)
+bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
 {
-   U_TRACE(0, "URDB::open(%u,%b)", log_size, btruncate, brdonly)
+   U_TRACE(0, "URDB::open(%u,%b,%b,%b)", log_size, btruncate, cdb_brdonly, breference)
 
-   (void) UCDB::open(brdonly);
+   (void) UCDB::open(cdb_brdonly);
 
    journal.setPath(*(const UFile*)this, 0, U_CONSTANT_TO_PARAM(".jnl"));
 
@@ -366,7 +366,7 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool brdonly)
             U_INTERNAL_DUMP("RDB_off = %u RDB_sync = %u capacity = %u nrecord = %u RDB_reference = %u",
                              RDB_off,     RDB_sync, RDB_capacity, RDB_nrecord,     RDB_reference)
 
-            RDB_reference++;
+            if (breference) RDB_reference++;
 
             U_RETURN(true);
             }
@@ -376,32 +376,36 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool brdonly)
    U_RETURN(false);
 }
 
-void URDB::close()
+void URDB::close(bool breference)
 {
-   U_TRACE(0, "URDB::close()")
+   U_TRACE(0, "URDB::close(%b)", breference)
 
    U_CHECK_MEMORY
 
    if (UFile::map_size) UFile::munmap(); // Constant DB
 
-   lock();
+   if (breference == false) journal.munmap();
+   else
+      {
+      lock();
 
-   RDB_reference--;
+      RDB_reference--;
 
-   uint32_t reference = RDB_reference;
+      uint32_t reference = RDB_reference;
 
-   U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference)
+      U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference)
 
-   uint32_t sz = RDB_sync = RDB_off;
+      uint32_t sz = RDB_sync = RDB_off;
 
-   journal.munmap();
+      journal.munmap();
 
-   if (reference == 0) (void) journal.ftruncate(sz);
+      if (reference == 0) (void) journal.ftruncate(sz);
+
+      unlock();
+      }
 
    journal.close();
    journal.reset();
-
-   unlock();
 }
 
 void URDB::reset()
@@ -476,6 +480,8 @@ void URDB::msync()
 bool URDB::closeReorganize()
 {
    U_TRACE(0, "URDB::closeReorganize()")
+
+   resetReference();
 
    if (reorganize())
       {
@@ -861,7 +867,9 @@ U_NO_EXPORT void URDB::getKeys1(uint32_t offset) // entry presenti nella cache..
 
    if (RDB_cache_node(n,data.dptr))
       {
-      UStringRep* rep = U_NEW(UStringRep((const char*)((ptrdiff_t)ptr_rdb->journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)),RDB_cache_node(n,key.dsize)));
+      UStringRep* rep;
+
+      U_NEW_DBG(UStringRep,rep,UStringRep((const char*)((ptrdiff_t)ptr_rdb->journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)),RDB_cache_node(n,key.dsize)));
 
       kvec->UVector<void*>::push(rep);
       }
@@ -884,7 +892,9 @@ U_NO_EXPORT inline void URDB::getKeys2(char* src)
 
    if (ptr_rdb->htLookup() == false)
       {
-      UStringRep* rep = U_NEW(UStringRep((const char*)ptr_rdb->UCDB::key.dptr, ptr_rdb->UCDB::key.dsize));
+      UStringRep* rep;
+
+      U_NEW_DBG(UStringRep, rep, UStringRep((const char*)ptr_rdb->UCDB::key.dptr, ptr_rdb->UCDB::key.dsize));
 
       kvec->UVector<void*>::push(rep);
       }
@@ -920,6 +930,8 @@ void URDB::callForAllEntrySorted(vPFprpr function, UVector<UString>* vec, qcompa
       UVector<UString> vkey(n);
 
       getKeys(vkey);
+
+      n = vkey.size();
 
       if (n > 1)
          {
@@ -963,42 +975,42 @@ UString URDB::printSorted()
 
    if (_size)
       {
-      UString buffer(_size);
-
       U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_nrecord = %u", UCDB::nrecord, RDB_nrecord)
 
       uint32_t n = UCDB::nrecord + RDB_nrecord;
 
-      U_INTERNAL_DUMP("n = %u", n)
-
-      UVector<UString> vkey(n);
-
-      getKeys(vkey);
-
-      if (n > 1) vkey.sort(ignore_case);
-
-      char tmp[40];
-      UStringRep* r;
-
-      for (uint32_t i = 0; i < n; ++i)
+      if (n)
          {
-         r = vkey.UVector<UStringRep*>::at(i);
+         UVector<UString> vkey(n);
 
-         UCDB::setKey(r);
+         getKeys(vkey);
 
-         if (fetch())
+         if (n > 1) vkey.sort(ignore_case);
+
+         char tmp[40];
+         UStringRep* r;
+         UString buffer(_size);
+
+         for (uint32_t i = 0; i < n; ++i)
             {
-            _size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", UCDB::key.dsize, UCDB::data.dsize);
+            r = vkey.UVector<UStringRep*>::at(i);
 
-            buffer.append(tmp, _size);
-            buffer.append((const char*) UCDB::key.dptr, UCDB::key.dsize);
-            buffer.append(U_CONSTANT_TO_PARAM("->"));
-            buffer.append((const char*)UCDB::data.dptr, UCDB::data.dsize);
-            buffer.push_back('\n');
+            UCDB::setKey(r);
+
+            if (fetch())
+               {
+               _size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", UCDB::key.dsize, UCDB::data.dsize);
+
+               buffer.append(tmp, _size);
+               buffer.append((const char*) UCDB::key.dptr, UCDB::key.dsize);
+               buffer.append(U_CONSTANT_TO_PARAM("->"));
+               buffer.append((const char*)UCDB::data.dptr, UCDB::data.dsize);
+               buffer.push_back('\n');
+               }
             }
-         }
 
-      U_RETURN_STRING(buffer);
+         U_RETURN_STRING(buffer);
+         }
       }
 
    U_RETURN_STRING(UString::getStringNull());

@@ -1,0 +1,41 @@
+#container {
+	margin-top:2em;
+}
+#containerBig {
+	margin:1em;
+}
+#wrapper {
+	margin-left:auto;
+	margin-right:auto;
+	width: 5.0em;
+}
+#menubox button {
+   width:22em;
+}
+#menubox #menulogo {
+   height:5.5em;
+	margin-top:0.5em;
+}       
+#menubox #menu1 {
+   height:4.5em;
+	margin-top:0.5em;
+}       
+#menubox #menu2 {
+   height:4.5em;
+	margin-top:0.5em;
+}
+#menubox #menu3 {
+   height:4.5em;
+	margin-top:0.5em;
+}
+#menubox #menu4 {
+   height:4.5em;
+	margin-top:0.5em;
+}
+#menubox #logo1 img {
+	height:4em;
+	margin-top:0.5em;
+}
+#menubox #logo2 img {
+	height:5em;
+}

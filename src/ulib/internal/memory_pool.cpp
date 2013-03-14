@@ -34,6 +34,8 @@
 
 #ifdef DEBUG
 #  include <fstream>
+const char*  UMemoryPool::obj_class;
+const char*  UMemoryPool::func_call;
 sig_atomic_t UMemoryPool::index_stack_busy = -1;
 #endif
 
@@ -281,14 +283,14 @@ public:
             }
          while (--num_entry);
 
-#     if defined(DEBUG)
+#     ifdef DEBUG
          UMemoryPool::index_stack_busy = -1;
 #     endif
 
          U_INTERNAL_ASSERT_EQUALS(pblock, eblock)
          }
 
-#  if defined(DEBUG)
+#  ifdef DEBUG
       ++num_call_allocateMemoryBlocks;
 #  endif
 
@@ -308,7 +310,7 @@ public:
 
       if (len == 0) allocateMemoryBlocks(space);
 
-#  if defined(DEBUG)
+#  ifdef DEBUG
       UMemoryPool::index_stack_busy = index;
 #  endif
 
@@ -484,7 +486,20 @@ void* UMemoryPool::pop(int stack_index)
 #if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
    void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE(stack_index));
 #else
-   void* ptr = ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->pop();
+   UStackMemoryPool* pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
+
+#  ifdef DEBUG
+   if (pstack->index &&
+       pstack->len == 0)
+      {
+      U_WARNING("we are going to call allocateMemoryBlocks() (pid %P) - object = %S func = %S"
+                " index = %u type = %u len = %u space = %u depth = %u max_depth = %u num_call_allocateMemoryBlocks = %u pop_cnt = %u push_cnt = %u",
+                  obj_class, func_call, pstack->index, pstack->type, pstack->len, pstack->space, pstack->depth,
+                  pstack->max_depth, pstack->num_call_allocateMemoryBlocks, pstack->pop_cnt, pstack->push_cnt);
+      }
+#  endif
+
+   void* ptr = pstack->pop();
 
    U_ASSERT(check(ptr))
 #endif
@@ -513,7 +528,7 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
       {
       int stack_index = U_SIZE_TO_STACK_INDEX(length);
 
-      ptr    = ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->pop();
+      ptr    = pop(stack_index);
       length = U_STACK_INDEX_TO_SIZE(stack_index);
       }
    else
@@ -548,7 +563,7 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
       {
       int stack_index = U_SIZE_TO_STACK_INDEX(length);
 
-      ptr    = ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->pop();
+      ptr    = pop(stack_index);
       length = U_STACK_INDEX_TO_SIZE(stack_index);
       }
    else
@@ -640,11 +655,10 @@ void UStackMemoryPool::paint(ostream& os) // paint info
       if (pstack->space > max_space) max_space = pstack->space;
 
       (void) snprintf(buffer, sizeof(buffer),
-                      "stack[%u]: type = %4u len = %5u space = %5u depth = %4u max_depth = %4u pop_cnt = %5u push_cnt = %5u allocateMemoryBlocks = %u\n",
-                        stack_index, pstack->type, pstack->len, pstack->space,
-                        pstack->depth, pstack->max_depth,
-                        pstack->pop_cnt, pstack->push_cnt,
-                        pstack->num_call_allocateMemoryBlocks);
+                      "stack[%u]: type = %4u len = %5u space = %5u allocateMemoryBlocks = %2u depth = %5u max_depth = %5u pop_cnt = %9u push_cnt = %9u\n",
+                        stack_index,
+                        pstack->type, pstack->len, pstack->space, pstack->num_call_allocateMemoryBlocks,
+                        pstack->depth, pstack->max_depth, pstack->pop_cnt, pstack->push_cnt);
 
       os << buffer;
       }

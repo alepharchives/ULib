@@ -160,7 +160,7 @@ static int create_central_header(int fd)
    for (ze = ziptail; ze != 0; ze = ze->next_entry)
       {
       total_in  += ze->usize;
-      total_out += ze->csize + 76 + u__strlen(ze->filename) * 2;
+      total_out += ze->csize + 76 + u__strlen(ze->filename, __PRETTY_FUNCTION__) * 2;
 
       if (ze->compressed)
          {
@@ -176,11 +176,11 @@ static int create_central_header(int fd)
       PACK_UB4(header, CEN_CRC,     ze->crc);
       PACK_UB4(header, CEN_CSIZE,   ze->csize);
       PACK_UB4(header, CEN_USIZE,   ze->usize);
-      PACK_UB2(header, CEN_FNLEN,   u__strlen(ze->filename));
+      PACK_UB2(header, CEN_FNLEN,   u__strlen(ze->filename, __PRETTY_FUNCTION__));
       PACK_UB4(header, CEN_OFFSET,  ze->offset);
 
       (void) write(fd, header,       46);
-      (void) write(fd, ze->filename, u__strlen(ze->filename));
+      (void) write(fd, ze->filename, u__strlen(ze->filename, __PRETTY_FUNCTION__));
       }
 
    dir_size = lseek(fd, 0, SEEK_CUR) - start_offset;
@@ -246,7 +246,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
    U_INTERNAL_TRACE("add_file_to_zip(%d,%d,%s,%p)", jfd, ffd, fname, statbuf)
 
    mod_time         = unix2dostime(&(statbuf->st_mtime));
-   file_name_length = u__strlen(fname);
+   file_name_length = u__strlen(fname, __PRETTY_FUNCTION__);
 
    ze = (zipentry*) calloc(1, sizeof(zipentry)); /* clear all the fields */
 
@@ -324,7 +324,7 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
    PACK_UB4(data_descriptor, 12, ze->usize);
 
    /* we need to seek back and fill the header */
-   offset = (ze->csize + u__strlen(ze->filename) + 16);
+   offset = (ze->csize + u__strlen(ze->filename, __PRETTY_FUNCTION__) + 16);
 
    if (lseek(jfd, -offset, SEEK_CUR) == (off_t)-1)
       {
@@ -393,13 +393,13 @@ static int add_to_zip(int fd, const char* file)
          return 1;
          }
 
-      nlen = u__strlen(file) + 256;
+      nlen = u__strlen(file, __PRETTY_FUNCTION__) + 256;
 
       fullname = (char*) calloc(1, nlen);
 
       (void) u__strcpy(fullname, file);
 
-      nlen = u__strlen(file);
+      nlen = u__strlen(file, __PRETTY_FUNCTION__);
 
       if (fullname[nlen - 1] != '/')
          {
@@ -910,11 +910,11 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          /* only a directory */
 
-         U_INTERNAL_TRACE("Leftovers are \"%s\" (%d)", start, u__strlen((const char*)start))
+         U_INTERNAL_TRACE("Leftovers are \"%s\" (%d)", start, u__strlen((const char*)start, __PRETTY_FUNCTION__))
 
          /* If the entry was just a directory, don't write to file, etc */
 
-         if (u__strlen((const char *)start) == 0) f_fd = -1;
+         if (u__strlen((const char *)start, __PRETTY_FUNCTION__) == 0) f_fd = -1;
 
          free(tmp_buff);
          }

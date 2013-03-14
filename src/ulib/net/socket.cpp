@@ -706,6 +706,9 @@ bool USocket::setServer(SocketAddress& cLocal, int iBackLog)
    (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, &_flag, sizeof(_flag));
    (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &_flag, sizeof(_flag));
    (void) setSockOpt(SOL_SOCKET, SO_LINGER,    &ling,  sizeof(ling));
+#ifdef SO_REUSEPORT
+   (void) setSockOpt(SOL_SOCKET, SO_REUSEPORT, &_flag, sizeof(_flag)); // http://git.kernel.org/linus/c617f398edd4db2b8567a28e899a88f8f574798d
+#endif
 
    if (bind(cLocal))
       {

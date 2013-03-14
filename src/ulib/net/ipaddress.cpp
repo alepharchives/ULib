@@ -138,7 +138,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
       pcAddress.i = cOtherAddr.pcAddress.i;
       }
 
-   uint32_t n = u__strlen(cOtherAddr.pcStrAddress);
+   uint32_t n = u__strlen(cOtherAddr.pcStrAddress, __PRETTY_FUNCTION__);
 
    if (n) U__MEMCPY(pcStrAddress, cOtherAddr.pcStrAddress, n);
 

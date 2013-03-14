@@ -68,7 +68,7 @@ public:
    // OPEN/CREAT a cache file
 
    bool open(const UString& path, uint32_t size,               const UString* environment = 0);
-   bool open(const UString& path, const UString& dir_template, const UString* environment = 0);
+   bool open(const UString& path, const UString& dir_template, const UString* environment = 0, bool brdonly = false);
 
    // OPERATION
 
@@ -220,7 +220,7 @@ protected:
 
 private:
    inline uint32_t hash(const char* key, uint32_t keylen) U_NO_EXPORT;
-          void     init(UFile& _x, uint32_t size, bool bexist) U_NO_EXPORT;
+          void     init(UFile& _x, uint32_t size, bool bexist, bool brdonly) U_NO_EXPORT;
 
    UCache(const UCache&)            {}
    UCache& operator=(const UCache&) { return *this; }

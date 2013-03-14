@@ -26,7 +26,7 @@ const char* UMemoryError::getErrorType(const void* pobj) const
 
       if (UObjectDB::fd > 0)
          {
-         uint32_t n = u__strlen(pbuffer),
+         uint32_t n = u__strlen(pbuffer, __PRETTY_FUNCTION__),
                   l = UObjectDB::dumpObject(pbuffer+n+1, 4096-n-1, pobj);
 
          if (l)

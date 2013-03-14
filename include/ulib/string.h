@@ -420,7 +420,7 @@ public:
 
       U_CHECK_MEMORY
 
-      _length = (value == U_NOT_FOUND ? u__strlen(str) : value);
+      _length = (value == U_NOT_FOUND ? u__strlen(str, __PRETTY_FUNCTION__) : value);
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -695,7 +695,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(t)
 
-      uint32_t tlen = u__strlen((char*)t);
+      uint32_t tlen = u__strlen((char*)t, __PRETTY_FUNCTION__);
 
       rep = UStringRep::create(tlen, tlen, (const char*)t);
 
@@ -776,11 +776,11 @@ public:
       return replace(pos1, n1, str.data() + pos2, str.rep->fold(pos2, n2));
       }
 
-   UString& replace(const char* s)                                { return replace(0U, size(),          s, u__strlen(s)); }
+   UString& replace(const char* s)                                { return replace(0U, size(),          s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& replace(unsigned char c)                              { return replace(0U, size(),         1U, c); }
    UString& replace(const UString& str)                           { return replace(0U, size(), str.data(), str.size()); }
    UString& replace(const char* s, uint32_t n)                    { return replace(0U, size(),          s, n); }
-   UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,     n,          s, u__strlen(s)); }
+   UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,     n,          s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& replace(uint32_t pos, uint32_t n, const UString& str) { return replace(pos,     n, str.data(), str.size()); }
 
    // Assignment
@@ -898,7 +898,7 @@ public:
    UString& append(UStringRep* _rep);
    UString& append(const UString& str);
 
-   UString& operator+=(const char* s)        { return append(s, u__strlen(s)); }
+   UString& operator+=(const char* s)        { return append(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& operator+=(unsigned char c)      { return append(1U, c); }
    UString& operator+=(const UString& str);
 
@@ -959,7 +959,7 @@ public:
    UString& insert(uint32_t pos,             char c) { return replace(pos, 0, 1, c); }
    UString& insert(uint32_t pos, uint32_t n, char c) { return replace(pos, 0, n, c); } // NB: uchar conflict with a uint32_t at the same parameter position
 
-   UString& insert(uint32_t pos, const char* s)             { return replace(pos, 0, s, u__strlen(s)); }
+   UString& insert(uint32_t pos, const char* s)             { return replace(pos, 0, s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& insert(uint32_t pos, const char* s, uint32_t n) { return replace(pos, 0, s, n); }
 
    void clear();
@@ -995,7 +995,7 @@ public:
    uint32_t find(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
    uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure;
 
-   uint32_t find(const char* s,   uint32_t pos = 0) const { return find(s, pos, u__strlen(s), U_NOT_FOUND); }
+   uint32_t find(const char* s,   uint32_t pos = 0) const { return find(s, pos, u__strlen(s, __PRETTY_FUNCTION__), U_NOT_FOUND); }
    uint32_t find(unsigned char c, uint32_t pos = 0) const __pure;
 
    // The `rfind' function searches from end to beginning string for a specified string (possibly a single
@@ -1003,7 +1003,7 @@ public:
    // where search must begin
 
    uint32_t rfind(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t rfind(const char* s,      uint32_t pos = U_NOT_FOUND) const { return rfind(s, pos, u__strlen(s)); }
+   uint32_t rfind(const char* s,      uint32_t pos = U_NOT_FOUND) const { return rfind(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t rfind(unsigned char c,    uint32_t pos = U_NOT_FOUND) const __pure;
    uint32_t rfind(const UString& str, uint32_t pos = U_NOT_FOUND) const { return rfind(str.data(), pos, str.size()); }
 
@@ -1011,12 +1011,12 @@ public:
    // The `find_last_of'  function searches string for the last  match of any character stored in s and returns its position
 
    uint32_t find_first_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_first_of(const char* s,      uint32_t pos = 0) const { return find_first_of(s, pos, u__strlen(s)); }
+   uint32_t find_first_of(const char* s,      uint32_t pos = 0) const { return find_first_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_first_of(unsigned char c,    uint32_t pos = 0) const { return find(c, pos); }
    uint32_t find_first_of(const UString& str, uint32_t pos = 0) const { return find_first_of(str.data(), pos, str.size()); }
 
    uint32_t find_last_of(const char* s,       uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_last_of(const char* s,       uint32_t pos = U_NOT_FOUND) const { return find_last_of(s, pos, u__strlen(s)); }
+   uint32_t find_last_of(const char* s,       uint32_t pos = U_NOT_FOUND) const { return find_last_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_last_of(unsigned char c,     uint32_t pos = U_NOT_FOUND) const { return rfind(c, pos); }
    uint32_t find_last_of(const UString& str,  uint32_t pos = U_NOT_FOUND) const { return find_last_of(str.data(), pos, str.size()); }
 
@@ -1026,12 +1026,12 @@ public:
    // and returns its position
 
    uint32_t find_first_not_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_first_not_of(const char* s,      uint32_t pos = 0) const { return find_first_not_of(s, pos, u__strlen(s)); }
+   uint32_t find_first_not_of(const char* s,      uint32_t pos = 0) const { return find_first_not_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_first_not_of(unsigned char c,    uint32_t pos = 0) const __pure;
    uint32_t find_first_not_of(const UString& str, uint32_t pos = 0) const { return find_first_not_of(str.data(), pos, str.size()); }
 
    uint32_t find_last_not_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_last_not_of(const char* s,      uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(s, pos, u__strlen(s)); }
+   uint32_t find_last_not_of(const char* s,      uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_last_not_of(unsigned char c,    uint32_t pos = U_NOT_FOUND) const __pure;
    uint32_t find_last_not_of(const UString& str, uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(str.data(), pos, str.size()); }
 
@@ -1040,24 +1040,24 @@ public:
    uint32_t findnocase(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
    uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure;
 
-   uint32_t findnocase(const char* s,      uint32_t pos = 0) const { return findnocase(s, pos, u__strlen(s), U_NOT_FOUND); }
+   uint32_t findnocase(const char* s,      uint32_t pos = 0) const { return findnocase(s, pos, u__strlen(s, __PRETTY_FUNCTION__), U_NOT_FOUND); }
 
    // Compare
 
-   int compare(const char* s) const             { return rep->compare(s, u__strlen(s)); }
+   int compare(const char* s) const             { return rep->compare(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    int compare(const char* s, uint32_t n) const { return rep->compare(s, n); }
 
    int compare(UStringRep* _rep) const          { return rep->compare(_rep); }
    int compare(const UString& str) const        { return rep->compare(str.rep); }
 
    int compare(uint32_t pos, const char* s) const
-      { return rep->compare(pos, u__strlen(s), s, u__strlen(s)); }
+      { return rep->compare(pos, u__strlen(s, __PRETTY_FUNCTION__), s, u__strlen(s, __PRETTY_FUNCTION__)); }
 
    int compare(uint32_t pos, uint32_t n1, const char* s, uint32_t n2) const
-      { return rep->compare(pos, U_min(size() - pos, n1), s, U_min(u__strlen(s), n2)); }
+      { return rep->compare(pos, U_min(size() - pos, n1), s, U_min(u__strlen(s, __PRETTY_FUNCTION__), n2)); }
 
    int compare(uint32_t pos, uint32_t n, const char* s) const
-      { return rep->compare(pos, U_min(size() - pos, n), s, u__strlen(s)); }
+      { return rep->compare(pos, U_min(size() - pos, n), s, u__strlen(s, __PRETTY_FUNCTION__)); }
 
    __pure int compare(uint32_t pos, uint32_t n, const UString& str) const
       { return rep->compare(pos, U_min(size() - pos, n), str.data(), str.size()); }
@@ -1069,7 +1069,7 @@ public:
    // Compare with ignore case
 
    int comparenocase(const char* s, uint32_t n) const { return rep->comparenocase(s, n); }
-   int comparenocase(const char* s) const             { return rep->comparenocase(s, u__strlen(s)); }
+   int comparenocase(const char* s) const             { return rep->comparenocase(s, u__strlen(s, __PRETTY_FUNCTION__)); }
 
    int comparenocase(UStringRep* _rep) const          { return rep->comparenocase(_rep); }
    int comparenocase(const UString& str) const        { return rep->comparenocase(str.rep); }
@@ -1090,7 +1090,7 @@ public:
    // Equal with ignore case
 
    bool equalnocase(const char* s, uint32_t n) const      { return rep->equalnocase(s, n); }
-   bool equalnocase(const char* s) const                  { return rep->equalnocase(s, u__strlen(s)); }
+   bool equalnocase(const char* s) const                  { return rep->equalnocase(s, u__strlen(s, __PRETTY_FUNCTION__)); }
 
    bool equalnocase(UStringRep* _rep) const               { return same(_rep) || rep->equalnocase(_rep); }
    bool equalnocase(const UString& str) const __pure;
@@ -1250,7 +1250,7 @@ public:
       U_ASSERT(writeable())
       U_INTERNAL_ASSERT(isNull() == false)
       U_INTERNAL_ASSERT(rep->references == 0)
-      U_INTERNAL_ASSERT_MAJOR(rep->_capacity,u__strlen(format))
+      U_INTERNAL_ASSERT_MAJOR(rep->_capacity,u__strlen(format, __PRETTY_FUNCTION__))
 
       // NB: +1 because we want space for null-terminator...
 
@@ -1268,7 +1268,7 @@ public:
       U_ASSERT(writeable())
       U_INTERNAL_ASSERT(isNull() == false)
       U_INTERNAL_ASSERT(rep->references == 0)
-      U_ASSERT_MAJOR(rep->space(),u__strlen(format))
+      U_ASSERT_MAJOR(rep->space(),u__strlen(format, __PRETTY_FUNCTION__))
 
       // NB: +1 because we want space for null-terminator...
 

@@ -652,7 +652,7 @@ void ULDAP::get(ULDAPEntry& e)
 
                U_INTERNAL_DUMP("e.attr_name[%d] = %S", j, _attribute)
 
-               if (strncmp(attribute, _attribute, u__strlen(_attribute)) == 0)
+               if (strncmp(attribute, _attribute, u__strlen(_attribute, __PRETTY_FUNCTION__)) == 0)
                   {
                   bvs = ldap_get_values_len(ld, entry, attribute);
 

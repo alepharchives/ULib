@@ -141,7 +141,7 @@ long u_des3_encode(const unsigned char* restrict inp, long len, unsigned char* r
 
    U_INTERNAL_PRINT("cipher = %p, md = %p", cipher, md)
 
-   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, u__strlen(password), 1, xkey, iv);
+   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, u__strlen(password, __PRETTY_FUNCTION__), 1, xkey, iv);
 
    wbio = BIO_new(BIO_s_mem());
    benc = BIO_new(BIO_f_cipher());
@@ -204,7 +204,7 @@ long u_des3_decode(const unsigned char* restrict inp, long len, unsigned char* r
 
    BIO_read(rbio, (unsigned char*)salt, sizeof(salt));
 
-   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, u__strlen(password), 1, xkey, iv);
+   (void) EVP_BytesToKey(cipher, md, salt, (unsigned char*)password, u__strlen(password, __PRETTY_FUNCTION__), 1, xkey, iv);
 
    BIO_set_cipher(benc, cipher, xkey, iv, U_DECRYPT);
 

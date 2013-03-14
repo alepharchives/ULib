@@ -240,7 +240,7 @@ public:
             if (delta >=  1000L ||
                 delta <= -1000L)
                {
-               U_SRV_LOG("UTimeThread delta time exceed 1 sec: diff(%ld ms) counter(%d)", delta, watch_counter);
+               U_SRV_LOG("UTimeThread delta time exceed 1 sec: diff(%ld ms)", delta);
                }
 #        endif
             }
@@ -402,23 +402,6 @@ UServer_Base::UServer_Base(UFileConfig* cfg)
 
    U_INTERNAL_ASSERT_EQUALS(pthis,0)
    U_INTERNAL_ASSERT_EQUALS(senvironment,0)
-
-#if defined(ENABLE_MEMPOOL) && !defined(__MINGW32__) // && !defined(DEBUG)
-#  ifndef ENABLE_THREAD
-   // the value are based on nodog
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1),        180);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2),         50);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),        250);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE), 72);
-#  else
-   // the value are based on WiAuth portal
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_1),         238);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_2),         336);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_4),         344);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5),        2085);
-   UMemoryPool::addMemoryBlocks(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE), 121);
-#  endif
-#endif
 
    server        = U_NEW(UString);
    as_user       = U_NEW(UString);
@@ -745,11 +728,20 @@ next:
          if (pw &&
              pw->pw_dir)
             {
+#        ifdef DEBUG
+            UMemoryPool::obj_class = "";
+            UMemoryPool::func_call = __PRETTY_FUNCTION__;
+#        endif
+
             char* buffer = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_PATH_MAX));
 
             (void) snprintf(buffer, U_PATH_MAX, "HOME=%s", pw->pw_dir);
 
             (void) U_SYSCALL(putenv, "%S", buffer);
+
+#        ifdef DEBUG
+            UMemoryPool::obj_class = UMemoryPool::func_call = 0;
+#        endif
             }
          }
       }
@@ -1319,9 +1311,12 @@ void UServer_Base::init()
       {
       log_shared = true; // NB: is always shared cause of possibility of fork() by parallelization...
 
+      // The zlib documentation states that destination buffer
+      // size must be at least 0.1% larger than avail_in plus 12 bytes 
+
 #  if defined(USE_LIBZ) && defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
-      log_rotate_size = shared_data_add = log->UFile::st_size + (log->UFile::st_size / 10) + 12U;
+      shared_data_add = // NB: pluginsHandlerInit() must run after this setting...
+      log_rotate_size = log->UFile::st_size + (log->UFile::st_size / 10) + 12U;
 #  endif
       }
    else
@@ -1339,7 +1334,8 @@ void UServer_Base::init()
 
    flag_loop = true; // NB: UTimeThread loop depend on this...
 
-   if (log_shared ||
+   if (log_shared    ||
+       isPreForked() ||
        shared_data_add)
       {
       // manage shared data...
@@ -1354,42 +1350,42 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION, 0)
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
-#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
-      /* NB: optimization if it is enough a time resolution of one second...
-
-      typedef struct shared_data {
-         ...........
-         struct timeval _timeval;
-         long last_sec[3];
-         char data_1[17]; // 18/06/12 18:45:56
-         char  null1[1];  // 123456789012345678901234567890
-         char data_2[26]; // 04/Jun/2012:18:18:37 +0200
-         char  null2[1];  // 123456789012345678901234567890
-         char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
-         char  null3[1];  // 123456789012345678901234567890
-      };
-      */
-
-      U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
-
-      U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
-
-      U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
-
-      u_now = U_NOW; // &(ptr_shared_data->_timeval);
-
-      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval)+3*sizeof(long))
-      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1)
-      U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1+26+1)
-
-      ((UTimeThread*)u_pthread_time)->start(50);
-#  endif
-
       if (log_shared)
          {
          U_INTERNAL_ASSERT_POINTER(log)
+
+#     if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD)
+         U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+
+         U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
+
+         U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
+
+         /* NB: optimization if it is enough a time resolution of one second...
+
+         typedef struct shared_data {
+            ...........
+            struct timeval _timeval;
+            long last_sec[3];
+            char data_1[17]; // 18/06/12 18:45:56
+            char  null1[1];  // 123456789012345678901234567890
+            char data_2[26]; // 04/Jun/2012:18:18:37 +0200
+            char  null2[1];  // 123456789012345678901234567890
+            char data_3[29]; // Wed, 20 Jun 2012 11:43:17 GMT
+            char  null3[1];  // 123456789012345678901234567890
+         };
+         */
+
+         u_now = U_NOW; // &(ptr_shared_data->_timeval);
+
+         (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+         U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_1,(char*)u_now+sizeof(struct timeval)+3*sizeof(long))
+         U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_2,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1)
+         U_INTERNAL_ASSERT_EQUALS(ptr_shared_data->data_3,(char*)u_now+sizeof(struct timeval)+3*sizeof(long)+17+1+26+1)
+
+         ((UTimeThread*)u_pthread_time)->start(50);
+#     endif
 
          ULog::setShared(U_LOG_DATA_SHARED, log_rotate_size);
 
@@ -1406,7 +1402,7 @@ void UServer_Base::init()
 
    U_INTERNAL_DUMP("n = %u UNotifier::max_connection = %u", n, UNotifier::max_connection)
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__) && defined(HAVE_ARCH64) && defined(ENABLE_THREAD) && !defined(DEBUG)
+#if defined(ENABLE_MEMPOOL) && !defined(__MINGW32__) && !defined(ENABLE_THREAD) // && !defined(DEBUG)
    int num_mem_block[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
 
    if (isLog()) num_mem_block[U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5)]             = n; // logbuf => UString(200U)
@@ -1418,7 +1414,7 @@ void UServer_Base::init()
 #  endif
              num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
 
-   for (uint32_t stack_type = 1; stack_type < U_NUM_STACK_TYPE; ++stack_type) if (stack_obj[i]) UMemoryPool::allocateMemoryBlocks(stack_type, num_mem_block[i]);
+   for (uint32_t i = 1; i < U_NUM_STACK_TYPE; ++i) if (num_mem_block[i]) UMemoryPool::allocateMemoryBlocks(i, num_mem_block[i]);
 #endif
 
    pthis->preallocate();
@@ -1609,20 +1605,26 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       {
 #  ifdef USE_LIBEVENT
       (void) UDispatcher::exit(0);
-#  else
-      UInterrupt::erase(SIGTERM); // async signal
-
-#     if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (preforked_num_kids == -1) ((UThread*)UNotifier::pthread)->suspend();
-
-#     if defined(DEBUG) && defined(HAVE_SYS_SYSCALL_H)
-      if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
-#     endif
-#     endif
-   // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.sigTERM", 0) // to get the value to based WiAuth portal
 #  endif
 
-      U_EXIT(0);
+      UInterrupt::erase(SIGTERM); // async signal
+
+#  ifdef DEBUG
+      if (UObjectDB::fd > 0) U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.sigTERM", 0) // to get the value to based WiAuth portal
+#  endif
+
+      if (preforked_num_kids)
+         {
+#  if defined(HAVE_PTHREAD_H) && defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+         if (preforked_num_kids == -1) ((UThread*)UNotifier::pthread)->suspend();
+
+#     if defined(HAVE_SYS_SYSCALL_H) && defined(DEBUG)
+         if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
+#     endif
+#  endif
+
+         U_EXIT(0);
+         }
       }
 }
 
@@ -2296,8 +2298,6 @@ void UServer_Base::run()
       }
 
 #ifdef DEBUG
-// U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.beforeExit", 0) // to get the value to based WiAuth portal
-
    pthis->deallocate();
 #endif
 }

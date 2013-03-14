@@ -35,7 +35,7 @@ void UDialog::initialize()
       {
       path_dialog = strdup(path);
 
-      U_INTERNAL_ASSERT_MINOR(u__strlen(path_dialog), U_PATH_MAX)
+      U_INTERNAL_ASSERT_MINOR(u__strlen(path_dialog, __PRETTY_FUNCTION__), U_PATH_MAX)
       }
 }
 

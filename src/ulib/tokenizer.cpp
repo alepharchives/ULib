@@ -26,8 +26,7 @@ void UTokenizer::setData(const UString& data)
    U_TRACE(0, "UTokenizer::setData(%.*S)", U_STRING_TO_TRACE(data))
 
    str = data;
-   s   = data.data();
-   end = s + data.size();
+   end = (s = data.data()) + data.size();
 }
 
 bool UTokenizer::next(UString& token, bPFi func)
@@ -151,7 +150,9 @@ loop:
          {
          s = u_delimit_token(s, &p, end, delim, 0);
 
-         goto tok;
+         if (p) goto tok;
+
+         U_RETURN(false);
          }
 
       s = u_skip(s, end, 0, 0);

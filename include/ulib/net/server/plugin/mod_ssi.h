@@ -94,8 +94,8 @@ protected:
    static time_t last_modified;
 
 private:
-   static UString getInclude(const UString& include, int include_level) U_NO_EXPORT;
    static UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
+   static UString getInclude(const UString& include, int include_level, bool bssi) U_NO_EXPORT;
 
    static bool    callService(const UString& name, const UString& value) U_NO_EXPORT;
    static UString getPathname(const UString& name, const UString& value, const UString& directory) U_NO_EXPORT;

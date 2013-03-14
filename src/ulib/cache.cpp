@@ -29,15 +29,15 @@ UCache::~UCache()
       }
 }
 
-U_NO_EXPORT void UCache::init(UFile& _x, uint32_t size, bool bexist)
+U_NO_EXPORT void UCache::init(UFile& _x, uint32_t size, bool bexist, bool brdonly)
 {
-   U_TRACE(0, "UCache::init(%.*S,%u,%b)", U_FILE_TO_TRACE(_x), size, bexist)
+   U_TRACE(0, "UCache::init(%.*S,%u,%b)", U_FILE_TO_TRACE(_x), size, bexist, brdonly)
 
    U_CHECK_MEMORY
 
    fd = _x.getFd();
 
-   (void) _x.memmap(PROT_READ | PROT_WRITE);
+   (void) _x.memmap(PROT_READ | (brdonly ? 0 : PROT_WRITE));
 
    char* ptr = _x.getMap();
 
@@ -73,7 +73,7 @@ bool UCache::open(const UString& path, uint32_t size, const UString* environment
 
    if (_x.creat(O_RDWR))
       {
-      init(_x, size, (_x.size() ? true : ((void)_x.ftruncate(size), false)));
+      init(_x, size, (_x.size() ? true : ((void)_x.ftruncate(size), false)), false);
 
       U_RETURN(true);
       }
@@ -81,9 +81,9 @@ bool UCache::open(const UString& path, uint32_t size, const UString* environment
    U_RETURN(false);
 }
 
-bool UCache::open(const UString& path, const UString& dir_template, const UString* environment)
+bool UCache::open(const UString& path, const UString& dir_template, const UString* environment, bool brdonly)
 {
-   U_TRACE(0, "UCache::open(%.*S,%.*S,%p)", U_STRING_TO_TRACE(path), U_STRING_TO_TRACE(dir_template), environment)
+   U_TRACE(0, "UCache::open(%.*S,%.*S,%p)", U_STRING_TO_TRACE(path), U_STRING_TO_TRACE(dir_template), environment, brdonly)
 
    U_CHECK_MEMORY
 
@@ -130,7 +130,7 @@ bool UCache::open(const UString& path, const UString& dir_template, const UStrin
          (void) _x.ftruncate(size);
          }
 
-      init(_x, size, exist);
+      init(_x, size, exist, brdonly);
 
       if (exist == false)
          {

@@ -101,7 +101,8 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(pthis)
 
-      U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S", pthis->depth, pthis->pathlen, u__strlen(pthis->pathname), pthis->pathname)
+      U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S",
+                        pthis->depth, pthis->pathlen, u__strlen(pthis->pathname, __PRETTY_FUNCTION__), pthis->pathname)
 
       path.replace(pthis->pathname+2, pthis->pathlen-2);
       }

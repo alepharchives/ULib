@@ -273,6 +273,7 @@
                                    (sz) <= U_STACK_TYPE_7 ? 7 : \
                                    (sz) <= U_STACK_TYPE_8 ? 8 : 9)
 
+class UOptions;
 class UStringRep;
 class UServer_Base;
 class UNoCatPlugIn;
@@ -294,6 +295,8 @@ public:
    static void* _malloc(         uint32_t* pnum, uint32_t type_size = 1, bool bzero = false);
 
 #ifdef DEBUG
+   static const char* obj_class;
+   static const char* func_call;
    static sig_atomic_t index_stack_busy; // Segnala operazione in corso su stack (per check rientranza)
 
    static void printInfo(std::ostream& os);
@@ -313,6 +316,7 @@ private:
    UMemoryPool(const UMemoryPool&)            {}
    UMemoryPool& operator=(const UMemoryPool&) { return *this; }
 
+   friend class UOptions;
    friend class UStringRep;
    friend class UServer_Base;
    friend class UNoCatPlugIn;

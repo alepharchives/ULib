@@ -2198,7 +2198,7 @@ polling_attivazione() {
 
 		SSI_HEAD=""
 		TITLE="LE TUE CREDENZIALI SONO:"
-		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><!-- <p class=\"bigger\">Password: $WA_PASSWORD</p> -->"
+		CREDENTIALS_TAG="<p class=\"bigger\">Utente: $1</p><p class=\"bigger\">Password: $WA_PASSWORD</p>"
 	fi
 
 	TITLE_TXT="Verifica attivazione"

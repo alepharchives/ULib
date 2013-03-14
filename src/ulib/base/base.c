@@ -221,7 +221,7 @@ void u_init_ulib_username(void)
    if (pw == 0) u__memcpy(u_user_name, "root", (u_user_name_len = 4), __PRETTY_FUNCTION__);
    else
       {
-      u_user_name_len = u__strlen(pw->pw_name);
+      u_user_name_len = u__strlen(pw->pw_name, __PRETTY_FUNCTION__);
 
       U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
 
@@ -259,7 +259,7 @@ void u_init_ulib_hostname(void)
          }
       }
 
-   u_hostname_len = u__strlen(u_hostname);
+   u_hostname_len = u__strlen(u_hostname, __PRETTY_FUNCTION__);
 
    if (u_hostname_len == 0) (void) strncpy(u_hostname, "localhost", (u_hostname_len = 9));
 }
@@ -288,7 +288,7 @@ loop:
    (void) u__strcpy(u_cwd, u_slashify(u_cwd, PATH_SEPARATOR, '/'));
 #endif
 
-   u_cwd_len = u__strlen(u_cwd);
+   u_cwd_len = u__strlen(u_cwd, __PRETTY_FUNCTION__);
 
    U_INTERNAL_ASSERT_MAJOR(u_cwd_len, 0)
    U_INTERNAL_ASSERT_MINOR(u_cwd_len, newsize)
@@ -449,7 +449,7 @@ void u_init_ulib(char** restrict argv)
 
    U_INTERNAL_ASSERT_POINTER(u_progname)
 
-   u_progname_len = u__strlen(u_progname);
+   u_progname_len = u__strlen(u_progname, __PRETTY_FUNCTION__);
 
 #ifdef __MINGW32__
    u_init_ulib_mingw();
@@ -830,7 +830,7 @@ uint32_t u__strftime(char* restrict s, uint32_t maxsize, const char* restrict fo
 
          case 'Z': /* %Z Defined by ANSI C as eliciting the time zone if available */
             {
-            n = u__strlen(tzname[u_daylight]);
+            n = u__strlen(tzname[u_daylight], __PRETTY_FUNCTION__);
 
             U_INTERNAL_ASSERT(count <= (maxsize-n))
 
@@ -1267,7 +1267,7 @@ minus:
          case 's':
             {
 #        ifdef DEBUG
-            int32_t remaining = (buffer_size - ret);
+            int32_t remaining = buffer_size - ret;
 #        endif
 
             cp = VA_ARG(unsigned char*);
@@ -1275,7 +1275,7 @@ minus:
             if (!cp) cp = (unsigned char* restrict)"(null)";
 
             sign = '\0';
-            size = (prec >= 0 ? prec : (int) u__strlen((const char*)cp));
+            size = (prec >= 0 ? prec : (int) u__strlen((const char*)cp, __PRETTY_FUNCTION__));
 
             U_INTERNAL_ERROR(size <= remaining, "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %u", size, remaining);
 
@@ -1516,7 +1516,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
                }
 
-            len = u__strlen(bp);
+            len = u__strlen(bp, __PRETTY_FUNCTION__);
 
             bp  += len;
             ret += len;
@@ -1631,7 +1631,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (ccp)
                {
-               len = u__strlen(ccp);
+               len = u__strlen(ccp, __PRETTY_FUNCTION__);
 
                u__memcpy(bp, ccp, len, __PRETTY_FUNCTION__);
 
@@ -1829,7 +1829,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                   (void) sprintf(tmp, " +%ld days", t / U_ONE_DAY_IN_SECOND);
 
-                  len1 = u__strlen(tmp);
+                  len1 = u__strlen(tmp, __PRETTY_FUNCTION__);
 
                   u__memcpy(bp+len, tmp, len1, __PRETTY_FUNCTION__);
 
@@ -1843,7 +1843,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
                (void) sprintf(tmp, "_%03lu", u_now->tv_usec / 1000L);
 
-               len1 = u__strlen(tmp);
+               len1 = u__strlen(tmp, __PRETTY_FUNCTION__);
 
                u__memcpy(bp+len, tmp, len1, __PRETTY_FUNCTION__);
 
@@ -1935,7 +1935,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             *bp++ = '"';
 
-            remaining = (buffer_size - ret - 100);
+            remaining = buffer_size - ret - ((flags & ALT) ? 100 : 10);
 
             for (n = 0; n < prec; ++n)
                {

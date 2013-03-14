@@ -1,1 +1,7 @@
-@M-/..M-@M-
+GET /admin/ HTTP/1.1
+Host: 10.30.1.111
+User-Agent: Mozilla/5.0 (FHScan Core 1.1)
+Connection: keep-alive
+Authorization: Basic Og==
+Accept-Encoding: gzip, deflate
+

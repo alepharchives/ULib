@@ -87,19 +87,19 @@ public:
 
    // Open a Reliable DataBase
 
-   bool open(                       uint32_t log_size = 1024 * 1024, bool btruncate = false, bool brdonly = true);
-   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false, bool brdonly = true)
+   bool open(                       uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true);
+   bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true)
       {
-      U_TRACE(0, "URDB::open(%.*S,%u,%b)", U_STRING_TO_TRACE(pathdb), log_size, btruncate)
+      U_TRACE(0, "URDB::open(%.*S,%u,%b,%b,%b)", U_STRING_TO_TRACE(pathdb), log_size, btruncate, cdb_brdonly, breference)
 
       UFile::setPath(pathdb);
 
-      return URDB::open(log_size, btruncate);
+      return URDB::open(log_size, btruncate, cdb_brdonly, breference);
       }
 
    // Close a Reliable DataBase
 
-   void close();
+   void close(bool breference = true);
 
    // Combines the old cdb file and the diffs in a new cdb file.
    // Close the database and deletes the obsolete journal file if everything worked out

@@ -722,6 +722,10 @@ int UClientImage_Base::handlerRead()
    initAfterGenericRead();
 #endif
 
+   UServer_Base::client_address = socket->cRemoteAddress.pcStrAddress;
+
+   U_INTERNAL_DUMP("UServer_Base::client_address = %S", UServer_Base::client_address)
+
 loop:
    ++counter;
 

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# ULib - C++ application development framework
+# Version: @VERSION@
+
+prefix=@prefix@
+libdir=@libdir@
+includedir=@includedir@
+exec_prefix=@exec_prefix@
+
+${prefix}/bin/usp_translator $1.usp &&
+${prefix}/bin/usp_libtool.sh --silent --tag=CXX --mode=compile \
+	@ULIB_CXX@ -I${includedir} -DHAVE_CONFIG_H @ULIB_CPPFLAGS@ @ULIB_CXXFLAGS@ -MT $1.lo -MD -MP -c -o $1.lo $1.cpp &&
+${prefix}/bin/usp_libtool.sh --silent --tag=CXX --mode=link \
+	@ULIB_CXX@ @ULIB_CPPFLAGS@ @ULIB_LDFLAGS@ -o $1.la -rpath ${prefix}/libexec/ulib/usp \
+	-module -export-dynamic -avoid-version -no-undefined $1.lo -l@ULIB@ @ULIB_LIBS@ &&
+mv $1.usp .libs; rm -rf $1.*; mv .libs/$1.usp .libs/$1.$2 .; rm -rf .libs

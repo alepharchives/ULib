@@ -641,6 +641,7 @@ ULIB_CXXFLAGS
 ULIB_LDFLAGS
 ULIB_CFLAGS
 ULIB_LIBS
+ULIB_CXX
 DOXY_FALSE
 DOXY_TRUE
 DOXYGEN
@@ -27553,7 +27554,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 # -------------------------------------------------------------------------------------
 
 	if test "$enable_debug" = "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -fsanitize=address -fsanitize=thread" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -fsanitize=address -fsanitize=thread -fno-omit-frame-pointer" ## _FORTIFY_SOURCE enabled by default g++ 4.7.2
 		if test "$USE_LIBSSL" = "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
 		fi
@@ -27907,11 +27908,13 @@ $as_echo "" >&6; }
 $as_echo "${T_MD}Output Substitution:${T_ME}" >&6; }
 
 
+ULIB_CXX="${CXX}"
 ULIB_LIBS="${LIBS}"
 ULIB_CFLAGS="${CFLAGS}"
 ULIB_LDFLAGS="${LDFLAGS}"
 ULIB_CXXFLAGS="${CXXFLAGS}"
 ULIB_CPPFLAGS="${CPPFLAGS}"
+
 
 
 
@@ -28191,7 +28194,7 @@ fi
 
 # SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/v8/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/lemon/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -29695,12 +29698,13 @@ do
     "src/ulib/ULib.rc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.rc" ;;
     "src/ulib/ULib.pc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.pc" ;;
     "src/ulib/lemon/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/lemon/Makefile" ;;
+    "src/ulib/net/server/plugin/v8/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/v8/Makefile" ;;
     "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
     "src/ulib/net/server/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/Makefile" ;;
     "src/ulib/net/server/plugin/mod_shib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_shib/Makefile" ;;
     "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
+    "src/ulib/net/server/plugin/usp/usp_compile.sh") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/usp_compile.sh" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;
-    "src/ulib/net/server/plugin/v8/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/v8/Makefile" ;;
     "include/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES include/ulib/Makefile" ;;
     "contrib/HCSP/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/HCSP/Makefile" ;;
     "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;

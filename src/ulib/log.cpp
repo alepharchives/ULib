@@ -153,7 +153,7 @@ bool ULog::open(uint32_t _size, mode_t mode)
       else
          {
          UString name = pthis->UFile::getName();
-         uint32_t len = u__strlen(dir_log_gz), sz = name.size();
+         uint32_t len = u__strlen(dir_log_gz, __PRETTY_FUNCTION__), sz = name.size();
 
          U__MEMCPY(ptr, dir_log_gz, len);
 
@@ -544,12 +544,12 @@ const char* ULog::dump(bool _reset) const
 
    char buffer[1024];
 
-   if (fmt) UObjectIO::os->write(buffer, u__snprintf(buffer, 1024, "%.*s", u__strlen(fmt), fmt));
+   if (fmt) UObjectIO::os->write(buffer, u__snprintf(buffer, 1024, "%.*s", u__strlen(fmt, __PRETTY_FUNCTION__), fmt));
 
    *UObjectIO::os << "\"\n"
                   << "prefix                    ";
 
-   if (prefix) UObjectIO::os->write(buffer, u__snprintf(buffer, 1024, "%.*S", u__strlen(prefix), prefix));
+   if (prefix) UObjectIO::os->write(buffer, u__snprintf(buffer, 1024, "%.*S", u__strlen(prefix, __PRETTY_FUNCTION__), prefix));
 
    *UObjectIO::os << '\n'
                   << "bsyslog                   " << bsyslog                    << '\n'

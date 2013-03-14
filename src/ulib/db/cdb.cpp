@@ -517,7 +517,7 @@ void UCDB::getKeys(UVector<UString>& vec)
 
       ptr += sizeof(UCDB::cdb_record_header);
 
-      rep = U_NEW(UStringRep(ptr, klen));
+      U_NEW_DBG(UStringRep, rep, UStringRep(ptr, klen));
 
       vec.UVector<void*>::push(rep);
 
@@ -580,16 +580,11 @@ void UCDB::call(const char*  key_ptr, uint32_t  key_size,
 
    U_INTERNAL_ASSERT_POINTER(internal.function_to_call)
 
-#ifdef DEBUG
-   UObjectDB::flag_ulib_object = true;
-#endif
+   UStringRep* skey;
+   UStringRep* sdata;
 
-   UStringRep* skey  = U_NEW(UStringRep( key_ptr,  key_size));
-   UStringRep* sdata = U_NEW(UStringRep(data_ptr, data_size));
-
-#ifdef DEBUG
-   UObjectDB::flag_ulib_object = false;
-#endif
+   U_NEW_DBG(UStringRep, skey,  UStringRep( key_ptr,  key_size));
+   U_NEW_DBG(UStringRep, sdata, UStringRep(data_ptr, data_size));
 
    U_INTERNAL_DUMP("skey = %#.*S sdata = %#.*S)", U_STRING_TO_TRACE(*skey), U_STRING_TO_TRACE(*sdata))
 
@@ -599,13 +594,15 @@ void UCDB::call(const char*  key_ptr, uint32_t  key_size,
       {
       U_INTERNAL_ASSERT_POINTER(internal.ptr_vector)
 
-      internal.ptr_vector->push_back(skey);
-      internal.ptr_vector->push_back(sdata);
+      internal.ptr_vector->UVector<void*>::push(skey);
+      internal.ptr_vector->UVector<void*>::push(sdata);
 
       internal.add_entry_to_vector = false;
       }
    else
       {
+      // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
+
        skey->release();
       sdata->release();
       }

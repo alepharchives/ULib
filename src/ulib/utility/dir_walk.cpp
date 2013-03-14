@@ -92,7 +92,7 @@ bool UDirWalk::setDirectory(const char* dir, const char* _filter, uint32_t _filt
 {
    U_TRACE(0, "UDirWalk::setDirectory(%S,%.*S,%u", dir, _filter_len, _filter, _filter_len)
 
-   pthis->pathlen = u__strlen(dir);
+   pthis->pathlen = u__strlen(dir, __PRETTY_FUNCTION__);
 
    dir = u_getPathRelativ(dir, &(pthis->pathlen));
 
@@ -169,9 +169,9 @@ void UDirWalk::recurse()
 
    ++depth; // if this has been called, then we're one level lower
 
-   U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S", depth, pathlen, u__strlen(pathname), pathname)
+   U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S", depth, pathlen, u__strlen(pathname, __PRETTY_FUNCTION__), pathname)
 
-   U_INTERNAL_ASSERT_EQUALS(u__strlen(pathname), pathlen)
+   U_INTERNAL_ASSERT_EQUALS(u__strlen(pathname, __PRETTY_FUNCTION__), pathlen)
 
    if (depth == 0) dirp = (DIR*) U_SYSCALL(opendir, "%S", "."); // NB: if pathname it is not '.' we have already make chdir()... 
    else
@@ -385,7 +385,8 @@ U_NO_EXPORT void UDirWalk::vectorPush()
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(pvector)
 
-   U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S", pthis->depth, pthis->pathlen, u__strlen(pthis->pathname), pthis->pathname)
+   U_INTERNAL_DUMP("depth = %d pathlen = %u pathname(%u) = %S",
+                     pthis->depth, pthis->pathlen, u__strlen(pthis->pathname, __PRETTY_FUNCTION__), pthis->pathname)
 
    uint32_t len    = pthis->pathlen;
    const char* ptr = pthis->pathname;

@@ -103,8 +103,8 @@ This is the object database (ODB) that keeps track of all live objects
 class U_NO_EXPORT UObjectDB {
 public:
 
-   static int  U_EXPORT fd, level_active;
    static bool U_EXPORT flag_new_object;
+   static int  U_EXPORT fd, level_active;
    static bool U_EXPORT flag_ulib_object;
 
    static void close();

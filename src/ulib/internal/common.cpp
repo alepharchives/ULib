@@ -70,6 +70,9 @@ void ULib_init()
    U_INTERNAL_ASSERT_EQUALS(init, false)
 
    init = true;
+
+   UMemoryPool::obj_class = "";
+   UMemoryPool::func_call = __PRETTY_FUNCTION__;
 #endif
 
    // setting from u_init_ulib(char** argv)...
@@ -78,15 +81,16 @@ void ULib_init()
 
    // allocation from memory pool
 
-   u_buffer =      (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
-
-#ifdef DEBUG
-   UObjectIO::init((char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE)), U_MAX_SIZE_PREALLOCATE);
-#endif
-
    UString::ptrbuf =
    UString::appbuf = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
    UFile::cwd_save = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
+   u_buffer        = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
+
+#ifdef DEBUG
+   UObjectIO::init((char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE)), U_MAX_SIZE_PREALLOCATE);
+
+   UMemoryPool::obj_class = UMemoryPool::func_call = 0;
+#endif
 
    UInterrupt::init();
 
@@ -122,10 +126,18 @@ void ULib_init()
    (void) U_SYSCALL(atexit, "%p", (vPF)&WSACleanup);
 #endif
 
-#if defined(SOLARIS) && (defined(SPARC) || defined(sparc))
+#if defined(SOLARIS) && (defined(SPARC) || defined(sparc)) && !defined(HAVE_ARCH64)
    // make this if there are pointer misalligned
    // (because pointers must be always a multiple of 4 (when running 32 bit applications))
    asm("ta 6");
+#endif
+
+#if defined(DEBUG) && defined(__GNUC__) && defined(U_ENABLE_ALIGNMENT_CHECKING)
+#  ifdef __i386__
+   __asm__("pushf\norl $0x40000,(%esp)\npopf"); // Enable Alignment Checking on x86
+#  elif defined(__x86_64__)
+   __asm__("pushf\norl $0x40000,(%rsp)\npopf"); // Enable Alignment Checking on x86_64
+#  endif
 #endif
 
    U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))

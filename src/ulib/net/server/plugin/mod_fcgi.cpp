@@ -323,7 +323,7 @@ int UFCGIPlugIn::handlerRequest()
          U_INTERNAL_ASSERT_POINTER(equalPtr)
 
           nameLen = (equalPtr - envp[i]);
-         valueLen = u__strlen(++equalPtr);
+         valueLen = u__strlen(++equalPtr, __PRETTY_FUNCTION__);
 
          U_INTERNAL_ASSERT_MAJOR( nameLen, 0)
          U_INTERNAL_ASSERT_MAJOR(valueLen, 0)

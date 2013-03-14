@@ -481,7 +481,7 @@ void UHTTP::in_READ()
 
          for (len = event.ip->len; event.ip->name[len-1] == '\0'; --len) {}
 
-         U_INTERNAL_ASSERT_EQUALS(len, u__strlen(event.ip->name))
+         U_INTERNAL_ASSERT_EQUALS(len, u__strlen(event.ip->name, __PRETTY_FUNCTION__))
 
          checkInotifyForCache(event.ip->wd, event.ip->name, len);
 
@@ -950,7 +950,7 @@ load:
          }
       }
 
-   // manage single favicon...
+   // manage favicon...
 
    file_data = (*cache_file)["favicon.ico"];
 
@@ -1219,6 +1219,24 @@ uint32_t UHTTP::getUserAgent()
       }
 
    U_RETURN(agent);
+}
+
+__pure bool UHTTP::isMobile()
+{
+   U_TRACE(0, "UHTTP::isMobile()")
+
+   if (u_http_info.user_agent_len &&
+       u_dosmatch_with_OR(U_HTTP_USER_AGENT_TO_PARAM,
+                          U_CONSTANT_TO_PARAM("*android*|"
+                                              "*iphone*|*ipod*|"
+                                              "*windows ce*|*windows phone*|"
+                                              "*blackberry*|*palm*|*opera mini*|"
+                                              "*webkit*series60*|*webkit*symbian*"), FNM_IGNORECASE))
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 void UHTTP::writeApacheLikeLog(bool bprepare)
@@ -3603,7 +3621,7 @@ bool UHTTP::getCookie(UString* cookie)
                {
                // HTTP Session Hijacking mitigation: IP_USER-AGENT_PID_COUNTER
 
-               len = u__strlen(UServer_Base::client_address);
+               len = u__strlen(UServer_Base::client_address, __PRETTY_FUNCTION__);
 
                if (token.compare(0U, len, UServer_Base::client_address, len) == 0) // IP
                   {
@@ -5467,7 +5485,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    UString header(U_CAPACITY);
    const char* motivation = 0;
 
-   file_data->array = U_NEW(UVector<UString>(4U));
+   U_NEW_DBG(UVector<UString>, file_data->array, UVector<UString>(4U));
 
    file_data->array->push_back(content);
 
@@ -5709,7 +5727,7 @@ U_NO_EXPORT void UHTTP::checkIfLink(UStringRep* key, void* value)
          UHTTP::ucgi* cgi1 = (UHTTP::ucgi*)cptr->ptr;
          UHTTP::ucgi* cgi2 = (UHTTP::ucgi*)file_data->ptr;
 
-         uint32_t n = u__strlen(cgi1->dir);
+         uint32_t n = u__strlen(cgi1->dir, __PRETTY_FUNCTION__);
 
          U_INTERNAL_DUMP("cgi1->dir = %.*S", n, cgi1->dir)
          U_INTERNAL_DUMP("cgi2->dir = %.*S", n, cgi2->dir)
@@ -5801,7 +5819,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    U_INTERNAL_DUMP("pathname = %.*S file = %.*S", U_STRING_TO_TRACE(*pathname), U_FILE_TO_TRACE(*file))
 
-   file_data = U_NEW(UFileCacheData);
+   U_NEW_DBG(UFileCacheData, file_data, UFileCacheData);
 
    // NB: copy attribute from file...
 
@@ -5937,7 +5955,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
                cgi->dir[pos + U_CONSTANT_SIZE("cgi-bin")] = '\0';
 
-               U_INTERNAL_DUMP("cgi_doc = %S", cgi->dir + u__strlen(cgi->dir) + 1)
+               U_INTERNAL_DUMP("cgi_doc = %S", cgi->dir + u__strlen(cgi->dir, __PRETTY_FUNCTION__) + 1)
 
                const char* ptr = pathname->c_pointer(pathname->size() - 2);
 
@@ -5993,7 +6011,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 #           ifndef __MINGW32__
                if ((file->lstat(), file->slink()))
                   {
-                  file_data->ptr = U_NEW(UString(*pathname));
+                  U_NEW_DBG(UString, file_data->ptr, UString(*pathname));
 
                   cache_file->callForAllEntry(checkIfLink);
                   }
@@ -6480,7 +6498,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(UString* penvironment)
 
       // NB: we can't use U_HTTP_URI_TO_TRACE because this function can be called by SSI...
 
-      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u__strlen(cgi_dir) + 1);
+      path.snprintf("%w/%s/%s", cgi_dir, cgi_dir + u__strlen(cgi_dir, __PRETTY_FUNCTION__) + 1);
 
       U_INTERNAL_DUMP("path = %.*S", U_STRING_TO_TRACE(path))
 
@@ -8569,7 +8587,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
 
             if (vec.empty() == false)
                {
-               d.array = U_NEW(UVector<UString>(4U));
+               U_NEW_DBG(UVector<UString>, d.array, UVector<UString>(4U));
 
                UString encoded, decoded;
 

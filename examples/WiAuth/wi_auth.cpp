@@ -318,6 +318,8 @@
    
             ap_rec->fromVector(access_point, i);
    
+            // NB: la logica e' invertita...
+   
             if (func() == false)
                {
                lindex = i;
@@ -360,6 +362,8 @@
          {
          U_TRACE(5, "WiAuthNodog::checkMAC()")
    
+         U_INTERNAL_DUMP("mac = %.*S mac_mask = %.*S", U_STRING_TO_TRACE(*mac), U_STRING_TO_TRACE(ap_rec->mac_mask))
+   
          if (ap_rec->mac_mask.empty() == false &&
              UServices::dosMatchWithOR(*mac, ap_rec->mac_mask, FNM_IGNORECASE))
             {
@@ -375,12 +379,10 @@
    
          U_CHECK_MEMORY
    
-         U_INTERNAL_DUMP("mac = %.*S", U_STRING_TO_TRACE(*mac))
-   
-         U_INTERNAL_ASSERT(*mac)
-   
          if (findLabel() != U_NOT_FOUND)
             {
+            U_INTERNAL_ASSERT(*mac)
+   
             callForAllAccessPoint(checkMAC);
    
             if (lindex != U_NOT_FOUND) U_RETURN(true);
@@ -522,9 +524,9 @@
             {
             U_ASSERT((*db_ap)[*address].empty())
    
-            down  = bdown;
-            port  = _port;
-            since = u_now->tv_sec;
+            down   = bdown;
+            port   = _port;
+            since  = u_now->tv_sec;
    
             op     = RDB_INSERT;
             add_ap = true;
@@ -554,8 +556,8 @@
             U_INTERNAL_DUMP("lindex = %u", lindex)
             }
    
-         _hostname  = *hostname;
-         last_info  = u_now->tv_sec;
+         _hostname = *hostname;
+         last_info = u_now->tv_sec;
    
          if (add_ap == false)
             {
@@ -1363,11 +1365,11 @@
       db_ap->setShared(  U_LOCK_USER1);
       db_user->setShared(U_LOCK_USER2);
    
-      bool result;
+      bool result, no_ssl = (UServer_Base::bssl == false);
    
       db_ap->lock();
    
-      result = db_ap->open(4 * 1024, false, false);
+      result = db_ap->open(1024 * 1024, false, false, no_ssl);
    
       db_ap->unlock();
    
@@ -1375,7 +1377,7 @@
        user_rec = U_NEW(WiAuthUser);
       nodog_rec = U_NEW(WiAuthNodog);
    
-      if (UServer_Base::bssl == false)
+      if (no_ssl)
          {
          callForAllAP(countAP, 0);
    
@@ -1388,11 +1390,11 @@
    
       db_user->lock();
    
-      result = db_user->open(1024 * 1024, false, false);
+      result = db_user->open(1024 * 1024, false, false, no_ssl);
    
       db_user->unlock();
    
-      if (UServer_Base::bssl == false)
+      if (no_ssl)
          {
          users_connected = 0;
    
@@ -1486,7 +1488,7 @@
    
       x.snprintf("$DIR_ROOT/etc/%s/cache.tmpl", virtual_name->data());
    
-      (void) cache->open(x, U_STRING_FROM_CONSTANT("$DIR_TEMPLATE"), environment);
+      (void) cache->open(x, U_STRING_FROM_CONSTANT("$DIR_TEMPLATE"), environment, true);
    
       message_page_template   = U_NEW(UString(cache->getContent(U_CONSTANT_TO_PARAM("message_page.tmpl"))));
       status_nodog_template   = U_NEW(UString(cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_body.tmpl"))));
@@ -1673,8 +1675,8 @@
    
          if (UServer_Base::bssl)
             {
-            (void) db_ap->close();
-            (void) db_user->close();
+            (void) db_ap->close(false);
+            (void) db_user->close(false);
             }
          else
             {
@@ -1820,7 +1822,7 @@
             ptr1 = output->data() + U_CONSTANT_SIZE("uid=");
             ptr2 = ptr1;
    
-            do ++ptr2; while (*ptr2 != '&');
+            do { ++ptr2; } while (*ptr2 != '&');
    
             uint32_t pos = ptr2 - ptr1;
    
@@ -1828,16 +1830,16 @@
    
             if (validation)
                {
+               UVector<UString> name_value(14);
+   
                UHTTP::getFormValue(*gateway, U_CONSTANT_TO_PARAM("gateway"),  0,  7, 14);
                UHTTP::getFormValue(*token,   U_CONSTANT_TO_PARAM("token"),    0, 11, 14);
    
-               UVector<UString> name_value(10);
+               (void) UStringExt::getNameValueFromData(output->substr(U_CONSTANT_SIZE("uid=")+pos+1), name_value, U_CONSTANT_TO_PARAM("&"));
    
-               (void) UStringExt::getNameValueFromData(output->substr(pos+1), name_value, U_CONSTANT_TO_PARAM("&"));
-   
-               *policy              = name_value[ 1];  
+               *policy              = name_value[ 1];
                *auth_domain         = name_value[ 3];
-               *account             = name_value[ 5]; 
+               *account             = name_value[ 5];
                *_time_available     = name_value[ 7];
                *_traffic_available  = name_value[ 9];
                *user_DownloadRate   = name_value[11];
@@ -2362,15 +2364,24 @@
    {
       U_TRACE(5, "::runAuthCmd(%S,%S)", _uid, password)
    
-      static int fd_stderr = UServices::getDevNull("/tmp/auth_cmd.err");
+      if (fmt_auth_cmd->empty())
+         {
+         output->clear();
    
-      UString cmd(U_CAPACITY);
+         UCommand::exit_value = 1;
+         }
+      else
+         {
+         static int fd_stderr = UServices::getDevNull("/tmp/auth_cmd.err");
    
-      cmd.snprintf(fmt_auth_cmd->data(), _uid, password);
+         UString cmd(U_CAPACITY);
    
-      *output = UCommand::outputCommand(cmd, 0, -1, fd_stderr);
+         cmd.snprintf(fmt_auth_cmd->data(), _uid, password);
    
-      UServer_Base::logCommandMsgError(cmd.data(), true);
+         *output = UCommand::outputCommand(cmd, 0, -1, fd_stderr);
+   
+         UServer_Base::logCommandMsgError(cmd.data(), true);
+         }
    
       if (UCommand::exit_value ||
           output->empty())
@@ -2768,6 +2779,11 @@
                      lan =                 "eth1";
                      len = U_CONSTANT_SIZE("eth1");
                      }
+                  else if (UStringExt::endsWith(*ap, U_CONSTANT_TO_PARAM("_pico2")))
+                     {
+                     lan =                 "ath0";
+                     len = U_CONSTANT_SIZE("ath0");
+                     }
                   }
    
                body = UStringExt::substitute(body, U_CONSTANT_TO_PARAM("<LAN>"),                                              lan, len);
@@ -2976,11 +2992,17 @@
    next:
          loadPolicy(*policy_flat);
    
-         UString signed_data = UDES3::signData("uid=%.*s&policy=FLAT&auth_domain=%.*s&account=null&max_time=%.*s&max_traffic=%.*s",
-                                          U_STRING_TO_TRACE(*uid),
-                                          U_STRING_TO_TRACE(*auth_domain),
-                                          U_STRING_TO_TRACE(*_time_available),
-                                          U_STRING_TO_TRACE(*_traffic_available));
+         *user_DownloadRate = U_STRING_FROM_CONSTANT("0");
+         *user_UploadRate   = U_STRING_FROM_CONSTANT("0");
+   
+         UString signed_data = UDES3::signData("uid=%.*s&policy=FLAT&auth_domain=%.*s&account=null&"
+                                               "max_time=%.*s&max_traffic=%.*s&UserDownloadRate=%.*s&UserUploadRate=%.*s",
+                                                U_STRING_TO_TRACE(*uid),
+                                                U_STRING_TO_TRACE(*auth_domain),
+                                                U_STRING_TO_TRACE(*_time_available),
+                                                U_STRING_TO_TRACE(*_traffic_available),
+                                                U_STRING_TO_TRACE(*user_DownloadRate),
+                                                U_STRING_TO_TRACE(*user_UploadRate));
    
          // NB: in questo modo l'utente ripassa dal firewall e NoDog lo rimanda da noi (login_validate) con i dati rinnovati...
    
@@ -3231,14 +3253,19 @@
    
       if (isUserConnected(false)) goto error;
    
-      U_ASSERT_EQUALS(*address, user_rec->nodog)
-   
       if ((*ip  != user_rec->_ip) ||
           (*mac != user_rec->_mac))
          {
          U_LOGGER("*** POSTLOGIN DIFFERENCE: IP(%.*s=>%.*s) MAC(%.*s=>%.*s) ***",
                         U_STRING_TO_TRACE(*ip),  U_STRING_TO_TRACE(user_rec->_ip),
                         U_STRING_TO_TRACE(*mac), U_STRING_TO_TRACE(user_rec->_mac));
+   
+         goto error;
+         }
+   
+      if (*address != user_rec->nodog)
+         {
+         U_LOGGER("*** POSTLOGIN DIFFERENCE: address(%.*s=>%.*s) ***", U_STRING_TO_TRACE(*address), U_STRING_TO_TRACE(user_rec->nodog));
    
          goto error;
          }

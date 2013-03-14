@@ -706,7 +706,7 @@ int UShibPlugIn::handlerRequest()
                UShibTarget::setcookie = 0;
                }
 
-            UHTTP::setRedirectResponse(0, ext, UShibTarget::location, u__strlen(UShibTarget::location));
+            UHTTP::setRedirectResponse(0, ext, UShibTarget::location, u__strlen(UShibTarget::location, __PRETTY_FUNCTION__));
 
             UHTTP::setRequestProcessed();
             }

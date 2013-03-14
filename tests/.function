@@ -8,7 +8,7 @@ mkdir -p out err tmp
 test -f ../.colors && . ../.colors
 
 #UTRACE="0 10M 0"
-#UOBJDUMP="0 500k 500"
+#UOBJDUMP="0 5M 500"
 #USIMERR="error.sim"
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
 #WINELOADER=wine
@@ -403,4 +403,4 @@ TIMEOUT() {
    fi
 }
 
-# grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP' err/*
+# grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP|allocateMemoryBlocks' err/*
